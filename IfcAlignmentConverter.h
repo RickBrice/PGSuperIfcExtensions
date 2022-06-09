@@ -22,8 +22,8 @@ public:
 
 private:
    static Float64 m_Precision;
-   const unitLength* m_pLengthUnit;
-   const unitAngle* m_pAngleUnit;
+   const WBFL::Units::Length* m_pLengthUnit;
+   const WBFL::Units::Angle* m_pAngleUnit;
    std::vector<std::_tstring> m_Notes;
    CComPtr<ICogoEngine> m_CogoEngine;
    CComPtr<IGeomUtil2d> m_GeomUtil;
@@ -80,8 +80,8 @@ private:
    {
       auto coordinates = pPoint->Coordinates();
       ATLASSERT(2 <= coordinates.size());
-      *pX = ::ConvertToSysUnits(coordinates[0],*m_pLengthUnit);
-      *pY = ::ConvertToSysUnits(coordinates[1],*m_pLengthUnit);
+      *pX = WBFL::Units::ConvertToSysUnits(coordinates[0],*m_pLengthUnit);
+      *pY = WBFL::Units::ConvertToSysUnits(coordinates[1],*m_pLengthUnit);
    }
 
    enum LastAlignmentType { Unknown, Line, Curve } m_LastAlignmentType;

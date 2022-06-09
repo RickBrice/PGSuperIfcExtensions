@@ -76,15 +76,15 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
                switch (si_unit->Prefix())
                {
                case Schema::IfcSIPrefix::IfcSIPrefix_KILO:
-                  m_pLengthUnit = &unitMeasure::Kilometer;
+                  m_pLengthUnit = &WBFL::Units::Measure::Kilometer;
                   break;
 
                case Schema::IfcSIPrefix::IfcSIPrefix_CENTI:
-                  m_pLengthUnit = &unitMeasure::Centimeter;
+                  m_pLengthUnit = &WBFL::Units::Measure::Centimeter;
                   break;
 
                case Schema::IfcSIPrefix::IfcSIPrefix_MILLI:
-                  m_pLengthUnit = &unitMeasure::Millimeter;
+                  m_pLengthUnit = &WBFL::Units::Measure::Millimeter;
                   break;
 
                default:
@@ -93,7 +93,7 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
             }
             else
             {
-               m_pLengthUnit = &unitMeasure::Meter;
+               m_pLengthUnit = &WBFL::Units::Measure::Meter;
             }
             continue;
          }
@@ -101,7 +101,7 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
          if (si_unit->Name() == Schema::IfcSIUnitName::IfcSIUnitName_RADIAN)
          {
             ATLASSERT(!si_unit->hasPrefix()); // not expeciting anything like Kilo-radians
-            m_pAngleUnit = &unitMeasure::Radian;
+            m_pAngleUnit = &WBFL::Units::Measure::Radian;
             continue;
          }
       }
@@ -140,9 +140,9 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
                   conversion_factor = 1 / value;
                }
 
-               if (IsEqual(conversion_factor, unitMeasure::Degree.GetConvFactor()))
+               if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
                {
-                  m_pAngleUnit = &unitMeasure::Degree;
+                  m_pAngleUnit = &WBFL::Units::Measure::Degree;
                }
             }
             else if (conversion_based_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
@@ -176,29 +176,29 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
                   conversion_factor = value;
                }
 
-               if (IsEqual(conversion_factor, unitMeasure::Feet.GetConvFactor()))
+               if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()))
                {
-                  m_pLengthUnit = &unitMeasure::Feet;
+                  m_pLengthUnit = &WBFL::Units::Measure::Feet;
                }
-               else if (IsEqual(conversion_factor, unitMeasure::USSurveyFoot.GetConvFactor()))
+               else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyFoot.GetConvFactor()))
                {
-                  m_pLengthUnit = &unitMeasure::USSurveyFoot;
+                  m_pLengthUnit = &WBFL::Units::Measure::USSurveyFoot;
                }
-               else if (IsEqual(conversion_factor, unitMeasure::Inch.GetConvFactor()))
+               else if (IsEqual(conversion_factor, WBFL::Units::Measure::Inch.GetConvFactor()))
                {
-                  m_pLengthUnit = &unitMeasure::Inch;
+                  m_pLengthUnit = &WBFL::Units::Measure::Inch;
                }
-               else if (IsEqual(conversion_factor, unitMeasure::Mile.GetConvFactor()))
+               else if (IsEqual(conversion_factor, WBFL::Units::Measure::Mile.GetConvFactor()))
                {
-                  m_pLengthUnit = &unitMeasure::Mile;
+                  m_pLengthUnit = &WBFL::Units::Measure::Mile;
                }
-               else if (IsEqual(conversion_factor, unitMeasure::Yard.GetConvFactor()))
+               else if (IsEqual(conversion_factor, WBFL::Units::Measure::Yard.GetConvFactor()))
                {
-                  m_pLengthUnit = &unitMeasure::Yard;
+                  m_pLengthUnit = &WBFL::Units::Measure::Yard;
                }
-               else if (IsEqual(conversion_factor, unitMeasure::USSurveyYard.GetConvFactor()))
+               else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyYard.GetConvFactor()))
                {
-                  m_pLengthUnit = &unitMeasure::USSurveyYard;
+                  m_pLengthUnit = &WBFL::Units::Measure::USSurveyYard;
                }
                else
                {
@@ -852,7 +852,7 @@ void CIfcAlignmentConverter::LoadAlignment(typename Schema::IfcAlignment* pAlign
    if(horizontal->hasStartDistAlong())
    {
       // as I understand IFC 8.7.3.1, StartDistAlong is the value of the distance along at the start of the alignment... that seems like a starting station
-      current_station = ::ConvertToSysUnits(horizontal->StartDistAlong(), *m_pLengthUnit);
+      current_station = WBFL::Units::ConvertToSysUnits(horizontal->StartDistAlong(), *m_pLengthUnit);
    }
    else
    {
@@ -1013,13 +1013,13 @@ Ifc4x3_rc4::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_rc4:
 Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_rc2::IfcAlignmentHorizontal* pHorizontal)
 {
     Float64 station = pHorizontal->hasStartDistAlong() ? pHorizontal->StartDistAlong() : 0.0;
-    return ::ConvertToSysUnits(station, *m_pLengthUnit);
+    return WBFL::Units::ConvertToSysUnits(station, *m_pLengthUnit);
 }
 
 Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_rc3::IfcAlignmentHorizontal* pHorizontal)
 {
     //Float64 station = pHorizontal->hasStartDistAlong() ? pHorizontal->StartDistAlong() : 0.0;
-    //return ::ConvertToSysUnits(station, *m_pLengthUnit);
+    //return WBFL::Units::ConvertToSysUnits(station, *m_pLengthUnit);
     return 0.0; // not a property of IfcAlignmentHorizontal in rc3
 }
 
@@ -1292,7 +1292,7 @@ void CIfcAlignmentConverter::LoadProfile(typename Schema::IfcAlignment* pAlignme
    auto vertical = curve->hasVertical() ? curve->Vertical() : nullptr;
 
    Float64 start_station = curve->Horizontal()->hasStartDistAlong() ? curve->Horizontal()->StartDistAlong() : 0.0;
-   start_station = ::ConvertToSysUnits(start_station, *m_pLengthUnit);
+   start_station = WBFL::Units::ConvertToSysUnits(start_station, *m_pLengthUnit);
 
    auto segments = vertical ? vertical->Segments() : nullptr;
 
@@ -1458,8 +1458,8 @@ Float64 CIfcAlignmentConverter::OnLine(Float64 startStation, typename Segment* p
    Float64 sx, sy;
    GetPoint<Schema>(pLine->StartPoint(), &sx, &sy);
 
-   Float64 length = ::ConvertToSysUnits(pLine->SegmentLength(),*m_pLengthUnit);
-   Float64 startDirection = ::ConvertToSysUnits(pLine->StartDirection(), *m_pAngleUnit);;
+   Float64 length = WBFL::Units::ConvertToSysUnits(pLine->SegmentLength(),*m_pLengthUnit);
+   Float64 startDirection = WBFL::Units::ConvertToSysUnits(pLine->StartDirection(), *m_pAngleUnit);;
    return OnLine(sx, sy, startStation, startDirection, length);
 }
 
@@ -1509,7 +1509,7 @@ Float64 CIfcAlignmentConverter::OnCurve(Float64 startStation, typename SpiralTyp
 {
    ATLASSERT(pCurve != nullptr);
 
-   Float64 radius = ::ConvertToSysUnits(pCurve->Radius(), *m_pLengthUnit);
+   Float64 radius = WBFL::Units::ConvertToSysUnits(pCurve->Radius(), *m_pLengthUnit);
 
    // Get all the construction points
    CComPtr<IPoint2d> pntEntryStart, pntEntryPI, pntEntryEnd;
@@ -1521,7 +1521,7 @@ Float64 CIfcAlignmentConverter::OnCurve(Float64 startStation, typename SpiralTyp
    if (pEntrySpiral)
    {
       GetSpiralPoints<Schema>(pEntrySpiral, &pntEntryStart, &pntEntryPI, &pntEntryEnd);
-      entry_spiral_length = ::ConvertToSysUnits(pEntrySpiral->SegmentLength(), *m_pLengthUnit);
+      entry_spiral_length = WBFL::Units::ConvertToSysUnits(pEntrySpiral->SegmentLength(), *m_pLengthUnit);
 
       if (pntEntryStart == nullptr || pntEntryPI == nullptr || pntEntryEnd == nullptr)
       {
@@ -1553,7 +1553,7 @@ Float64 CIfcAlignmentConverter::OnCurve(Float64 startStation, typename SpiralTyp
    if (pExitSpiral)
    {
       GetSpiralPoints<Schema>(pExitSpiral, &pntExitStart, &pntExitPI, &pntExitEnd);
-      exit_spiral_length = ::ConvertToSysUnits(pExitSpiral->SegmentLength(), *m_pLengthUnit);
+      exit_spiral_length = WBFL::Units::ConvertToSysUnits(pExitSpiral->SegmentLength(), *m_pLengthUnit);
 
       if (pntExitStart == nullptr || pntExitPI == nullptr || pntExitEnd == nullptr)
       {
@@ -1612,7 +1612,7 @@ Float64 CIfcAlignmentConverter::OnCurve(Float64 startStation, typename SpiralTyp
 
       pntEnd = pntCurveEnd;
 
-      if (!IsEqual(::ConvertToSysUnits(pEntrySpiral->EndRadius(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pEntrySpiral->EndRadius(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("End radius of the entry sprial does not match the radius of the circular curve. The entry spiral end radius will be ignored.")));
       }
@@ -1634,7 +1634,7 @@ Float64 CIfcAlignmentConverter::OnCurve(Float64 startStation, typename SpiralTyp
 
       pntEnd = pntExitEnd;
 
-      if (!IsEqual(::ConvertToSysUnits(pExitSpiral->StartRadius(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pExitSpiral->StartRadius(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("Start radius of the exit sprial does not match the radius of the circular curve. The exit spiral start radius will be ignored.")));
       }
@@ -1658,12 +1658,12 @@ Float64 CIfcAlignmentConverter::OnCurve(Float64 startStation, typename SpiralTyp
       pntEnd = pntExitEnd;
 
 
-      if (!IsEqual(::ConvertToSysUnits(pEntrySpiral->EndRadius(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pEntrySpiral->EndRadius(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("End radius of the entry sprial does not match the radius of the circular curve. The entry spiral end radius will be ignored.")));
       }
 
-      if (!IsEqual(::ConvertToSysUnits(pExitSpiral->StartRadius(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pExitSpiral->StartRadius(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("Start radius of the exit sprial does not match the radius of the circular curve. The exit spiral start radius will be ignored.")));
       }
@@ -1754,7 +1754,7 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
 {
    ATLASSERT(pCurve != nullptr);
 
-   Float64 radius = ::ConvertToSysUnits(pCurve->StartRadiusOfCurvature(), *m_pLengthUnit);
+   Float64 radius = WBFL::Units::ConvertToSysUnits(pCurve->StartRadiusOfCurvature(), *m_pLengthUnit);
 
    // Get all the construction points
    CComPtr<IPoint2d> pntEntryStart, pntEntryPI, pntEntryEnd;
@@ -1766,7 +1766,7 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
    if (pEntrySpiral)
    {
       GetSpiralPoints_4x3<Schema>(pEntrySpiral, &pntEntryStart, &pntEntryPI, &pntEntryEnd);
-      entry_spiral_length = ::ConvertToSysUnits(pEntrySpiral->SegmentLength(), *m_pLengthUnit);
+      entry_spiral_length = WBFL::Units::ConvertToSysUnits(pEntrySpiral->SegmentLength(), *m_pLengthUnit);
 
       if (pntEntryStart == nullptr || pntEntryPI == nullptr || pntEntryEnd == nullptr)
       {
@@ -1798,7 +1798,7 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
    if (pExitSpiral)
    {
       GetSpiralPoints_4x3<Schema>(pExitSpiral, &pntExitStart, &pntExitPI, &pntExitEnd);
-      exit_spiral_length = ::ConvertToSysUnits(pExitSpiral->SegmentLength(), *m_pLengthUnit);
+      exit_spiral_length = WBFL::Units::ConvertToSysUnits(pExitSpiral->SegmentLength(), *m_pLengthUnit);
 
       if (pntExitStart == nullptr || pntExitPI == nullptr || pntExitEnd == nullptr)
       {
@@ -1857,7 +1857,7 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
 
       pntEnd = pntCurveEnd;
 
-      if (!IsEqual(::ConvertToSysUnits(pEntrySpiral->EndRadiusOfCurvature(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pEntrySpiral->EndRadiusOfCurvature(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("End radius of the entry sprial does not match the radius of the circular curve. The entry spiral end radius will be ignored.")));
       }
@@ -1879,7 +1879,7 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
 
       pntEnd = pntExitEnd;
 
-      if (!IsEqual(::ConvertToSysUnits(pExitSpiral->StartRadiusOfCurvature(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pExitSpiral->StartRadiusOfCurvature(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("Start radius of the exit sprial does not match the radius of the circular curve. The exit spiral start radius will be ignored.")));
       }
@@ -1903,12 +1903,12 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
       pntEnd = pntExitEnd;
 
 
-      if (!IsEqual(::ConvertToSysUnits(pEntrySpiral->EndRadiusOfCurvature(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pEntrySpiral->EndRadiusOfCurvature(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("End radius of the entry sprial does not match the radius of the circular curve. The entry spiral end radius will be ignored.")));
       }
 
-      if (!IsEqual(::ConvertToSysUnits(pExitSpiral->StartRadiusOfCurvature(), *m_pLengthUnit), radius))
+      if (!IsEqual(WBFL::Units::ConvertToSysUnits(pExitSpiral->StartRadiusOfCurvature(), *m_pLengthUnit), radius))
       {
          m_Notes.push_back(std::_tstring(_T("Start radius of the exit sprial does not match the radius of the circular curve. The exit spiral start radius will be ignored.")));
       }
@@ -1998,9 +1998,9 @@ template <typename Schema, typename CurveType>
 void CIfcAlignmentConverter::GetCurvePoints(typename CurveType* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter)
 {
    auto pStart = pCurve->StartPoint();
-   auto bkTangentBrg = ::ConvertToSysUnits(pCurve->StartDirection(), *m_pAngleUnit);
-   auto L = ::ConvertToSysUnits(pCurve->SegmentLength(),*m_pLengthUnit);
-   auto R = ::ConvertToSysUnits(pCurve->Radius(),*m_pLengthUnit);
+   auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pCurve->StartDirection(), *m_pAngleUnit);
+   auto L = WBFL::Units::ConvertToSysUnits(pCurve->SegmentLength(),*m_pLengthUnit);
+   auto R = WBFL::Units::ConvertToSysUnits(pCurve->Radius(),*m_pLengthUnit);
 
    Float64 delta = L / R;
    Float64 T = R*tan(delta/2);
@@ -2028,9 +2028,9 @@ template <typename Schema>
 void CIfcAlignmentConverter::GetCurvePoints_4x3(typename Schema::IfcAlignmentHorizontalSegment* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter)
 {
    auto pStart = pCurve->StartPoint();
-   auto bkTangentBrg = ::ConvertToSysUnits(pCurve->StartDirection(), *m_pAngleUnit);
-   auto L = ::ConvertToSysUnits(pCurve->SegmentLength(), *m_pLengthUnit);
-   auto R = ::ConvertToSysUnits(pCurve->StartRadiusOfCurvature(), *m_pLengthUnit);
+   auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pCurve->StartDirection(), *m_pAngleUnit);
+   auto L = WBFL::Units::ConvertToSysUnits(pCurve->SegmentLength(), *m_pLengthUnit);
+   auto R = WBFL::Units::ConvertToSysUnits(pCurve->StartRadiusOfCurvature(), *m_pLengthUnit);
    bool bIsCCW = (R < 0 ? true : false);
 
    Float64 delta = fabs(L / R);
@@ -2069,9 +2069,9 @@ template <typename Schema,typename SpiralType>
 void CIfcAlignmentConverter::GetSpiralPoints(typename SpiralType* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd)
 {
    auto pStart = pSpiral->StartPoint();
-   auto bkTangentBrg = ::ConvertToSysUnits(pSpiral->StartDirection(), *m_pAngleUnit);
-   auto L = ::ConvertToSysUnits(pSpiral->SegmentLength(),*m_pLengthUnit);
-   auto R = ::ConvertToSysUnits((pSpiral->hasStartRadius() ? pSpiral->StartRadius() : pSpiral->EndRadius()),*m_pLengthUnit);
+   auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pSpiral->StartDirection(), *m_pAngleUnit);
+   auto L = WBFL::Units::ConvertToSysUnits(pSpiral->SegmentLength(),*m_pLengthUnit);
+   auto R = WBFL::Units::ConvertToSysUnits((pSpiral->hasStartRadius() ? pSpiral->StartRadius() : pSpiral->EndRadius()),*m_pLengthUnit);
    bool bIsCCW = (pSpiral->hasStartRadius() ? pSpiral->IsStartRadiusCCW() : pSpiral->IsEndRadiusCCW());
 
    Float64 sx, sy;
@@ -2106,10 +2106,10 @@ template <typename Schema>
 void CIfcAlignmentConverter::GetSpiralPoints_4x3(typename Schema::IfcAlignmentHorizontalSegment* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd)
 {
    auto pStart = pSpiral->StartPoint();
-   auto bkTangentBrg = ::ConvertToSysUnits(pSpiral->StartDirection(), *m_pAngleUnit);
-   auto L = ::ConvertToSysUnits(pSpiral->SegmentLength(), *m_pLengthUnit);
-   auto Rstart = ::ConvertToSysUnits(pSpiral->StartRadiusOfCurvature(), *m_pLengthUnit);
-   auto Rend = ::ConvertToSysUnits(pSpiral->EndRadiusOfCurvature(), *m_pLengthUnit);
+   auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pSpiral->StartDirection(), *m_pAngleUnit);
+   auto L = WBFL::Units::ConvertToSysUnits(pSpiral->SegmentLength(), *m_pLengthUnit);
+   auto Rstart = WBFL::Units::ConvertToSysUnits(pSpiral->StartRadiusOfCurvature(), *m_pLengthUnit);
+   auto Rend = WBFL::Units::ConvertToSysUnits(pSpiral->EndRadiusOfCurvature(), *m_pLengthUnit);
    auto R = IsZero(Rstart) ? Rend : Rstart; // zero means infinite radius
    bool bIsCCW = (R < 0 ? true : false);
 
@@ -2144,11 +2144,11 @@ void CIfcAlignmentConverter::GetSpiralPoints_4x3(typename Schema::IfcAlignmentHo
 template <typename Schema,typename LineSegmentType>
 void CIfcAlignmentConverter::LinearSegment(Float64 startStation,typename LineSegmentType* pLinearSegment)
 {
-   Float64 length = ::ConvertToSysUnits(pLinearSegment->HorizontalLength(),*m_pLengthUnit);
+   Float64 length = WBFL::Units::ConvertToSysUnits(pLinearSegment->HorizontalLength(),*m_pLengthUnit);
    Float64 start_gradient = pLinearSegment->StartGradient();
-   Float64 start_dist = ::ConvertToSysUnits(pLinearSegment->StartDistAlong(),*m_pLengthUnit);
+   Float64 start_dist = WBFL::Units::ConvertToSysUnits(pLinearSegment->StartDistAlong(),*m_pLengthUnit);
 
-   Float64 start_height = ::ConvertToSysUnits(pLinearSegment->StartHeight(),*m_pLengthUnit);
+   Float64 start_height = WBFL::Units::ConvertToSysUnits(pLinearSegment->StartHeight(),*m_pLengthUnit);
 
    if (m_ProfileState == PROFILE_NOT_STARTED)
    {
@@ -2186,10 +2186,10 @@ void CIfcAlignmentConverter::ParabolicSegment(Float64 startStation, typename Par
 {
    // finish any open profile element
    Float64 start_gradient = pParaCurve->StartGradient();
-   Float64 start_dist = ::ConvertToSysUnits(pParaCurve->StartDistAlong(), *m_pLengthUnit);
-   Float64 start_height = ::ConvertToSysUnits(pParaCurve->StartHeight(), *m_pLengthUnit);
-   Float64 length = ::ConvertToSysUnits(pParaCurve->HorizontalLength(), *m_pLengthUnit);
-   Float64 R = ::ConvertToSysUnits(pParaCurve->ParabolaConstant(), *m_pLengthUnit);
+   Float64 start_dist = WBFL::Units::ConvertToSysUnits(pParaCurve->StartDistAlong(), *m_pLengthUnit);
+   Float64 start_height = WBFL::Units::ConvertToSysUnits(pParaCurve->StartHeight(), *m_pLengthUnit);
+   Float64 length = WBFL::Units::ConvertToSysUnits(pParaCurve->HorizontalLength(), *m_pLengthUnit);
+   Float64 R = WBFL::Units::ConvertToSysUnits(pParaCurve->ParabolaConstant(), *m_pLengthUnit);
    if (pParaCurve->IsConvex())
       R *= -1;
 
@@ -2218,10 +2218,10 @@ void CIfcAlignmentConverter::ParabolicSegment_4x3(Float64 startStation, typename
 {
    // finish any open profile element
    Float64 start_gradient = pParaCurve->StartGradient();
-   Float64 start_dist = ::ConvertToSysUnits(pParaCurve->StartDistAlong(), *m_pLengthUnit);
-   Float64 start_height = ::ConvertToSysUnits(pParaCurve->StartHeight(), *m_pLengthUnit);
-   Float64 length = ::ConvertToSysUnits(pParaCurve->HorizontalLength(), *m_pLengthUnit);
-   Float64 R = ::ConvertToSysUnits(pParaCurve->RadiusOfCurvature(), *m_pLengthUnit);
+   Float64 start_dist = WBFL::Units::ConvertToSysUnits(pParaCurve->StartDistAlong(), *m_pLengthUnit);
+   Float64 start_height = WBFL::Units::ConvertToSysUnits(pParaCurve->StartHeight(), *m_pLengthUnit);
+   Float64 length = WBFL::Units::ConvertToSysUnits(pParaCurve->HorizontalLength(), *m_pLengthUnit);
+   Float64 R = WBFL::Units::ConvertToSysUnits(pParaCurve->RadiusOfCurvature(), *m_pLengthUnit);
 
    Float64 exit_gradient = pParaCurve->EndGradient();
 
