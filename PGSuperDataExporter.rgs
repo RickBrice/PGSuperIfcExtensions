@@ -1,0 +1,26 @@
+HKCR
+{
+	IFCExtensions.IFCExporter.1 = s 'IFC Exporter'
+	{
+		CLSID = s '{4E36E0A6-9EAE-452E-B91C-0099D065A764}'
+	}
+	IFCExtensions.IFCExporter = s 'IFC Exporter'
+	{
+		CLSID = s '{4E36E0A6-9EAE-452E-B91C-0099D065A764}'
+		CurVer = s 'IFCExtensions.IFCExporter.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {4E36E0A6-9EAE-452E-B91C-0099D065A764} = s 'IFC Exporter'
+		{
+			ProgID = s 'IFCExtensions.IFCExporter.1'
+			VersionIndependentProgID = s 'IFCExtensions.IFCExporter'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{14D0D78D-820D-4373-88A0-353ED4D86108}'
+		}
+	}
+}

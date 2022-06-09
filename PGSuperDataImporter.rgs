@@ -1,0 +1,26 @@
+HKCR
+{
+	IFCExtensions.IFCImporter.1 = s 'IFC Importer'
+	{
+		CLSID = s '{9A717887-EB12-470E-8A4F-C941F65E592B}'
+	}
+	IFCExtensions.IFCImporter = s 'IFC Importer'
+	{
+		CLSID = s '{9A717887-EB12-470E-8A4F-C941F65E592B}'
+		CurVer = s 'IFCExtensions.IFCImporter.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {9A717887-EB12-470E-8A4F-C941F65E592B} = s 'IFC Importer'
+		{
+			ProgID = s 'IFCExtensions.IFCImporter.1'
+			VersionIndependentProgID = s 'IFCExtensions.IFCImporter'
+			ForceRemove 'Programmable'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			'TypeLib' = s '{14D0D78D-820D-4373-88A0-353ED4D86108}'
+		}
+	}
+}
