@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
-// IEPluginExample
-// Copyright © 1999-2020  Washington State Department of Transportation
+// IFC Extension for PGSuper
+// Copyright © 1999-2023  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
