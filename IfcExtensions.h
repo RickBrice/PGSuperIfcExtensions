@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
-// IEPluginExample
-// Copyright © 1999-2020  Washington State Department of Transportation
+// IFC Extension for PGSuper
+// Copyright © 1999-2023  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
+
 
 // PGSuperProjectImporter.h : Declaration of the CPGSuperProjectImporter
 
