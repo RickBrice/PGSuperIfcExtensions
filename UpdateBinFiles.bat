@@ -5,5 +5,5 @@ SET REGFREECOM=%ARPDIR%\BridgeLink\RegFreeCOM
 
 
 REM - Experimental Extensions
-xcopy /Y /d %REGFREECOM%\x64\Release\IfcExtensions.dll	%BINTARGET%\Extensions\Experimental\x64\
+xcopy /Y /d %REGFREECOM%\x64\Release\PGSuperIfcExtensions.dll	%BINTARGET%\Extensions\Experimental\x64\
 
