@@ -123,7 +123,7 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
 
          if (si_unit->Name() == Schema::IfcSIUnitName::IfcSIUnitName_RADIAN)
          {
-            ATLASSERT(!si_unit->hasPrefix()); // not expeciting anything like Kilo-radians
+            ATLASSERT(si_unit->Prefix() == boost::none); // not expecting anything like Kilo-radians
             m_pAngleUnit = &WBFL::Units::Measure::Radian;
             continue;
          }
@@ -1145,21 +1145,9 @@ Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizo
 
 Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_add1::IfcAlignmentHorizontal* pHorizontal)
 {
-    Float64 station = pHorizontal->hasStartDistAlong() ? pHorizontal->StartDistAlong() : 0.0;
-    return WBFL::Units::ConvertToSysUnits(station, *m_pLengthUnit);
+   return 0.0; // not a property of IfcAlignmentHorizontal in add1
 }
 
-Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_rc3::IfcAlignmentHorizontal* pHorizontal)
-{
-    //Float64 station = pHorizontal->hasStartDistAlong() ? pHorizontal->StartDistAlong() : 0.0;
-    //return WBFL::Units::ConvertToSysUnits(station, *m_pLengthUnit);
-    return 0.0; // not a property of IfcAlignmentHorizontal in rc3
-}
-
-Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_rc4::IfcAlignmentHorizontal* pHorizontal)
-{
-    return 0.0; // not a property of IfcAlignmentHorizontal in rc4
-}
 
 template <typename Schema>
 void CIfcAlignmentConverter::GetStations(typename Schema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations)
@@ -2354,7 +2342,7 @@ void CIfcAlignmentConverter::ParabolicSegment_4x3(Float64 startStation, typename
    Float64 start_dist = WBFL::Units::ConvertToSysUnits(pParaCurve->StartDistAlong(), *m_pLengthUnit);
    Float64 start_height = WBFL::Units::ConvertToSysUnits(pParaCurve->StartHeight(), *m_pLengthUnit);
    Float64 length = WBFL::Units::ConvertToSysUnits(pParaCurve->HorizontalLength(), *m_pLengthUnit);
-   Float64 R = WBFL::Units::ConvertToSysUnits(pParaCurve->RadiusOfCurvature(), *m_pLengthUnit);
+   Float64 R = WBFL::Units::ConvertToSysUnits(pParaCurve->RadiusOfCurvature() ? *(pParaCurve->RadiusOfCurvature()) : 0.0, *m_pLengthUnit);
 
    Float64 exit_gradient = pParaCurve->EndGradient();
 
