@@ -38,9 +38,11 @@ extern CComModule _Module;
 #include <AgentTools.h>
 
 #include <ifcparse/IfcHierarchyHelper.h>
-#include <ifcparse/Ifc4x1.h>
-#include <ifcparse/Ifc4x2.h>
-#include <ifcparse/Ifc4x3_rc1.h>
-#include <ifcparse/Ifc4x3_rc2.h>
-#include <ifcparse/Ifc4x3_rc3.h>
-#include <ifcparse/Ifc4x3_rc4.h>
+//#include <ifcparse/Ifc4x1.h>
+//#include <ifcparse/Ifc4x2.h>
+//#include <ifcparse/Ifc4x3_rc1.h>
+//#include <ifcparse/Ifc4x3_rc2.h>
+//#include <ifcparse/Ifc4x3_rc3.h>
+//#include <ifcparse/Ifc4x3_rc4.h>
+#include <ifcparse/Ifc4x3_tc1.h>
+#include <ifcparse/Ifc4x3_add1.h>

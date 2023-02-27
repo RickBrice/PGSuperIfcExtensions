@@ -32,14 +32,16 @@ public:
 
     enum SchemaType
     {
-        Schema_4x3_rc3,
-        Schema_4x3_rc4
+        //Schema_4x3_rc3,
+        //Schema_4x3_rc4
+       Schema_4x3_tc1,
+       Schema_4x3_add1
     };
 
-    void BuildModel(IBroker* pBroker, const CString& strFilePath, SchemaType schemaType, bool bSimplifiedAlignment);
+    bool BuildModel(IBroker* pBroker, const CString& strFilePath, SchemaType schemaType, bool bSimplifiedAlignment);
 
 private:
     template <typename Schema>
-    void BuildModel(IBroker* pBroker, const CString& strFilePath, bool bSimplifiedAlignment);
+    bool BuildModel(IBroker* pBroker, const CString& strFilePath, bool bSimplifiedAlignment);
 };
 

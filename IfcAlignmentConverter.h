@@ -75,9 +75,11 @@ private:
    template <typename Schema>
    void InitUnits(IfcParse::IfcFile& file);
 
-   Float64 GetStartDistAlong(Ifc4x3_rc2::IfcAlignmentHorizontal* pHorizontal);
-   Float64 GetStartDistAlong(Ifc4x3_rc3::IfcAlignmentHorizontal* pHorizontal);
-   Float64 GetStartDistAlong(Ifc4x3_rc4::IfcAlignmentHorizontal* pHorizontal);
+   //Float64 GetStartDistAlong(Ifc4x3_rc2::IfcAlignmentHorizontal* pHorizontal);
+   //Float64 GetStartDistAlong(Ifc4x3_rc3::IfcAlignmentHorizontal* pHorizontal);
+   //Float64 GetStartDistAlong(Ifc4x3_rc4::IfcAlignmentHorizontal* pHorizontal);
+   Float64 GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizontal* pHorizontal);
+   Float64 GetStartDistAlong(Ifc4x3_add1::IfcAlignmentHorizontal* pHorizontal);
 
    template <typename Schema>
    void GetStations(typename Schema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
@@ -125,7 +127,7 @@ private:
    template <typename Schema>
    void LinearSegment_4x3(Float64 startStation, typename Schema::IfcAlignmentVerticalSegment* pLinearSegment);
 
-   // adds a parabolic curve to the proflie
+   // adds a parabolic curve to the profile
    template <typename Schema, typename ParabolicSegmentType>
    void ParabolicSegment(Float64 startStation, typename ParabolicSegmentType* pParaCurve);
 
@@ -147,9 +149,11 @@ private:
    template <typename Schema, typename SpiralType>
    void CheckSpiralType(typename SpiralType* pSpiral);
 
-   void CheckSpiralType_4x3(Ifc4x3_rc2::IfcAlignmentHorizontalSegment* pSpiral);
-   void CheckSpiralType_4x3(Ifc4x3_rc3::IfcAlignmentHorizontalSegment* pSpiral);
-   void CheckSpiralType_4x3(Ifc4x3_rc4::IfcAlignmentHorizontalSegment* pSpiral);
+   //void CheckSpiralType_4x3(Ifc4x3_rc2::IfcAlignmentHorizontalSegment* pSpiral);
+   //void CheckSpiralType_4x3(Ifc4x3_rc3::IfcAlignmentHorizontalSegment* pSpiral);
+   //void CheckSpiralType_4x3(Ifc4x3_rc4::IfcAlignmentHorizontalSegment* pSpiral);
+   void CheckSpiralType_4x3(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* pSpiral);
+   void CheckSpiralType_4x3(Ifc4x3_add1::IfcAlignmentHorizontalSegment* pSpiral);
 
    //// NOTE: Not converting LandXML to cross slope data. This struct and the functions that follow are
    //// trial implementations, but they don't work.
