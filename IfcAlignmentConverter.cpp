@@ -2055,9 +2055,9 @@ Float64 CIfcAlignmentConverter::OnCurve_4x3(Float64 startStation, typename Schem
    // create a horizontal curve object so that we can get some information from it
    CComPtr<ICompoundCurve> hc;
    hc.CoCreateInstance(CLSID_CompoundCurve);
-   hc->putref_PBT(pntStart);
-   hc->putref_PI(pntPI);
-   hc->putref_PFT(pntEnd);
+   hc->put_PBT(pntStart);
+   hc->put_PI(pntPI);
+   hc->put_PFT(pntEnd);
    hc->put_Radius(fabs(radius));
    hc->put_SpiralLength(spEntry, entry_spiral_length);
    hc->put_SpiralLength(spExit, exit_spiral_length);

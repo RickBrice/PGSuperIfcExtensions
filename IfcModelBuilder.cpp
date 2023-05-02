@@ -357,7 +357,7 @@ void CreateVerticalProfile_4x3(IfcHierarchyHelper<Schema>& file, IBroker* pBroke
    IndexType nVCurves = pAlignment->GetVertCurveCount();
    for (IndexType i = 0; i < nVCurves; i++)
    {
-      CComPtr<IVertCurve> curve;
+      CComPtr<IVerticalCurve> curve;
       pAlignment->GetVertCurve(i, &curve);
 
       CComPtr<IProfilePoint> startPoint;
@@ -448,7 +448,8 @@ void CreateVerticalProfile_4x3(IfcHierarchyHelper<Schema>& file, IBroker* pBroke
       else
       {
          Float64 horizontal_length;
-         curve->get_Length(&horizontal_length);
+         CComQIPtr<IProfileElement> element(curve);
+         element->GetLength(&horizontal_length);
          Float64 start_gradient, end_gradient;
          curve->get_EntryGrade(&start_gradient);
          curve->get_ExitGrade(&end_gradient);
