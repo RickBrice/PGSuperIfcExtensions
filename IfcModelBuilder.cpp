@@ -48,7 +48,7 @@ int GetVertexOrdering(IShape* pShape)
     CComPtr<IPoint2dCollection> points;
     pShape->get_PolyPoints(&points);
 
-    CollectionIndexType cPoints;
+    IndexType cPoints;
     points->get_Count(&cPoints);
 
     if (cPoints < 3)
@@ -62,7 +62,7 @@ int GetVertexOrdering(IShape* pShape)
     Float64 ar, at;
 
     // loop over all points - make sure of closure
-    CollectionIndexType idx0, idx1;
+    IndexType idx0, idx1;
     idx0 = 0;
     idx1 = 1;
 
