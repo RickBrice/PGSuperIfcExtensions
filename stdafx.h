@@ -37,6 +37,7 @@ extern CComModule _Module;
 
 #include <AgentTools.h>
 
+#pragma warning(disable:4250) // 
 #include <ifcparse/IfcHierarchyHelper.h>
 //#include <ifcparse/Ifc4x1.h>
 //#include <ifcparse/Ifc4x2.h>
