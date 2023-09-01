@@ -21,6 +21,47 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+class CIfcModelBuilderOptions
+{
+public:
+   enum class Schema
+   {
+      //Schema_4x3_rc3,
+      //Schema_4x3_rc4
+      Schema_4x3_tc1,
+      Schema_4x3_add1
+   };
+
+   enum class ModelElements
+   {
+      AlignmentOnly,
+      AlignmentAndBridge
+   };
+
+   enum class AlignmentModel
+   {
+      Polyline, // IfcPolyline (3D wire)
+      GradientCurve // IfcGradientCurve
+   };
+
+   enum class Tangents
+   {
+      Polyline, // use IfcPolyline to model tangents
+      Line // use IfcLine to model tangents
+   };
+
+   enum class ObjectPlacement
+   {
+      Global, // IfcAxis2Placement3D
+      Linear // IfcAxis2PlacementLinear
+   };
+
+   Schema schema = Schema::Schema_4x3_add1;
+   ModelElements model_elements = ModelElements::AlignmentAndBridge;
+   AlignmentModel alignment_model = AlignmentModel::GradientCurve;
+   ObjectPlacement object_placement = ObjectPlacement::Linear;
+   Tangents tangents = Tangents::Line;
+};
 
 ///////////////////////////////////////////////////////////////////////////
 // CIfcModelBuilder
@@ -30,18 +71,10 @@ public:
     CIfcModelBuilder(void);
     ~CIfcModelBuilder(void);
 
-    enum SchemaType
-    {
-        //Schema_4x3_rc3,
-        //Schema_4x3_rc4
-       Schema_4x3_tc1,
-       Schema_4x3_add1
-    };
-
-    bool BuildModel(IBroker* pBroker, const CString& strFilePath, SchemaType schemaType, bool bSimplifiedAlignment);
+    bool BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
 
 private:
     template <typename Schema>
-    bool BuildModel(IBroker* pBroker, const CString& strFilePath, bool bSimplifiedAlignment);
+    bool BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
 };
 
