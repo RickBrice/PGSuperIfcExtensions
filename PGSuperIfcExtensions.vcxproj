@@ -82,7 +82,7 @@
       <HeaderFileName />
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\;$(ARPDIR)\PGSuper\Include\$(Platform);$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;$(ARPDIR)\WBFL\Include\$(Platform);$(IFCOPENSHELL_DIR)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\;$(ARPDIR)\PGSuper\Include\$(Platform);$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;$(ARPDIR)\WBFL\Include\$(Platform);$(IFCOPENSHELL_DIR)\src;$(IFCOPENSHELL_DIR)\_deps\boost_1_78_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -133,7 +133,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\;$(ARPDIR)\PGSuper\Include\$(Platform);$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;$(ARPDIR)\WBFL\Include\$(Platform);$(IFCOPENSHELL_DIR)\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\;$(ARPDIR)\PGSuper\Include\$(Platform);$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;$(ARPDIR)\WBFL\Include\$(Platform);$(IFCOPENSHELL_DIR)\src;$(IFCOPENSHELL_DIR)\_deps\boost_1_78_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
@@ -173,6 +173,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ExportOptions.cpp" />
     <ClCompile Include="IfcAlignmentConverter.cpp" />
     <ClCompile Include="IfcAlignmentConverterException.cpp" />
     <ClCompile Include="IfcExtensions.cpp" />
@@ -190,10 +191,12 @@
     <None Include="PGSuperDataExporter.rgs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ExportOptions.h" />
     <ClInclude Include="IfcAlignmentConverter.h" />
     <ClInclude Include="IfcAlignmentConverterException.h" />
     <ClInclude Include="IfcExtensions.h" />
     <ClInclude Include="IfcModelBuilder.h" />
+    <ClInclude Include="OutputWindowAsStream.h" />
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />
     <ClInclude Include="Resource.h" />

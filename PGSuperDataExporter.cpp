@@ -25,7 +25,7 @@
 #include "IfcExtensions.h"
 #include "PGSuperDataExporter.h"
 #include "IfcModelBuilder.h"
-#include <MFCTools\Prompts.h>
+#include "ExportOptions.h"
 
 HRESULT CPGSuperDataExporter::FinalConstruct()
 {
@@ -62,16 +62,20 @@ STDMETHODIMP CPGSuperDataExporter::GetCommandHintText(BSTR*  bstrText) const
 
 STDMETHODIMP CPGSuperDataExporter::Export(IBroker* pBroker)
 {
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
    // write some bridge data to a text file
-   int alignment_type = AfxRBChoose(_T("Alignment Geometric Representation"), _T("Select a geometric representation of the alignment"), _T("IfcPolyline (3D Wire)\nIfcGradientCurve"),1);
-   CIfcModelBuilder::SchemaType schemaType = (CIfcModelBuilder::SchemaType)AfxRBChoose(_T("Format"), _T("Select IFC Format"), _T("IFC 4x3 TC1\nIFC 4x3 Add1"),1);
+   CExportOptions options_dlg;
+   if (options_dlg.DoModal() == IDCLOSE)
+      return S_OK;
+
 	CFileDialog  dlg(FALSE,_T("ifc"),_T("PGSuperExport.ifc"),OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IFC File(*.ifc)|*.ifc||"));
 	if (dlg.DoModal() == IDOK)
 	{
 		CString file_path = dlg.GetPathName();
 
        CIfcModelBuilder builder;
-       bool bResult = builder.BuildModel(pBroker, file_path, schemaType, alignment_type == 0 ? true : false);
+       bool bResult = builder.BuildModel(pBroker, file_path, options_dlg.options);
        CString strMsg;
        strMsg.Format(_T("Model export %s for %s"), (bResult ? _T("successful") : _T("failed")), file_path);
        AfxMessageBox(strMsg, MB_OK | (bResult ? MB_ICONEXCLAMATION : MB_ICONSTOP));

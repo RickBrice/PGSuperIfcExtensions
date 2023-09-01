@@ -8,15 +8,26 @@
 #define IDR_PGSUPERDATAIMPORTER         104
 #define IDR_PGSUPERDATAEXPORTER         105
 #define IDR_PGSPLICEPROJECTIMPORTER     106
+#define IDC_4X3_TC1                     201
+#define IDC_4X3_ADD1                    202
+#define IDC_ALIGNMENT_ONLY              203
+#define IDC_ALIGNMENT_AND_BRIDGE        204
 #define IDB_BSI                         205
+#define IDC_POLYLINE                    205
+#define IDD_DIALOG1                     206
+#define IDC_GRADIENTCURVE               206
+#define IDD_EXPORT_OPTIONS              206
+#define IDC_POLYLINE_TANGENT            207
+#define IDC_RADIO2                      208
+#define IDC_LINE_TANGENTS               208
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        206
+#define _APS_NEXT_RESOURCE_VALUE        208
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         201
+#define _APS_NEXT_CONTROL_VALUE         209
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
