@@ -1109,7 +1109,7 @@ typename Schema::IfcProduct* CreateGirderSegment_4x3(IfcHierarchyHelper<Schema>&
 
     // need a list of entities that are associated with this material
     // right now we are creating a unique material for each segment but we still need the list
-    aggregate_of_instance::ptr segments(new aggregate_of_instance);
+    typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr segments(new aggregate_of<typename Schema::IfcDefinitionSelect>());
     segments->push(segment);
 
     // associate the material with the segment (ie segments collection)
@@ -1626,7 +1626,7 @@ void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const CSt
 
    //auto project = file.addProject(); // Don't like the default units in IfcOpenShell so we have do build our own
    /////////////////////////// The following is copied from addProject and tweaked
-   aggregate_of_instance::ptr units(new aggregate_of_instance);
+   typename Schema::IfcUnit::list::ptr units(new typename Schema::IfcUnit::list);
    auto* dimexp = new Schema::IfcDimensionalExponents(0, 0, 0, 0, 0, 0, 0);
    auto* unit1 = new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
    auto* unit2 = new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN);
