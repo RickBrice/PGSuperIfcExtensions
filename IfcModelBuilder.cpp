@@ -185,7 +185,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
          file.addEntity(segment);
          alignment_segments->push(segment);
 
-         auto placement = new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)}));
+         auto placement = new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
          if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
          {
             typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
@@ -201,7 +201,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
             auto dir = new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)});
             double mag = 1.0;
             auto vector = new Schema::IfcVector(dir, mag);
-            auto parent_curve = new Schema::IfcLine(new Schema::IfcCartesianPoint(std::vector<double>{0, 0}), vector);
+            auto parent_curve = new Schema::IfcLine(new Schema::IfcCartesianPoint(std::vector<double>{0.0,0.0}), vector);
             auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure(dist), parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
@@ -243,8 +243,8 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
          alignment_segments->push(segment);
 
          Float64 A = (bIsCCW ? 1.0 : -1.0) * sqrt(Lspiral[spEntry] * R);
-         auto curve_segment_placement = new Schema::IfcAxis2Placement2D(ifc_start, new Schema::IfcDirection(std::vector<double>{cos(bk_tangent_direction), sin(bk_tangent_direction)}));
-         auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0, 0}), new Schema::IfcDirection(std::vector<double>{1, 0}));
+         auto curve_segment_placement = new Schema::IfcAxis2Placement2D(ifc_start, new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+         auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{cos(bk_tangent_direction), sin(bk_tangent_direction)}));
          auto parent_curve = new Schema::IfcClothoid(parent_curve_placement, A);
          auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, curve_segment_placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure(Lspiral[spEntry]), parent_curve);
          curve_segments->push(curve_segment);
@@ -272,9 +272,8 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
       auto ifc_ccc = ConvertPoint<Schema>(ccc);
       auto dx = cos(bk_tangent_direction_curve);
       auto dy = sin(bk_tangent_direction_curve);
-      auto curve_segment_placement = new Schema::IfcAxis2Placement2D(ifc_start, new Schema::IfcDirection(std::vector<double>{ dx, dy }));
-      //auto parent_curve_placement = new Schema::IfcAxis2Placement2D(ifc_ccc, new Schema::IfcDirection(std::vector<double>{dy, (bIsCCW ? -1.0 : 1.0)*dx}));
-      auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0, (bIsCCW ? 1.0 : -1.0)* R}), new Schema::IfcDirection(std::vector<double>{dy, (bIsCCW ? -1.0 : 1.0)* dx}));
+      auto curve_segment_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{ 1.0, 0.0 }));
+      auto parent_curve_placement = new Schema::IfcAxis2Placement2D(ifc_ccc, new Schema::IfcDirection(std::vector<double>{(bIsCCW ? 1.0 : -1.0)* dy, (bIsCCW ? -1.0 : 1.0)*dx}));
       auto parent_curve = new Schema::IfcCircle(parent_curve_placement, R);
       auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, curve_segment_placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure((bIsCCW ? 1.0 : -1.0)*Lc), parent_curve);
       file.addEntity(curve_segment);
@@ -289,21 +288,31 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
          Float64 fwd_tangent_direction_curve;
          fwdTangentBrgCurve->get_Value(&fwd_tangent_direction_curve);
 
+         CComPtr<IDirection> fwdTangentBrgSpiral;
+         curve->get_FwdTangentBrg(&fwdTangentBrgSpiral); // foward tangent of curve at the end of the exit spiral
+         Float64 fwd_tangent_direction_spiral; 
+         fwdTangentBrgSpiral->get_Value(&fwd_tangent_direction_spiral);
+
          // spiral starts at the Curve to Spiral point (CS)
          CComPtr<IPoint2d> pntCS;
          curve->get_CS(&pntCS);
-         ifc_start = ConvertPoint<Schema>(pntCS);
+         auto ifc_cs = ConvertPoint<Schema>(pntCS);
 
-         auto ifc_exit_spiral = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_start, fwd_tangent_direction_curve, (bIsCCW ? 1.0 : -1.0)*R, 0, Lspiral[spExit], boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
+         // The geometry of the spiral (point of infinite radius) begins at the Spiral to Tangent point (ST)
+         CComPtr<IPoint2d> pntST;
+         curve->get_ST(&pntST);
+         auto ifc_st = ConvertPoint<Schema>(pntST);
+
+         auto ifc_exit_spiral = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_cs, fwd_tangent_direction_curve, (bIsCCW ? 1.0 : -1.0)*R, 0, Lspiral[spExit], boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
          auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, ifc_exit_spiral);
          file.addEntity(segment);
          alignment_segments->push(segment);
 
-         Float64 A = (bIsCCW ? 1.0 : -1.0) * sqrt(Lspiral[spExit] * R);
-         auto curve_segment_placement = new Schema::IfcAxis2Placement2D(ifc_start, new Schema::IfcDirection(std::vector<double>{cos(fwd_tangent_direction_curve), sin(fwd_tangent_direction_curve)}));
-         auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0, 0}), new Schema::IfcDirection(std::vector<double>{1, 0}));
+         Float64 A = 1.0*(bIsCCW ? 1.0 : -1.0) * sqrt(Lspiral[spExit] * R);
+         auto curve_segment_placement = new Schema::IfcAxis2Placement2D(ifc_cs, new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+         auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{cos(fwd_tangent_direction_curve), sin(fwd_tangent_direction_curve)}));
          auto parent_curve = new Schema::IfcClothoid(parent_curve_placement, A);
-         auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, curve_segment_placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure(Lspiral[spExit]), parent_curve);
+         auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, curve_segment_placement, new Schema::IfcNonNegativeLengthMeasure(Lspiral[spExit]), new Schema::IfcNonNegativeLengthMeasure(-1.0*Lspiral[spExit]), parent_curve);
          file.addEntity(curve_segment);
          curve_segments->push(curve_segment);
       }
@@ -336,7 +345,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
       file.addEntity(segment);
       alignment_segments->push(segment);
    
-      auto placement = new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)}));
+      auto placement = new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
       if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
       {
          typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
@@ -374,7 +383,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    auto dir = new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)});
    double mag = 1.0;
    auto vector = new Schema::IfcVector(dir, mag);
-   auto terminator_parent_curve = new Schema::IfcLine(new Schema::IfcCartesianPoint(std::vector<double>{0, 0}), vector);
+   auto terminator_parent_curve = new Schema::IfcLine(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), vector);
    auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_DISCONTINUOUS, segment_curve_placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure(0.0), terminator_parent_curve);
    file.addEntity(terminator_curve_segment);
    curve_segments->push(terminator_curve_segment);
