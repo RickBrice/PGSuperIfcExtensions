@@ -47,6 +47,7 @@
 #include <IFace\Intervals.h>
 
 #include <EAF\EAFDisplayUnits.h>
+#include <EAF/EAFUIIntegration.h>
 
 // Build environment setup
 // Define the environment variable IFCOPENSHELL_DIR with the root location of IfcOpenShell (e.g. F:\IfcOpenShell)
