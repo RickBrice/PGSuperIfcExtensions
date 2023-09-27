@@ -27,6 +27,8 @@
 #include "IfcModelBuilder.h"
 #include "ExportOptions.h"
 
+#include <EAF/EAFUIIntegration.h>
+
 HRESULT CPGSuperDataExporter::FinalConstruct()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
@@ -69,7 +71,13 @@ STDMETHODIMP CPGSuperDataExporter::Export(IBroker* pBroker)
    if (options_dlg.DoModal() == IDCLOSE)
       return S_OK;
 
-	CFileDialog  dlg(FALSE,_T("ifc"),_T("PGSuperExport.ifc"),OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IFC File(*.ifc)|*.ifc||"));
+   GET_IFACE2(pBroker, IEAFDocument, pDoc);
+   auto file_title = pDoc->GetFileTitle();
+   auto file_root = pDoc->GetFileRoot();
+   CString default_file_name;
+   default_file_name.Format(_T("%s%s.ifc"), file_root, file_title);
+
+	CFileDialog  dlg(FALSE,_T("ifc"),default_file_name,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IFC File (*.ifc)|*.ifc||"));
 	if (dlg.DoModal() == IDOK)
 	{
 		CString file_path = dlg.GetPathName();
