@@ -407,7 +407,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
    representation_items->push(composite_curve);
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+   auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
    ATLASSERT(geometric_representation_context);
    auto representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_GRAPH_VIEW, boost::none);
    file.addEntity(representation_subcontext);
@@ -471,7 +471,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
             auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
             auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-            auto axes = new Schema::IfcAxis2Placement3D(vertical_point, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), gradient_direction);
+            auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
             auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(length), parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
@@ -511,7 +511,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
          Float64 C1 = start_height;
          auto vertical_point1 = new Schema::IfcCartesianPoint(std::vector<double>{0.0, start_height});
          auto gradient_direction1 = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
-         auto axes1 = new Schema::IfcAxis2Placement3D(vertical_point1, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), gradient_direction1);
+         auto axes1 = new Schema::IfcAxis2Placement2D(vertical_point1, gradient_direction1);
          auto parent_curve1 = new Schema::IfcPolynomialCurve(axes1, boost::none, std::vector<double>{A1, B1, C1}, boost::none);
          auto curve_segment1 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes1, new Schema::IfcNonNegativeLengthMeasure(start_dist_along), new Schema::IfcNonNegativeLengthMeasure(l1), parent_curve1);
          file.addEntity(curve_segment1);
@@ -527,7 +527,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
          Float64 C2 = pviElevation;
          auto vertical_point2 = new Schema::IfcCartesianPoint(std::vector<double>{0.0, pviElevation});
          auto gradient_direction2 = new Schema::IfcDirection(std::vector<double>{cos(pviGrade), sin(pviGrade)});
-         auto axes2 = new Schema::IfcAxis2Placement3D(vertical_point2, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), gradient_direction1);
+         auto axes2 = new Schema::IfcAxis2Placement2D(vertical_point2, gradient_direction1);
          auto parent_curve2 = new Schema::IfcPolynomialCurve(axes2, boost::none, std::vector<double>{A2, B1, C2}, boost::none);
          auto curve_segment2 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes2, new Schema::IfcNonNegativeLengthMeasure(start_dist_along + l1), new Schema::IfcNonNegativeLengthMeasure(l2), parent_curve2);
          file.addEntity(curve_segment2);
@@ -553,7 +553,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
             auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
             auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-            auto axes = new Schema::IfcAxis2Placement3D(vertical_point, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), gradient_direction);
+            auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
             auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(l1), parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
@@ -572,7 +572,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             Float64 C = start_height;
             auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, start_height});
             auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
-            auto axes = new Schema::IfcAxis2Placement3D(vertical_point, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), gradient_direction);
+            auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
             auto parent_curve = new Schema::IfcPolynomialCurve(axes, boost::none, std::vector<double>{A, B, C}, boost::none);
             auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(start_dist_along), new Schema::IfcNonNegativeLengthMeasure(horizontal_length), parent_curve);
             file.addEntity(curve_segment);
@@ -608,7 +608,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
       auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
       auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-      auto axes = new Schema::IfcAxis2Placement3D(vertical_point, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), gradient_direction);
+      auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
       auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(length), parent_curve);
       file.addEntity(curve_segment);
       curve_segments->push(curve_segment);
@@ -629,7 +629,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    auto terminator_vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
    auto terminator_gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
    auto terminator_parent_curve = new Schema::IfcLine(terminator_vertical_point, new Schema::IfcVector(terminator_gradient_direction, 1.0));
-   auto terminator_placement = new Schema::IfcAxis2Placement3D(terminator_vertical_point, new Schema::IfcDirection(std::vector<double>{0, 0, 1}), terminator_gradient_direction);
+   auto terminator_placement = new Schema::IfcAxis2Placement2D(terminator_vertical_point, terminator_gradient_direction);
    auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, terminator_placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure(0.0), terminator_parent_curve);
    file.addEntity(terminator_curve_segment);
    curve_segments->push(terminator_curve_segment);
@@ -745,7 +745,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       representation_items->push(gradient_curve);
    }
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+   auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
    ATLASSERT(geometric_representation_context);
    auto representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_GRAPH_VIEW, boost::none);
    auto shape_representation = new Schema::IfcShapeRepresentation(representation_subcontext, std::string("Axis"), std::string("Curve3D"), representation_items);
@@ -987,7 +987,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          strand_representation_items->push(swept_disk_solid);
       }
 
-      auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+      auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
       ATLASSERT(geometric_representation_context);
       auto strand_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), strand_representation_items);
       typename aggregate_of<typename Schema::IfcRepresentation>::ptr strand_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
@@ -1801,13 +1801,6 @@ void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const CSt
    owner_history->OwningApplication()->setVersion(std::string(T2A(pVersionInfo->GetVersion(true))));
    owner_history->OwningApplication()->ApplicationDeveloper()->setIdentification(std::string("Washington State Department of Transportation, Bridge and Structures Office"));
    owner_history->OwningApplication()->ApplicationDeveloper()->setName(std::string("Richard Brice, PE"));
-
-   auto world_coordinate_system = file.addPlacement3d();
-   auto geometric_representation_context = new Schema::IfcGeometricRepresentationContext(std::string("3D"), std::string("Model"), 3, boost::none, world_coordinate_system, nullptr/*true north*/);
-   file.addEntity(geometric_representation_context); // ADD THE CONTEXT TO THE FILE!!!!
-   auto contexts = project->RepresentationContexts(); // get the old context
-   (*contexts)->push(geometric_representation_context); // add the new context
-   project->setRepresentationContexts(contexts); // set the context back into the project
 }
 
 
@@ -2010,7 +2003,7 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       file.addEntity(segment_placement);
    }
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+   auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
    ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
    auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), representation_type, representation_items);
@@ -2168,7 +2161,7 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
       representation_type = "SweptSolid";
    }
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+   auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
    ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
    auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), representation_type, representation_items);
@@ -2314,7 +2307,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       deck_placement = site->ObjectPlacement();
    }
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+   auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
    ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
    auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), representation_type, representation_items);
@@ -2475,7 +2468,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       }
 
 
-      auto geometric_representation_context = file.getRepresentationContext(std::string("3D"));
+      auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
       ATLASSERT(geometric_representation_context);
       typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
       auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), representation_type, representation_items);
