@@ -567,13 +567,16 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             file.addEntity(segment);
             profile_segments->push(segment);
 
+            // based on this post (https://forums.buildingsmart.org/t/ifcpolynomialcurve-clarification/4716), define the vertical curve as
+            // CoefficientsX = {0.0, 1.0}
+            // CoefficientsY = {C,B,A}
             Float64 A = (end_gradient - start_gradient) / (2 * horizontal_length);
             Float64 B = start_gradient;
             Float64 C = start_height;
             auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, start_height});
             auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
             auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
-            auto parent_curve = new Schema::IfcPolynomialCurve(axes, boost::none, std::vector<double>{A, B, C}, boost::none);
+            auto parent_curve = new Schema::IfcPolynomialCurve(axes, std::vector<double>{0.0,1.0}, std::vector<double>{C, B, A}, boost::none);
             auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(start_dist_along), new Schema::IfcNonNegativeLengthMeasure(horizontal_length), parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
