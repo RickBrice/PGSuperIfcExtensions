@@ -44,7 +44,7 @@ Select Configuration Properties > General
 Change Platform Toolset to "Visual Studio 2019 (v142)"
 ~~~
 
-The HDF5 libraries need to be changed to the debugging version for multiple projects. The list include IfcHouse, IfcAdvancedHouse, _ifcopenshell_wrapper, IfcGeom. An _D needs to be appended to the HDF file name in the linker settings.
+The HDF5 libraries need to be changed to the debugging version for multiple projects. The list include IfcHouse, IfcAdvancedHouse, _ifcopenshell_wrapper, IfcGeomServer, IfcConvert. An _D needs to be appended to the HDF file name in the linker settings.
 
 Now build the Debug and Release configurations.
 
