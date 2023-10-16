@@ -471,8 +471,8 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
             auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
             auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-            auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(length), parent_curve);
+            auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0,0.0}), new Schema::IfcDirection(std::vector<double>{1.0,0.0}));
+            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(length), parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
          }
@@ -509,11 +509,10 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
          Float64 A1 = (pviGrade - start_gradient) / (2 * l1);
          Float64 B1 = start_gradient;
          Float64 C1 = start_height;
-         auto vertical_point1 = new Schema::IfcCartesianPoint(std::vector<double>{0.0, start_height});
-         auto gradient_direction1 = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
-         auto axes1 = new Schema::IfcAxis2Placement2D(vertical_point1, gradient_direction1);
-         auto parent_curve1 = new Schema::IfcPolynomialCurve(axes1, boost::none, std::vector<double>{A1, B1, C1}, boost::none);
-         auto curve_segment1 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes1, new Schema::IfcNonNegativeLengthMeasure(start_dist_along), new Schema::IfcNonNegativeLengthMeasure(l1), parent_curve1);
+         auto parent_curve1_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+         auto parent_curve1 = new Schema::IfcPolynomialCurve(parent_curve1_placement, std::vector<double>{0.0,1.0}, std::vector<double>{C1, B1, A1}, boost::none);
+         auto segment_curve1_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+         auto curve_segment1 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve1_placement, new Schema::IfcNonNegativeLengthMeasure(start_dist_along), new Schema::IfcNonNegativeLengthMeasure(l1), parent_curve1);
          file.addEntity(curve_segment1);
          curve_segments->push(curve_segment1);
 
@@ -525,11 +524,10 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
          Float64 A2 = (end_gradient - pviGrade) / (2 * l2);
          Float64 B2 = pviGrade;
          Float64 C2 = pviElevation;
-         auto vertical_point2 = new Schema::IfcCartesianPoint(std::vector<double>{0.0, pviElevation});
-         auto gradient_direction2 = new Schema::IfcDirection(std::vector<double>{cos(pviGrade), sin(pviGrade)});
-         auto axes2 = new Schema::IfcAxis2Placement2D(vertical_point2, gradient_direction1);
-         auto parent_curve2 = new Schema::IfcPolynomialCurve(axes2, boost::none, std::vector<double>{A2, B1, C2}, boost::none);
-         auto curve_segment2 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes2, new Schema::IfcNonNegativeLengthMeasure(start_dist_along + l1), new Schema::IfcNonNegativeLengthMeasure(l2), parent_curve2);
+         auto parent_curve2_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+         auto parent_curve2 = new Schema::IfcPolynomialCurve(parent_curve2_placement, boost::none, std::vector<double>{C2, B2, A2}, boost::none);
+         auto segment_curve2_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+         auto curve_segment2 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve2_placement, new Schema::IfcNonNegativeLengthMeasure(start_dist_along + l1), new Schema::IfcNonNegativeLengthMeasure(l2), parent_curve2);
          file.addEntity(curve_segment2);
          curve_segments->push(curve_segment2);
       }
@@ -553,8 +551,8 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
             auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
             auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-            auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(l1), parent_curve);
+            auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(l1), parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
          }
@@ -573,11 +571,13 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
             Float64 A = (end_gradient - start_gradient) / (2 * horizontal_length);
             Float64 B = start_gradient;
             Float64 C = start_height;
-            auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, start_height});
-            auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
-            auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
-            auto parent_curve = new Schema::IfcPolynomialCurve(axes, std::vector<double>{0.0,1.0}, std::vector<double>{C, B, A}, boost::none);
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(start_dist_along), new Schema::IfcNonNegativeLengthMeasure(horizontal_length), parent_curve);
+            auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+            auto parent_curve = new Schema::IfcPolynomialCurve(parent_curve_placement, std::vector<double>{0.0,1.0}, std::vector<double>{C, B, A}, boost::none);
+            auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, 
+               new Schema::IfcNonNegativeLengthMeasure(start_dist_along), 
+               new Schema::IfcNonNegativeLengthMeasure(horizontal_length),
+               parent_curve);
             file.addEntity(curve_segment);
             curve_segments->push(curve_segment);
          }
@@ -611,8 +611,8 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
       auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
       auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-      auto axes = new Schema::IfcAxis2Placement2D(vertical_point, gradient_direction);
-      auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, axes, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(length), parent_curve);
+      auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
+      auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, new Schema::IfcNonNegativeLengthMeasure(prev_end_dist_along), new Schema::IfcNonNegativeLengthMeasure(length), parent_curve);
       file.addEntity(curve_segment);
       curve_segments->push(curve_segment);
 
@@ -632,7 +632,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    auto terminator_vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
    auto terminator_gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
    auto terminator_parent_curve = new Schema::IfcLine(terminator_vertical_point, new Schema::IfcVector(terminator_gradient_direction, 1.0));
-   auto terminator_placement = new Schema::IfcAxis2Placement2D(terminator_vertical_point, terminator_gradient_direction);
+   auto terminator_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
    auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, terminator_placement, new Schema::IfcNonNegativeLengthMeasure(0.0), new Schema::IfcNonNegativeLengthMeasure(0.0), terminator_parent_curve);
    file.addEntity(terminator_curve_segment);
    curve_segments->push(terminator_curve_segment);
