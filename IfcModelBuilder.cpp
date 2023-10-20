@@ -417,7 +417,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
 }
 
 template <typename Schema>
-void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcShapeRepresentation** palignment_representation)
+void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcGradientCurve** palignment_gradient_curve, typename Schema::IfcShapeRepresentation** palignment_representation)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr profile_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -741,11 +741,13 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       }
       auto polyline = new Schema::IfcPolyline(points);
       representation_items->push(polyline);
+      *palignment_gradient_curve = nullptr;
    }
    else
    {
       auto gradient_curve = new Schema::IfcGradientCurve(curve_segments, false, horizontal_geometry_base_curve, nullptr);
       representation_items->push(gradient_curve);
+      *palignment_gradient_curve = gradient_curve;
    }
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("3D")); // creates the representation context if it doesn't already exist
@@ -765,8 +767,9 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &horizontal_geometry_base_curve,&horizontal_alignment_representation);
 
    typename Schema::IfcAlignmentVertical* vertical_profile_layout;
+   typename Schema::IfcGradientCurve* alignment_gradient_curve;
    typename Schema::IfcShapeRepresentation* alignment_representation;
-   CreateVerticalProfile<Schema>(file, pBroker, horizontal_geometry_base_curve, options, &vertical_profile_layout, &alignment_representation);
+   CreateVerticalProfile<Schema>(file, pBroker, horizontal_geometry_base_curve, options, &vertical_profile_layout, &alignment_gradient_curve, &alignment_representation);
 
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
    representations->push(horizontal_alignment_representation); // 2D alignment geometry
@@ -823,23 +826,26 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    CComPtr<IPoint2d> startPoint;
    pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
 
-   auto point_on_alignment = new Schema::IfcPointByDistanceExpression(new Schema::IfcNonNegativeLengthMeasure(0.0), 0.0, 0.0, 0.0, horizontal_geometry_base_curve);
-   auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, new Schema::IfcDirection(std::vector<double>{ 0, 0, 1}), new Schema::IfcDirection(std::vector<double>{1,0,0}));
-   auto cartesian_position = new Schema::IfcAxis2Placement3D(new Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}), new Schema::IfcDirection(std::vector<double>{ 0, 0, 1 }), new Schema::IfcDirection(std::vector<double>{1, 0, 0}));
-   auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, cartesian_position);
+   auto point_on_alignment = new Schema::IfcPointByDistanceExpression(new Schema::IfcNonNegativeLengthMeasure(0.0), boost::none, boost::none, boost::none, alignment_gradient_curve ? alignment_gradient_curve : horizontal_geometry_base_curve);
+   auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
+   auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
 
 
    typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
    pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(startStation), nullptr));
+
    auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
    file.addEntity(property_set);
-   auto stationing_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
 
+   auto stationing_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
    file.addEntity(stationing_referent);
+
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_stationing_objects(new aggregate_of<typename Schema::IfcObjectDefinition>());
    related_stationing_objects->push(stationing_referent);
+
    auto nests_stationing = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nests Referents with station information with alignment"), boost::none, alignment, related_stationing_objects);
    file.addEntity(nests_stationing);
+
    auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates station properties to referent"), boost::none, related_stationing_objects, property_set);
    file.addEntity(rel_defines_by_properties);
 }
