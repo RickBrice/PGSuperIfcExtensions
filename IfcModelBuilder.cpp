@@ -1755,7 +1755,7 @@ void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const CSt
 
    std::vector<std::string> file_description;
    std::ostringstream os;
-   os << "ViewDefinition[Alignment-basedReferenceView-wannabe]" << std::ends;// << file.schema()->name() << " Issue date: 17 February 2021]" << std::ends;
+   os << "ViewDefinition[Alignment-basedReferenceView]" << std::ends;
    file_description.push_back(os.str().c_str());
    file.header().file_description().description(file_description);
 
