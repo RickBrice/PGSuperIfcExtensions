@@ -78,8 +78,9 @@ private:
    //Float64 GetStartDistAlong(Ifc4x3_rc2::IfcAlignmentHorizontal* pHorizontal);
    //Float64 GetStartDistAlong(Ifc4x3_rc3::IfcAlignmentHorizontal* pHorizontal);
    //Float64 GetStartDistAlong(Ifc4x3_rc4::IfcAlignmentHorizontal* pHorizontal);
-   Float64 GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizontal* pHorizontal);
+   //Float64 GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizontal* pHorizontal);
    Float64 GetStartDistAlong(Ifc4x3_add1::IfcAlignmentHorizontal* pHorizontal);
+   Float64 GetStartDistAlong(Ifc4x3_add2::IfcAlignmentHorizontal* pHorizontal);
 
    template <typename Schema>
    void GetStations(typename Schema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
@@ -152,8 +153,9 @@ private:
    //void CheckSpiralType_4x3(Ifc4x3_rc2::IfcAlignmentHorizontalSegment* pSpiral);
    //void CheckSpiralType_4x3(Ifc4x3_rc3::IfcAlignmentHorizontalSegment* pSpiral);
    //void CheckSpiralType_4x3(Ifc4x3_rc4::IfcAlignmentHorizontalSegment* pSpiral);
-   void CheckSpiralType_4x3(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* pSpiral);
+   //void CheckSpiralType_4x3(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* pSpiral);
    void CheckSpiralType_4x3(Ifc4x3_add1::IfcAlignmentHorizontalSegment* pSpiral);
+   void CheckSpiralType_4x3(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral);
 
    //// NOTE: Not converting LandXML to cross slope data. This struct and the functions that follow are
    //// trial implementations, but they don't work.

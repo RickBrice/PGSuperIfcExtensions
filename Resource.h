@@ -8,18 +8,16 @@
 #define IDR_PGSUPERDATAIMPORTER         104
 #define IDR_PGSUPERDATAEXPORTER         105
 #define IDR_PGSPLICEPROJECTIMPORTER     106
-#define IDC_4X3_TC1                     201
 #define IDC_4X3_ADD1                    202
-#define IDC_ALIGNMENT_ONLY              203
-#define IDC_ALIGNMENT_AND_BRIDGE        204
+#define IDC_4X3_ADD2                    203
+#define IDC_ALIGNMENT_ONLY              213
+#define IDC_ALIGNMENT_AND_BRIDGE        214
 #define IDB_BSI                         205
-#define IDC_POLYLINE                    205
-#define IDD_DIALOG1                     206
-#define IDC_GRADIENTCURVE               206
+#define IDC_POLYLINE                    225
+#define IDC_GRADIENTCURVE               226
 #define IDD_EXPORT_OPTIONS              206
-#define IDC_POLYLINE_TANGENT            207
-#define IDC_RADIO2                      208
-#define IDC_LINE_TANGENTS               208
+#define IDC_POLYLINE_TANGENT            237
+#define IDC_LINE_TANGENTS               238
 
 // Next default values for new objects
 // 

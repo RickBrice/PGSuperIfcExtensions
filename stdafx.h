@@ -45,5 +45,6 @@ extern CComModule _Module;
 //#include <ifcparse/Ifc4x3_rc2.h>
 //#include <ifcparse/Ifc4x3_rc3.h>
 //#include <ifcparse/Ifc4x3_rc4.h>
-#include <ifcparse/Ifc4x3_tc1.h>
+//#include <ifcparse/Ifc4x3_tc1.h>
 #include <ifcparse/Ifc4x3_add1.h>
+#include <ifcparse/Ifc4x3_add2.h>

@@ -28,8 +28,9 @@ public:
    {
       //Schema_4x3_rc3,
       //Schema_4x3_rc4
-      Schema_4x3_tc1,
-      Schema_4x3_add1
+      //Schema_4x3_tc1,
+      //Schema_4x3_add1,
+      Schema_4x3_add2
    };
 
    enum class ModelElements
@@ -56,7 +57,7 @@ public:
       Linear // IfcAxis2PlacementLinear
    };
 
-   Schema schema = Schema::Schema_4x3_add1;
+   Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    AlignmentModel alignment_model = AlignmentModel::GradientCurve;
    ObjectPlacement object_placement = ObjectPlacement::Linear;
