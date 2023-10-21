@@ -371,23 +371,23 @@ bool  CIfcAlignmentConverter::IsValidAlignment(typename Schema::IfcAlignment* pA
 //    return (found == transition_curve_types.end() ? false : true);
 //}
 
-bool IsTransitionCurve(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* horizontal_segment)
-{
-   static std::set<Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::Value> transition_curve_types
-   {
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE,
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID,
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE,
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC,
-      //Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBICSPIRAL,
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE,
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE,
-      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND
-   };
-
-   auto found = transition_curve_types.find(horizontal_segment->PredefinedType());
-   return (found == transition_curve_types.end() ? false : true);
-}
+//bool IsTransitionCurve(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* horizontal_segment)
+//{
+//   static std::set<Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::Value> transition_curve_types
+//   {
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE,
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID,
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE,
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC,
+//      //Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBICSPIRAL,
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE,
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE,
+//      Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND
+//   };
+//
+//   auto found = transition_curve_types.find(horizontal_segment->PredefinedType());
+//   return (found == transition_curve_types.end() ? false : true);
+//}
 
 bool IsTransitionCurve(Ifc4x3_add1::IfcAlignmentHorizontalSegment* horizontal_segment)
 {
@@ -401,6 +401,24 @@ bool IsTransitionCurve(Ifc4x3_add1::IfcAlignmentHorizontalSegment* horizontal_se
       Ifc4x3_add1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE,
       Ifc4x3_add1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE,
       Ifc4x3_add1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND
+   };
+
+   auto found = transition_curve_types.find(horizontal_segment->PredefinedType());
+   return (found == transition_curve_types.end() ? false : true);
+}
+
+bool IsTransitionCurve(Ifc4x3_add2::IfcAlignmentHorizontalSegment* horizontal_segment)
+{
+   static std::set<Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::Value> transition_curve_types
+   {
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE,
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID,
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE,
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC,
+      //Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBICSPIRAL,
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE,
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE,
+      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND
    };
 
    auto found = transition_curve_types.find(horizontal_segment->PredefinedType());
@@ -463,15 +481,20 @@ typename Schema::IfcAlignmentHorizontal* GetAlignmentHorizontal(typename Schema:
 //{
 //    return GetAlignmentHorizontal<Ifc4x3_rc4>(pAlignment);
 //}
-
-Ifc4x3_tc1::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_tc1::IfcAlignment* pAlignment)
-{
-   return GetAlignmentHorizontal<Ifc4x3_tc1>(pAlignment);
-}
+//
+//Ifc4x3_tc1::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_tc1::IfcAlignment* pAlignment)
+//{
+//   return GetAlignmentHorizontal<Ifc4x3_tc1>(pAlignment);
+//}
 
 Ifc4x3_add1::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_add1::IfcAlignment* pAlignment)
 {
    return GetAlignmentHorizontal<Ifc4x3_add1>(pAlignment);
+}
+
+Ifc4x3_add2::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_add2::IfcAlignment* pAlignment)
+{
+   return GetAlignmentHorizontal<Ifc4x3_add2>(pAlignment);
 }
 
 
@@ -524,14 +547,19 @@ typename Schema::IfcAlignmentVertical* GetAlignmentVertical(typename Schema::Ifc
 //    return GetAlignmentVertical<Ifc4x3_rc4>(pAlignment);
 //}
 
-Ifc4x3_tc1::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_tc1::IfcAlignment* pAlignment)
-{
-   return GetAlignmentVertical<Ifc4x3_tc1>(pAlignment);
-}
+//Ifc4x3_tc1::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_tc1::IfcAlignment* pAlignment)
+//{
+//   return GetAlignmentVertical<Ifc4x3_tc1>(pAlignment);
+//}
 
 Ifc4x3_add1::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_add1::IfcAlignment* pAlignment)
 {
    return GetAlignmentVertical<Ifc4x3_add1>(pAlignment);
+}
+
+Ifc4x3_add2::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_add2::IfcAlignment* pAlignment)
+{
+   return GetAlignmentVertical<Ifc4x3_add2>(pAlignment);
 }
 
 template <typename Schema>
@@ -741,10 +769,14 @@ HRESULT CIfcAlignmentConverter::ConvertToPGSuper(IBroker* pBroker, CString& strF
    {
       bResult = ConvertToPGSuper_4x3<Ifc4x3_add1>(*pFile, &alignment_data, &profile_data, &section_data);
    }
-   else if (strSchemaName == std::string("IFC4X3_TC1"))
+   else if (strSchemaName == std::string("IFC4X3_ADD2"))
    {
-      bResult = ConvertToPGSuper_4x3<Ifc4x3_tc1>(*pFile, &alignment_data, &profile_data, &section_data);
+      bResult = ConvertToPGSuper_4x3<Ifc4x3_add2>(*pFile, &alignment_data, &profile_data, &section_data);
    }
+   //else if (strSchemaName == std::string("IFC4X3_TC1"))
+   //{
+   //   bResult = ConvertToPGSuper_4x3<Ifc4x3_tc1>(*pFile, &alignment_data, &profile_data, &section_data);
+   //}
    else
    {
       AfxMessageBox(_T("Schema not supported"));
@@ -1082,17 +1114,21 @@ void CIfcAlignmentConverter::LoadAlignment(typename Schema::IfcAlignment* pAlign
 //{
 //    return alignment_segment->DesignParameters()->as<Ifc4x3_rc4::IfcAlignmentHorizontalSegment>();
 //}
-
-Ifc4x3_tc1::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3_tc1::IfcAlignmentSegment* alignment_segment)
-{
-   return alignment_segment->DesignParameters()->as<Ifc4x3_tc1::IfcAlignmentHorizontalSegment>();
-}
+//
+//Ifc4x3_tc1::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3_tc1::IfcAlignmentSegment* alignment_segment)
+//{
+//   return alignment_segment->DesignParameters()->as<Ifc4x3_tc1::IfcAlignmentHorizontalSegment>();
+//}
 
 Ifc4x3_add1::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3_add1::IfcAlignmentSegment* alignment_segment)
 {
    return alignment_segment->DesignParameters()->as<Ifc4x3_add1::IfcAlignmentHorizontalSegment>();
 }
 
+Ifc4x3_add2::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3_add2::IfcAlignmentSegment* alignment_segment)
+{
+   return alignment_segment->DesignParameters()->as<Ifc4x3_add2::IfcAlignmentHorizontalSegment>();
+}
 
 //Ifc4x3_rc2::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_rc2::IfcAlignmentSegment* alignment_segment)
 //{
@@ -1108,17 +1144,21 @@ Ifc4x3_add1::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3
 //{
 //    return alignment_segment->DesignParameters()->as<Ifc4x3_rc4::IfcAlignmentVerticalSegment>();
 //}
-
-Ifc4x3_tc1::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_tc1::IfcAlignmentSegment* alignment_segment)
-{
-   return alignment_segment->DesignParameters()->as<Ifc4x3_tc1::IfcAlignmentVerticalSegment>();
-}
+//
+//Ifc4x3_tc1::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_tc1::IfcAlignmentSegment* alignment_segment)
+//{
+//   return alignment_segment->DesignParameters()->as<Ifc4x3_tc1::IfcAlignmentVerticalSegment>();
+//}
 
 Ifc4x3_add1::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_add1::IfcAlignmentSegment* alignment_segment)
 {
    return alignment_segment->DesignParameters()->as<Ifc4x3_add1::IfcAlignmentVerticalSegment>();
 }
 
+Ifc4x3_add2::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_add2::IfcAlignmentSegment* alignment_segment)
+{
+   return alignment_segment->DesignParameters()->as<Ifc4x3_add2::IfcAlignmentVerticalSegment>();
+}
 
 //Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_rc2::IfcAlignmentHorizontal* pHorizontal)
 //{
@@ -1137,17 +1177,21 @@ Ifc4x3_add1::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_add
 //{
 //    return 0.0; // not a property of IfcAlignmentHorizontal in rc4
 //}
-
-Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizontal* pHorizontal)
-{
-   return 0.0; // not a property of IfcAlignmentHorizontal in tc1
-}
+//
+//Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizontal* pHorizontal)
+//{
+//   return 0.0; // not a property of IfcAlignmentHorizontal in tc1
+//}
 
 Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_add1::IfcAlignmentHorizontal* pHorizontal)
 {
    return 0.0; // not a property of IfcAlignmentHorizontal in add1
 }
 
+Float64 CIfcAlignmentConverter::GetStartDistAlong(Ifc4x3_add2::IfcAlignmentHorizontal* pHorizontal)
+{
+   return 0.0; // not a property of IfcAlignmentHorizontal in add2
+}
 
 template <typename Schema>
 void CIfcAlignmentConverter::GetStations(typename Schema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations)
@@ -2475,32 +2519,32 @@ void CIfcAlignmentConverter::CheckSpiralType(typename SpiralType* pSpiral)
 //        break;
 //    }
 //}
-
-void CIfcAlignmentConverter::CheckSpiralType_4x3(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* pSpiral)
-{
-   switch (pSpiral->PredefinedType())
-   {
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE:
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE:
-      //case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBICSPIRAL:
-      //case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BIQUADRATICPARABOLA:
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC:
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE:
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE:
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND:
-      m_Notes.push_back(std::_tstring(_T("Spiral type not supported. Assuming clothoid.")));
-      break;
-
-   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID:
-      // this is ok... we were expecting clothoid
-      break;
-
-   default:
-      ATLASSERT(false); // is there a new spiral type???
-      m_Notes.push_back(std::_tstring(_T("Spiral type not defined. Assuming clothoid.")));
-      break;
-   }
-}
+//
+//void CIfcAlignmentConverter::CheckSpiralType_4x3(Ifc4x3_tc1::IfcAlignmentHorizontalSegment* pSpiral)
+//{
+//   switch (pSpiral->PredefinedType())
+//   {
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE:
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE:
+//      //case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBICSPIRAL:
+//      //case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BIQUADRATICPARABOLA:
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC:
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE:
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE:
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND:
+//      m_Notes.push_back(std::_tstring(_T("Spiral type not supported. Assuming clothoid.")));
+//      break;
+//
+//   case Ifc4x3_tc1::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID:
+//      // this is ok... we were expecting clothoid
+//      break;
+//
+//   default:
+//      ATLASSERT(false); // is there a new spiral type???
+//      m_Notes.push_back(std::_tstring(_T("Spiral type not defined. Assuming clothoid.")));
+//      break;
+//   }
+//}
 
 void CIfcAlignmentConverter::CheckSpiralType_4x3(Ifc4x3_add1::IfcAlignmentHorizontalSegment* pSpiral)
 {
@@ -2528,3 +2572,29 @@ void CIfcAlignmentConverter::CheckSpiralType_4x3(Ifc4x3_add1::IfcAlignmentHorizo
    }
 }
 
+
+void CIfcAlignmentConverter::CheckSpiralType_4x3(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral)
+{
+   switch (pSpiral->PredefinedType())
+   {
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE:
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE:
+      //case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBICSPIRAL:
+      //case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BIQUADRATICPARABOLA:
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC:
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE:
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE:
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND:
+      m_Notes.push_back(std::_tstring(_T("Spiral type not supported. Assuming clothoid.")));
+      break;
+
+   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID:
+      // this is ok... we were expecting clothoid
+      break;
+
+   default:
+      ATLASSERT(false); // is there a new spiral type???
+      m_Notes.push_back(std::_tstring(_T("Spiral type not defined. Assuming clothoid.")));
+      break;
+   }
+}
