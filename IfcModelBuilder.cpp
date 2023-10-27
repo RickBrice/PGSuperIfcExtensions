@@ -633,7 +633,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    auto terminator_gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
    auto terminator_parent_curve = new Schema::IfcLine(terminator_vertical_point, new Schema::IfcVector(terminator_gradient_direction, 1.0));
    auto terminator_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-   auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, terminator_placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(0.0), terminator_parent_curve);
+   auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_DISCONTINUOUS, terminator_placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(0.0), terminator_parent_curve);
    file.addEntity(terminator_curve_segment);
    curve_segments->push(terminator_curve_segment);
 
