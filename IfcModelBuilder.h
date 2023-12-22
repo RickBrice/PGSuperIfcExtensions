@@ -51,16 +51,9 @@ public:
       Line // use IfcLine to model tangents
    };
 
-   enum class ObjectPlacement
-   {
-      Global, // IfcAxis2Placement3D
-      Linear // IfcAxis2PlacementLinear
-   };
-
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    AlignmentModel alignment_model = AlignmentModel::GradientCurve;
-   ObjectPlacement object_placement = ObjectPlacement::Linear;
    Tangents tangents = Tangents::Line;
 };
 
