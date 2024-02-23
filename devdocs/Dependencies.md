@@ -48,7 +48,7 @@ $ build-deps.cmd vs2022-x64 Debug
 $ build-deps.cmd vs2022-x64 Release
 ~~~
 
-Before running cmake, we need to add information about our Python install
+Before running cmake, we need to add the python dependencies
 ~~~
 > echo PY_VER_MAJOR_MINOR=312>> BuildDepsCache-x64.txt
 > echo PYTHONHOME=F:\Python\Python312>> BuildDepsCache-x64.txt
