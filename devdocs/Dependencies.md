@@ -12,6 +12,13 @@ $ git checkout v0.8.0
 $ git submodule update --init --recursive
 ~~~
 
+The build system uses an old version of Python. We want to use the latest version. Make sure python is installed, then
+
+~~~
+set IFCOS_INSTALL_PYTHON=FALSE
+~~~
+
+
 Open the `x64 Native Tools Compand Prompt for VS 2022` window. Build the dependencies and run cmake.
 ~~~
 Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
@@ -19,6 +26,16 @@ $ F:
 $ cd F:\IfcOpenshell\win
 $ build-deps.cmd vs2022-x64 Debug
 $ build-deps.cmd vs2022-x64 Release
+~~~
+
+Before running cmake, we need to add the pythong dependencies
+~~~
+> echo PY_VER_MAJOR_MINOR=312>> BuildDepsCache-x64.txt
+> echo PYTHONHOME=F:\Python\Python312>> BuildDepsCache-x64.txt
+~~~
+
+Ok, ready to build
+~~~
 $ run-cmake.bat vs2022-x64
 ~~~
 
