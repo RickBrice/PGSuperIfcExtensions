@@ -4,6 +4,25 @@ The basic instructions are at https://blenderbim.org/docs-python/ifcopenshell/in
 
 Make the following adjustments after cloning the repository.
 
+Designate the repository directories as `safe`. This is a one-time setup step. The build scripts will fail if git cannot clone the repositories and check out branches.
+Option 1 - Make git trust any directory
+~~~
+git config --global --add safe.directory *
+~~~
+
+Option 2 - Make git trust the following directories
+~~~
+git config --global --add safe.directory F:/IfcOpenShell
+git config --global --add safe.directory F:/IfcOpenShell/_deps/mpfr
+git config --global --add safe.directory F:/IfcOpenShell/_deps/mpir
+git config --global --add safe.directory F:/IfcOpenShell/_deps/OpenCOLLADA
+git config --global --add safe.directory F:/IfcOpenShell/_deps/occt_git
+git config --global --add safe.directory F:/IfcOpenShell/_deps/cgal
+git config --global --add safe.directory F:/IfcOpenshell/_deps-vs2022-x64-installed/Eigen
+git config --global --add safe.directory F:/IfcOpenshell/src/ifcconvert/cityjson
+~~~
+
+
 Checkout the v0.8.0 branch and updated submodules (The cityjson submodule gets missed during the oringal clone)
 ~~~
 $ git clone --recursive https://github.com/IfcOpenShell/IfcOpenshell.git
@@ -12,23 +31,24 @@ $ git checkout v0.8.0
 $ git submodule update --init --recursive
 ~~~
 
-The build system uses an old version of Python. We want to use the latest version. Make sure python is installed, then
+The build system uses an old version of Python. We want to use the latest version. Make sure python is installed. I've installed it in F:\Python\Python312 (for version 3.12).
+Set the following environment variable at the command prompted
 
-~~~
-set IFCOS_INSTALL_PYTHON=FALSE
-~~~
-
-
-Open the `x64 Native Tools Compand Prompt for VS 2022` window. Build the dependencies and run cmake.
+Open the `x64 Native Tools Compand Prompt for VS 2022` window.
 ~~~
 Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
+$ set IFCOS_INSTALL_PYTHON=FALSE
+~~~
+
+Build the dependencies.
+~~~
 $ F:
 $ cd F:\IfcOpenshell\win
 $ build-deps.cmd vs2022-x64 Debug
 $ build-deps.cmd vs2022-x64 Release
 ~~~
 
-Before running cmake, we need to add the pythong dependencies
+Before running cmake, we need to add information about our Python install
 ~~~
 > echo PY_VER_MAJOR_MINOR=312>> BuildDepsCache-x64.txt
 > echo PYTHONHOME=F:\Python\Python312>> BuildDepsCache-x64.txt
