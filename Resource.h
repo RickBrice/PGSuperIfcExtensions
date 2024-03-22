@@ -10,12 +10,15 @@
 #define IDR_PGSPLICEPROJECTIMPORTER     106
 #define IDC_4X3_ADD1                    202
 #define IDC_4X3_ADD2                    203
+#define IDB_BSI                         205
+#define IDD_EXPORT_OPTIONS              206
+#define IDC_REPRESENTATION_CURVE        209
+#define IDC_RADIO2                      210
+#define IDC_REPRESENTATION_FOOTPRINT    210
 #define IDC_ALIGNMENT_ONLY              213
 #define IDC_ALIGNMENT_AND_BRIDGE        214
-#define IDB_BSI                         205
 #define IDC_POLYLINE                    225
 #define IDC_GRADIENTCURVE               226
-#define IDD_EXPORT_OPTIONS              206
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
 
@@ -25,7 +28,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        208
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         209
+#define _APS_NEXT_CONTROL_VALUE         211
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

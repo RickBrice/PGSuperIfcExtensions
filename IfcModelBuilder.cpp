@@ -36,6 +36,8 @@
 
 #include <WBFLCogo\CogoHelpers.h>
 
+constexpr IndexType NUM_DECK_SECTIONS = 10;
+
 #define CLOCKWISE 0
 #define COUNTERCLOCKWISE 1
 int GetVertexOrdering(IShape* pShape)
@@ -136,11 +138,11 @@ int GetVertexOrdering(IShape* pShape)
 }
 
 template <typename Schema>
-typename Schema::IfcCartesianPoint* ConvertPoint(IPoint2d* pPoint)
+typename Schema::IfcCartesianPoint* ConvertPoint(IPoint2d* pPoint,bool bMirror = false)
 {
    Float64 x, y;
    pPoint->Location(&x, &y);
-   return new Schema::IfcCartesianPoint(std::vector<double>{x, y});
+   return new Schema::IfcCartesianPoint(std::vector<double>{bMirror ? -x : x, y});
 }
 
 template <typename Schema>
@@ -173,7 +175,7 @@ typename Schema::IfcPolyline* CreatePolyline(IShape* shape)
    {
       CComPtr<IPoint2d> point;
       polyPoints->get_Item(idx, &point);
-      points->push(ConvertPoint<Schema>(point));
+      points->push(ConvertPoint<Schema>(point,true/*mirror about Y axis*/));
    }
 
    // we know that points is open (last point is not the same as the first)
@@ -186,23 +188,251 @@ typename Schema::IfcPolyline* CreatePolyline(IShape* shape)
 }
 
 template <typename Schema>
-typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& file)
+typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& file, const CIfcModelBuilderOptions& options)
 {
    // get the directrix line of the alignment
    auto alignment = file.getSingle<typename Schema::IfcAlignment>();
    auto alignment_representation = alignment->Representation();
    auto alignment_representations = alignment_representation->Representations();
-   auto representation = *(alignment_representations->begin() + 1);
-   auto alignment_representation_items = representation->Items();
-   auto representation_item = *(alignment_representation_items->begin());
-   auto directrix = representation_item->as<typename Schema::IfcCurve>();
-   CHECK(directrix->as<typename Schema::IfcGradientCurve>());
-   return directrix;
+   for (auto& representation : *alignment_representations)
+   {
+      auto alignment_representation_items = representation->Items();
+      for (auto& representation_item : *alignment_representation_items)
+      {
+         auto directrix = representation_item->as<typename Schema::IfcCurve>();
+         if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+         {
+            if (directrix->as<typename Schema::IfcGradientCurve>())
+               return directrix;
+         }
+         else
+         {
+            // if we are using a polyline, then the directrix is the polyline curve (which is 3d, not 2d, in this case)
+            if (directrix->as<typename Schema::IfcPolyline>())
+               return directrix;
+         }
+      }
+   }
+   CHECK(false); // didn't find the alignment curve
+   return nullptr;
+}
+
+
+// creates geometry and business logic segments for horizontal alignment tangent runs
+template <typename Schema>
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_tangent(typename Schema::IfcCartesianPoint* p, double dir, double length,const CIfcModelBuilderOptions& options)
+{
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      typename Schema::IfcCurve* parent_curve = nullptr;
+      if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
+      {
+         typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+         auto v = p->Coordinates();
+         auto xs = v[0];
+         auto ys = v[1];
+         double xe = xs + length * cos(dir);
+         double ye = ys + length * sin(dir);
+         auto p2 = new Schema::IfcCartesianPoint({ xe,ye });
+         points->push(p);
+         points->push(p2);
+         parent_curve = new Schema::IfcPolyline(points);
+      }
+      else
+      {
+         parent_curve = new Schema::IfcLine(
+            new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
+            new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1.0, 0.0}), 1.0));
+      }
+
+      curve_segment = new Schema::IfcCurveSegment(
+         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+         new Schema::IfcLengthMeasure(0.0), // start
+         new Schema::IfcLengthMeasure(length),
+         parent_curve);
+   }
+
+   // business logic
+   auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(
+      boost::none, boost::none, p, dir, 0.0, 0.0, length, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE);
+
+   auto alignment_segment = new Schema::IfcAlignmentSegment(
+      IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   return { curve_segment, alignment_segment };
+}
+
+// creates geometry and business logic segments for horizontal alignment horizonal curves
+template <typename Schema>
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_hcurve(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double lc, const CIfcModelBuilderOptions& options)
+{
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      double sign = radius / fabs(radius);
+      auto parent_curve = new Schema::IfcCircle(
+         new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })), new Schema::IfcDirection(std::vector<double>{1, 0})),
+         fabs(radius));
+
+      curve_segment = new Schema::IfcCurveSegment(
+         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+         new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+         new Schema::IfcLengthMeasure(0.0),
+         new Schema::IfcLengthMeasure(sign * lc),
+         parent_curve);
+   }
+
+   // business logic
+   auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, radius, lc, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC);
+   auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   return { curve_segment, alignment_segment };
+}
+
+// creates geometry and business logic segments for horizontal alignment entry clothoid transition curve
+template <typename Schema>
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_entry_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
+{
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      double sign = radius / fabs(radius);
+
+      Float64 A = sign * sqrt(ls * fabs(radius));
+
+      auto parent_curve = new Schema::IfcClothoid(
+         new Schema::IfcAxis2Placement2D(
+            new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
+            new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
+         A);
+
+      curve_segment = new Schema::IfcCurveSegment(
+         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+         new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+         new Schema::IfcLengthMeasure(0.0),
+         new Schema::IfcLengthMeasure(ls),
+         parent_curve);
+   }
+
+   // business logic
+   auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, 0.0, radius, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
+   auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   return { curve_segment, alignment_segment };
+}
+
+// creates geometry and business logic segments for horizontal alignment exit clothoid transition curve
+template <typename Schema>
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_exit_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
+{
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      double sign = radius / fabs(radius);
+
+      Float64 A = -1.0 * sign * sqrt(ls * fabs(radius));
+
+      auto parent_curve = new Schema::IfcClothoid(
+         new Schema::IfcAxis2Placement2D(
+            new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
+            new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
+         A);
+
+      curve_segment = new Schema::IfcCurveSegment(
+         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+         new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+         new Schema::IfcLengthMeasure(-1.0 * ls),
+         new Schema::IfcLengthMeasure(ls),
+         parent_curve);
+   }
+
+   // business logic
+   auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, 0.0, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
+   auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   return { curve_segment, alignment_segment };
+}
+
+// creates geometry and business logic segments for vertical profile gradient runs
+template <typename Schema>
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_gradient(typename Schema::IfcCartesianPoint* p, double slope, double length, const CIfcModelBuilderOptions& options)
+{
+   CHECK(0 <= length);
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      auto parent_curve = new Schema::IfcLine(
+         new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
+         new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1, 0}), 1.0));
+
+      curve_segment = new Schema::IfcCurveSegment(
+         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - slope * slope), slope})),
+         new Schema::IfcLengthMeasure(0.0), // start
+         new Schema::IfcLengthMeasure(length),
+         parent_curve);
+   }
+
+   // business logic
+   auto design_parameters = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, p->Coordinates()[0], length, p->Coordinates()[1], slope, slope, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
+   auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   return { curve_segment, alignment_segment };
+}
+
+// creates geometry and business logic segments for vertical profile parabolic vertical curves
+template <typename Schema>
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_vcurve(typename Schema::IfcCartesianPoint* p, double start_slope, double end_slope, double length, const CIfcModelBuilderOptions& options)
+{
+   CHECK(0 < length);
+
+   if (IsEqual(start_slope, end_slope))
+   {
+      // this is actually a gradient line
+      return create_gradient<Schema>(p, start_slope, length, options);
+   }
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      double A = 0.0;
+      double B = start_slope;
+      double C = (end_slope - start_slope) / (2 * length);
+
+      auto parent_curve = new Schema::IfcPolynomialCurve(
+         new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0})),
+         std::vector<double>{0.0, 1.0},
+         std::vector<double>{A, B, C},
+         boost::none);
+
+      curve_segment = new Schema::IfcCurveSegment(
+         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{1.0, 0.0})),
+         new Schema::IfcLengthMeasure(0.0),
+         new Schema::IfcLengthMeasure(length),
+         parent_curve);
+   }
+
+   // business logic
+   double k = (end_slope - start_slope) / length;
+   auto design_parameters = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, p->Coordinates()[0], length, p->Coordinates()[1], start_slope, end_slope, 1 / k, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
+   auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   return { curve_segment, alignment_segment };
 }
 
 
 template <typename Schema>
-void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
+void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments,typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -237,38 +467,13 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
          Float64 angle;
          direction->get_Value(&angle);
 
-         auto ifc_line_segment = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_prev_point, angle, 0.0, 0.0, dist, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE);
-         file.addEntity(ifc_line_segment);
-         auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, ifc_line_segment);
-         file.addEntity(segment);
-         alignment_segments->push(segment);
-
-         auto placement = new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)}));
-         if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
+         auto [geometry_segment, business_segment] = create_tangent<Schema>(ifc_prev_point, angle, dist, options);
+         file.addEntity(business_segment);
+         alignment_segments->push(business_segment);
+         if (geometry_segment)
          {
-            typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-            points->push(ifc_prev_point);
-            points->push(ConvertPoint<Schema>(pntTS));
-            auto parent_curve = new Schema::IfcPolyline(points);
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(dist), parent_curve);
-            file.addEntity(curve_segment);
-            curve_segments->push(curve_segment);
-         }
-         else
-         {
-            auto parent_curve = new Schema::IfcLine(
-               new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
-               new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1.0, 0.0}), 1.0));
-
-            auto curve_segment = new Schema::IfcCurveSegment(
-               Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-               new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)})),
-               new Schema::IfcLengthMeasure(0.0), // start
-               new Schema::IfcLengthMeasure(dist),
-               parent_curve);
-
-            file.addEntity(curve_segment);
-            curve_segments->push(curve_segment);
+            file.addEntity(geometry_segment);
+            curve_segments->push(geometry_segment);
          }
       }
 
@@ -290,127 +495,75 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
       curve->get_Direction(&curve_direction);
       bool bIsCCW = (curve_direction == cdLeft) ? true : false;
 
-      // curve starts at the Tangent to Spiral point (TS)
-      auto ifc_ts = ConvertPoint<Schema>(pntTS);
-
-      CComPtr<IDirection> bkTangentBrg;
-      curve->get_BkTangentBrg(&bkTangentBrg);
-      Float64 bk_tangent_direction;
-      bkTangentBrg->get_Value(&bk_tangent_direction);
-
       if (0.0 < Lspiral[spEntry])
       {
          // there is an entry spiral
 
+         // spiral starts at the Tangent to Spiral point (TS)
+         auto ifc_ts = ConvertPoint<Schema>(pntTS);
 
-         auto ifc_entry_spiral = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_ts, bk_tangent_direction, 0, (bIsCCW ? 1.0 : -1.0)*R, Lspiral[spEntry], boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
-         auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, ifc_entry_spiral);
-         file.addEntity(segment);
-         alignment_segments->push(segment);
+         // tangent to spiral is the back tangent of the full curve
+         CComPtr<IDirection> bkTangentBrg;
+         curve->get_BkTangentBrg(&bkTangentBrg);
+         Float64 bk_tangent_direction;
+         bkTangentBrg->get_Value(&bk_tangent_direction);
 
-         Float64 A = (bIsCCW ? 1.0 : -1.0) * sqrt(Lspiral[spEntry] * R);
-         
-         auto parent_curve = new Schema::IfcClothoid(
-            new Schema::IfcAxis2Placement2D(
-               new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })), 
-               new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
-            A);
-
-         auto curve_segment = new Schema::IfcCurveSegment(
-            Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, 
-            new Schema::IfcAxis2Placement2D(ifc_ts, new Schema::IfcDirection(std::vector<double>({cos(bk_tangent_direction),sin(bk_tangent_direction)}))),
-            new Schema::IfcLengthMeasure(0.0), 
-            new Schema::IfcLengthMeasure(Lspiral[spEntry]), 
-            parent_curve);
-
-         file.addEntity(parent_curve);
-         file.addEntity(curve_segment);
-         curve_segments->push(curve_segment);
+         auto [geometry_segment, business_segment] = create_entry_spiral<Schema>(ifc_ts, bk_tangent_direction, (bIsCCW ? 1.0 : -1.0) * R, Lspiral[spEntry], options);
+         file.addEntity(business_segment);
+         alignment_segments->push(business_segment);
+         if (geometry_segment)
+         {
+            file.addEntity(geometry_segment);
+            curve_segments->push(geometry_segment);
+         }
       }
 
+      //
       // build the horizontal curve
+      //
+
       // curve starts at the Spiral-to-Curve point
       CComPtr<IPoint2d> sc;
       curve->get_SC(&sc);
       auto ifc_sc = ConvertPoint<Schema>(sc);
 
+      // tanget at the start is for the circular curve, not the full curve
       CComPtr<IDirection> bkTangentBrgCurve;
       curve->get_CurveBkTangentBrg(&bkTangentBrgCurve);
       Float64 bk_tangent_direction_curve;
       bkTangentBrgCurve->get_Value(&bk_tangent_direction_curve);
-      auto dx = cos(bk_tangent_direction_curve);
-      auto dy = sin(bk_tangent_direction_curve);
 
-      auto ifc_hcurve = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_sc, bk_tangent_direction_curve, (bIsCCW ? 1.0 : -1.0)*R, (bIsCCW ? 1.0 : -1.0)*R, Lc, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC);
-      auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, ifc_hcurve);
-      file.addEntity(segment);
-      alignment_segments->push(segment);
-
-
-      auto parent_curve = new Schema::IfcCircle(
-         new Schema::IfcAxis2Placement2D(
-            new Schema::IfcCartesianPoint(std::vector<double>{0,0}),
-            new Schema::IfcDirection(std::vector<double>({1,0}))),
-         R);
-      
-      auto curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, 
-         new Schema::IfcAxis2Placement2D(ifc_sc, new Schema::IfcDirection(std::vector<double>({ dx, dy }))),
-         new Schema::IfcLengthMeasure(0.0), 
-         new Schema::IfcLengthMeasure((bIsCCW ? 1.0 : -1.0) * Lc), 
-         parent_curve);
-
-      file.addEntity(parent_curve);
-      file.addEntity(curve_segment);
-      curve_segments->push(curve_segment);
+      auto [geometry_segment, business_segment] = create_hcurve<Schema>(ifc_sc, bk_tangent_direction_curve, (bIsCCW ? 1.0 : -1.0) * R, Lc, options);
+      file.addEntity(business_segment);
+      alignment_segments->push(business_segment);
+      if (geometry_segment)
+      {
+         file.addEntity(geometry_segment);
+         curve_segments->push(geometry_segment);
+      }
 
       if (0.0 < Lspiral[spExit])
       {
          // there is an exit spiral
-
-         CComPtr<IDirection> fwdTangentBrgCurve;
-         curve->get_CurveFwdTangentBrg(&fwdTangentBrgCurve); // forward tangent of curve is start tangent to exit spiral
-         Float64 fwd_tangent_direction_curve;
-         fwdTangentBrgCurve->get_Value(&fwd_tangent_direction_curve);
-
-         CComPtr<IDirection> fwdTangentBrgSpiral;
-         curve->get_FwdTangentBrg(&fwdTangentBrgSpiral); // forward tangent of curve at the end of the exit spiral
-         Float64 fwd_tangent_direction_spiral; 
-         fwdTangentBrgSpiral->get_Value(&fwd_tangent_direction_spiral);
 
          // spiral starts at the Curve to Spiral point (CS)
          CComPtr<IPoint2d> pntCS;
          curve->get_CS(&pntCS);
          auto ifc_cs = ConvertPoint<Schema>(pntCS);
 
-         // The geometry of the spiral (point of infinite radius) begins at the Spiral to Tangent point (ST)
-         CComPtr<IPoint2d> pntST;
-         curve->get_ST(&pntST);
-         auto ifc_st = ConvertPoint<Schema>(pntST);
+         CComPtr<IDirection> fwdTangentBrgCurve;
+         curve->get_CurveFwdTangentBrg(&fwdTangentBrgCurve); // forward tangent of curve is start tangent to exit spiral
+         Float64 fwd_tangent_direction_curve;
+         fwdTangentBrgCurve->get_Value(&fwd_tangent_direction_curve);
 
-         auto ifc_exit_spiral = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_cs, fwd_tangent_direction_curve, (bIsCCW ? 1.0 : -1.0)*R, 0, Lspiral[spExit], boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
-         auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, ifc_exit_spiral);
-         file.addEntity(segment);
-         alignment_segments->push(segment);
-
-         Float64 A = (bIsCCW ? -1.0 : 1.0) * sqrt(Lspiral[spExit] * R);
-
-         auto parent_curve = new Schema::IfcClothoid(
-            new Schema::IfcAxis2Placement2D(
-               new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })), 
-               new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
-            A);
-
-         auto curve_segment = new Schema::IfcCurveSegment(
-            Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-            new Schema::IfcAxis2Placement2D(ifc_cs, new Schema::IfcDirection(std::vector<double>({ cos(fwd_tangent_direction_curve),sin(fwd_tangent_direction_curve) }))),
-            new Schema::IfcLengthMeasure(-1.0 * Lspiral[spExit]),
-            new Schema::IfcLengthMeasure(1.0*Lspiral[spExit]),
-            parent_curve);
-
-         file.addEntity(parent_curve);
-         file.addEntity(curve_segment);
-         curve_segments->push(curve_segment);
+         auto [geometry_segment, business_segment] = create_exit_spiral<Schema>(ifc_cs, fwd_tangent_direction_curve, (bIsCCW ? 1.0 : -1.0) * R, Lspiral[spExit], options);
+         file.addEntity(business_segment);
+         alignment_segments->push(business_segment);
+         if (geometry_segment)
+         {
+            file.addEntity(geometry_segment);
+            curve_segments->push(geometry_segment);
+         }
       }
 
       // end of this curve (Spiral to Tangent, ST) becomes previous point for next alignment segment
@@ -435,32 +588,13 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    if(prevPoint->SameLocation(endPoint) == S_FALSE)
    {
       // end the alignment with a line segment
-      auto ifc_line_segment = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_prev_point, angle, 0.0, 0.0, dist, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE);
-      file.addEntity(ifc_line_segment);
-      auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, ifc_line_segment);
-      file.addEntity(segment);
-      alignment_segments->push(segment);
-   
-      auto placement = new Schema::IfcAxis2Placement2D(ifc_prev_point, new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)}));
-      if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
+      auto [geometry_segment, business_segment] = create_tangent<Schema>(ifc_prev_point, angle, dist, options);
+      file.addEntity(business_segment);
+      alignment_segments->push(business_segment);
+      if (geometry_segment)
       {
-         typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-         points->push(ifc_prev_point);
-         points->push(ifc_end_point);
-         auto parent_curve = new Schema::IfcPolyline(points);
-         auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(dist), parent_curve);
-         file.addEntity(curve_segment);
-         curve_segments->push(curve_segment);
-      }
-      else
-      {
-         auto dir = new Schema::IfcDirection(std::vector<double>{1.0,0.0});
-         double mag = 1.0;
-         auto vector = new Schema::IfcVector(dir, mag);
-         auto parent_curve = new Schema::IfcLine(new Schema::IfcCartesianPoint(std::vector<double>{0, 0}), vector);
-         auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(dist), parent_curve);
-         file.addEntity(curve_segment);
-         curve_segments->push(curve_segment);
+         file.addEntity(geometry_segment);
+         curve_segments->push(geometry_segment);
       }
    }
 
@@ -468,21 +602,15 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    // Add terminator segment
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Product_Shape/Product_Geometric_Representation/Alignment_Geometry/Alignment_Geometry_-_Horizontal_and_Vertical/content.html
    // 4.1.7.1.1.2 Zero length segment shall be added at the end of the list of segments
-   auto terminator_line_segment = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, ifc_end_point, 0.0, 0.0, 0.0, 0.0, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE);
-   file.addEntity(terminator_line_segment);
-   auto terminator_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, terminator_line_segment);
-   file.addEntity(terminator_segment);
-   alignment_segments->push(terminator_segment);
-
    // 4.1.7.1.1.2 If the geometry definition is present, then a zero length curve segment must be provided as well
-   auto segment_curve_placement = new Schema::IfcAxis2Placement2D(ifc_end_point, new Schema::IfcDirection(std::vector<double>{cos(angle), sin(angle)}));
-   auto dir = new Schema::IfcDirection(std::vector<double>{1.0,0.0});
-   double mag = 1.0;
-   auto vector = new Schema::IfcVector(dir, mag);
-   auto terminator_parent_curve = new Schema::IfcLine(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), vector);
-   auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_DISCONTINUOUS, segment_curve_placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(0.0), terminator_parent_curve);
-   file.addEntity(terminator_curve_segment);
-   curve_segments->push(terminator_curve_segment);
+   auto [geometry_segment, business_segment] = create_tangent<Schema>(ifc_end_point, angle, 0.0, options);
+   file.addEntity(business_segment);
+   alignment_segments->push(business_segment);
+   if (geometry_segment)
+   {
+      file.addEntity(geometry_segment);
+      curve_segments->push(geometry_segment);
+   }
 
    // create a horizontal alignment from all the alignment segments
    // position the alignment relative to the site localPlacement
@@ -495,6 +623,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    file.addEntity(nests);
 
    *phorizontal_alignment = horizontal_alignment;
+   *pnests_horizontal_segments = nests;
 
    auto composite_curve = new Schema::IfcCompositeCurve(curve_segments, false/*not self-intersecting*/);
    file.addEntity(composite_curve);
@@ -502,7 +631,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
 }
 
 template <typename Schema>
-void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcGradientCurve** palignment_gradient_curve)
+void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcRelNests** pnests_vertical_segments, typename Schema::IfcGradientCurve** palignment_gradient_curve)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr profile_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -544,22 +673,14 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       {
          // create a linear segment between the last profile element and this curve
          Float64 length = start_dist_along - prev_end_dist_along;
-         auto* linear_segment = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, prev_end_dist_along, length, prev_end_height, prev_end_gradient, prev_end_gradient, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
-         file.addEntity(linear_segment);
-
-         auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, linear_segment);
-         file.addEntity(segment);
-         profile_segments->push(segment);
-
-         if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+         auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{prev_end_dist_along, prev_end_height});
+         auto [geometry_segment, business_segment] = create_gradient<Schema>(vertical_point, prev_end_gradient, length, options);
+         file.addEntity(business_segment);
+         profile_segments->push(business_segment);
+         if (geometry_segment)
          {
-            auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
-            auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
-            auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-            auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0,0.0}), new Schema::IfcDirection(std::vector<double>{1.0,0.0}));
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, new Schema::IfcLengthMeasure(prev_end_dist_along), new Schema::IfcLengthMeasure(length), parent_curve);
-            file.addEntity(curve_segment);
-            curve_segments->push(curve_segment);
+            file.addEntity(geometry_segment);
+            curve_segments->push(geometry_segment);
          }
       }
 
@@ -568,7 +689,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       curve->get_L2(&l2);
       if (!IsEqual(l1, l2) && !IsZero(l2))
       {
-         // compound curve
+         // compound vertical curve
          CComPtr<IProfilePoint> pviPoint;
          curve->get_PVI(&pviPoint);
          CComPtr<IStation> pviStation;
@@ -582,39 +703,25 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
          curve->get_EntryGrade(&start_gradient);
          curve->get_ExitGrade(&end_gradient);
 
-         Float64 k1, k2;
-         curve->get_K1(&k1);
-         curve->get_K2(&k2);
+         auto vertical_point1 = new Schema::IfcCartesianPoint(std::vector<double>{start_dist_along, start_height});
+         auto [geometry_segment1, business_segment1] = create_vcurve<Schema>(vertical_point1, start_gradient, pviGrade, l1, options);
+         file.addEntity(business_segment1);
+         profile_segments->push(business_segment1);
+         if (geometry_segment1)
+         {
+            file.addEntity(geometry_segment1);
+            curve_segments->push(geometry_segment1);
+         }
 
-         auto* parabolic_segment1 = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, start_dist_along, l1, start_height, start_gradient, pviGrade, IsZero(k1) ? Float64_Max : 1 / k1, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
-         auto segment1 = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, parabolic_segment1);
-         file.addEntity(segment1);
-         profile_segments->push(segment1);
-
-         Float64 A1 = (pviGrade - start_gradient) / (2 * l1);
-         Float64 B1 = start_gradient;
-         Float64 C1 = start_height;
-         auto parent_curve1_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-         auto parent_curve1 = new Schema::IfcPolynomialCurve(parent_curve1_placement, std::vector<double>{0.0,1.0}, std::vector<double>{C1, B1, A1}, boost::none);
-         auto segment_curve1_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-         auto curve_segment1 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve1_placement, new Schema::IfcLengthMeasure(start_dist_along), new Schema::IfcLengthMeasure(l1), parent_curve1);
-         file.addEntity(curve_segment1);
-         curve_segments->push(curve_segment1);
-
-         auto* parabolic_segment2 = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, start_dist_along + l1, l2, pviElevation, pviGrade, end_gradient, IsZero(k2) ? Float64_Max : 1 / k2, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
-         auto segment2 = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, parabolic_segment2);
-         file.addEntity(segment2);
-         profile_segments->push(segment2);
-
-         Float64 A2 = (end_gradient - pviGrade) / (2 * l2);
-         Float64 B2 = pviGrade;
-         Float64 C2 = pviElevation;
-         auto parent_curve2_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-         auto parent_curve2 = new Schema::IfcPolynomialCurve(parent_curve2_placement, boost::none, std::vector<double>{C2, B2, A2}, boost::none);
-         auto segment_curve2_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-         auto curve_segment2 = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve2_placement, new Schema::IfcLengthMeasure(start_dist_along + l1), new Schema::IfcLengthMeasure(l2), parent_curve2);
-         file.addEntity(curve_segment2);
-         curve_segments->push(curve_segment2);
+         auto vertical_point2 = new Schema::IfcCartesianPoint(std::vector<double>{start_dist_along + l1, pviElevation});
+         auto [geometry_segment2, business_segment2] = create_vcurve<Schema>(vertical_point2, pviGrade, end_gradient, l2, options);
+         file.addEntity(business_segment2);
+         profile_segments->push(business_segment2);
+         if (geometry_segment2)
+         {
+            file.addEntity(geometry_segment2);
+            curve_segments->push(geometry_segment2);
+         }
       }
       else
       {
@@ -628,43 +735,27 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
          if (IsEqual(start_gradient, end_gradient))
          {
             // this is just a straight line
-            auto* linear_segment = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, prev_end_dist_along, l1, prev_end_height, start_gradient, start_gradient, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
-            auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, linear_segment);
-            file.addEntity(segment);
-            profile_segments->push(segment);
-
-            auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
-            auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(start_gradient), sin(start_gradient)});
-            auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-            auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, new Schema::IfcLengthMeasure(prev_end_dist_along), new Schema::IfcLengthMeasure(l1), parent_curve);
-            file.addEntity(curve_segment);
-            curve_segments->push(curve_segment);
+            auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{prev_end_dist_along, prev_end_height});
+            auto [geometry_segment, business_segment] = create_gradient<Schema>(vertical_point, prev_end_gradient, l1, options);
+            file.addEntity(business_segment);
+            profile_segments->push(business_segment);
+            if (geometry_segment)
+            {
+               file.addEntity(geometry_segment);
+               curve_segments->push(geometry_segment);
+            }
          }
          else
          {
-            Float64 k;
-            curve->get_K1(&k);
-            auto* parabolic_segment = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, start_dist_along, horizontal_length, start_height, start_gradient, end_gradient, IsZero(k) ? Float64_Max : 1 / k, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
-            auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, parabolic_segment);
-            file.addEntity(segment);
-            profile_segments->push(segment);
-
-            // based on this post (https://forums.buildingsmart.org/t/ifcpolynomialcurve-clarification/4716), define the vertical curve as
-            // CoefficientsX = {0.0, 1.0}
-            // CoefficientsY = {C,B,A}
-            Float64 A = (end_gradient - start_gradient) / (2 * horizontal_length);
-            Float64 B = start_gradient;
-            Float64 C = start_height;
-            auto parent_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-            auto parent_curve = new Schema::IfcPolynomialCurve(parent_curve_placement, std::vector<double>{0.0,1.0}, std::vector<double>{C, B, A}, boost::none);
-            auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-            auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, 
-               new Schema::IfcLengthMeasure(start_dist_along), 
-               new Schema::IfcLengthMeasure(horizontal_length),
-               parent_curve);
-            file.addEntity(curve_segment);
-            curve_segments->push(curve_segment);
+            auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{start_dist_along, start_height});
+            auto [geometry_segment, business_segment] = create_vcurve<Schema>(vertical_point, start_gradient, end_gradient, horizontal_length,options);
+            file.addEntity(business_segment);
+            profile_segments->push(business_segment);
+            if (geometry_segment)
+            {
+               file.addEntity(geometry_segment);
+               curve_segments->push(geometry_segment);
+            }
          }
       }
 
@@ -688,18 +779,15 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
       // create a linear segment between the last profile element and the end of the alignment
       ATLASSERT(IsEqual(prev_end_gradient, endGrade));
       Float64 length = endStation - startStation - prev_end_dist_along;
-      auto linear_segment = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, prev_end_dist_along, length, prev_end_height, prev_end_gradient, prev_end_gradient, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
-      auto segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, linear_segment);
-      file.addEntity(segment);
-      profile_segments->push(segment);
-
-      auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
-      auto gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
-      auto parent_curve = new Schema::IfcLine(vertical_point, new Schema::IfcVector(gradient_direction, 1.0));
-      auto segment_curve_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-      auto curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT, segment_curve_placement, new Schema::IfcLengthMeasure(prev_end_dist_along), new Schema::IfcLengthMeasure(length), parent_curve);
-      file.addEntity(curve_segment);
-      curve_segments->push(curve_segment);
+      auto vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{prev_end_dist_along, prev_end_height});
+      auto [geometry_segment, business_segment] = create_gradient<Schema>(vertical_point, prev_end_gradient, length, options);
+      file.addEntity(business_segment);
+      profile_segments->push(business_segment);
+      if (geometry_segment)
+      {
+         file.addEntity(geometry_segment);
+         curve_segments->push(geometry_segment);
+      }
 
       // check elevation
       ATLASSERT(IsEqual(endElevation, prev_end_height + length * prev_end_gradient));
@@ -708,19 +796,16 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    // Add terminator segment
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Product_Shape/Product_Geometric_Representation/Alignment_Geometry/Alignment_Geometry_-_Horizontal_and_Vertical/content.html
    // 4.1.7.1.1.2 Zero length segment shall be added at the end of the list of segments
-   auto terminator_line_segment = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, 0.0, 0, 0, 0, 0, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
-   auto terminator_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, terminator_line_segment);
-   file.addEntity(terminator_segment);
-   profile_segments->push(terminator_segment);
-
    // 4.1.7.1.1.2 If the geometry definition is present, then a zero length curve segment must be provided as well
-   auto terminator_vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{0.0, prev_end_height});
-   auto terminator_gradient_direction = new Schema::IfcDirection(std::vector<double>{cos(prev_end_gradient), sin(prev_end_gradient)});
-   auto terminator_parent_curve = new Schema::IfcLine(terminator_vertical_point, new Schema::IfcVector(terminator_gradient_direction, 1.0));
-   auto terminator_placement = new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0}));
-   auto terminator_curve_segment = new Schema::IfcCurveSegment(Schema::IfcTransitionCode::IfcTransitionCode_DISCONTINUOUS, terminator_placement, new Schema::IfcLengthMeasure(0.0), new Schema::IfcLengthMeasure(0.0), terminator_parent_curve);
-   file.addEntity(terminator_curve_segment);
-   curve_segments->push(terminator_curve_segment);
+   auto terminator_vertical_point = new Schema::IfcCartesianPoint(std::vector<double>{prev_end_dist_along, prev_end_height});
+   auto [geometry_segment, business_segment] = create_gradient<Schema>(terminator_vertical_point, prev_end_gradient, 0.0, options);
+   file.addEntity(business_segment);
+   profile_segments->push(business_segment);
+   if (geometry_segment)
+   {
+      file.addEntity(geometry_segment);
+      curve_segments->push(geometry_segment);
+   }
 
    auto vertical_profile = new Schema::IfcAlignmentVertical(IfcParse::IfcGlobalId(), nullptr, std::string("Vertical Alignment"), boost::none, boost::none, file.getSingle<typename Schema::IfcLocalPlacement>(), nullptr);
    file.addEntity(vertical_profile);
@@ -729,7 +814,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    file.addEntity(nests);
 
    *pvertical_profile = vertical_profile;
-
+   *pnests_vertical_segments = nests;
    
    // define the roadway surface geometric representation with IfcSectionedSurface
 #pragma Reminder("This geometric construction does not take into account the different ways PGSuper defines slope of the roadway section")
@@ -803,10 +888,123 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    //auto sectioned_surface = new Schema::IfcSectionedSurface(horizontal_geometry_base_curve, cross_section_positions, cross_sections);
    //representation_items->push(sectioned_surface);
 
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::Polyline)
+   auto gradient_curve = new Schema::IfcGradientCurve(curve_segments, false, horizontal_geometry_base_curve, nullptr);
+   file.addEntity(gradient_curve);
+   *palignment_gradient_curve = gradient_curve;
+}
+
+// creates representations for each IfcAlignmentSegment per CT 4.1.7.1.1.4
+// https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/concepts/Product_Shape/Product_Geometric_Representation/Alignment_Geometry/Alignment_Geometry_-_Segments/content.html
+template <typename Schema>
+void CreateSegmentRepresentations(IfcHierarchyHelper<typename Schema>& file, typename Schema::IfcLocalPlacement* global_placement, typename Schema::IfcGeometricRepresentationSubContext* segment_axis_subcontext, typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments, typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr segments)
+{
+   auto cs_iter = curve_segments->begin();
+   auto s_iter = segments->begin();
+   for (; cs_iter != curve_segments->end(); cs_iter++, s_iter++) 
+   {
+      auto curve_segment = *cs_iter;
+      auto alignment_segment = (*s_iter)->as<typename Schema::IfcAlignmentSegment>();
+
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      representation_items->push(curve_segment);
+
+      auto axis_representation = new Schema::IfcShapeRepresentation(segment_axis_subcontext, std::string("Axis"), std::string("Segment"), representation_items);
+      file.addEntity(axis_representation);
+
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      representations->push(axis_representation);
+
+      auto product = new Schema::IfcProductDefinitionShape(std::string("Product Definition of a Segment"), boost::none, representations);
+      file.addEntity(product);
+
+      alignment_segment->setObjectPlacement(global_placement);
+      alignment_segment->setRepresentation(product);
+   }
+}
+
+template <typename Schema>
+void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+{
+   USES_CONVERSION;
+
+   typename Schema::IfcProductDefinitionShape* alignment_representation = nullptr;
+
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   ATLASSERT(geometric_representation_context);
+
+   // Need Axis representation for Polyline, Gradient, and Segments
+   auto axis_model_representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
+   file.addEntity(axis_model_representation_subcontext);
+
+   typename Schema::IfcAlignmentHorizontal* horizontal_alignment_layout = nullptr;
+   typename Schema::IfcAlignmentVertical* vertical_profile_layout = nullptr;
+   typename Schema::IfcCompositeCurve* composite_curve = nullptr;
+   typename Schema::IfcGradientCurve* gradient_curve = nullptr;
+   typename Schema::IfcPolyline* polyline = nullptr;
+
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      typename Schema::IfcRelNests* nests_horizontal_segments;
+      CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &nests_horizontal_segments, &composite_curve);
+
+      typename Schema::IfcRelNests* nests_vertical_segments;
+      CreateVerticalProfile<Schema>(file, pBroker, composite_curve, options, &vertical_profile_layout, &nests_vertical_segments, &gradient_curve);
+
+      // Need FootPrint representation for Horizontal+Vertical composite curve
+      typename Schema::IfcGeometricRepresentationSubContext* footprint_model_representation_subcontext = nullptr;
+      if (options.representations == CIfcModelBuilderOptions::Representations::Curve3dAndFootPrint)
+      {
+         footprint_model_representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("FootPrint"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
+         file.addEntity(footprint_model_representation_subcontext);
+      }
+
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr horizontal_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      horizontal_representation_items->push(composite_curve);
+
+      typename Schema::IfcShapeRepresentation* footprint_curve2d_shape_representation = nullptr;
+      if (options.representations == CIfcModelBuilderOptions::Representations::Curve3dAndFootPrint)
+      {
+         footprint_curve2d_shape_representation = new Schema::IfcShapeRepresentation(footprint_model_representation_subcontext, std::string("FootPrint"), std::string("Curve2D"), horizontal_representation_items);
+         file.addEntity(footprint_curve2d_shape_representation);
+      }
+
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr vertical_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      vertical_representation_items->push(gradient_curve);
+
+      auto curve3d_shape_representation = new Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), vertical_representation_items);
+      file.addEntity(curve3d_shape_representation);
+
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      if (options.representations == CIfcModelBuilderOptions::Representations::Curve3dAndFootPrint)
+      {
+         representations->push(footprint_curve2d_shape_representation); // 2D alignment geometry (Horizontal + Vertical)
+      }
+      representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
+      alignment_representation = new Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
+      // this alignment_representation will be assigned to the IfcAlignment when it is created a little further down.
+
+      // loops over all the individual segments in the horizontal and vertical alignments setting up 'Axis' 'Segment' representations for each individual segment
+      auto global_placement = file.addLocalPlacement();
+      CreateSegmentRepresentations(file, global_placement, axis_model_representation_subcontext, composite_curve->Segments(), nests_horizontal_segments->RelatedObjects());
+      if (gradient_curve)
+      {
+         CreateSegmentRepresentations(file, global_placement, axis_model_representation_subcontext, gradient_curve->Segments(), nests_vertical_segments->RelatedObjects());
+      }
+   }
+   else
    {
       // Instead of IfcGradientCurve, we are using a generalized 3D polyline geometric representation of the alignment (a 3D wire)
       // This isn't as accurate, but some viewer may be able to deal with this better
+      GET_IFACE2(pBroker, IRoadway, pAlignment);
+
+      Float64 startStation, startElevation, startGrade;
+      CComPtr<IPoint2d> startPoint;
+      pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+
+      Float64 endStation, endElevation, endGrade;
+      CComPtr<IPoint2d> endPoint;
+      pAlignment->GetEndPoint(2, &endStation, &endElevation, &endGrade, &endPoint);
+
       IndexType nAlignmentPoints = 100;
       Float64 stationInc = (endStation - startStation) / (nAlignmentPoints + 1);
       typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
@@ -822,54 +1020,19 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
 
          points->push(new Schema::IfcCartesianPoint(std::vector<Float64>{x, y, z}));
       }
-      auto polyline = new Schema::IfcPolyline(points);
-      *palignment_gradient_curve = nullptr;
+      polyline = new Schema::IfcPolyline(points);
+
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr alignment_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      alignment_representation_items->push(polyline);
+
+      auto curve3d_shape_representation = new Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), alignment_representation_items);
+      file.addEntity(curve3d_shape_representation);
+
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
+      alignment_representation = new Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
+      // this alignment_representation will be assigned to the IfcAlignment when it is created a little further down.
    }
-   else
-   {
-      auto gradient_curve = new Schema::IfcGradientCurve(curve_segments, false, horizontal_geometry_base_curve, nullptr);
-      file.addEntity(gradient_curve);
-      *palignment_gradient_curve = gradient_curve;
-   }
-}
-
-template <typename Schema>
-void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
-{
-   USES_CONVERSION;
-   typename Schema::IfcAlignmentHorizontal* horizontal_alignment_layout;
-   typename Schema::IfcCompositeCurve* composite_curve;
-   CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &composite_curve);
-
-   typename Schema::IfcAlignmentVertical* vertical_profile_layout;
-   typename Schema::IfcGradientCurve* gradient_curve;
-   CreateVerticalProfile<Schema>(file, pBroker, composite_curve, options, &vertical_profile_layout, &gradient_curve);
-
-
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
-
-   auto axis_model_representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
-   file.addEntity(axis_model_representation_subcontext);
-
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr horizontal_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-   horizontal_representation_items->push(composite_curve);
-
-   auto footprint_shape_representation = new Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("FootPrint"), std::string("Curve2D"), horizontal_representation_items);
-   file.addEntity(footprint_shape_representation);
-
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr vertical_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-   vertical_representation_items->push(gradient_curve);
-
-   auto curve3d_shape_representation = new Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), vertical_representation_items);
-   file.addEntity(curve3d_shape_representation);
-
-
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
-   representations->push(footprint_shape_representation); // 2D alignment geometry
-   representations->push(curve3d_shape_representation); // 3D alignment geometry
-   auto alignment_product = new Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
-
 
    // place the alignment relative to the site
    auto site = file.getSingle<typename Schema::IfcSite>();
@@ -882,17 +1045,20 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    GET_IFACE2(pBroker, IRoadwayData, pRoadwayData);
    std::string strAlignmentName(T2A(pRoadwayData->GetAlignmentData2().Name.c_str()));
    if (strAlignmentName.empty()) strAlignmentName = "Unnamed alignment";
-   auto alignment = new Schema::IfcAlignment(IfcParse::IfcGlobalId(), nullptr, strAlignmentName, boost::none, boost::none, local_placement, alignment_product, boost::none);
+   auto alignment = new Schema::IfcAlignment(IfcParse::IfcGlobalId(), nullptr, strAlignmentName, boost::none, boost::none, local_placement, alignment_representation, boost::none);
    file.addEntity(alignment);
 
-   // 4.1.4.4.1 Alignments nest horizontal and vertical layouts
-   // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Nesting/Alignment_Layouts/content.html
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_layout_list(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   alignment_layout_list->push(horizontal_alignment_layout);
-   alignment_layout_list->push(vertical_profile_layout);
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      // 4.1.4.4.1 Alignments nest horizontal and vertical layouts
+      // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Nesting/Alignment_Layouts/content.html
+      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_layout_list(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      alignment_layout_list->push(horizontal_alignment_layout);
+      alignment_layout_list->push(vertical_profile_layout);
 
-   auto nests_alignment_layouts = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nest horizontal and vertical alignment layouts with the alignment"), boost::none, alignment, alignment_layout_list);
-   file.addEntity(nests_alignment_layouts);
+      auto nests_alignment_layouts = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nest horizontal and vertical alignment layouts with the alignment"), boost::none, alignment, alignment_layout_list);
+      file.addEntity(nests_alignment_layouts);
+   }
 
    // IFC 4.1.4.1.1 "Every IfcAlignment must be related to IfcProject using the IfcRelAggregates relationship"
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Aggregation/Alignment_Aggregation_To_Project/content.html
@@ -920,7 +1086,14 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    CComPtr<IPoint2d> startPoint;
    pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
 
-   auto point_on_alignment = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(0.0), boost::none, boost::none, boost::none, gradient_curve ? gradient_curve : composite_curve);
+   typename Schema::IfcCurve* curve = nullptr;
+   if (gradient_curve) curve = gradient_curve;
+   else if (composite_curve) curve = composite_curve;
+   else curve = polyline;
+   auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
+      new Schema::IfcLengthMeasure(0.0), 
+      boost::none, boost::none, boost::none, 
+      curve);
    auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
    auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
 
@@ -949,7 +1122,7 @@ typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsP
 {
    CComPtr<IShape> shape;
    IndexType gdrIdx, slabIdx;
-   pShapes->GetSegmentShape(intervalIdx, poi, true/*orient*/, pgsTypes::scBridge, &shape, &gdrIdx, &slabIdx);
+   pShapes->GetSegmentShape(intervalIdx, poi, true/*orient*/, pgsTypes::scGirder, &shape, &gdrIdx, &slabIdx);
 
    CComQIPtr<ICompositeShape> composite(shape);
    CComPtr<ICompositeShapeItem> shapeItem;
@@ -1191,7 +1364,7 @@ void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const CSt
 
 
 template <typename Schema>
-void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
+void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -1258,18 +1431,48 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    const pgsPointOfInterest& poiStart(vPoi.front());
    const pgsPointOfInterest& poiEnd(vPoi.back());
 
-   CComPtr<IDirection> segment_direction;
-   pBridge->GetSegmentBearing(segmentKey, &segment_direction);
-   Float64 direction;
-   segment_direction->get_Value(&direction);
+   CComPtr<IPoint2d> pntStart, pntEnd;
+   pBridge->GetPoint(poiStart, pgsTypes::pcGlobal, &pntStart);
+   pBridge->GetPoint(poiEnd, pgsTypes::pcGlobal, &pntEnd);
 
-   Float64 segment_grade = pBridge->GetSegmentSlope(segmentKey);
+   GET_IFACE2(pBroker, IGirder, pGirder);
 
-   Float64 Ls = pBridge->GetSegmentLength(segmentKey);
+   Float64 sx, sy;
+   pntStart->Location(&sx, &sy);
+   Float64 sz = pGirder->GetTopGirderChordElevation(poiStart);
+
+
+   Float64 ex, ey;
+   pntEnd->Location(&ex, &ey);
+   Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
+
+   //Float64 startStation, startElevation, startGrade;
+   //CComPtr<IPoint2d> startPoint;
+   //pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+
+   //Float64 endStation, endElevation, endGrade;
+   //CComPtr<IPoint2d> endPoint;
+   //pAlignment->GetEndPoint(2, &endStation, &endElevation, &endGrade, &endPoint);
+
+   //// get the directrix line of the alignment
+   //auto directrix = GetAlignmentDirectrix(file);
+
+   //// place the segment relative to the alignment
+   //auto segment_start_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(startSegmentStation - startStation), startSegmentOffset, startElevation - startSegmentElevation, 0.0, directrix);
+   //auto segment_end_point   = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(endSegmentStation - startStation), endSegmentOffset, endElevation - endSegmentElevation, 0.0, directrix);
+
+   ////CComPtr<IDirection> segment_direction;
+   ////pBridge->GetSegmentBearing(segmentKey, &segment_direction);
+   ////Float64 direction;
+   ////segment_direction->get_Value(&direction);
+
+   ////Float64 segment_grade = pBridge->GetSegmentSlope(segmentKey);
+
+   ////Float64 Ls = pBridge->GetSegmentLength(segmentKey);
 
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}));
-   girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{Ls, 0, 0}));
+   girder_line_points->push(new Schema::IfcCartesianPoint({ sx,sy,sz }));
+   girder_line_points->push(new Schema::IfcCartesianPoint({ ex,ey,ez }));
    auto girder_line = new Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
@@ -1327,38 +1530,38 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    file.addEntity(sectioned_solid);
    representation_items->push(sectioned_solid);
 
-   Float64 startSegmentStation, startSegmentOffset;
-   pBridge->GetStationAndOffset(poiStart, &startSegmentStation, &startSegmentOffset);
+   ////Float64 startSegmentStation, startSegmentOffset;
+   ////pBridge->GetStationAndOffset(poiStart, &startSegmentStation, &startSegmentOffset);
 
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
-   Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   ////GET_IFACE2(pBroker, IRoadway, pAlignment);
+   ////Float64 startStation, startElevation, startGrade;
+   ////CComPtr<IPoint2d> startPoint;
+   ////pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
 
-   // get the directrix line of the alignment
-   auto directrix = GetAlignmentDirectrix(file);
+   ////// get the directrix line of the alignment
+   ////auto directrix = GetAlignmentDirectrix(file);
 
-   // place the segment relative to the alignment
-   auto distance_along = startSegmentStation - startStation;
-   auto segment_origin_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), 0.0, 0.0, 0.0, directrix);
-   auto relative_placement = new Schema::IfcAxis2PlacementLinear(
-      segment_origin_point,
-      new Schema::IfcDirection(std::vector<double>{ -segment_grade * cos(direction), -segment_grade * sin(direction), 1.0}), // Exact Z direction
-      new Schema::IfcDirection(std::vector<double>{cos(direction), sin(direction), 0}) // RefDirection
-      );
-   auto segment_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
-   file.addEntity(segment_origin_point);
-   file.addEntity(relative_placement);
-   file.addEntity(segment_placement);
+   ////// place the segment relative to the alignment
+   ////auto distance_along = startSegmentStation - startStation;
+   ////auto segment_origin_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), 0.0, 0.0, 0.0, directrix);
+   ////auto relative_placement = new Schema::IfcAxis2PlacementLinear(
+   ////   segment_origin_point,
+   ////   new Schema::IfcDirection(std::vector<double>{ -segment_grade * cos(direction), -segment_grade * sin(direction), 1.0}), // Exact Z direction
+   ////   new Schema::IfcDirection(std::vector<double>{cos(direction), sin(direction), 0}) // RefDirection
+   ////   );
+   ////auto segment_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
+   ////file.addEntity(segment_origin_point);
+   ////file.addEntity(relative_placement);
+   ////file.addEntity(segment_placement);
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
+   //auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   //ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-   auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+   auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
 
-
+   auto segment_placement = file.addLocalPlacement();
    segment->setObjectPlacement(segment_placement);
    segment->setRepresentation(product_definition_shape);
 }
@@ -1433,7 +1636,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
 //}
 
 template <typename Schema>
-void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CClosureKey& closureKey, typename Schema::IfcElementAssembly* closureJoint, const CIfcModelBuilderOptions& options)
+void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CClosureKey& closureKey, typename Schema::IfcElementAssembly* closureJoint, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -1461,24 +1664,32 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
    pBridge->GetPoint(poiEnd, pgsTypes::pcGlobal, &pntEnd);
 
    GET_IFACE2(pBroker, IGirder, pGirder);
-   Float64 Zs = pGirder->GetTopGirderChordElevation(poiStart);
-   Float64 Ze = pGirder->GetTopGirderChordElevation(poiEnd);
+   Float64 sx, sy;
+   pntStart->Location(&sx, &sy);
+   Float64 sz = pGirder->GetTopGirderChordElevation(poiStart);
 
 
-   Float64 distance;
-   CComPtr<IDirection> closure_direction;
-   cogoUtil::Inverse(pntStart, pntEnd, &distance, &closure_direction);
+   Float64 ex, ey;
+   pntEnd->Location(&ex, &ey);
+   Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
-   Float64 direction;
-   closure_direction->get_Value(&direction);
+
+   //Float64 distance;
+   //CComPtr<IDirection> closure_direction;
+   //cogoUtil::Inverse(pntStart, pntEnd, &distance, &closure_direction);
+
+   //Float64 direction;
+   //closure_direction->get_Value(&direction);
 
    Float64 Lc = pBridge->GetClosureJointLength(closureKey);
-   Float64 closure_grade = (Ze - Zs) / Lc;
+   //Float64 closure_grade = (Ze - Zs) / Lc;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}));
-   girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{Lc, 0, 0}));
+   //girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}));
+   //girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{Lc, 0, 0}));
+   girder_line_points->push(new Schema::IfcCartesianPoint({ sx,sy,sz }));
+   girder_line_points->push(new Schema::IfcCartesianPoint({ ex,ey,ez }));
    auto girder_line = new Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
@@ -1502,38 +1713,37 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
 
    representation_items->push(sectioned_solid);
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-   auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), representation_type, representation_items);
+   auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), representation_type, representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
 
 
-   Float64 startClosureStation, startClosureOffset;
-   pBridge->GetStationAndOffset(poiStart, &startClosureStation, &startClosureOffset);
+   ////Float64 startClosureStation, startClosureOffset;
+   ////pBridge->GetStationAndOffset(poiStart, &startClosureStation, &startClosureOffset);
 
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
-   Float64 startClosureElevation = pAlignment->GetElevation(startClosureStation, 0.0);
+   ////GET_IFACE2(pBroker, IRoadway, pAlignment);
+   ////Float64 startClosureElevation = pAlignment->GetElevation(startClosureStation, 0.0);
 
-   Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   ////Float64 startStation, startElevation, startGrade;
+   ////CComPtr<IPoint2d> startPoint;
+   ////pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
 
-   // get the directrix line of the alignment
-   auto directrix = GetAlignmentDirectrix(file);
+   ////// get the directrix line of the alignment
+   ////auto directrix = GetAlignmentDirectrix(file);
 
-   // place closure joint relative to alignment
-   auto closure_origin_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(startClosureStation - startStation), -startClosureOffset, Zs - startClosureElevation, 0.0, directrix);
-   auto relative_placement = new Schema::IfcAxis2PlacementLinear(closure_origin_point, new Schema::IfcDirection(std::vector<double>{ -closure_grade * cos(direction), -closure_grade * sin(direction), 1}), new Schema::IfcDirection(std::vector<double>{cos(direction), sin(direction), 0}));
-   auto closure_placement = new Schema::IfcLinearPlacement(nullptr/*alignment->ObjectPlacement()*/, relative_placement, nullptr);
+   ////// place closure joint relative to alignment
+   ////auto closure_origin_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(startClosureStation - startStation), -startClosureOffset, Zs - startClosureElevation, 0.0, directrix);
+   ////auto relative_placement = new Schema::IfcAxis2PlacementLinear(closure_origin_point, new Schema::IfcDirection(std::vector<double>{ -closure_grade * cos(direction), -closure_grade * sin(direction), 1}), new Schema::IfcDirection(std::vector<double>{cos(direction), sin(direction), 0}));
+   ////auto closure_placement = new Schema::IfcLinearPlacement(nullptr/*alignment->ObjectPlacement()*/, relative_placement, nullptr);
 
+   auto closure_placement = file.addLocalPlacement();
    closureJoint->setObjectPlacement(closure_placement);
    closureJoint->setRepresentation(product_definition_shape);
 }
 
 template <typename Schema>
-void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options)
+void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
 
@@ -1544,14 +1754,14 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
 
    // get the directrix line of the alignment
-   auto directrix = GetAlignmentDirectrix(file);
+   auto directrix = GetAlignmentDirectrix(file,options);
 
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
    CComPtr<IPoint2d> startPoint;
    pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
 
-   IndexType nDeckSections = 10;
+   IndexType nDeckSections = NUM_DECK_SECTIONS;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
    typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
@@ -1564,12 +1774,14 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       pShapes->GetSlabShape(station, nullptr, true/*include haunch*/, &slab_shape);
 
       auto polyline = CreatePolyline<Schema>(slab_shape);
-      auto deck_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, std::string("deck perimeter"), polyline);
+      std::ostringstream os;
+      os << "Deck Section at Station " << station;
+      auto deck_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
       cross_sections->push(deck_perimeter);
       file.addEntity(deck_perimeter);
 
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), boost::none, boost::none, boost::none, directrix);
-      auto deck_section_placement = new Schema::IfcAxis2PlacementLinear(pde, nullptr, nullptr);
+      auto deck_section_placement = new Schema::IfcAxis2PlacementLinear(pde, nullptr/*axis*/, nullptr/*ref_direction*/);
       cross_section_positions->push(deck_section_placement);
       file.addEntity(pde);
       file.addEntity(deck_section_placement);
@@ -1583,10 +1795,10 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    auto site = file.getSingle<typename Schema::IfcSite>();
    auto deck_placement = site->ObjectPlacement();
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
+   //auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   //ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-   auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+   auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
    file.addEntity(product_definition_shape);
@@ -1602,36 +1814,46 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
 
 template <typename Schema>
-void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcRailing* railing, const CIfcModelBuilderOptions& options)
+void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcRailing* railing, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    GET_IFACE2(pBroker, IBarriers, pBarriers);
 
    bool bHasSidewalk = pBarriers->HasSidewalk(tbOrientation);
    bool bHasInteriorBarrier = pBarriers->HasInteriorBarrier(tbOrientation);
 
-   IndexType nShapes = 1 + (bHasSidewalk ? 1 : 0) + (bHasInteriorBarrier ? 1 : 0);
+   IndexType nShapesPerBarrier = 1 + (bHasSidewalk ? 1 : 0) + (bHasInteriorBarrier ? 1 : 0);
 
    GET_IFACE2(pBroker, IBridge, pBridge);
-   //Float64 startStation = pBridge->GetPierStation(0);
-   //Float64 endStation = pBridge->GetPierStation(pBridge->GetPierCount() - 1);
    Float64 startBrgStation = pBridge->GetBearingStation(0, pgsTypes::Ahead);
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
 
+   IndexType nSections = NUM_DECK_SECTIONS;
+   std::vector<std::pair<Float64,CComPtr<IShape>>> barrier_shapes;
+
    GET_IFACE2(pBroker, IShapes, pShapes);
-   CComPtr<IShape> start_barrier_shape, end_barrier_shape;
    if (tbOrientation == pgsTypes::tboLeft)
    {
-      pShapes->GetLeftTrafficBarrierShape(startBrgStation, nullptr, &start_barrier_shape);
-      pShapes->GetLeftTrafficBarrierShape(endBrgStation, nullptr, &end_barrier_shape);
+      for (IndexType i = 0; i <= nSections; i++)
+      {
+         auto station = i * (endBrgStation - startBrgStation) / nSections + startBrgStation;
+         CComPtr<IShape> shape;
+         pShapes->GetLeftTrafficBarrierShape(station, nullptr, &shape);
+         barrier_shapes.emplace_back(station,shape);
+      }
    }
    else
    {
-      pShapes->GetRightTrafficBarrierShape(startBrgStation, nullptr, &start_barrier_shape);
-      pShapes->GetRightTrafficBarrierShape(endBrgStation, nullptr, &end_barrier_shape);
+      for (IndexType i = 0; i <= nSections; i++)
+      {
+         auto station = i * (endBrgStation - startBrgStation) / nSections + startBrgStation;
+         CComPtr<IShape> shape;
+         pShapes->GetRightTrafficBarrierShape(station, nullptr, &shape);
+         barrier_shapes.emplace_back(station, shape);
+      }
    }
 
    // get the directrix line of the alignment
-   auto directrix = GetAlignmentDirectrix(file);
+   auto directrix = GetAlignmentDirectrix(file, options);
 
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
@@ -1640,15 +1862,14 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 
    typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
    std::vector<typename aggregate_of<typename Schema::IfcProfileDef>::ptr> cross_sections;
-   for (int i = 0; i < nShapes; i++)
+   for (int i = 0; i < nShapesPerBarrier; i++)
    {
       typename aggregate_of<typename Schema::IfcProfileDef>::ptr ptr(new aggregate_of<typename Schema::IfcProfileDef>());
       cross_sections.push_back(ptr);
    }
 
-   for (int i = 0; i < 2; i++)
+   for(auto [station,barrier_shape] : barrier_shapes)
    {
-      CComPtr<IShape> barrier_shape = (i == 0) ? start_barrier_shape : end_barrier_shape;
       CComQIPtr<ICompositeShape> composite(barrier_shape);
       if (!composite)
       {
@@ -1661,17 +1882,17 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 #if defined _DEBUG
       IndexType _nShapes;
       composite->get_Count(&_nShapes);
-      ATLASSERT(nShapes == _nShapes); // if this fires the actual number of shapes is not the same as the expected number of shapes
+      ATLASSERT(nShapesPerBarrier == _nShapes); // if this fires the actual number of shapes is not the same as the expected number of shapes
 #endif
 
-      auto distance_along = (i == 0 ? startBrgStation - startStation : endBrgStation - startStation);
+      auto distance_along = station - startStation;
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), boost::none, boost::none, boost::none, directrix);
       auto placement = new Schema::IfcAxis2PlacementLinear(pde, nullptr, nullptr);
       cross_section_positions->push(placement);
       file.addEntity(pde);
       file.addEntity(placement);
 
-      for (IndexType shapeIdx = 0; shapeIdx < nShapes; shapeIdx++)
+      for (IndexType shapeIdx = 0; shapeIdx < nShapesPerBarrier; shapeIdx++)
       {
          CComPtr<ICompositeShapeItem> shape_item;
          composite->get_Item(shapeIdx, &shape_item);
@@ -1680,13 +1901,18 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          shape_item->get_Shape(&shape);
 
          auto polyline = CreatePolyline<Schema>(shape);
-         auto shape_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, boost::none, polyline);
+         std::ostringstream os;
+         os << (tbOrientation == pgsTypes::tboLeft ? "Left" : "Right") << " Barrier";
+         if (1 < nShapesPerBarrier)
+            os << " Shape " << shapeIdx;
+
+         auto shape_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
          cross_sections[shapeIdx]->push(shape_perimeter);
       } // next shape
-   } // next end (i)
+   } // next section
 
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-   for (IndexType shapeIdx = 0; shapeIdx < nShapes; shapeIdx++)
+   for (IndexType shapeIdx = 0; shapeIdx < nShapesPerBarrier; shapeIdx++)
    {
       auto sectioned_solid = new Schema::IfcSectionedSolidHorizontal(directrix, cross_sections[shapeIdx], cross_section_positions);
       representation_items->push(sectioned_solid);
@@ -1697,10 +1923,10 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    auto railing_placement = site->ObjectPlacement();
 
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
+   //auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   //ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-   auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+   auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
    file.addEntity(product_definition_shape);
@@ -1756,6 +1982,13 @@ template <typename Schema>
 void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
+
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   ATLASSERT(geometric_representation_context);
+
+   auto body_model_representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("Body"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
+   file.addEntity(body_model_representation_subcontext);
+
 
    // Define spatial structure
    // From IfcSite https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcSite.htm
@@ -1822,7 +2055,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
       Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
-   CreateDeckRepresentation(file, pBroker, deck, options);
+   CreateDeckRepresentation(file, pBroker, deck, options, body_model_representation_subcontext);
    file.addEntity(deck);
    list_of_superstructure_spatial_elements->push(deck);
 
@@ -1836,12 +2069,12 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing
    typename aggregate_of<typename Schema::IfcProduct>::ptr list_of_superstructure_elements(new aggregate_of<typename Schema::IfcProduct>());
    auto left_railing = new Schema::IfcRailing(IfcParse::IfcGlobalId(), nullptr, std::string("Left Railing"), boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcRailingTypeEnum::IfcRailingType_GUARDRAIL);
-   CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboLeft, left_railing, options);
+   CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboLeft, left_railing, options, body_model_representation_subcontext);
    file.addEntity(left_railing);
    list_of_superstructure_elements->push(left_railing);
 
    auto right_railing = new Schema::IfcRailing(IfcParse::IfcGlobalId(), nullptr, std::string("Right Railing"), boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcRailingTypeEnum::IfcRailingType_GUARDRAIL);
-   CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboRight, right_railing, options);
+   CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboRight, right_railing, options, body_model_representation_subcontext);
    file.addEntity(right_railing);
    list_of_superstructure_elements->push(right_railing);
 
@@ -1872,7 +2105,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             os_segment_name << "Segment " << LABEL_SEGMENT(segIdx);
             auto segment_name = os_segment_name.str();
             auto segment = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
-            CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
+            CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
             CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment);
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
@@ -1915,7 +2148,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                os_closure_name << "Closure Joint " << LABEL_SEGMENT(segIdx);
                auto closure_joint_name = os_closure_name.str();
                auto closure_joint = new Schema::IfcElementAssembly(IfcParse::IfcGlobalId(), nullptr, closure_joint_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_SITE, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED);
-               CreateClosureJointRepresentation<Schema>(file, pBroker, segmentKey, closure_joint, options);
+               CreateClosureJointRepresentation<Schema>(file, pBroker, segmentKey, closure_joint, options, body_model_representation_subcontext);
                file.addEntity(closure_joint);
                list_of_girder_segments->push(closure_joint);
 
