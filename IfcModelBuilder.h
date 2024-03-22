@@ -51,10 +51,17 @@ public:
       Line // use IfcLine to model tangents
    };
 
+   enum class Representations
+   {
+      Curve3dOnly,
+      Curve3dAndFootPrint
+   };
+
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    AlignmentModel alignment_model = AlignmentModel::GradientCurve;
    Tangents tangents = Tangents::Line;
+   Representations representations = Representations::Curve3dOnly;
 };
 
 ///////////////////////////////////////////////////////////////////////////
