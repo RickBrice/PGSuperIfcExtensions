@@ -142,6 +142,8 @@ typename Schema::IfcCartesianPoint* ConvertPoint(IPoint2d* pPoint,bool bMirror =
 {
    Float64 x, y;
    pPoint->Location(&x, &y);
+   x = IsZero(x) ? 0.0 : x;
+   y = IsZero(y) ? 0.0 : y;
    return new Schema::IfcCartesianPoint(std::vector<double>{bMirror ? -x : x, y});
 }
 
@@ -1446,30 +1448,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
-   //Float64 startStation, startElevation, startGrade;
-   //CComPtr<IPoint2d> startPoint;
-   //pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
-
-   //Float64 endStation, endElevation, endGrade;
-   //CComPtr<IPoint2d> endPoint;
-   //pAlignment->GetEndPoint(2, &endStation, &endElevation, &endGrade, &endPoint);
-
-   //// get the directrix line of the alignment
-   //auto directrix = GetAlignmentDirectrix(file);
-
-   //// place the segment relative to the alignment
-   //auto segment_start_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(startSegmentStation - startStation), startSegmentOffset, startElevation - startSegmentElevation, 0.0, directrix);
-   //auto segment_end_point   = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(endSegmentStation - startStation), endSegmentOffset, endElevation - endSegmentElevation, 0.0, directrix);
-
-   ////CComPtr<IDirection> segment_direction;
-   ////pBridge->GetSegmentBearing(segmentKey, &segment_direction);
-   ////Float64 direction;
-   ////segment_direction->get_Value(&direction);
-
-   ////Float64 segment_grade = pBridge->GetSegmentSlope(segmentKey);
-
-   ////Float64 Ls = pBridge->GetSegmentLength(segmentKey);
-
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
    girder_line_points->push(new Schema::IfcCartesianPoint({ sx,sy,sz }));
    girder_line_points->push(new Schema::IfcCartesianPoint({ ex,ey,ez }));
@@ -1481,33 +1459,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
    GET_IFACE2(pBroker, IShapes, pShapes);
-   // extrusion (but this doesn't work for tapered sections like spliced girders with parabolic haunch)
-   //auto iter = std::begin(vPoi);
-   //pgsPointOfInterest prevPoi(*iter);
-   //auto prev_girder_profile = CreateSectionProfile<Schema>(pShapes, prevPoi, intervalIdx);
-   //iter++;
-   //auto end = std::end(vPoi);
-   //for(; iter != end; iter++)
-   //{
-   //   const pgsPointOfInterest& poi(*iter);
-   //   auto girder_profile = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx);
-
-   //   // extrude the shape in the global X direction
-   //   auto position = new Ifc4x3_rc3::IfcAxis2Placement3D(
-   //      new Schema::IfcCartesianPoint(std::vector<Float64>{prevPoi.GetDistFromStart(), 0, 0}), // begin extrusion dist from start from (0,0,0)
-   //      new Schema::IfcDirection(std::vector<Float64>{1, 0, 0}), // direction the Z-axis of the extrusion in the global X direction
-   //      new Schema::IfcDirection(std::vector<Float64>{0, 1, 0}) // direction the X-axis of the cross section in the global Y direction
-   //   );
-
-   //   Float64 depth = poi.GetDistFromStart() - prevPoi.GetDistFromStart();
-   //   auto extruded_direction = new Schema::IfcDirection(std::vector<Float64>{0, 0, 1}); // extrude in the Z-direction relative to the placement (the placement puts the Z-axis in the global X direction)
-   //   //auto solid = new Schema::IfcExtrudedAreaSolid(prev_girder_profile, position, extruded_direction, depth);
-   //   auto solid = new Schema::IfcExtrudedAreaSolidTapered(prev_girder_profile, position, extruded_direction, depth, girder_profile);
-   //   representation_items->push(solid);
-
-   //   prevPoi = poi;
-   //   prev_girder_profile = girder_profile;
-   //}
 
    typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
 
@@ -1530,32 +1481,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    file.addEntity(sectioned_solid);
    representation_items->push(sectioned_solid);
 
-   ////Float64 startSegmentStation, startSegmentOffset;
-   ////pBridge->GetStationAndOffset(poiStart, &startSegmentStation, &startSegmentOffset);
-
-   ////GET_IFACE2(pBroker, IRoadway, pAlignment);
-   ////Float64 startStation, startElevation, startGrade;
-   ////CComPtr<IPoint2d> startPoint;
-   ////pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
-
-   ////// get the directrix line of the alignment
-   ////auto directrix = GetAlignmentDirectrix(file);
-
-   ////// place the segment relative to the alignment
-   ////auto distance_along = startSegmentStation - startStation;
-   ////auto segment_origin_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), 0.0, 0.0, 0.0, directrix);
-   ////auto relative_placement = new Schema::IfcAxis2PlacementLinear(
-   ////   segment_origin_point,
-   ////   new Schema::IfcDirection(std::vector<double>{ -segment_grade * cos(direction), -segment_grade * sin(direction), 1.0}), // Exact Z direction
-   ////   new Schema::IfcDirection(std::vector<double>{cos(direction), sin(direction), 0}) // RefDirection
-   ////   );
-   ////auto segment_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
-   ////file.addEntity(segment_origin_point);
-   ////file.addEntity(relative_placement);
-   ////file.addEntity(segment_placement);
-
-   //auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   //ATLASSERT(geometric_representation_context);
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
    auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
@@ -1773,6 +1698,10 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       CComPtr<IShape> slab_shape;
       pShapes->GetSlabShape(station, nullptr, true/*include haunch*/, &slab_shape);
 
+      double elev = pAlignment->GetElevation(station, 0.0);
+      CComQIPtr<IXYPosition> pos(slab_shape);
+      pos->Offset(0.0, -elev);
+
       auto polyline = CreatePolyline<Schema>(slab_shape);
       std::ostringstream os;
       os << "Deck Section at Station " << station;
@@ -1831,6 +1760,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    std::vector<std::pair<Float64,CComPtr<IShape>>> barrier_shapes;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
    if (tbOrientation == pgsTypes::tboLeft)
    {
       for (IndexType i = 0; i <= nSections; i++)
@@ -1838,6 +1768,11 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          auto station = i * (endBrgStation - startBrgStation) / nSections + startBrgStation;
          CComPtr<IShape> shape;
          pShapes->GetLeftTrafficBarrierShape(station, nullptr, &shape);
+
+         double elev = pAlignment->GetElevation(station, 0.0);
+         CComQIPtr<IXYPosition> pos(shape);
+         pos->Offset(0.0, -elev);
+
          barrier_shapes.emplace_back(station,shape);
       }
    }
@@ -1848,6 +1783,11 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          auto station = i * (endBrgStation - startBrgStation) / nSections + startBrgStation;
          CComPtr<IShape> shape;
          pShapes->GetRightTrafficBarrierShape(station, nullptr, &shape);
+
+         double elev = pAlignment->GetElevation(station, 0.0);
+         CComQIPtr<IXYPosition> pos(shape);
+         pos->Offset(0.0, -elev);
+
          barrier_shapes.emplace_back(station, shape);
       }
    }
@@ -1855,7 +1795,6 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    // get the directrix line of the alignment
    auto directrix = GetAlignmentDirectrix(file, options);
 
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
    CComPtr<IPoint2d> startPoint;
    pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
@@ -2147,7 +2086,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                std::ostringstream os_closure_name;
                os_closure_name << "Closure Joint " << LABEL_SEGMENT(segIdx);
                auto closure_joint_name = os_closure_name.str();
-               auto closure_joint = new Schema::IfcElementAssembly(IfcParse::IfcGlobalId(), nullptr, closure_joint_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_SITE, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED);
+               auto closure_joint = new Schema::IfcElementAssembly(IfcParse::IfcGlobalId(), nullptr, closure_joint_name, std::string("Cast in place concrete closure joint"), std::string("CLOSUREJOINT"), nullptr, nullptr, boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_SITE, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED);
                CreateClosureJointRepresentation<Schema>(file, pBroker, segmentKey, closure_joint, options, body_model_representation_subcontext);
                file.addEntity(closure_joint);
                list_of_girder_segments->push(closure_joint);
@@ -2170,15 +2109,15 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                //auto closure_joint_parts_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("cast in place closure joint parts"), boost::none, closure_joint, list_of_closure_joint_parts);
                //file.addEntity(closure_joint_parts_aggregates);
             }
+         } // next segment
 
-            std::ostringstream os_relationship_name;
-            os_relationship_name << "Elements of girder for Group " << LABEL_GROUP(grpIdx) << " Girder " << T2A(LABEL_GIRDER(gdrIdx));
-            auto girder_aggregation_name = os_relationship_name.str();
-            auto girder_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, girder_aggregation_name, boost::none, girder, list_of_girder_segments);
-            file.addEntity(girder_aggregates);
-         }
-      }
-   }
+         std::ostringstream os_relationship_name;
+         os_relationship_name << "Elements of girder for Group " << LABEL_GROUP(grpIdx) << " Girder " << T2A(LABEL_GIRDER(gdrIdx));
+         auto girder_aggregation_name = os_relationship_name.str();
+         auto girder_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, girder_aggregation_name, boost::none, girder, list_of_girder_segments);
+         file.addEntity(girder_aggregates);
+      } // next girder
+   } // next group
 
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing, IfcElementAssembly::GIRDER
    auto rel_contained_in_superstructure_spatial_structure = new Schema::IfcRelContainedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in superstructure spatial structure"), boost::none, list_of_superstructure_elements, superstructure);
