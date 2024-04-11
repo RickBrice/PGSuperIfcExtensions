@@ -148,7 +148,7 @@ typename Schema::IfcCartesianPoint* ConvertPoint(IPoint2d* pPoint,bool bMirror =
 }
 
 template <typename Schema>
-typename Schema::IfcPolyline* CreatePolyline(IShape* shape)
+typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderOptions& options)
 {
    CComPtr<IPoint2dCollection> polyPoints;
    shape->get_PolyPoints(&polyPoints);
@@ -184,9 +184,24 @@ typename Schema::IfcPolyline* CreatePolyline(IShape* shape)
    // the polygon must be closed by reference
    points->push(*(points->begin()));
 
-   auto polyline = new Schema::IfcPolyline(points);
+   typename Schema::IfcCurve* curve = nullptr;
+   if (options.sweep_profile == CIfcModelBuilderOptions::SweepProfile::IndexPolyCurve)
+   {
+      std::vector<std::vector<double>> vpoints;
+      for (auto point : *points)
+      {
+         auto coord = point->Coordinates();
+         vpoints.emplace_back(coord);
+      }
+      auto point_list = new Schema::IfcCartesianPointList2D(vpoints,boost::none);
+      curve = new Schema::IfcIndexedPolyCurve(point_list,boost::none,false);
+   }
+   else
+   {
+      curve = new Schema::IfcPolyline(points);
+   }
 
-   return polyline;
+   return curve;
 }
 
 template <typename Schema>
@@ -621,6 +636,15 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    auto site = file.getSingle<typename Schema::IfcSite>();
    file.relatePlacements(site, horizontal_alignment);
 
+   // name the segments
+   IndexType idx = 1;
+   for (auto& segment : *alignment_segments)
+   {
+      std::ostringstream os;
+      os << "H" << idx++;
+      segment->setName(os.str());
+   }
+
    auto nests = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests horizontal alignment segments with horizontal alignment"), horizontal_alignment, alignment_segments);
    file.addEntity(nests);
 
@@ -807,6 +831,16 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    {
       file.addEntity(geometry_segment);
       curve_segments->push(geometry_segment);
+   }
+
+
+   // name the segments
+   IndexType idx = 1;
+   for (auto& segment : *profile_segments)
+   {
+      std::ostringstream os;
+      os << "V" << idx++;
+      segment->setName(os.str());
    }
 
    auto vertical_profile = new Schema::IfcAlignmentVertical(IfcParse::IfcGlobalId(), nullptr, std::string("Vertical Alignment"), boost::none, boost::none, file.getSingle<typename Schema::IfcLocalPlacement>(), nullptr);
@@ -1145,7 +1179,7 @@ typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsP
       gdrShape = _gdrShape;
    }
 
-   auto polyline = CreatePolyline<Schema>(gdrShape);
+   auto polyline = CreatePolyline<Schema>(gdrShape, options);
    auto girder_section = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, std::string("CrossSectionProfile"), polyline);
 
    return girder_section;
@@ -1492,7 +1526,7 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 }
 
 template <typename Schema>
-void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
+void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment,typename Schema::IfcStyledRepresentation* styled_representation)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -1505,6 +1539,12 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    // create the material
    auto material = new Schema::IfcMaterial("Precast Segment Concrete", boost::none/*description*/, boost::none/*category*/);
    file.addEntity(material);
+
+   // assigns the presentation styles to the material
+   typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
+   list_of_representations->push(styled_representation);
+   auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, material);
+   file.addEntity(material_defintion_representation);
 
    // Pset_MaterialConcrete
    typename aggregate_of<typename Schema::IfcProperty>::ptr material_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
@@ -1671,12 +1711,22 @@ template <typename Schema>
 void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
+   USES_CONVERSION;
 
    if (pBridge->GetDeckType() == pgsTypes::sdtNone)
       return;
 
    Float64 startBrgStation = pBridge->GetBearingStation(0, pgsTypes::Ahead);
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
+
+   CComPtr<IDirection> objDir;
+   pBridge->GetPierDirection(0, &objDir);
+   Float64 startDir;
+   objDir->get_Value(&startDir);
+   objDir.Release();
+   pBridge->GetPierDirection(pBridge->GetPierCount() - 1, &objDir);
+   Float64 endDir;
+   objDir->get_Value(&endDir);
 
    // get the directrix line of the alignment
    auto directrix = GetAlignmentDirectrix(file,options);
@@ -1688,6 +1738,9 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
    IndexType nDeckSections = NUM_DECK_SECTIONS;
 
+   objDir.Release();
+   objDir.CoCreateInstance(CLSID_Direction);
+
    GET_IFACE2(pBroker, IShapes, pShapes);
    typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
    typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
@@ -1695,16 +1748,19 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    {
       auto station = i * (endBrgStation - startBrgStation) / nDeckSections + startBrgStation;
 
+      auto dir = i * (endDir - startDir) / nDeckSections + startDir;
+      objDir->put_Value(dir);
+
       CComPtr<IShape> slab_shape;
-      pShapes->GetSlabShape(station, nullptr, true/*include haunch*/, &slab_shape);
+      pShapes->GetSlabShape(station, objDir, true/*include haunch*/, &slab_shape);
 
       double elev = pAlignment->GetElevation(station, 0.0);
       CComQIPtr<IXYPosition> pos(slab_shape);
       pos->Offset(0.0, -elev);
 
-      auto polyline = CreatePolyline<Schema>(slab_shape);
+      auto polyline = CreatePolyline<Schema>(slab_shape, options);
       std::ostringstream os;
-      os << "Deck Section at Station " << station;
+      os << "Deck Section at Station " << T2A(WBFL::COGO::Station(station).AsString(WBFL::Units::StationFormats::SI).c_str());
       auto deck_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
       cross_sections->push(deck_perimeter);
       file.addEntity(deck_perimeter);
@@ -1743,7 +1799,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
 
 template <typename Schema>
-void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcRailing* railing, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcProduct* railing, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    GET_IFACE2(pBroker, IBarriers, pBarriers);
 
@@ -1839,7 +1895,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          CComPtr<IShape> shape;
          shape_item->get_Shape(&shape);
 
-         auto polyline = CreatePolyline<Schema>(shape);
+         auto polyline = CreatePolyline<Schema>(shape, options);
          std::ostringstream os;
          os << (tbOrientation == pgsTypes::tboLeft ? "Left" : "Right") << " Barrier";
          if (1 < nShapesPerBarrier)
@@ -1915,6 +1971,23 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
    }
 
    return list_of_piers;
+}
+
+template <typename Schema>
+typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(std::string name,double r,double g,double b,typename Schema::IfcGeometricRepresentationContext* geometric_representation_context)
+{
+   auto color = new Schema::IfcColourRgb(name,r,g,b);
+   auto ssr = new Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
+   typename aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>::ptr list_of_surface_styles(new aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>());
+   list_of_surface_styles->push(ssr);
+   auto ss = new Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
+   typename aggregate_of<typename Schema::IfcPresentationStyle>::ptr list_of_presentation_styles(new aggregate_of<typename Schema::IfcPresentationStyle>());
+   list_of_presentation_styles->push(ss);
+   auto styled_item = new Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
+   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr styled_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   styled_items->push(styled_item);
+   auto styled_representation = new Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
+   return styled_representation;
 }
 
 template <typename Schema>
@@ -2007,18 +2080,23 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // Add railings to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing
    typename aggregate_of<typename Schema::IfcProduct>::ptr list_of_superstructure_elements(new aggregate_of<typename Schema::IfcProduct>());
-   auto left_railing = new Schema::IfcRailing(IfcParse::IfcGlobalId(), nullptr, std::string("Left Railing"), boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcRailingTypeEnum::IfcRailingType_GUARDRAIL);
+   auto left_railing = new Schema::IfcWall(IfcParse::IfcGlobalId(), nullptr, std::string("Left Railing"), boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcWallTypeEnum::IfcWallType_PARAPET);
    CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboLeft, left_railing, options, body_model_representation_subcontext);
    file.addEntity(left_railing);
    list_of_superstructure_elements->push(left_railing);
 
-   auto right_railing = new Schema::IfcRailing(IfcParse::IfcGlobalId(), nullptr, std::string("Right Railing"), boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcRailingTypeEnum::IfcRailingType_GUARDRAIL);
+   auto right_railing = new Schema::IfcWall(IfcParse::IfcGlobalId(), nullptr, std::string("Right Railing"), boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcWallTypeEnum::IfcWallType_PARAPET);
    CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboRight, right_railing, options, body_model_representation_subcontext);
    file.addEntity(right_railing);
    list_of_superstructure_elements->push(right_railing);
 
    // Add girders to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcElementAssembly::GIRDER
+
+   // first create a representation object for the girder material. this is one way to add presentation information such as color.
+   // this helper function just sets color and hard codes all the other parameters - this can be expanded in the future
+   auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", 7.6078431372549E-1, 7.72549019607843E-1, 8.E-1, geometric_representation_context);
+
    GET_IFACE2(pBroker, IBridge, pBridge);
    GroupIndexType nGroups = pBridge->GetGirderGroupCount();
    for (GroupIndexType grpIdx = 0; grpIdx < nGroups; grpIdx++)
@@ -2045,7 +2123,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             auto segment_name = os_segment_name.str();
             auto segment = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
-            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment);
+            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, girder_material_representation);
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
 

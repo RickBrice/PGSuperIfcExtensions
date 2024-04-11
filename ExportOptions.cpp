@@ -28,6 +28,7 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 	DDX_RadioEnum<CIfcModelBuilderOptions::AlignmentModel>(pDX, IDC_POLYLINE, options.alignment_model);
 	DDX_RadioEnum<CIfcModelBuilderOptions::Tangents>(pDX, IDC_POLYLINE_TANGENT, options.tangents);
 	DDX_RadioEnum<CIfcModelBuilderOptions::Representations>(pDX, IDC_REPRESENTATION_CURVE, options.representations);
+	DDX_RadioEnum<CIfcModelBuilderOptions::SweepProfile>(pDX, IDC_SWEEP_POLYLINE, options.sweep_profile);
 }
 
 
