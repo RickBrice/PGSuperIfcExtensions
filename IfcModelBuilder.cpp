@@ -625,6 +625,8 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file,IBroker* pBroker
    alignment_segments->push(business_segment);
    if (geometry_segment)
    {
+      // the last segment must have a DISCONTINUOUS transition code... create_tangent assumes continuous segments
+      geometry_segment->setTransition(Schema::IfcTransitionCode::IfcTransitionCode_DISCONTINUOUS);
       file.addEntity(geometry_segment);
       curve_segments->push(geometry_segment);
    }
@@ -829,6 +831,9 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    profile_segments->push(business_segment);
    if (geometry_segment)
    {
+      // the last segment must have a DISCONTINUOUS transition code... create_gradient assumes continuous segments
+      geometry_segment->setTransition(Schema::IfcTransitionCode::IfcTransitionCode_DISCONTINUOUS);
+
       file.addEntity(geometry_segment);
       curve_segments->push(geometry_segment);
    }
