@@ -47,7 +47,7 @@ Build the IfcOpenShell dependencies by running the following commands.
 This will take a long time. 
 When building the Debug dependencies, there will be 3 assert windows that you need to press the Ignore button.
 ~~~
-cd F:\IfcOpenshell\win
+cd F:\IfcOpenShell\win
 build-deps.cmd vs2022-x64 Debug
 build-deps.cmd vs2022-x64 Release
 ~~~
