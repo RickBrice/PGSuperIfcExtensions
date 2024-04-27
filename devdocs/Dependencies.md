@@ -27,8 +27,8 @@ git config --global --add safe.directory F:/IfcOpenshell/src/ifcconvert/cityjson
 Get the sources
 Checkout the v0.8.0 branch and updated submodules (The cityjson submodule gets missed during the oringal clone)
 ~~~
-git clone --recursive https://github.com/IfcOpenShell/IfcOpenshell.git
-cd IfcOpenshell
+git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
+cd IfcOpenShell
 git checkout v0.8.0
 git submodule update --init --recursive
 ~~~
@@ -73,6 +73,8 @@ Fire up Visual Studio and open the solution file. The solution file is in `F:\If
 The HDF5 libraries need to be changed to the debugging version for multiple projects. The list include IfcHouse, IfcAdvancedHouse, _ifcopenshell_wrapper, IfcGeomServer, IfcConvert. An _D needs to be appended to the HDF file name in the linker settings.
 
 Now build the Debug and Release configurations.
+
+Also see https://github.com/IfcOpenShell/IfcOpenShell/issues/4584
 
 ---
 
