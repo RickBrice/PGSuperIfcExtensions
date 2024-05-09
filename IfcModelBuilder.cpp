@@ -421,7 +421,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
    if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
    {
-      double A = 0.0;
+      double A = p->Coordinates()[0];
       double B = start_slope;
       double C = (end_slope - start_slope) / (2 * length);
 
@@ -433,7 +433,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
       curve_segment = new Schema::IfcCurveSegment(
          Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{1.0, 0.0})),
+         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - start_slope * start_slope), start_slope})),
          new Schema::IfcLengthMeasure(0.0),
          new Schema::IfcLengthMeasure(length),
          parent_curve);
@@ -1399,8 +1399,19 @@ void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const CSt
    owner_history->OwningApplication()->setApplicationFullName(std::string(pDocType->IsPGSuperDocument() ? "BridgeLink:PGSuper" : "BridgeLink:PGSplice"));
    owner_history->OwningApplication()->setApplicationIdentifier(std::string(pDocType->IsPGSuperDocument() ? "PGSuper" : "PGSplice"));
    owner_history->OwningApplication()->setVersion(std::string(T2A(pVersionInfo->GetVersion(true))));
-   owner_history->OwningApplication()->ApplicationDeveloper()->setIdentification(std::string("Washington State Department of Transportation, Bridge and Structures Office"));
-   owner_history->OwningApplication()->ApplicationDeveloper()->setName(std::string("Richard Brice, PE"));
+   // owner_history->OwningApplication()->ApplicationDeveloper() is IfcOrganization
+   auto organization = owner_history->OwningApplication()->ApplicationDeveloper();
+   organization->setIdentification(std::string("Washington State Department of Transportation, Bridge and Structures Office"));
+   organization->setName(std::string("Richard Brice, PE"));
+
+   // this is an optional parameter, but the AASHTO IDS requires it
+   typename aggregate_of<typename Schema::IfcActorRole>::ptr roles(new aggregate_of<typename Schema::IfcActorRole>());
+   auto role = new Schema::IfcActorRole(Schema::IfcRoleEnum::IfcRole_CIVILENGINEER, boost::none, boost::none);
+   file.addEntity(role);
+   roles->push(role);
+   organization->setRoles(roles);
+
+   owner_history->OwningApplication()->setApplicationDeveloper(organization);
 }
 
 
@@ -1793,8 +1804,8 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
    file.addEntity(product_definition_shape);
 
-   auto slab = new Schema::IfcSlab(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Deck slab element"), boost::none, deck_placement, product_definition_shape, boost::none,
-      Schema::IfcSlabTypeEnum::IfcSlabType_FLOOR); // see Ifc 4x3 6.1.2.19.2 (FLOOR represents a bridge deck)
+   auto slab = new Schema::IfcSlab(IfcParse::IfcGlobalId(), nullptr, std::string("Deck Slab"), boost::none, boost::none, deck_placement, product_definition_shape, boost::none,
+      Schema::IfcSlabTypeEnum::IfcSlabType_FLOOR); // see Ifc 4x3 6.1.2.19.2 (FLOOR represents a bridge deck), name is option but AASHTO IDS requires it
    typename aggregate_of<typename Schema::IfcProduct>::ptr list_of_slabs(new aggregate_of<typename Schema::IfcProduct>());
    list_of_slabs->push(slab);
 
@@ -1953,7 +1964,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
          pBridge->IsAbutment(pierIdx) ? Schema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT : Schema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER);
       file.addEntity(pier);
 
-      auto foundation = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none,nullptr,nullptr,boost::none,
+      std::ostringstream os;
+      os << "Foundation at " << pier_name << std::endl; // name is not required, but is specified in AASHTO IDS
+      auto foundation = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, nullptr, nullptr, boost::none,
          Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
          Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
          Schema::IfcBridgePartTypeEnum::IfcBridgePartType_FOUNDATION);
@@ -2205,6 +2218,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing, IfcElementAssembly::GIRDER
    auto rel_contained_in_superstructure_spatial_structure = new Schema::IfcRelContainedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in superstructure spatial structure"), boost::none, list_of_superstructure_elements, superstructure);
    file.addEntity(rel_contained_in_superstructure_spatial_structure);
+
+   Create_Pset_BridgeCommon<Schema>(file,bridge);
 }
 
 template <typename Schema>
@@ -2214,6 +2229,8 @@ bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, 
 
    IfcHierarchyHelper<Schema> file;
    InitializeFile<Schema>(file, pBroker, strFilePath); // creates project and site
+   Create_Pset_ProjectCommon<Schema>(file);
+   Create_AASHTO_ProjectCommon<Schema>(file);
 
    CreateAlignment<Schema>(file, pBroker, options); // creates alignment and aggregates with project, references into site spatial structure
 
@@ -2222,8 +2239,85 @@ bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, 
       CreateBridge<Schema>(file, pBroker, options); // creates bridge with site spatial structure
    }
 
+
    std::ofstream ofs(T2A(strFilePath));
    ofs << file;
 
    return true;
 }
+
+template <typename Schema>
+void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
+{
+   auto project = file.getSingle<typename Schema::IfcProject>();
+
+   // 5.1.8.1 PEnum_ProjectType
+   typename aggregate_of<typename Schema::IfcValue>::ptr property_type_enum_values(new aggregate_of<typename Schema::IfcValue>());
+   property_type_enum_values->push(new Schema::IfcLabel(std::string("MODIFICATION")));
+   property_type_enum_values->push(new Schema::IfcLabel(std::string("NEWBUILD")));
+   property_type_enum_values->push(new Schema::IfcLabel(std::string("OPERATIONMAINTENANCE")));
+   property_type_enum_values->push(new Schema::IfcLabel(std::string("RENOVATION")));
+   property_type_enum_values->push(new Schema::IfcLabel(std::string("REPAIR")));
+   auto project_type_enum = new Schema::IfcPropertyEnumeration(std::string("PEnum_ProjectType"), property_type_enum_values, nullptr);
+
+   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_project_types(new aggregate_of<typename Schema::IfcValue>());
+   list_of_project_types->push(new Schema::IfcLabel(std::string("NEWBUILD")));
+   auto project_type_property = new Schema::IfcPropertyEnumeratedValue(std::string("ProjectType"), boost::none, list_of_project_types, project_type_enum);
+
+   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   list_of_properties->push(project_type_property);
+
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ProjectCommon"), boost::none, list_of_properties);
+  
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_projects(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_projects->push(project);
+
+   auto project_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_projects, property_set);
+   file.addEntity(project_properties);
+}
+
+template <typename Schema>
+void Create_AASHTO_ProjectCommon(IfcHierarchyHelper<Schema>& file)
+{
+   auto project = file.getSingle<typename Schema::IfcProject>();
+
+   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ContractNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("DesignNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ProjectNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ProjectWebsite"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("AASHTO_ProjectCommon"), boost::none, list_of_properties);
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_projects(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_projects->push(project);
+
+   auto project_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_projects, property_set);
+   file.addEntity(project_properties);
+}
+
+template <typename Schema>
+void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file,typename Schema::IfcBridge* bridge)
+{
+   typename aggregate_of<typename Schema::IfcValue>::ptr enum_values(new aggregate_of<typename Schema::IfcValue>());
+   enum_values->push(new Schema::IfcLabel(std::string("COATED")));
+   enum_values->push(new Schema::IfcLabel(std::string("COMPOSITE")));
+   enum_values->push(new Schema::IfcLabel(std::string("HOMOGENEOUS")));
+   auto penum = new Schema::IfcPropertyEnumeration(std::string("PEnum_StructureIndicator"), enum_values, nullptr);
+
+   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_enum_types(new aggregate_of<typename Schema::IfcValue>());
+   list_of_enum_types->push(new Schema::IfcLabel(std::string("COMPOSITE")));
+   auto property = new Schema::IfcPropertyEnumeratedValue(std::string("StructureIndicator"), boost::none, list_of_enum_types, penum);
+
+   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   list_of_properties->push(property);
+
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_BridgeCommon"), boost::none, list_of_properties);
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_bridges(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_bridges->push(bridge);
+
+   auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_bridges, property_set);
+   file.addEntity(related_properties);
+}
+
