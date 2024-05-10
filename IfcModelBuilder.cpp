@@ -36,6 +36,7 @@
 
 #include <WBFLCogo\CogoHelpers.h>
 
+
 constexpr IndexType NUM_DECK_SECTIONS = 10;
 
 #define CLOCKWISE 0
@@ -239,38 +240,38 @@ typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& fil
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_tangent(typename Schema::IfcCartesianPoint* p, double dir, double length,const CIfcModelBuilderOptions& options)
 {
-   // geometry
-   typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   {
-      typename Schema::IfcCurve* parent_curve = nullptr;
-      if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
-      {
-         typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-         auto v = p->Coordinates();
-         auto xs = v[0];
-         auto ys = v[1];
-         double xe = xs + length * cos(dir);
-         double ye = ys + length * sin(dir);
-         auto p2 = new Schema::IfcCartesianPoint({ xe,ye });
-         points->push(p);
-         points->push(p2);
-         parent_curve = new Schema::IfcPolyline(points);
-      }
-      else
-      {
-         parent_curve = new Schema::IfcLine(
-            new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
-            new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1.0, 0.0}), 1.0));
-      }
+   //// geometry
+   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   //{
+   //   typename Schema::IfcCurve* parent_curve = nullptr;
+   //   if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
+   //   {
+   //      typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+   //      auto v = p->Coordinates();
+   //      auto xs = v[0];
+   //      auto ys = v[1];
+   //      double xe = xs + length * cos(dir);
+   //      double ye = ys + length * sin(dir);
+   //      auto p2 = new Schema::IfcCartesianPoint({ xe,ye });
+   //      points->push(p);
+   //      points->push(p2);
+   //      parent_curve = new Schema::IfcPolyline(points);
+   //   }
+   //   else
+   //   {
+   //      parent_curve = new Schema::IfcLine(
+   //         new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
+   //         new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1.0, 0.0}), 1.0));
+   //   }
 
-      curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-         new Schema::IfcLengthMeasure(0.0), // start
-         new Schema::IfcLengthMeasure(length),
-         parent_curve);
-   }
+   //   curve_segment = new Schema::IfcCurveSegment(
+   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+   //      new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+   //      new Schema::IfcLengthMeasure(0.0), // start
+   //      new Schema::IfcLengthMeasure(length),
+   //      parent_curve);
+   //}
 
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(
@@ -279,6 +280,13 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
    auto alignment_segment = new Schema::IfcAlignmentSegment(
       IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
 
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      curve_segment = mapAlignmentSegment(alignment_segment).first;
+   }
+
    return { curve_segment, alignment_segment };
 }
 
@@ -286,26 +294,33 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_hcurve(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double lc, const CIfcModelBuilderOptions& options)
 {
-   // geometry
-   typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   {
-      double sign = radius / fabs(radius);
-      auto parent_curve = new Schema::IfcCircle(
-         new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })), new Schema::IfcDirection(std::vector<double>{1, 0})),
-         fabs(radius));
+   //// geometry
+   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   //{
+   //   double sign = radius / fabs(radius);
+   //   auto parent_curve = new Schema::IfcCircle(
+   //      new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })), new Schema::IfcDirection(std::vector<double>{1, 0})),
+   //      fabs(radius));
 
-      curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-         new Schema::IfcLengthMeasure(0.0),
-         new Schema::IfcLengthMeasure(sign * lc),
-         parent_curve);
-   }
+   //   curve_segment = new Schema::IfcCurveSegment(
+   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+   //      new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+   //      new Schema::IfcLengthMeasure(0.0),
+   //      new Schema::IfcLengthMeasure(sign * lc),
+   //      parent_curve);
+   //}
 
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, radius, lc, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      curve_segment = mapAlignmentSegment(alignment_segment).first;
+   }
 
    return { curve_segment, alignment_segment };
 }
@@ -314,31 +329,38 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_entry_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
 {
-   // geometry
-   typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   {
-      double sign = radius / fabs(radius);
+   //// geometry
+   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   //{
+   //   double sign = radius / fabs(radius);
 
-      Float64 A = sign * sqrt(ls * fabs(radius));
+   //   Float64 A = sign * sqrt(ls * fabs(radius));
 
-      auto parent_curve = new Schema::IfcClothoid(
-         new Schema::IfcAxis2Placement2D(
-            new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
-            new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
-         A);
+   //   auto parent_curve = new Schema::IfcClothoid(
+   //      new Schema::IfcAxis2Placement2D(
+   //         new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
+   //         new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
+   //      A);
 
-      curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-         new Schema::IfcLengthMeasure(0.0),
-         new Schema::IfcLengthMeasure(ls),
-         parent_curve);
-   }
+   //   curve_segment = new Schema::IfcCurveSegment(
+   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+   //      new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+   //      new Schema::IfcLengthMeasure(0.0),
+   //      new Schema::IfcLengthMeasure(ls),
+   //      parent_curve);
+   //}
 
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, 0.0, radius, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      curve_segment = mapAlignmentSegment(alignment_segment).first;
+   }
 
    return { curve_segment, alignment_segment };
 }
@@ -347,31 +369,38 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_exit_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
 {
-   // geometry
-   typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   {
-      double sign = radius / fabs(radius);
+   //// geometry
+   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   //{
+   //   double sign = radius / fabs(radius);
 
-      Float64 A = -1.0 * sign * sqrt(ls * fabs(radius));
+   //   Float64 A = -1.0 * sign * sqrt(ls * fabs(radius));
 
-      auto parent_curve = new Schema::IfcClothoid(
-         new Schema::IfcAxis2Placement2D(
-            new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
-            new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
-         A);
+   //   auto parent_curve = new Schema::IfcClothoid(
+   //      new Schema::IfcAxis2Placement2D(
+   //         new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
+   //         new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
+   //      A);
 
-      curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-         new Schema::IfcLengthMeasure(-1.0 * ls),
-         new Schema::IfcLengthMeasure(ls),
-         parent_curve);
-   }
+   //   curve_segment = new Schema::IfcCurveSegment(
+   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+   //      new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
+   //      new Schema::IfcLengthMeasure(-1.0 * ls),
+   //      new Schema::IfcLengthMeasure(ls),
+   //      parent_curve);
+   //}
 
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, 0.0, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      curve_segment = mapAlignmentSegment(alignment_segment).first;
+   }
 
    return { curve_segment, alignment_segment };
 }
@@ -382,25 +411,32 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 {
    CHECK(0 <= length);
 
-   // geometry
-   typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   {
-      auto parent_curve = new Schema::IfcLine(
-         new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
-         new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1, 0}), 1.0));
+   //// geometry
+   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   //{
+   //   auto parent_curve = new Schema::IfcLine(
+   //      new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
+   //      new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1, 0}), 1.0));
 
-      curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - slope * slope), slope})),
-         new Schema::IfcLengthMeasure(0.0), // start
-         new Schema::IfcLengthMeasure(length),
-         parent_curve);
-   }
+   //   curve_segment = new Schema::IfcCurveSegment(
+   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+   //      new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - slope * slope), slope})),
+   //      new Schema::IfcLengthMeasure(0.0), // start
+   //      new Schema::IfcLengthMeasure(length),
+   //      parent_curve);
+   //}
 
    // business logic
    auto design_parameters = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, p->Coordinates()[0], length, p->Coordinates()[1], slope, slope, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      curve_segment = mapAlignmentSegment(alignment_segment).first;
+   }
 
    return { curve_segment, alignment_segment };
 }
@@ -417,32 +453,39 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
       return create_gradient<Schema>(p, start_slope, length, options);
    }
 
-   // geometry
-   typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   {
-      double A = p->Coordinates()[0];
-      double B = start_slope;
-      double C = (end_slope - start_slope) / (2 * length);
+   //// geometry
+   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   //{
+   //   double A = p->Coordinates()[0];
+   //   double B = start_slope;
+   //   double C = (end_slope - start_slope) / (2 * length);
 
-      auto parent_curve = new Schema::IfcPolynomialCurve(
-         new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0})),
-         std::vector<double>{0.0, 1.0},
-         std::vector<double>{A, B, C},
-         boost::none);
+   //   auto parent_curve = new Schema::IfcPolynomialCurve(
+   //      new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0})),
+   //      std::vector<double>{0.0, 1.0},
+   //      std::vector<double>{A, B, C},
+   //      boost::none);
 
-      curve_segment = new Schema::IfcCurveSegment(
-         Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-         new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - start_slope * start_slope), start_slope})),
-         new Schema::IfcLengthMeasure(0.0),
-         new Schema::IfcLengthMeasure(length),
-         parent_curve);
-   }
+   //   curve_segment = new Schema::IfcCurveSegment(
+   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
+   //      new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - start_slope * start_slope), start_slope})),
+   //      new Schema::IfcLengthMeasure(0.0),
+   //      new Schema::IfcLengthMeasure(length),
+   //      parent_curve);
+   //}
 
    // business logic
    double k = (end_slope - start_slope) / length;
    auto design_parameters = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, p->Coordinates()[0], length, p->Coordinates()[1], start_slope, end_slope, 1 / k, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
+
+   // geometry
+   typename Schema::IfcCurveSegment* curve_segment = nullptr;
+   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   {
+      curve_segment = mapAlignmentSegment(alignment_segment).first;
+   }
 
    return { curve_segment, alignment_segment };
 }
