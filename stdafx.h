@@ -39,6 +39,8 @@ extern CComModule _Module;
 
 #pragma warning(disable:4250) // 
 #include <ifcparse/IfcHierarchyHelper.h>
+#include <ifcparse/IfcAlignmentHelper.h>
+
 //#include <ifcparse/Ifc4x1.h>
 //#include <ifcparse/Ifc4x2.h>
 //#include <ifcparse/Ifc4x3_rc1.h>
