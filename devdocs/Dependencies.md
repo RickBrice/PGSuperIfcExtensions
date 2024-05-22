@@ -1,5 +1,7 @@
 The PGSuperIfcExtension is based on IfcOpenShell v0.8.0. Before building this PGSuper plug-in, the IfcOpenShell dependency needs to be installed from source and compiled.
 
+**NOTE** If you have a version of the boost libraries already installed, consider using the version installed with IFCOS instead. Mixing versions of boost libraries leads to runtime issues.
+
 Designate the repository directories as `safe` for git. This is a one-time setup step. The build scripts will fail if git cannot clone the repositories and check out branches.
 Option 1 - Make git trust any directory
 ~~~
