@@ -45,6 +45,11 @@ Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
 set IFCOS_INSTALL_PYTHON=FALSE
 ~~~
 
+This is an optional step. One of my computers has a 24 core processor. The default is to use all 24 cores, but this ends up with out of memory errors. I find that using 12 cores works well.
+~~~
+set IFCOS_NUM_BUILD_PROCS=12
+~~~
+
 Build the IfcOpenShell dependencies by running the following commands.
 This will take a long time. 
 When building the Debug dependencies, there will be 3 assert windows that you need to press the Ignore button.
