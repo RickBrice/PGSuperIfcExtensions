@@ -1769,11 +1769,15 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
 template <typename Schema>
 void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
+   // This is not a good model of the deck. This modlue just creates NUM_DECK_SECTIONS cross sections and extrudes between them.
    GET_IFACE2(pBroker, IBridge, pBridge);
    USES_CONVERSION;
 
    if (pBridge->GetDeckType() == pgsTypes::sdtNone)
       return;
+
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   auto station_format = pDisplayUnits->GetStationFormat();
 
    Float64 startBrgStation = pBridge->GetBearingStation(0, pgsTypes::Ahead);
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
@@ -1807,11 +1811,15 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    {
       auto station = i * (endBrgStation - startBrgStation) / nDeckSections + startBrgStation;
 
-      auto dir = i * (endDir - startDir) / nDeckSections + startDir;
-      objDir->put_Value(dir);
+      // This code, and the objDir in GetSlabShape, are trying to account for skew by sweeping the cut line angle
+      // between the start and end of the bridge. However, there appears to be an issue in WBFL::CoordinateGeometry 
+      // that causes the top of deck section from the roadway to have duplicate points. Duplicate points are
+      // not valid for the IFC section shape so we will just use a normal section cut for now
+      //auto dir = i * (endDir - startDir) / nDeckSections + startDir;
+      //objDir->put_Value(dir);
 
       CComPtr<IShape> slab_shape;
-      pShapes->GetSlabShape(station, objDir, true/*include haunch*/, &slab_shape);
+      pShapes->GetSlabShape(station, nullptr/*objDir*/, true/*include haunch*/, &slab_shape);
 
       double elev = pAlignment->GetElevation(station, 0.0);
       CComQIPtr<IXYPosition> pos(slab_shape);
@@ -1819,7 +1827,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
       auto polyline = CreatePolyline<Schema>(slab_shape, options);
       std::ostringstream os;
-      os << "Deck Section at Station " << T2A(WBFL::COGO::Station(station).AsString(WBFL::Units::StationFormats::SI).c_str());
+      os << "Deck Section at Station " << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str());
       auto deck_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
       cross_sections->push(deck_perimeter);
       file.addEntity(deck_perimeter);
@@ -2017,11 +2025,6 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 
       typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_foundations(new aggregate_of<typename Schema::IfcObjectDefinition>());
       list_of_foundations->push(foundation);
-
-      // This was the TPF concept, but it violates bSI rules
-      //// IfcBridgePart::PIER <-> IfcRelContainedInSpatialStructure <-> IfcBridgePart::FOUNDATION
-      //auto rel_contained_in_pier_spatial_structure = new Schema::IfcRelContainedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, std::string("Foundations in pier spatial structure"), boost::none, list_of_foundations, pier);
-      //file.addEntity(rel_contained_in_pier_spatial_structure);
 
       // IfcBridgePart::PIER <-> IfcRelAggregates <-> IfcBridgePart::FOUNDATION
       auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Foundation is an aggregate component of pier"), boost::none, pier, list_of_foundations);
