@@ -1,3 +1,7 @@
+**NOTE**
+IfcOpenShell is porting to the v0.8.0 as the main branch. Many of these instructions are becoming out of date. I'll update these instructions after IfcOpenShell stabilizes.
+-----
+
 The PGSuperIfcExtension is based on IfcOpenShell v0.8.0. Before building this PGSuper plug-in, the IfcOpenShell dependency needs to be installed from source and compiled.
 
 **NOTE** If you have a version of the boost libraries already installed, consider using the version installed with IFCOS instead. Mixing versions of boost libraries leads to runtime issues.
