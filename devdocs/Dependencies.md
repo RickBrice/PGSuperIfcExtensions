@@ -1,7 +1,3 @@
-**NOTE**
-IfcOpenShell is porting to the v0.8.0 as the main branch. Many of these instructions are becoming out of date. I'll update these instructions after IfcOpenShell stabilizes.
------
-
 The PGSuperIfcExtension is based on IfcOpenShell v0.8.0. Before building this PGSuper plug-in, the IfcOpenShell dependency needs to be installed from source and compiled.
 
 **NOTE** If you have a version of the boost libraries already installed, consider using the version installed with IFCOS instead. Mixing versions of boost libraries leads to runtime issues.
@@ -34,9 +30,6 @@ Get the sources
 Checkout the v0.8.0 branch and updated submodules (The cityjson submodule gets missed during the oringal clone)
 ~~~
 git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
-cd IfcOpenShell
-git checkout v0.8.0
-git submodule update --init --recursive
 ~~~
 
 The build system uses an old version of Python. We want to use the latest version of python, make sure you have it installed. I've installed it in F:\Python\Python312 (for version 3.12).
@@ -56,14 +49,17 @@ set IFCOS_NUM_BUILD_PROCS=12
 
 Build the IfcOpenShell dependencies by running the following commands.
 This will take a long time. 
-When building the Debug dependencies, there will be 3 assert windows that you need to press the Ignore button.
+When building the Debug dependencies, there will be 3 assert windows that you need to press the Ignore button - if you step away from the build, the test programs asserting will eventually error out and the asserts will go away.
+
 ~~~
 cd F:\IfcOpenShell\win
 build-deps.cmd vs2022-x64 Debug
 build-deps.cmd vs2022-x64 Release
 ~~~
 
-Next run batch file for cmake to create the visual studio solution file.
+If the build of the boost libraries errors out, you'll need to apply the patch https://github.com/boostorg/boost/issues/914#issuecomment-2159445304 and restart the overall build process (ie. run `build-deps.cmd vs2022-x64 Debug` again)
+
+Now that we've got good builds of the dependencies, run the batch file for cmake to create the visual studio solution file.
 
 If you did not have IfcOpenShell install Python, you need to tell it what Python version you
 have installed and where it is located.
