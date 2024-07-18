@@ -131,105 +131,78 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
 
       if (conversion_based_unit)
       {
-         if (conversion_based_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
+         auto measure_with_unit = conversion_based_unit->ConversionFactor();
+         auto unit_component = measure_with_unit->UnitComponent()->as<typename Schema::IfcSIUnit>();
+         Float64 conversion_factor;
+         try
          {
-            if (conversion_based_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
-            {
-               auto measure_with_unit = conversion_based_unit->ConversionFactor();
-               auto unit_component = measure_with_unit->UnitComponent()->as<typename Schema::IfcSIUnit>();
-               ATLASSERT(unit_component->Name() == Schema::IfcSIUnitName::IfcSIUnitName_RADIAN);
-               ATLASSERT(unit_component->Prefix() == boost::none); // not dealing with conversion factors to anything but meter
-               Float64 conversion_factor;
-               try
-               {
-                  auto value_component = measure_with_unit->ValueComponent();
-                  ATLASSERT(value_component); // not dealing with anything but simple conversion factors
-                   //auto value = *(value_component->as<typename Schema::IfcLengthMeasure>()); // as<> returns nullptr if the type is different so deferencing could lead to crash
-                   //auto value = *(value_component->as<typename Schema::IfcRatio>()); // as<> returns nullptr if the type is different so deferencing could lead to crash
-                  auto value = static_cast<Float64>(*value_component->data().getArgument(0));
-                  conversion_factor = 1 / (value);
-               }
-               catch (IfcParse::IfcInvalidTokenException& e)
-               {
-                  // Was expecting something like 
-                  // #15 = IFCMEASUREWITHUNIT(IFCLENGTHMEASURE(3.28083333333333), #16);
-                  // where the expected token is IFCLENGTHMEASURE, but instead found something like
-                  // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
-                  // we'll just get the value and keep going
-                  TRACE(e.what());
-                  Argument* pArgument = measure_with_unit->get("ValueComponent");
-                  ATLASSERT(pArgument->type() == IfcUtil::Argument_DOUBLE);
-                  double value = double(*pArgument);
-                  conversion_factor = 1 / value;
-               }
-
-               if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
-               {
-                  m_pAngleUnit = &WBFL::Units::Measure::Degree;
-               }
-            }
-            else if (conversion_based_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
-            {
-               auto measure_with_unit = conversion_based_unit->ConversionFactor();
-               auto unit_component = measure_with_unit->UnitComponent()->as<typename Schema::IfcSIUnit>();
-               ATLASSERT(unit_component->Name() == Schema::IfcSIUnitName::IfcSIUnitName_METRE);
-               ATLASSERT(unit_component->Prefix() == boost::none); // not dealing with conversion factors to anything but meter
-
-               Float64 conversion_factor;
-               try
-               {
-                  auto value_component = measure_with_unit->ValueComponent();
-                  ATLASSERT(value_component); // not dealing with anything but simple conversion factors
-                  //auto value = *(value_component->as<typename Schema::IfcLengthMeasure>()); // as<> returns nullptr if the type is different so deferencing could lead to crash
-                  //auto value = *(value_component->as<typename Schema::IfcRatio>()); // as<> returns nullptr if the type is different so deferencing could lead to crash
-                  auto value = static_cast<Float64>(*value_component->data().getArgument(0));
-                  conversion_factor = (value);
-               }
-               catch (IfcParse::IfcInvalidTokenException& e)
-               {
-                  // Was expecting something like 
-                  // #15 = IFCMEASUREWITHUNIT(IFCLENGTHMEASURE(3.28083333333333), #16);
-                  // where the expected token is IFCLENGTHMEASURE, but instead found something like
-                  // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
-                  // we'll just get the value and keep going
-                  TRACE(e.what());
-                  Argument* pArgument = measure_with_unit->get("ValueComponent");
-                  ATLASSERT(pArgument->type() == IfcUtil::Argument_DOUBLE);
-                  double value = double(*pArgument);
-                  conversion_factor = value;
-               }
-
-               if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()))
-               {
-                  m_pLengthUnit = &WBFL::Units::Measure::Feet;
-               }
-               else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyFoot.GetConvFactor()))
-               {
-                  m_pLengthUnit = &WBFL::Units::Measure::USSurveyFoot;
-               }
-               else if (IsEqual(conversion_factor, WBFL::Units::Measure::Inch.GetConvFactor()))
-               {
-                  m_pLengthUnit = &WBFL::Units::Measure::Inch;
-               }
-               else if (IsEqual(conversion_factor, WBFL::Units::Measure::Mile.GetConvFactor()))
-               {
-                  m_pLengthUnit = &WBFL::Units::Measure::Mile;
-               }
-               else if (IsEqual(conversion_factor, WBFL::Units::Measure::Yard.GetConvFactor()))
-               {
-                  m_pLengthUnit = &WBFL::Units::Measure::Yard;
-               }
-               else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyYard.GetConvFactor()))
-               {
-                  m_pLengthUnit = &WBFL::Units::Measure::USSurveyYard;
-               }
-               else
-               {
-                  ATLASSERT(false); // we don't have a unit of measure for this
-               }
-            }
-            continue;
+            auto value_component = measure_with_unit->ValueComponent();
+            ATLASSERT(value_component); // not dealing with anything but simple conversion factors
+            conversion_factor = static_cast<Float64>(*value_component->data().getArgument(0));
          }
+         catch (IfcParse::IfcInvalidTokenException& e)
+         {
+            // Was expecting something like 
+            // #15 = IFCMEASUREWITHUNIT(IFCLENGTHMEASURE(3.28083333333333), #16);
+            // where the expected token is IFCLENGTHMEASURE, but instead found something like
+            // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
+            // we'll just get the value and keep going
+            TRACE(e.what());
+            Argument* pArgument = measure_with_unit->get("ValueComponent");
+            ATLASSERT(pArgument->type() == IfcUtil::Argument_DOUBLE);
+            conversion_factor = double(*pArgument);
+         }
+
+         if (unit_component->Prefix() == Schema::IfcSIPrefix::IfcSIPrefix_MILLI)
+         {
+            // lengths are in millimeter, so divide the convesion factor by 1000.
+            // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
+            conversion_factor /= 1000.0;
+         }
+
+         if (conversion_based_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
+         {
+            ATLASSERT(unit_component->Name() == Schema::IfcSIUnitName::IfcSIUnitName_RADIAN);
+
+            if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
+            {
+               m_pAngleUnit = &WBFL::Units::Measure::Degree;
+            }
+         }
+         else if (conversion_based_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
+         {
+            ATLASSERT(unit_component->Name() == Schema::IfcSIUnitName::IfcSIUnitName_METRE);
+
+            if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()))
+            {
+               m_pLengthUnit = &WBFL::Units::Measure::Feet;
+            }
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyFoot.GetConvFactor()))
+            {
+               m_pLengthUnit = &WBFL::Units::Measure::USSurveyFoot;
+            }
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Inch.GetConvFactor()))
+            {
+               m_pLengthUnit = &WBFL::Units::Measure::Inch;
+            }
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Mile.GetConvFactor()))
+            {
+               m_pLengthUnit = &WBFL::Units::Measure::Mile;
+            }
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Yard.GetConvFactor()))
+            {
+               m_pLengthUnit = &WBFL::Units::Measure::Yard;
+            }
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyYard.GetConvFactor()))
+            {
+               m_pLengthUnit = &WBFL::Units::Measure::USSurveyYard;
+            }
+            else
+            {
+               ATLASSERT(false); // we don't have a unit of measure for this
+            }
+         }
+         continue;
       }
    }
 }
@@ -1219,7 +1192,7 @@ void CIfcAlignmentConverter::GetStations(typename Schema::IfcAlignment* pAlignme
                   auto point_by_distance_expression = location->as<typename Schema::IfcPointByDistanceExpression>();
                   if (point_by_distance_expression)
                   {
-                     distance_along = *(point_by_distance_expression->DistanceAlong()->as<typename Schema::IfcNonNegativeLengthMeasure>());
+                     distance_along = *(point_by_distance_expression->DistanceAlong()->as<typename Schema::IfcLengthMeasure>());
                   }
                }
             }
@@ -2196,7 +2169,7 @@ void CIfcAlignmentConverter::GetCurvePoints_4x3(typename Schema::IfcAlignmentHor
    auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pCurve->StartDirection(), *m_pAngleUnit);
    auto L = WBFL::Units::ConvertToSysUnits(pCurve->SegmentLength(), *m_pLengthUnit);
    auto R = WBFL::Units::ConvertToSysUnits(pCurve->StartRadiusOfCurvature(), *m_pLengthUnit);
-   bool bIsCCW = (R < 0 ? true : false);
+   bool bIsCCW = (R < 0 ? false : true);
 
    Float64 delta = fabs(L / R);
    Float64 T = R*tan(delta / 2);
@@ -2386,19 +2359,7 @@ void CIfcAlignmentConverter::ParabolicSegment_4x3(Float64 startStation, typename
    Float64 start_dist = WBFL::Units::ConvertToSysUnits(pParaCurve->StartDistAlong(), *m_pLengthUnit);
    Float64 start_height = WBFL::Units::ConvertToSysUnits(pParaCurve->StartHeight(), *m_pLengthUnit);
    Float64 length = WBFL::Units::ConvertToSysUnits(pParaCurve->HorizontalLength(), *m_pLengthUnit);
-   Float64 R = WBFL::Units::ConvertToSysUnits(pParaCurve->RadiusOfCurvature() ? *(pParaCurve->RadiusOfCurvature()) : 0.0, *m_pLengthUnit);
-
    Float64 exit_gradient = pParaCurve->EndGradient();
-
-   // determine of the parabola is convex
-   // if the second derivative is > 0 it is convex
-   // y = (g2 - g1)/(2L)X^2 + g1*X + startElev
-   // y' = (g2 - g1)/L * X + g1
-   // y'' = (g2 - g1)/L
-   if (0 < (exit_gradient - start_gradient)/length) // is convex
-      R *= -1; // convex
-
-   ATLASSERT(IsEqual(exit_gradient, start_gradient + length / R));
 
    if (m_ProfileState == PROFILE_NOT_STARTED)
    {
