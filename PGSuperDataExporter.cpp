@@ -68,7 +68,7 @@ STDMETHODIMP CPGSuperDataExporter::Export(IBroker* pBroker)
 
    // write some bridge data to a text file
    CExportOptions options_dlg;
-   if (options_dlg.DoModal() == IDCLOSE)
+   if (options_dlg.DoModal() == IDCANCEL)
       return S_OK;
 
    GET_IFACE2(pBroker, IEAFDocument, pDoc);

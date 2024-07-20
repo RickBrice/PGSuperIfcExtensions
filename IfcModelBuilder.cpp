@@ -29,8 +29,9 @@
 #include <IFace\Bridge.h>
 #include <IFace\Intervals.h>
 #include <IFace\PrestressForce.h>
+#include <IFace\AnalysisResults.h>
 #include <EAF\EAFDisplayUnits.h>
-
+#include <EAF\EAFAutoProgress.h>
 #include <PgsExt\GirderLabel.h>
 #include <PgsExt\PrecastSegmentData.h>
 
@@ -452,28 +453,6 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
       // this is actually a gradient line
       return create_gradient<Schema>(p, start_slope, length, options);
    }
-
-   //// geometry
-   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   //{
-   //   double A = p->Coordinates()[0];
-   //   double B = start_slope;
-   //   double C = (end_slope - start_slope) / (2 * length);
-
-   //   auto parent_curve = new Schema::IfcPolynomialCurve(
-   //      new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>{0.0, 0.0}), new Schema::IfcDirection(std::vector<double>{1.0, 0.0})),
-   //      std::vector<double>{0.0, 1.0},
-   //      std::vector<double>{A, B, C},
-   //      boost::none);
-
-   //   curve_segment = new Schema::IfcCurveSegment(
-   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-   //      new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - start_slope * start_slope), start_slope})),
-   //      new Schema::IfcLengthMeasure(0.0),
-   //      new Schema::IfcLengthMeasure(length),
-   //      parent_curve);
-   //}
 
    // business logic
    double R = length / (end_slope - start_slope);
@@ -1541,9 +1520,14 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
+   //Float64 Ls = pBridge->GetSegmentPlanLength(segmentKey);
+   //Float64 slope = pBridge->GetSegmentSlope(segmentKey);
+
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
    girder_line_points->push(new Schema::IfcCartesianPoint({ sx,sy,sz }));
    girder_line_points->push(new Schema::IfcCartesianPoint({ ex,ey,ez }));
+   //girder_line_points->push(new Schema::IfcCartesianPoint({ 0,0,0 }));
+   //girder_line_points->push(new Schema::IfcCartesianPoint({ 0,0,Ls }));
    auto girder_line = new Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
@@ -1562,6 +1546,8 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       cross_sections->push(girder_perimeter);
 
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(poi.GetDistFromStart()), boost::none, boost::none, boost::none, girder_line);
+      //Float64 x = poi.GetDistFromStart() * sqrt(1 + slope * slope);
+      //auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
       file.addEntity(pde);
 
       auto lp = new Schema::IfcAxis2PlacementLinear(pde, nullptr, nullptr);
@@ -1585,7 +1571,7 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 }
 
 template <typename Schema>
-void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment,typename Schema::IfcStyledRepresentation* styled_representation)
+void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options, typename Schema::IfcStyledRepresentation* styled_representation)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -1594,6 +1580,25 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    IntervalIndexType releaseIntervalIdx = pIntervals->GetPrestressReleaseInterval(segmentKey);
    IntervalIndexType liftingIntervalIdx = pIntervals->GetLiftSegmentInterval(segmentKey);
    IntervalIndexType haulingIntervalIdx = pIntervals->GetHaulSegmentInterval(segmentKey);
+
+   Float64 camber_ratio = 0.0;
+   if (options.include_camber)
+   {
+      // Compute the camber ratio
+      // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_PrecastConcreteElementGeneral.htm
+      // The camber deflection, measured from the midpoint of a cambered face of a piece to the midpoint of the chord joining the ends of the same face, 
+      // as shown in the figure below (figure not provided), divided by the original (nominal) straight length of the face of the piece.
+      GET_IFACE2(pBroker, IPointOfInterest, pPoi);
+      PoiList vPoi;
+      pPoi->GetPointsOfInterest(segmentKey, POI_RELEASED_SEGMENT | POI_5L, &vPoi);
+      CHECK(vPoi.size() == 1);
+      const pgsPointOfInterest& poiMS = vPoi.front();
+      GET_IFACE2(pBroker, ICamber, pCamber);
+      Float64 D = pCamber->GetDCamberForGirderSchedule(poiMS, pgsTypes::CreepTime::Max);
+      GET_IFACE2(pBroker, IBridge, pBridge);
+      Float64 Ls = pBridge->GetSegmentPlanLength(segmentKey);
+      camber_ratio = D / Ls;
+   }
 
    // create the material
    auto material = new Schema::IfcMaterial("Precast Segment Concrete", boost::none/*description*/, boost::none/*category*/);
@@ -1619,6 +1624,12 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("ReleaseStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx)), nullptr));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("TransportationStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc(segmentKey, haulingIntervalIdx)), nullptr));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("InitialTension"), boost::none, new Schema::IfcPressureMeasure(pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent)), nullptr));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtStart"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtEnd"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
+   if (options.include_camber) {
+      precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("CamberAtMidspan"), boost::none, new Schema::IfcRatioMeasure(camber_ratio), nullptr));
+   }
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("DesignLocationNumber"), boost::none, new Schema::IfcLabel(T2A(SEGMENT_LABEL(segmentKey))), nullptr));
    auto pset_material_precast_concrete = new Schema::IfcMaterialProperties(std::string("Pset_PrecastConcreteElementGeneral"), boost::none, precast_concrete_properties, material);
    file.addEntity(pset_material_precast_concrete);
 
@@ -1632,32 +1643,32 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    file.addEntity(rel_associates_materials);
 }
 
-//template <typename Schema>
-//void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, typename Schema::IfcTendon* tendon)
-//{
-//   // place strands relative to the segment
-//   auto strand_placement = file.addLocalPlacement(segment->ObjectPlacement(),
-//      0, 0, 0, // (0,0,0) of the strands is at (0,0,0) of the segment
-//      1, 0, 0, // direction the Z-axis of the extrusion in the global X direction 
-//      0, 1, 0 // direction the X-axis of the cross section in the global Y direction
-//   );
-//
-//   GET_IFACE2(pBroker, IPointOfInterest, pPoi);
-//   PoiList vPoi;
-//   pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE | POI_SECTCHANGE, &vPoi, POIFIND_OR);
-//   ATLASSERT(2 <= vPoi.size());
-//
-//   const pgsPointOfInterest& poiStart(vPoi.front());
-//   const pgsPointOfInterest& poiEnd(vPoi.back());
-//
-//   auto strands = CreateStrands<Schema>(file, pBroker, poiStart, poiEnd, strand_placement);
-//
-//   if (0 < strands->size())
-//   {
-//      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Strands"), boost::none, segment, strands);
-//      file.addEntity(rel_aggregates);
-//   }
-//}
+template <typename Schema>
+void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment/*, typename Schema::IfcTendon* tendon*/)
+{
+   // place strands relative to the segment
+   auto strand_placement = file.addLocalPlacement(segment->ObjectPlacement(),
+      0, 0, 0, // (0,0,0) of the strands is at (0,0,0) of the segment
+      1, 0, 0, // direction the Z-axis of the extrusion in the global X direction 
+      0, 1, 0 // direction the X-axis of the cross section in the global Y direction
+   );
+
+   GET_IFACE2(pBroker, IPointOfInterest, pPoi);
+   PoiList vPoi;
+   pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE | POI_SECTCHANGE, &vPoi, POIFIND_OR);
+   ATLASSERT(2 <= vPoi.size());
+
+   const pgsPointOfInterest& poiStart(vPoi.front());
+   const pgsPointOfInterest& poiEnd(vPoi.back());
+
+   auto strands = CreateStrands<Schema>(file, pBroker, poiStart, poiEnd, strand_placement);
+
+   if (0 < strands->size())
+   {
+      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Strands"), boost::none, segment, strands);
+      file.addEntity(rel_aggregates);
+   }
+}
 
 template <typename Schema>
 void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CClosureKey& closureKey, typename Schema::IfcElementAssembly* closureJoint, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
@@ -1804,6 +1815,8 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    objDir.Release();
    objDir.CoCreateInstance(CLSID_Direction);
 
+   IndexType point_count = 0;
+
    GET_IFACE2(pBroker, IShapes, pShapes);
    typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
    typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
@@ -1820,6 +1833,25 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
       CComPtr<IShape> slab_shape;
       pShapes->GetSlabShape(station, nullptr/*objDir*/, true/*include haunch*/, &slab_shape);
+
+      // All of the deck cross sections must have exactly the same number of points or it is an invalid IFC representation
+      // Capture the number of points for the first deck section, then compare all other deck sections
+      // If the point count is different, just skip it.
+      // It is typically different between spans at continuous piers... this is a hack, see note above about
+      // modeling skews
+      CComPtr<IPoint2dCollection> polyPoints;
+      slab_shape->get_PolyPoints(&polyPoints);
+      IndexType nPoints;
+      polyPoints->get_Count(&nPoints);
+      if (i == 0)
+      {
+         point_count = nPoints;
+      }
+      else
+      {
+         if (point_count != nPoints)
+            continue;
+      }
 
       double elev = pAlignment->GetElevation(station, 0.0);
       CComQIPtr<IXYPosition> pos(slab_shape);
@@ -2186,7 +2218,10 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             auto segment_name = os_segment_name.str();
             auto segment = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
-            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, girder_material_representation);
+            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, options, girder_material_representation);
+            
+            //CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment/*, tendon*/);
+
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
 
@@ -2271,6 +2306,10 @@ template <typename Schema>
 bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
+
+   GET_IFACE2(pBroker, IProgress, pProgress);
+   CEAFAutoProgress ap(pProgress);
+   pProgress->UpdateMessage(_T("Exporting IFC model"));
 
    IfcHierarchyHelper<Schema> file;
    InitializeFile<Schema>(file, pBroker, strFilePath); // creates project and site
