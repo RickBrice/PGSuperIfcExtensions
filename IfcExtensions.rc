@@ -130,10 +130,13 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,179,249,50,14
     GROUPBOX        "Export",IDC_STATIC,7,7,228,59
     GROUPBOX        "Alignment",IDC_STATIC,7,68,230,81
-    GROUPBOX        "Bridge",IDC_STATIC,7,153,230,84
-    LTEXT           "Sweep Profile",IDC_STATIC,16,170,44,8
-    CONTROL         "IfcPolyline",IDC_SWEEP_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,169,49,10
-    CONTROL         "IfcIndexPolyCurve",IDC_SWEEP_INDEXPOLYCURVE,"Button",BS_AUTORADIOBUTTON,134,169,76,10
+    GROUPBOX        "Bridge",IDC_STATIC,7,153,230,36
+    LTEXT           "Deck and Beam Section Profile",IDC_STATIC,16,166,97,8
+    CONTROL         "IfcPolyline",IDC_SWEEP_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,177,49,10
+    CONTROL         "IfcIndexPolyCurve",IDC_SWEEP_INDEXPOLYCURVE,"Button",BS_AUTORADIOBUTTON,134,177,76,10
+    GROUPBOX        "Girders",IDC_STATIC,7,194,231,43
+    CONTROL         "Include camber in PSet_PrecastConcreteElementGeneral",IDC_INCLUDE_CAMBER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,209,196,10
 END
 
 

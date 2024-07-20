@@ -69,6 +69,7 @@ public:
    Tangents tangents = Tangents::Line;
    Representations representations = Representations::Curve3dOnly;
    SweepProfile sweep_profile = SweepProfile::Polyline;
+   bool include_camber = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////
