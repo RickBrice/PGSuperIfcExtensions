@@ -1223,6 +1223,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
    GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);
    GET_IFACE2_NOCHECK(pBroker, IMaterials, pMaterials);
 
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
+
    PoiList vHP;
    pPoi->GetPointsOfInterest(segmentKey, POI_HARPINGPOINT, &vHP);
    std::array<std::string, 3> strStrandType{ "Straight","Harped","Temporary" };
@@ -1258,9 +1261,11 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          CComPtr<IPoint2d> pntStart;
          strand_points_start->get_Item(strandIdx, &pntStart);
 
-         Float64 X, Y;
-         pntStart->Location(&X, &Y);
-         auto start_point = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, poiStart.GetDistFromStart()});
+         Float64 X, Y, Z; // X = distance along beam, Z = vertical distance in beam section, Y = horizontal distance in beam section = Z.cross(X)
+         pntStart->Location(&Y, &Z);
+         X = poiStart.GetDistFromStart() * sqrt(1 + slope * slope); // adjust distance along plan length to distance along girder
+
+         auto start_point = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, Z});
 
          points->push(start_point);
 
@@ -1273,24 +1278,26 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
             harp_points->get_Item(strandIdx, &point);
 
             auto i = std::distance(begin, iter);
-            const pgsPointOfInterest& poi = vHP[i];
+            const pgsPointOfInterest& poiHP = vHP[i];
 
-            point->Location(&X, &Y);
-            auto hp = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, poi.GetDistFromStart()});
+            point->Location(&Y, &Z);
+            X = poiHP.GetDistFromStart() * sqrt(1 + slope * slope);
+            auto hp = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, Z});
             points->push(hp);
          }
 
          CComPtr<IPoint2d> pntEnd;
          strand_points_end->get_Item(strandIdx, &pntEnd);
 
-         pntEnd->Location(&X, &Y);
-         auto end_point = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, poiEnd.GetDistFromStart()});
+         pntEnd->Location(&Y, &Z);
+         X = poiEnd.GetDistFromStart() * sqrt(1 + slope * slope);
+         auto end_point = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, Z});
          points->push(end_point);
 
          auto directrix = new Schema::IfcPolyline(points);
          file.addEntity(directrix);
 
-         // NOTE: IfcSweptDiskSolid is not part of AbRV.
+         // NOTE: IfcSweptDiskSolid is not part of AbV.
          auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, pStrand->GetNominalDiameter() / 2, boost::none, boost::none, boost::none);
          file.addEntity(swept_disk_solid);
          strand_representation_items->push(swept_disk_solid);
@@ -1313,6 +1320,59 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
       file.addEntity(strand);
 
       strands->push(strand);
+
+      // 6.3.4.9 Pset_ElementComponentCommon
+      typename aggregate_of<typename Schema::IfcProperty>::ptr element_component_common_properties(new aggregate_of<typename Schema::IfcProperty>());
+
+      if (strandType == pgsTypes::Temporary)
+      {
+         // 6.1.8.8 PEnum_ElementStatus
+         // This is the only PSet I could find with TEMPORARY so use it for temporary strands
+         typename aggregate_of<typename Schema::IfcValue>::ptr element_status_enum_values(new aggregate_of<typename Schema::IfcValue>());
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("DEMOLISH")));
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("EXISTING")));
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("NEW")));
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("TEMPORARY")));
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("OTHER")));
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("NOTKNOWN")));
+         element_status_enum_values->push(new Schema::IfcLabel(std::string("UNSET")));
+         auto element_status_enum = new Schema::IfcPropertyEnumeration(std::string("PEnum_ElementStatus"), element_status_enum_values, nullptr);
+
+         typename aggregate_of<typename Schema::IfcValue>::ptr list_of_element_status(new aggregate_of<typename Schema::IfcValue>());
+         list_of_element_status->push(new Schema::IfcLabel(std::string("TEMPORARY")));
+         element_component_common_properties->push(new Schema::IfcPropertyEnumeratedValue(std::string("Status"), boost::none, list_of_element_status, element_status_enum));
+      }
+
+      // 6.3.8.1 PEnum_ElementComponentCorrosionTreatment
+      typename aggregate_of<typename Schema::IfcValue>::ptr corrosion_treatment_enum_values(new aggregate_of<typename Schema::IfcValue>());
+      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("EPOXYCOATED")));
+      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("GALVANISED")));
+      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("NONE")));
+      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("PAINTED")));
+      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("STAINLESS")));
+      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("NOTDEFINED")));
+      auto corrosion_treatment_enum = new Schema::IfcPropertyEnumeration(std::string("PEnum_ElementComponentCorrosionTreatment"), corrosion_treatment_enum_values, nullptr);
+
+      typename aggregate_of<typename Schema::IfcValue>::ptr list_of_corrosion_treatments(new aggregate_of<typename Schema::IfcValue>());
+      if (pStrand->GetCoating() == WBFL::Materials::PsStrand::Coating::None)
+      {
+         list_of_corrosion_treatments->push(new Schema::IfcLabel(std::string("NONE")));
+      }
+      else
+      {
+         list_of_corrosion_treatments->push(new Schema::IfcLabel(std::string("EPOXYCOATED")));
+      }
+      element_component_common_properties->push(new Schema::IfcPropertyEnumeratedValue(std::string("CorrosionTreatment"), boost::none, list_of_corrosion_treatments, corrosion_treatment_enum));
+
+      auto pset_element_component_common = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ElementComponentCommon"), boost::none, element_component_common_properties);
+      file.addEntity(pset_element_component_common);
+
+
+      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_strands(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      related_strands->push(strand);
+
+      auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_strands, pset_element_component_common);
+      file.addEntity(related_properties);
    }
 
    return strands;
@@ -1456,10 +1516,13 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE | POI_SECTCHANGE, &vPoi, POIFIND_OR);
    ATLASSERT(2 <= vPoi.size());
 
+   Float64 Ls = pBridge->GetSegmentLength(segmentKey);
+   Float64 Lg = pBridge->GetSegmentPlanLength(segmentKey);
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
+
    if (variationType == pgsTypes::svtParabolic)
    {
       // single parabola
-      Float64 Ls = pBridge->GetSegmentLength(segmentKey);
       Float64 Lleft = pSegment->GetVariationLength(pgsTypes::sztLeftPrismatic);
       Float64 Lright = pSegment->GetVariationLength(pgsTypes::sztRightPrismatic);
       Float64 L = Ls - Lleft - Lright; // length of the non-prismatic portion of the segment
@@ -1488,7 +1551,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       }
 
       // right parabola
-      Float64 Ls = pBridge->GetSegmentLength(segmentKey);
       Float64 Lright = pSegment->GetVariationLength(pgsTypes::sztRightPrismatic);
       Float64 Lr = pSegment->GetVariationLength(pgsTypes::sztRightTapered);
       Lleft = Ls - Lright - Lr; // location of the left end of the right parabola
@@ -1520,14 +1582,10 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
-   //Float64 Ls = pBridge->GetSegmentPlanLength(segmentKey);
-   //Float64 slope = pBridge->GetSegmentSlope(segmentKey);
-
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   girder_line_points->push(new Schema::IfcCartesianPoint({ sx,sy,sz }));
-   girder_line_points->push(new Schema::IfcCartesianPoint({ ex,ey,ez }));
-   //girder_line_points->push(new Schema::IfcCartesianPoint({ 0,0,0 }));
-   //girder_line_points->push(new Schema::IfcCartesianPoint({ 0,0,Ls }));
+   // build the girder model in a simple coordinate system, then use ObjectPlacement to local in space
+   girder_line_points->push(new Schema::IfcCartesianPoint({ 0,0,0 }));
+   girder_line_points->push(new Schema::IfcCartesianPoint({ Lg,0,0 })); // due East from origin, length is plan length, not basic segment length
    auto girder_line = new Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
@@ -1545,9 +1603,8 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       file.addEntity(girder_perimeter);
       cross_sections->push(girder_perimeter);
 
-      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(poi.GetDistFromStart()), boost::none, boost::none, boost::none, girder_line);
-      //Float64 x = poi.GetDistFromStart() * sqrt(1 + slope * slope);
-      //auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
+      Float64 x = poi.GetDistFromStart() * sqrt(1 + slope * slope); // adjust distance along plan length to distance along girder
+      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
       file.addEntity(pde);
 
       auto lp = new Schema::IfcAxis2PlacementLinear(pde, nullptr, nullptr);
@@ -1565,7 +1622,16 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
 
-   auto segment_placement = file.addLocalPlacement();
+   // Place the segment in 3D space
+   WBFL::Geometry::Vector3d ref_direction(ex - sx, ey - sy, ez - sz); // along the length of the girder
+   ref_direction.Normalize();
+   WBFL::Geometry::Vector3d z(0, 0, 1); // true up direction
+   WBFL::Geometry::Vector3d y = z.Cross(ref_direction); // cross product gives Y axis perpendicular to ref_direction and up
+   WBFL::Geometry::Vector3d axis = ref_direction.Cross(y); // cross product gives Z axis of the girder
+   auto segment_placement = file.addLocalPlacement(nullptr,
+      sx, sy, sz,
+      axis.X(), axis.Y(), axis.Z(),
+      ref_direction.X(), ref_direction.Y(), ref_direction.Z());
    segment->setObjectPlacement(segment_placement);
    segment->setRepresentation(product_definition_shape);
 }
@@ -1639,19 +1705,17 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    segments->push(segment);
 
    // associate the material with the segment (ie segments collection)
-   auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Concrete_To_Precast_Segment"), boost::none, segments, material);
+   auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Concrete_to_Precast_Segment"), boost::none, segments, material);
    file.addEntity(rel_associates_materials);
 }
 
 template <typename Schema>
-void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment/*, typename Schema::IfcTendon* tendon*/)
+void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, typename Schema::IfcStyledRepresentation* styled_representation)
 {
-   // place strands relative to the segment
-   auto strand_placement = file.addLocalPlacement(segment->ObjectPlacement(),
-      0, 0, 0, // (0,0,0) of the strands is at (0,0,0) of the segment
-      1, 0, 0, // direction the Z-axis of the extrusion in the global X direction 
-      0, 1, 0 // direction the X-axis of the cross section in the global Y direction
-   );
+   USES_CONVERSION;
+
+   // place strands relative to the segment origin
+   auto strand_placement = file.addLocalPlacement(segment->ObjectPlacement());
 
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPoi;
@@ -1665,6 +1729,53 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
 
    if (0 < strands->size())
    {
+      // create the material
+      auto strand_material = new Schema::IfcMaterial("Prestressing Strand", boost::none/*description*/, boost::none/*category*/);
+      file.addEntity(strand_material);
+
+      // assigns the presentation styles to the material
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      list_of_representations->push(styled_representation);
+      auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
+      file.addEntity(material_defintion_representation);
+
+
+      pgsTypes::StrandType strandType = pgsTypes::Straight;
+      GET_IFACE2(pBroker, IMaterials, pMaterials);
+      const auto* pStrand = pMaterials->GetStrandMaterial(segmentKey, strandType);
+      auto fy = pStrand->GetYieldStrength();
+      auto fpu = pStrand->GetUltimateStrength();
+      auto eu = 0.035; // from ASTM A416 spec
+
+      std::ostringstream os;
+      os << "ASTM A416 Grade " << T2A(WBFL::Materials::PsStrand::GetGrade(pStrand->GetGrade(), true/*US units*/).c_str());
+      auto grade = os.str();
+
+      // Pset_MaterialSteel
+      typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
+#pragma Reminder("WORKING HERE - Define strand material")
+      // this assumes same material for all strands, but that is not the case in the PGSuper data model
+      // straight, harped, and temporary can be different - Grade 250, Grade 270, Grade 300
+      //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
+      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new Schema::IfcPressureMeasure(fy), nullptr));
+      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new Schema::IfcPressureMeasure(fpu), nullptr));
+      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new Schema::IfcPositiveRatioMeasure(eu), nullptr));
+      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new Schema::IfcLabel(grade.c_str()), nullptr));
+      auto pset_material_steel = new Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, strand_material);
+      file.addEntity(pset_material_steel);
+
+      // need a list of entities that are associated with this material
+      // right now we are creating a unique material for each strand but we still need the list
+      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr strands_for_material(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      for (auto& strand : *strands)
+      {
+         strands_for_material->push(strand);
+      }
+
+      // associate the material with the segment (ie segments collection)
+      auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Strand"), boost::none, strands_for_material, strand_material);
+      file.addEntity(rel_associates_materials);
+
       auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Strands"), boost::none, segment, strands);
       file.addEntity(rel_aggregates);
    }
@@ -1780,6 +1891,12 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
 template <typename Schema>
 void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
+#pragma Reminder("WORKING HERE - Deck Model - need to re-think this approach")
+   // Consider modeling the slab separately from the haunch. The basic slab is the same everywhere.
+   // Each girder has it's own haunch.
+   // This should eliminate the problem with different number of points in the cross section profile.
+   // The deck representation would be a composite of the main slab and each haunch
+
    // This is not a good model of the deck. This model just creates NUM_DECK_SECTIONS cross sections and extrudes between them.
    GET_IFACE2(pBroker, IBridge, pBridge);
    USES_CONVERSION;
@@ -2188,6 +2305,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // first create a representation object for the girder material. this is one way to add presentation information such as color.
    // this helper function just sets color and hard codes all the other parameters - this can be expanded in the future
    auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", 7.6078431372549E-1, 7.72549019607843E-1, 8.E-1, geometric_representation_context);
+   auto strand_material_representation = CreateMaterialRepresentation<Schema>("Strand", 1, 0, 0, geometric_representation_context);
 
    GET_IFACE2(pBroker, IBridge, pBridge);
    GroupIndexType nGroups = pBridge->GetGirderGroupCount();
@@ -2220,7 +2338,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
             CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, options, girder_material_representation);
             
-            //CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment/*, tendon*/);
+            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment, strand_material_representation);
 
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
