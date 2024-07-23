@@ -40,6 +40,34 @@
 
 constexpr IndexType NUM_DECK_SECTIONS = 10;
 
+
+#pragma Reminder("TODO - generalize the property enum methods and move to IfcHierarchyHelper")
+// Need to cache the IfcPropertyEnumeration for lookup - it can be used multiple times by reference
+// Need to have a getPropertyEnumeration method
+// Need to generalize the enumValues from strings to IfcValue
+// createPropertyEnumeratedValue needs two forms, a single value and a vector of values
+template <typename Schema>
+typename Schema::IfcPropertyEnumeration* createPropertyEnumeration(const std::string& name, std::vector<std::string>& enumValues, typename Schema::IfcUnit* unit = nullptr)
+{
+   typename aggregate_of<typename Schema::IfcValue>::ptr enum_values(new aggregate_of<typename Schema::IfcValue>());
+   for (const auto& value : enumValues)
+   {
+      enum_values->push(new Schema::IfcLabel(value));
+   }
+
+   auto property_enum = new Schema::IfcPropertyEnumeration(name, enum_values, unit);
+   return property_enum;
+}
+
+template <typename Schema>
+typename Schema::IfcPropertyEnumeratedValue* createPropertyEnumeratedValue(const std::string& property_name,typename Schema::IfcPropertyEnumeration* enumeration,const std::string& value)
+{
+   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_selected_enum_values(new aggregate_of<typename Schema::IfcValue>());
+   list_of_selected_enum_values->push(new Schema::IfcLabel(value));
+   auto property_enum_value = new Schema::IfcPropertyEnumeratedValue(property_name, boost::none, list_of_selected_enum_values, enumeration);
+   return property_enum_value;
+}
+
 #define CLOCKWISE 0
 #define COUNTERCLOCKWISE 1
 int GetVertexOrdering(IShape* pShape)
@@ -241,39 +269,6 @@ typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& fil
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_tangent(typename Schema::IfcCartesianPoint* p, double dir, double length,const CIfcModelBuilderOptions& options)
 {
-   //// geometry
-   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   //{
-   //   typename Schema::IfcCurve* parent_curve = nullptr;
-   //   if (options.tangents == CIfcModelBuilderOptions::Tangents::Polyline)
-   //   {
-   //      typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   //      auto v = p->Coordinates();
-   //      auto xs = v[0];
-   //      auto ys = v[1];
-   //      double xe = xs + length * cos(dir);
-   //      double ye = ys + length * sin(dir);
-   //      auto p2 = new Schema::IfcCartesianPoint({ xe,ye });
-   //      points->push(p);
-   //      points->push(p2);
-   //      parent_curve = new Schema::IfcPolyline(points);
-   //   }
-   //   else
-   //   {
-   //      parent_curve = new Schema::IfcLine(
-   //         new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
-   //         new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1.0, 0.0}), 1.0));
-   //   }
-
-   //   curve_segment = new Schema::IfcCurveSegment(
-   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-   //      new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-   //      new Schema::IfcLengthMeasure(0.0), // start
-   //      new Schema::IfcLengthMeasure(length),
-   //      parent_curve);
-   //}
-
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(
       boost::none, boost::none, p, dir, 0.0, 0.0, length, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE);
@@ -295,23 +290,6 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_hcurve(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double lc, const CIfcModelBuilderOptions& options)
 {
-   //// geometry
-   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   //{
-   //   double sign = radius / fabs(radius);
-   //   auto parent_curve = new Schema::IfcCircle(
-   //      new Schema::IfcAxis2Placement2D(new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })), new Schema::IfcDirection(std::vector<double>{1, 0})),
-   //      fabs(radius));
-
-   //   curve_segment = new Schema::IfcCurveSegment(
-   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-   //      new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-   //      new Schema::IfcLengthMeasure(0.0),
-   //      new Schema::IfcLengthMeasure(sign * lc),
-   //      parent_curve);
-   //}
-
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, radius, lc, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
@@ -330,28 +308,6 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_entry_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
 {
-   //// geometry
-   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   //{
-   //   double sign = radius / fabs(radius);
-
-   //   Float64 A = sign * sqrt(ls * fabs(radius));
-
-   //   auto parent_curve = new Schema::IfcClothoid(
-   //      new Schema::IfcAxis2Placement2D(
-   //         new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
-   //         new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
-   //      A);
-
-   //   curve_segment = new Schema::IfcCurveSegment(
-   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-   //      new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-   //      new Schema::IfcLengthMeasure(0.0),
-   //      new Schema::IfcLengthMeasure(ls),
-   //      parent_curve);
-   //}
-
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, 0.0, radius, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
@@ -370,28 +326,6 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_exit_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
 {
-   //// geometry
-   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   //{
-   //   double sign = radius / fabs(radius);
-
-   //   Float64 A = -1.0 * sign * sqrt(ls * fabs(radius));
-
-   //   auto parent_curve = new Schema::IfcClothoid(
-   //      new Schema::IfcAxis2Placement2D(
-   //         new Schema::IfcCartesianPoint(std::vector<double>({ 0,0 })),
-   //         new Schema::IfcDirection(std::vector<double>({ 1,0 }))),
-   //      A);
-
-   //   curve_segment = new Schema::IfcCurveSegment(
-   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-   //      new Schema::IfcAxis2Placement2D(pc, new Schema::IfcDirection(std::vector<double>{cos(dir), sin(dir)})),
-   //      new Schema::IfcLengthMeasure(-1.0 * ls),
-   //      new Schema::IfcLengthMeasure(ls),
-   //      parent_curve);
-   //}
-
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, 0.0, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
    auto alignment_segment = new Schema::IfcAlignmentSegment(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, boost::none, nullptr, nullptr, design_parameters);
@@ -411,22 +345,6 @@ template <typename Schema>
 std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_gradient(typename Schema::IfcCartesianPoint* p, double slope, double length, const CIfcModelBuilderOptions& options)
 {
    CHECK(0 <= length);
-
-   //// geometry
-   //typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   //if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
-   //{
-   //   auto parent_curve = new Schema::IfcLine(
-   //      new Schema::IfcCartesianPoint(std::vector<double>({ 0, 0 })),
-   //      new Schema::IfcVector(new Schema::IfcDirection(std::vector<double>{1, 0}), 1.0));
-
-   //   curve_segment = new Schema::IfcCurveSegment(
-   //      Schema::IfcTransitionCode::IfcTransitionCode_CONTSAMEGRADIENT,
-   //      new Schema::IfcAxis2Placement2D(p, new Schema::IfcDirection(std::vector<double>{sqrt(1 - slope * slope), slope})),
-   //      new Schema::IfcLengthMeasure(0.0), // start
-   //      new Schema::IfcLengthMeasure(length),
-   //      parent_curve);
-   //}
 
    // business logic
    auto design_parameters = new Schema::IfcAlignmentVerticalSegment(boost::none, boost::none, p->Coordinates()[0], length, p->Coordinates()[1], slope, slope, boost::none, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
@@ -1328,41 +1246,17 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
       {
          // 6.1.8.8 PEnum_ElementStatus
          // This is the only PSet I could find with TEMPORARY so use it for temporary strands
-         typename aggregate_of<typename Schema::IfcValue>::ptr element_status_enum_values(new aggregate_of<typename Schema::IfcValue>());
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("DEMOLISH")));
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("EXISTING")));
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("NEW")));
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("TEMPORARY")));
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("OTHER")));
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("NOTKNOWN")));
-         element_status_enum_values->push(new Schema::IfcLabel(std::string("UNSET")));
-         auto element_status_enum = new Schema::IfcPropertyEnumeration(std::string("PEnum_ElementStatus"), element_status_enum_values, nullptr);
-
-         typename aggregate_of<typename Schema::IfcValue>::ptr list_of_element_status(new aggregate_of<typename Schema::IfcValue>());
-         list_of_element_status->push(new Schema::IfcLabel(std::string("TEMPORARY")));
-         element_component_common_properties->push(new Schema::IfcPropertyEnumeratedValue(std::string("Status"), boost::none, list_of_element_status, element_status_enum));
+         std::vector<std::string> enum_values{ "DEMOLISH","EXISTING","NEW","TEMPORARY","OTHER","NOTKNOWN","UNSET" };
+         auto element_status_enum = createPropertyEnumeration<Schema>("PEnum_ElementStatus", enum_values);
+         auto enum_value = createPropertyEnumeratedValue<Schema>("Status", element_status_enum, "TEMPORARY");
+         element_component_common_properties->push(enum_value);
       }
 
       // 6.3.8.1 PEnum_ElementComponentCorrosionTreatment
-      typename aggregate_of<typename Schema::IfcValue>::ptr corrosion_treatment_enum_values(new aggregate_of<typename Schema::IfcValue>());
-      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("EPOXYCOATED")));
-      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("GALVANISED")));
-      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("NONE")));
-      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("PAINTED")));
-      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("STAINLESS")));
-      corrosion_treatment_enum_values->push(new Schema::IfcLabel(std::string("NOTDEFINED")));
-      auto corrosion_treatment_enum = new Schema::IfcPropertyEnumeration(std::string("PEnum_ElementComponentCorrosionTreatment"), corrosion_treatment_enum_values, nullptr);
-
-      typename aggregate_of<typename Schema::IfcValue>::ptr list_of_corrosion_treatments(new aggregate_of<typename Schema::IfcValue>());
-      if (pStrand->GetCoating() == WBFL::Materials::PsStrand::Coating::None)
-      {
-         list_of_corrosion_treatments->push(new Schema::IfcLabel(std::string("NONE")));
-      }
-      else
-      {
-         list_of_corrosion_treatments->push(new Schema::IfcLabel(std::string("EPOXYCOATED")));
-      }
-      element_component_common_properties->push(new Schema::IfcPropertyEnumeratedValue(std::string("CorrosionTreatment"), boost::none, list_of_corrosion_treatments, corrosion_treatment_enum));
+      std::vector<std::string> enum_values{ "EPOXYCOATED","GALVANISED","NONE","PAINTED","STAINLESS","NOTDEFINED" };
+      auto corrosion_treatment_enum_values = createPropertyEnumeration<Schema>("PEnum_ElementComponentCorrosionTreatment", enum_values);
+      auto corrosion_treatment_type = createPropertyEnumeratedValue<Schema>("CorrosionTreatment", corrosion_treatment_enum_values, pStrand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED");
+      element_component_common_properties->push(corrosion_treatment_type);
 
       auto pset_element_component_common = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ElementComponentCommon"), boost::none, element_component_common_properties);
       file.addEntity(pset_element_component_common);
@@ -1747,15 +1641,19 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
       auto fpu = pStrand->GetUltimateStrength();
       auto eu = 0.035; // from ASTM A416 spec
 
+#pragma Reminder("WORKING HERE - Define strand material")
+      // Need to clean this up
+      // ASTM A416 is for low relaxation strand... PGSuper does low relaxation and stress relieved
+      // ASTM A416 is for Grade 250 and Grade 270... PGSuper does grade 300 as well, but there doesn't seem to be an ASTM
+      // We are assuming same material for all strands, but that is not the case in the PGSuper data model
+      // straight, harped, and temporary can be different - Grade 250, Grade 270, Grade 300
+      // Strand size/diameter is a property on IfcTendon
       std::ostringstream os;
       os << "ASTM A416 Grade " << T2A(WBFL::Materials::PsStrand::GetGrade(pStrand->GetGrade(), true/*US units*/).c_str());
       auto grade = os.str();
 
       // Pset_MaterialSteel
       typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
-#pragma Reminder("WORKING HERE - Define strand material")
-      // this assumes same material for all strands, but that is not the case in the PGSuper data model
-      // straight, harped, and temporary can be different - Grade 250, Grade 270, Grade 300
       //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
       material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new Schema::IfcPressureMeasure(fy), nullptr));
       material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new Schema::IfcPressureMeasure(fpu), nullptr));
@@ -1819,23 +1717,13 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
-
-   //Float64 distance;
-   //CComPtr<IDirection> closure_direction;
-   //cogoUtil::Inverse(pntStart, pntEnd, &distance, &closure_direction);
-
-   //Float64 direction;
-   //closure_direction->get_Value(&direction);
-
-   Float64 Lc = pBridge->GetClosureJointLength(closureKey);
-   //Float64 closure_grade = (Ze - Zs) / Lc;
+   Float64 Lc = pBridge->GetClosureJointLength(closureKey); // this is a plan length distance, we need the length along the grade
+   Float64 slope = (ez - sz) / Lc;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   //girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}));
-   //girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{Lc, 0, 0}));
-   girder_line_points->push(new Schema::IfcCartesianPoint({ sx,sy,sz }));
-   girder_line_points->push(new Schema::IfcCartesianPoint({ ex,ey,ez }));
+   girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}));
+   girder_line_points->push(new Schema::IfcCartesianPoint(std::vector<double>{Lc, 0, 0}));
    auto girder_line = new Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
@@ -1864,26 +1752,16 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
 
-
-   ////Float64 startClosureStation, startClosureOffset;
-   ////pBridge->GetStationAndOffset(poiStart, &startClosureStation, &startClosureOffset);
-
-   ////GET_IFACE2(pBroker, IRoadway, pAlignment);
-   ////Float64 startClosureElevation = pAlignment->GetElevation(startClosureStation, 0.0);
-
-   ////Float64 startStation, startElevation, startGrade;
-   ////CComPtr<IPoint2d> startPoint;
-   ////pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
-
-   ////// get the directrix line of the alignment
-   ////auto directrix = GetAlignmentDirectrix(file);
-
-   ////// place closure joint relative to alignment
-   ////auto closure_origin_point = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(startClosureStation - startStation), -startClosureOffset, Zs - startClosureElevation, 0.0, directrix);
-   ////auto relative_placement = new Schema::IfcAxis2PlacementLinear(closure_origin_point, new Schema::IfcDirection(std::vector<double>{ -closure_grade * cos(direction), -closure_grade * sin(direction), 1}), new Schema::IfcDirection(std::vector<double>{cos(direction), sin(direction), 0}));
-   ////auto closure_placement = new Schema::IfcLinearPlacement(nullptr/*alignment->ObjectPlacement()*/, relative_placement, nullptr);
-
-   auto closure_placement = file.addLocalPlacement();
+   // Place the segment in 3D space
+   WBFL::Geometry::Vector3d ref_direction(ex - sx, ey - sy, ez - sz); // along the length of the girder
+   ref_direction.Normalize();
+   WBFL::Geometry::Vector3d z(0, 0, 1); // true up direction
+   WBFL::Geometry::Vector3d y = z.Cross(ref_direction); // cross product gives Y axis perpendicular to ref_direction and up
+   WBFL::Geometry::Vector3d axis = ref_direction.Cross(y); // cross product gives Z axis of the girder
+   auto closure_placement = file.addLocalPlacement(nullptr,
+      sx, sy, sz,
+      axis.X(), axis.Y(), axis.Z(),
+      ref_direction.X(), ref_direction.Y(), ref_direction.Z());
    closureJoint->setObjectPlacement(closure_placement);
    closureJoint->setRepresentation(product_definition_shape);
 }
@@ -2454,17 +2332,9 @@ void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
    auto project = file.getSingle<typename Schema::IfcProject>();
 
    // 5.1.8.1 PEnum_ProjectType
-   typename aggregate_of<typename Schema::IfcValue>::ptr property_type_enum_values(new aggregate_of<typename Schema::IfcValue>());
-   property_type_enum_values->push(new Schema::IfcLabel(std::string("MODIFICATION")));
-   property_type_enum_values->push(new Schema::IfcLabel(std::string("NEWBUILD")));
-   property_type_enum_values->push(new Schema::IfcLabel(std::string("OPERATIONMAINTENANCE")));
-   property_type_enum_values->push(new Schema::IfcLabel(std::string("RENOVATION")));
-   property_type_enum_values->push(new Schema::IfcLabel(std::string("REPAIR")));
-   auto project_type_enum = new Schema::IfcPropertyEnumeration(std::string("PEnum_ProjectType"), property_type_enum_values, nullptr);
-
-   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_project_types(new aggregate_of<typename Schema::IfcValue>());
-   list_of_project_types->push(new Schema::IfcLabel(std::string("NEWBUILD")));
-   auto project_type_property = new Schema::IfcPropertyEnumeratedValue(std::string("ProjectType"), boost::none, list_of_project_types, project_type_enum);
+   std::vector<std::string> enum_values{ "MODIFICAITON","NEWBUILD","OPERATIONMAINTENANCE","RENOVATION","REPAIR" };
+   auto project_type_enum = createPropertyEnumeration<Schema>("PEnum_ProjectType", enum_values);
+   auto project_type_property = createPropertyEnumeratedValue<Schema>("ProjectType", project_type_enum, "NEWBUILD");
 
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
    list_of_properties->push(project_type_property);
@@ -2501,15 +2371,10 @@ void Create_AASHTO_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 template <typename Schema>
 void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file,typename Schema::IfcBridge* bridge)
 {
-   typename aggregate_of<typename Schema::IfcValue>::ptr enum_values(new aggregate_of<typename Schema::IfcValue>());
-   enum_values->push(new Schema::IfcLabel(std::string("COATED")));
-   enum_values->push(new Schema::IfcLabel(std::string("COMPOSITE")));
-   enum_values->push(new Schema::IfcLabel(std::string("HOMOGENEOUS")));
-   auto penum = new Schema::IfcPropertyEnumeration(std::string("PEnum_StructureIndicator"), enum_values, nullptr);
-
-   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_enum_types(new aggregate_of<typename Schema::IfcValue>());
-   list_of_enum_types->push(new Schema::IfcLabel(std::string("COMPOSITE")));
-   auto property = new Schema::IfcPropertyEnumeratedValue(std::string("StructureIndicator"), boost::none, list_of_enum_types, penum);
+   // 5.4.8.4 PEnum_StructureIndicator
+   std::vector<std::string> enum_values{ "COATED","COMPOSITE","HOMOGENEOUS" };
+   auto penum = createPropertyEnumeration<Schema>("PEnum_StructureIndicator", enum_values);
+   auto property = createPropertyEnumeratedValue<Schema>("StructureIndicator", penum, "COMPOSITE");
 
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
    list_of_properties->push(property);
