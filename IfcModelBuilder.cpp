@@ -1328,7 +1328,7 @@ void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const CSt
 
    std::vector<std::string> file_description;
    std::ostringstream os;
-   os << "ViewDefinition[Alignment-basedReferenceView]" << std::ends;
+   os << "ViewDefinition[Alignment-basedView]" << std::ends;
    file_description.push_back(os.str().c_str());
    file.header().file_description().description(file_description);
 
@@ -2039,7 +2039,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       file.addEntity(pier);
 
       std::ostringstream os;
-      os << "Foundation at " << pier_name << std::endl; // name is not required, but is specified in AASHTO IDS
+      os << "Foundation at " << pier_name; // name is not required, but is specified in AASHTO IDS
       auto foundation = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, nullptr, nullptr, boost::none,
          Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
          Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
