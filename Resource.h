@@ -22,7 +22,9 @@
 #define IDC_ALIGNMENT_AND_BRIDGE        214
 #define IDC_INCLUDE_CAMBER              215
 #define IDC_INCLUDE_CAMBER_NO           216
-#define IDC_CHECK1                      217
+#define IDC_BSDD                        218
+#define IDC_WALL                        219
+#define IDC_RAILING                     220
 #define IDC_POLYLINE                    225
 #define IDC_GRADIENTCURVE               226
 #define IDC_POLYLINE_TANGENT            237
@@ -34,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        208
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         218
+#define _APS_NEXT_CONTROL_VALUE         221
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

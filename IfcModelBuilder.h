@@ -63,13 +63,21 @@ public:
       IndexPolyCurve // use IfcIndexPolyCurve for sweep profile
    };
 
+   enum class Railings
+   {
+      Parapet, // use IfcWall.PARAPET
+      Balustrade // Use IfcRailing.BALSTRADE
+   };
+
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
+   bool classify = true;
    AlignmentModel alignment_model = AlignmentModel::GradientCurve;
    Tangents tangents = Tangents::Line;
    Representations representations = Representations::Curve3dOnly;
    SweepProfile sweep_profile = SweepProfile::Polyline;
-   bool include_camber = false;
+   Railings railings = Railings::Balustrade;
+   bool include_camber = true;
 };
 
 ///////////////////////////////////////////////////////////////////////////
