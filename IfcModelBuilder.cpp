@@ -40,15 +40,6 @@
 
 constexpr IndexType NUM_DECK_SECTIONS = 10;
 
-// Classification Notes
-// Need to reclassify bridge as tpfBridge_GirderPrestressedConcrete
-// https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_GirderPrestressedConcrete
-// Parent type is a tpfBridge_Girder and it has the TPFBridge_GirderCommon property set and the TPFBridge_MemberCamber property set
-// both have related properties
-// https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder
-
-
-
 
 #pragma Reminder("TODO - generalize the property enum methods and move to IfcHierarchyHelper")
 // Need to cache the IfcPropertyEnumeration for lookup - it can be used multiple times by reference
@@ -1070,41 +1061,144 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    file.addEntity(rel_referenced_in_spatial_structure);
 
 
-   // add stationing information
+   //// add stationing information
+   //GET_IFACE2(pBroker, IRoadway, pAlignment);
+   //Float64 startStation, startElevation, startGrade;
+   //CComPtr<IPoint2d> startPoint;
+   //pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+
+   //typename Schema::IfcCurve* curve = nullptr;
+   //if (gradient_curve) curve = gradient_curve;
+   //else if (composite_curve) curve = composite_curve;
+   //else curve = polyline;
+   //auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
+   //   new Schema::IfcLengthMeasure(0.0), 
+   //   boost::none, boost::none, boost::none, 
+   //   curve);
+   //auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
+   //auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
+
+
+   //typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
+   //pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(startStation), nullptr));
+
+   //auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
+   //file.addEntity(property_set);
+
+   //auto stationing_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
+   //file.addEntity(stationing_referent);
+
+   //typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_stationing_objects(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   //related_stationing_objects->push(stationing_referent);
+
+   //auto nests_stationing = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nests Referents with station information with alignment"), boost::none, alignment, related_stationing_objects);
+   //file.addEntity(nests_stationing);
+
+   //auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates station properties to referent"), boost::none, related_stationing_objects, property_set);
+   //file.addEntity(rel_defines_by_properties);
+}
+
+template <typename Schema>
+void CreateReferents(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+{
+   USES_CONVERSION;
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+
+   auto directrix = GetAlignmentDirectrix(file, options);
+
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   auto station_format = pDisplayUnits->GetStationFormat();
+
+   // get stationing information
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
    CComPtr<IPoint2d> startPoint;
    pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
 
-   typename Schema::IfcCurve* curve = nullptr;
-   if (gradient_curve) curve = gradient_curve;
-   else if (composite_curve) curve = composite_curve;
-   else curve = polyline;
+   // Referents must be in order so start with the start of alignment referent
+
+   //
+   // Referent at start of alignment
+   //
+
+   // Referent position
    auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
-      new Schema::IfcLengthMeasure(0.0), 
-      boost::none, boost::none, boost::none, 
-      curve);
+      new Schema::IfcLengthMeasure(0.0),
+      boost::none, boost::none, boost::none,
+      directrix);
    auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
    auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
 
+   // Create referent
+   auto start_station_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
+   file.addEntity(start_station_referent);
+   alignment_referents->push(start_station_referent); // add to list of all alignment referents
 
+   // Define properties for Pset_Stationing
    typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
    pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(startStation), nullptr));
 
+   // Create Pset and assign properties
    auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
    file.addEntity(property_set);
 
-   auto stationing_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
-   file.addEntity(stationing_referent);
+   // Assign the property set to the referent
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   referents->push(start_station_referent);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_stationing_objects(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   related_stationing_objects->push(stationing_referent);
-
-   auto nests_stationing = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nests Referents with station information with alignment"), boost::none, alignment, related_stationing_objects);
-   file.addEntity(nests_stationing);
-
-   auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates station properties to referent"), boost::none, related_stationing_objects, property_set);
+   auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates start station properties to referent"), boost::none, referents, property_set);
    file.addEntity(rel_defines_by_properties);
+
+   // now do referents for each pier
+
+   if (options.model_elements == CIfcModelBuilderOptions::ModelElements::AlignmentAndBridge)
+   {
+      //
+   // Referents for pier locations
+   //
+      GET_IFACE2(pBroker, IBridge, pBridge);
+      auto nPiers = pBridge->GetPierCount();
+      for (auto pierIdx = 0; pierIdx < nPiers; pierIdx++)
+      {
+         // referent position
+         auto pierStation = pBridge->GetPierStation(pierIdx);
+
+         auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
+            new Schema::IfcLengthMeasure(pierStation - startStation),
+            boost::none, boost::none, boost::none,
+            directrix);
+         auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
+         auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
+
+         // create referent
+         std::ostringstream os;
+         os << "Station " << T2A(WBFL::COGO::Station(pierStation).AsString(station_format).c_str()) << " " << T2A(LABEL_PIER_EX(pBridge->IsAbutment(pierIdx), pierIdx));
+         auto referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_POSITION);
+         file.addEntity(referent);
+         alignment_referents->push(referent);
+
+         // create and assign Pset_Stationing
+         typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
+         pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(pierStation), nullptr));
+
+         auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
+         file.addEntity(property_set);
+
+         typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+         referents->push(referent);
+
+         auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates pier station properties to referent"), boost::none, referents, property_set);
+         file.addEntity(rel_defines_by_properties);
+      }
+   }
+
+   //
+   // Nest referents to alignment
+   //
+   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+   auto nests_stationing = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nests Referents with Alignment"), boost::none, alignment, alignment_referents);
+   file.addEntity(nests_stationing);
 }
 
 template <typename Schema>
@@ -1550,6 +1644,12 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    IntervalIndexType liftingIntervalIdx = pIntervals->GetLiftSegmentInterval(segmentKey);
    IntervalIndexType haulingIntervalIdx = pIntervals->GetHaulSegmentInterval(segmentKey);
 
+   GET_IFACE2(pBroker, IPointOfInterest, pPoi);
+   PoiList vPoi;
+   pPoi->GetPointsOfInterest(segmentKey, POI_RELEASED_SEGMENT | POI_5L, &vPoi);
+   CHECK(vPoi.size() == 1);
+   const pgsPointOfInterest& poiMS = vPoi.front();
+
    Float64 camber_ratio = 0.0;
    if (options.include_camber)
    {
@@ -1557,11 +1657,6 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
       // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_PrecastConcreteElementGeneral.htm
       // The camber deflection, measured from the midpoint of a cambered face of a piece to the midpoint of the chord joining the ends of the same face, 
       // as shown in the figure below (figure not provided), divided by the original (nominal) straight length of the face of the piece.
-      GET_IFACE2(pBroker, IPointOfInterest, pPoi);
-      PoiList vPoi;
-      pPoi->GetPointsOfInterest(segmentKey, POI_RELEASED_SEGMENT | POI_5L, &vPoi);
-      CHECK(vPoi.size() == 1);
-      const pgsPointOfInterest& poiMS = vPoi.front();
       GET_IFACE2(pBroker, ICamber, pCamber);
       Float64 D = pCamber->GetDCamberForGirderSchedule(poiMS, pgsTypes::CreepTime::Max);
       GET_IFACE2(pBroker, IBridge, pBridge);
@@ -1610,6 +1705,46 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    // associate the material with the segment (ie segments collection)
    auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Concrete_to_Precast_Segment"), boost::none, segments, material);
    file.addEntity(rel_associates_materials);
+
+   // Qto_BeamBaseQuantities
+#pragma Reminder("NOTE: These are a little bit dummy quantities - updated in the future")
+   // assuming simple sections (no change in cross section or depth like end blocks are variable depth hammerhead segments)
+   // need to update pgsuper so we can get the different surface areas directly instead of having to compute them here
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   GET_IFACE2(pBroker, ISectionProperties, pSectProps);
+   auto L = pBridge->GetSegmentPlanLength(segmentKey);
+   auto A = pSectProps->GetAg(releaseIntervalIdx, poiMS);
+   auto P = pSectProps->GetPerimeter(poiMS);
+   auto OSA = L * P;
+   auto GSA = OSA + 2 * A;
+   auto GV = L * A;
+   auto W = pSectProps->GetSegmentWeight(segmentKey);
+   Float64 g = WBFL::Units::System::GetGravitationalAcceleration();
+   W /= g; // this is a unit of mass
+
+   typename aggregate_of<typename Schema::IfcPhysicalQuantity>::ptr beam_quantities(new aggregate_of<typename Schema::IfcPhysicalQuantity>());
+   beam_quantities->push(new Schema::IfcQuantityArea(std::string("GrossSurfaceArea"), boost::none, nullptr, GSA, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityVolume(std::string("GrossVolume"), boost::none, nullptr, GV, boost::none));
+
+   auto qto_bodygeometryvalidation = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BodyGeometryValidation"), boost::none, boost::none, beam_quantities);
+   file.addEntity(qto_bodygeometryvalidation);
+
+   beam_quantities->push(new Schema::IfcQuantityLength(std::string("Length"), boost::none, nullptr, L, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityArea(std::string("CrossSectionArea"), boost::none, nullptr, A, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityArea(std::string("OuterSurfaceArea"), boost::none, nullptr, OSA, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityWeight(std::string("GrossWeight"), boost::none, nullptr, W, boost::none));
+
+   auto qto_beambasequantities = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BeamBaseQuantities"), boost::none, boost::none, beam_quantities);
+   file.addEntity(qto_beambasequantities);
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_segments->push(segment);
+
+   auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, qto_bodygeometryvalidation);
+   file.addEntity(rel_defines_by_properties);
+
+   rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, qto_beambasequantities);
+   file.addEntity(rel_defines_by_properties);
 }
 
 template <typename Schema>
@@ -2241,7 +2376,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    if (options.classify)
    {
       Classify_TPFRailings(file, railings);
-      Create_TPFBridge_RailingCommon(file, railings);
+      Create_Pset_TPFBridge_RailingCommon(file, railings);
    }
 
    // Add girders to the spatial structure of the superstructure
@@ -2269,7 +2404,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
          auto girder = new Schema::IfcElementAssembly(IfcParse::IfcGlobalId(), nullptr, girder_name, boost::none, boost::none, 
             nullptr/*ObjectPlacement - to be set in CreateGirderSegmentRepresentation*/, 
             nullptr/*Representation - to be set in CreateGirderSegmentRepresentation*/,
-            boost::none, boost::none, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
+            boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
          file.addEntity(girder);
          list_of_superstructure_elements->push(girder);
          girders.push_back(girder);
@@ -2289,6 +2424,12 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
+
+            if (nSegments == 1 && options.classify)
+            {
+               // TPFBridge_GirderCommon doesn't work for spliced girders so only do this for precast
+               Create_Pset_TPFBridge_GirderCommon(file, pBroker, options, segmentKey, girder);
+            }
 
             // build segment internals (strand, rebar, etc)... need to do this for each strand, bar, etc
             // Save this for later
@@ -2372,7 +2513,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    Create_Pset_BridgeCommon<Schema>(file,bridge);
    if (options.classify)
    {
-      Create_TPFBridge_BridgeCommon<Schema>(file, pBroker, bridge);
+      Create_Pset_TPFBridge_BridgeCommon<Schema>(file, pBroker, bridge);
       Classify_TPFBridge<Schema>(file, bridge);
    }
  }
@@ -2391,7 +2532,7 @@ bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, 
    Create_Pset_ProjectCommon<Schema>(file);
    if (options.classify)
    {
-      Create_TPFBridge_ProjectCommon<Schema>(file);
+      Create_Pset_TPFBridge_ProjectCommon<Schema>(file);
    }
 
    CreateAlignment<Schema>(file, pBroker, options); // creates alignment and aggregates with project, references into site spatial structure
@@ -2400,6 +2541,8 @@ bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, 
    {
       CreateBridge<Schema>(file, pBroker, options); // creates bridge with site spatial structure
    }
+
+   CreateReferents(file, pBroker, options);
 
 
    std::ofstream ofs(T2A(strFilePath));
@@ -2431,7 +2574,7 @@ void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 }
 
 template <typename Schema>
-void Create_TPFBridge_ProjectCommon(IfcHierarchyHelper<Schema>& file)
+void Create_Pset_TPFBridge_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 {
    auto project = file.getSingle<typename Schema::IfcProject>();
 
@@ -2471,7 +2614,7 @@ void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file, typename Schema:
 }
 
 template <typename Schema>
-void Create_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridge* bridge)
+void Create_Pset_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridge* bridge)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
    auto nSpans = pBridge->GetSpanCount();
@@ -2491,7 +2634,7 @@ void Create_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, IBroker* pB
 }
 
 template <typename Schema>
-void Create_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*> railings)
+void Create_Pset_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*> railings)
 {
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
    list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_MASHCompliantRailing"), boost::none, new Schema::IfcBoolean(true), nullptr));
@@ -2509,10 +2652,93 @@ void Create_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::vecto
 }
 
 template <typename Schema>
+void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options,const CSegmentKey& segmentKey,typename Schema::IfcElementAssembly* segment)
+{
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   GET_IFACE2(pBroker, IIntervals, pIntervals);
+   GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);
+
+   auto releaseIntervalIdx = pIntervals->GetPrestressReleaseInterval(segmentKey);
+   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   list_of_properties->push(new Schema::IfcPropertySingleValue(
+      std::string("tpfBridge_Girder-ConcreteStrengthat28Days"), 
+      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_MemberCamber/tpfBridge_CamberatPrestressingRelease"),
+      new Schema::IfcInteger((int)pMaterials->GetSegmentFc28(segmentKey)), nullptr));
+
+   list_of_properties->push(new Schema::IfcPropertySingleValue(
+      std::string("tpfBridge_Girder-GirderStrengthatTimeOfPrestress"), 
+      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_GirderCommon/tpfBridge_ConcreteStrengthatTimeOfPrestressing"),
+      new Schema::IfcInteger((int)pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx)), nullptr));
+
+   list_of_properties->push(new Schema::IfcPropertySingleValue(
+      std::string("tpfBridge_Girder-JackingForce"), 
+      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_GirderCommon/tpfBridge_JackingForce"),
+      new Schema::IfcReal(pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent)), nullptr));
+
+   // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_GirderCommon
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_GirderCommon"), boost::none, list_of_properties);
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_segments->push(segment);
+
+   auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, property_set);
+   file.addEntity(related_properties);
+
+   if (options.include_camber)
+   {
+      GET_IFACE2(pBroker, IGirder, pGirder);
+
+      typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+
+      Float64 precamber = pGirder->GetPrecamber(segmentKey);
+      if(!IsZero(precamber))
+      {
+         list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_Girder-BuiltInCamber"), boost::none, new Schema::IfcReal(precamber), nullptr));
+      }
+
+      GET_IFACE2(pBroker, IPointOfInterest, pPoi);
+      PoiList vPoi;
+      pPoi->GetPointsOfInterest(segmentKey, POI_RELEASED_SEGMENT | POI_5L, &vPoi);
+      CHECK(vPoi.size() == 1);
+      const pgsPointOfInterest& poiMS = vPoi.front();
+
+      GET_IFACE2(pBroker, IProductForces, pProduct);
+      auto bat = pProduct->GetBridgeAnalysisType(pgsTypes::Minimize); // minimize because we want the greatest downward deflection
+
+      Float64 camber = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftPretension, poiMS, bat, rtCumulative, false);
+      list_of_properties->push(new Schema::IfcPropertySingleValue(
+         std::string("tpfBridge_Girder-CamberatPrestressRelease"), 
+         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_MemberCamber/tpfBridge_CamberatPrestressingRelease"),
+         new Schema::IfcReal(camber + precamber), nullptr));
+
+      auto lastIntervalIdx = pIntervals->GetIntervalCount() - 1;
+      auto lastCompositeIntervalIdx = pIntervals->GetLastCompositeDeckInterval();
+      GET_IFACE2(pBroker, ICombinedForces, pCombined);
+      Float64 dc_final = pCombined->GetDeflection(lastIntervalIdx, lcDC, poiMS, bat, rtCumulative);
+      Float64 dc_composite = pCombined->GetDeflection(lastCompositeIntervalIdx, lcDC, poiMS, bat, rtCumulative);
+      Float64 dw_final = pCombined->GetDeflection(lastIntervalIdx, lcDW, poiMS, bat, rtCumulative);
+      Float64 dw_composite = pCombined->GetDeflection(lastCompositeIntervalIdx, lcDW, poiMS, bat, rtCumulative);
+      Float64 d = (dc_final - dc_composite) + (dw_final - dw_composite);
+      list_of_properties->push(new Schema::IfcPropertySingleValue(
+         std::string("tpfBridge_Girder-DeflectionDuetoCompositLoads"), 
+         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_MemberCamber/tpfBridge_DeflectionDuetoCompositLoads"),
+         new Schema::IfcReal(d), nullptr));
+
+      // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Girder/prop/TPFBridge_MemberCamber
+      auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_MemberCamber"), boost::none, list_of_properties);
+
+      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      related_segments->push(segment);
+
+      auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, property_set);
+      file.addEntity(related_properties);
+   }
+}
+
+template <typename Schema>
 void Classify_TPFBridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridge* bridge)
 {
-   auto classifications = file.instances_by_type<typename Schema::IfcClassification>();
-   auto classification = (*classifications->begin())->as<typename Schema::IfcClassification>();
+   auto classification = file.getSingle<typename Schema::IfcClassification>();
 
    auto classification_reference = new Schema::IfcClassificationReference(
       std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/1/class/tpfBridge_Bridge"),
@@ -2540,8 +2766,7 @@ void Classify_TPFBridgePart(IfcHierarchyHelper<Schema>& file, typename Schema::I
 template <typename Schema>
 void Classify_TPFBridgeParts(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& parts, const std::string& uri, const std::string& code, const std::string& name, const std::string& part_type)
 {
-   auto classifications = file.instances_by_type<typename Schema::IfcClassification>();
-   auto classification = (*classifications->begin())->as<typename Schema::IfcClassification>();
+   auto classification = file.getSingle<typename Schema::IfcClassification>();
 
    auto classification_reference = new Schema::IfcClassificationReference(
       uri, /*Class identifier (uri) = Location*/
