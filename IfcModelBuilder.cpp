@@ -192,6 +192,9 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderO
    IndexType nPoints;
    polyPoints->get_Count(&nPoints);
 
+   if (nPoints < 3)
+      return nullptr; // there must be at least 3 points in the cross section or this isn't a polygon cross section
+
    // polygon must be closed and it must be closed by reference, not different points at same location
    CComPtr<IPoint2d> first, last;
    polyPoints->get_Item(0, &first);
@@ -2132,36 +2135,45 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          shape_item->get_Shape(&shape);
 
          auto polyline = CreatePolyline<Schema>(shape, options);
-         std::ostringstream os;
-         os << (tbOrientation == pgsTypes::tboLeft ? "Left" : "Right") << " Barrier";
-         if (1 < nShapesPerBarrier)
-            os << " Shape " << shapeIdx;
+         if (polyline)
+         {
+            std::ostringstream os;
+            os << (tbOrientation == pgsTypes::tboLeft ? "Left" : "Right") << " Barrier";
+            if (1 < nShapesPerBarrier)
+               os << " Shape " << shapeIdx;
 
-         auto shape_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
-         cross_sections[shapeIdx]->push(shape_perimeter);
+            auto shape_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
+            cross_sections[shapeIdx]->push(shape_perimeter);
+         }
       } // next shape
    } // next section
 
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
    for (IndexType shapeIdx = 0; shapeIdx < nShapesPerBarrier; shapeIdx++)
    {
-      auto sectioned_solid = new Schema::IfcSectionedSolidHorizontal(directrix, cross_sections[shapeIdx], cross_section_positions);
-      representation_items->push(sectioned_solid);
-      file.addEntity(sectioned_solid);
+      if (0 < cross_sections[shapeIdx]->size())
+      {
+         auto sectioned_solid = new Schema::IfcSectionedSolidHorizontal(directrix, cross_sections[shapeIdx], cross_section_positions);
+         representation_items->push(sectioned_solid);
+         file.addEntity(sectioned_solid);
+      }
    }
 
-   auto site = file.getSingle<typename Schema::IfcSite>();
-   auto railing_placement = site->ObjectPlacement();
+   if (0 < representation_items->size())
+   {
+      auto site = file.getSingle<typename Schema::IfcSite>();
+      auto railing_placement = site->ObjectPlacement();
 
 
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-   auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
-   shape_representation_list->push(shape_representation);
-   auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
-   file.addEntity(product_definition_shape);
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      auto shape_representation = new Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+      shape_representation_list->push(shape_representation);
+      auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
+      file.addEntity(product_definition_shape);
 
-   railing->setObjectPlacement(railing_placement);
-   railing->setRepresentation(product_definition_shape);
+      railing->setObjectPlacement(railing_placement);
+      railing->setRepresentation(product_definition_shape);
+   }
 }
 
 template <typename Schema>
@@ -2346,6 +2358,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // Add railings to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing
    typename aggregate_of<typename Schema::IfcProduct>::ptr list_of_superstructure_elements(new aggregate_of<typename Schema::IfcProduct>());
+#pragma Reminder("PGSUPER needs the concept of No Railing - here we define a railing product with no representation which says there is a railing")
    typename Schema::IfcProduct* left_railing;
    if (options.railings == CIfcModelBuilderOptions::Railings::Parapet)
    {
