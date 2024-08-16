@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "IfcModelBuilder.h"
+#include "Units.h"
 
 #include <IFace\Project.h>
 #include <IFace\VersionInfo.h>
@@ -1677,20 +1678,44 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, material);
    file.addEntity(material_defintion_representation);
 
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
+   typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
+
+   Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
+   Float64 fci = pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx);
+   Float64 fcl = pMaterials->GetSegmentFc(segmentKey, liftingIntervalIdx);
+   Float64 fch = pMaterials->GetSegmentFc(segmentKey, haulingIntervalIdx);
+   Float64 fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
+   Float64 max_agg_size = pMaterials->GetSegmentMaxAggrSize(segmentKey);
+   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   {
+      stress_unit = GetStressUnit<Schema>(file,pBroker);
+      displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
+
+      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      fcl = WBFL::Units::ConvertFromSysUnits(fcl, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      fch = WBFL::Units::ConvertFromSysUnits(fch, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+
+      max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
+   }
+
    // Pset_MaterialConcrete
    typename aggregate_of<typename Schema::IfcProperty>::ptr material_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
-   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc28(segmentKey)), nullptr));
-   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new Schema::IfcPositiveLengthMeasure(pMaterials->GetSegmentMaxAggrSize(segmentKey)), nullptr));
+   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new Schema::IfcPressureMeasure(fc), stress_unit));
+   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new Schema::IfcPositiveLengthMeasure(max_agg_size), displacement_unit));
    auto pset_material_concrete = new Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, material);
    file.addEntity(pset_material_concrete);
 
    // Pset_PrecastConcreteElementGeneral
    typename aggregate_of<typename Schema::IfcProperty>::ptr precast_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("FormStrippingStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx)), nullptr));
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("LiftingStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc(segmentKey, liftingIntervalIdx)), nullptr));
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("ReleaseStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx)), nullptr));
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("TransportationStrength"), boost::none, new Schema::IfcPressureMeasure(pMaterials->GetSegmentFc(segmentKey, haulingIntervalIdx)), nullptr));
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("InitialTension"), boost::none, new Schema::IfcPressureMeasure(pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent)), nullptr));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("FormStrippingStrength"), boost::none, new Schema::IfcPressureMeasure(fci), stress_unit));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("LiftingStrength"), boost::none, new Schema::IfcPressureMeasure(fcl), stress_unit));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("ReleaseStrength"), boost::none, new Schema::IfcPressureMeasure(fci), stress_unit));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("TransportationStrength"), boost::none, new Schema::IfcPressureMeasure(fch), stress_unit));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("InitialTension"), boost::none, new Schema::IfcPressureMeasure(fpj), stress_unit));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtStart"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtEnd"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
    if (options.include_camber) {
@@ -1722,20 +1747,42 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    auto GSA = OSA + 2 * A;
    auto GV = L * A;
    auto W = pSectProps->GetSegmentWeight(segmentKey);
-   Float64 g = WBFL::Units::System::GetGravitationalAcceleration();
-   W /= g; // this is a unit of mass
+   auto g = WBFL::Units::System::GetGravitationalAcceleration();
+   auto Mass = W / g; // this is a unit of mass
+
+   typename Schema::IfcConversionBasedUnit* big_area_unit = nullptr;
+   typename Schema::IfcConversionBasedUnit* small_area_unit = nullptr;
+   typename Schema::IfcConversionBasedUnit* volume_unit = nullptr;
+   typename Schema::IfcConversionBasedUnit* mass_unit = nullptr;
+   typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
+
+   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   {
+      big_area_unit = GetBigAreaUnit<Schema>(file, pBroker);
+      small_area_unit = GetSmallAreaUnit<Schema>(file, pBroker);
+      volume_unit = GetVolumeUnit<Schema>(file, pBroker);
+      mass_unit = GetMassUnit<Schema>(file, pBroker);
+      length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
+
+      GSA = WBFL::Units::ConvertFromSysUnits(GSA, WBFL::Units::Measure::Feet2);
+      GV = WBFL::Units::ConvertFromSysUnits(GV, WBFL::Units::Measure::Feet3);
+      L = WBFL::Units::ConvertFromSysUnits(L, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+      A = WBFL::Units::ConvertFromSysUnits(A, pDisplayUnits->GetAreaUnit().UnitOfMeasure);
+      Mass = WBFL::Units::ConvertFromSysUnits(Mass, WBFL::Units::Measure::PoundMass);
+   }
+
 
    typename aggregate_of<typename Schema::IfcPhysicalQuantity>::ptr beam_quantities(new aggregate_of<typename Schema::IfcPhysicalQuantity>());
-   beam_quantities->push(new Schema::IfcQuantityArea(std::string("GrossSurfaceArea"), boost::none, nullptr, GSA, boost::none));
-   beam_quantities->push(new Schema::IfcQuantityVolume(std::string("GrossVolume"), boost::none, nullptr, GV, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityArea(std::string("GrossSurfaceArea"), boost::none, big_area_unit, GSA, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityVolume(std::string("GrossVolume"), boost::none, volume_unit, GV, boost::none));
 
    auto qto_bodygeometryvalidation = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BodyGeometryValidation"), boost::none, boost::none, beam_quantities);
    file.addEntity(qto_bodygeometryvalidation);
 
-   beam_quantities->push(new Schema::IfcQuantityLength(std::string("Length"), boost::none, nullptr, L, boost::none));
-   beam_quantities->push(new Schema::IfcQuantityArea(std::string("CrossSectionArea"), boost::none, nullptr, A, boost::none));
-   beam_quantities->push(new Schema::IfcQuantityArea(std::string("OuterSurfaceArea"), boost::none, nullptr, OSA, boost::none));
-   beam_quantities->push(new Schema::IfcQuantityWeight(std::string("GrossWeight"), boost::none, nullptr, W, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityLength(std::string("Length"), boost::none, length_unit, L, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityArea(std::string("CrossSectionArea"), boost::none, small_area_unit, A, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityArea(std::string("OuterSurfaceArea"), boost::none, big_area_unit, OSA, boost::none));
+   beam_quantities->push(new Schema::IfcQuantityWeight(std::string("GrossWeight"), boost::none, mass_unit, Mass, boost::none));
 
    auto qto_beambasequantities = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BeamBaseQuantities"), boost::none, boost::none, beam_quantities);
    file.addEntity(qto_beambasequantities);
@@ -2670,23 +2717,44 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);
    GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    auto releaseIntervalIdx = pIntervals->GetPrestressReleaseInterval(segmentKey);
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+
+   typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
+   typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
+
+   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   {
+      stress_unit = GetStressUnit<Schema>(file, pBroker);
+      displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
+   }
+
+   auto fci = pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx);
+   auto fc = pMaterials->GetSegmentFc28(segmentKey);
+   auto fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
+   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   {
+      fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   }
+
    list_of_properties->push(new Schema::IfcPropertySingleValue(
       std::string("tpfBridge_GirderStrengthatTimeOfPrestress"), 
       std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_ConcreteStrengthatTimeOfPrestressing"),
-      new Schema::IfcInteger((int)pMaterials->GetSegmentFc28(segmentKey)), nullptr));
+      new Schema::IfcInteger((int)fci), stress_unit));
 
    list_of_properties->push(new Schema::IfcPropertySingleValue(
       std::string("tpfBridge_ConceteStrengthat28Days"),
       std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_ConceteStrengthat28Days"),
-      new Schema::IfcInteger((int)pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx)), nullptr));
+      new Schema::IfcInteger((int)fc), stress_unit));
 
    list_of_properties->push(new Schema::IfcPropertySingleValue(
       std::string("tpfBridge_JackingForce"), 
       std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_JackingForce"),
-      new Schema::IfcReal(pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent)), nullptr));
+      new Schema::IfcReal(fpj), stress_unit));
 
    // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/TPFBridge_GirderCommon
    auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_GirderCommon"), boost::none, list_of_properties);
@@ -2706,7 +2774,11 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
       Float64 precamber = pGirder->GetPrecamber(segmentKey);
       if(!IsZero(precamber))
       {
-         list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_Girder-BuiltInCamber"), boost::none, new Schema::IfcReal(precamber), nullptr));
+         if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+         {
+            precamber = WBFL::Units::ConvertFromSysUnits(precamber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
+         }
+         list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_BuiltInCamber"), boost::none, new Schema::IfcReal(precamber), displacement_unit));
       }
 
       GET_IFACE2(pBroker, IPointOfInterest, pPoi);
@@ -2718,11 +2790,17 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
       GET_IFACE2(pBroker, IProductForces, pProduct);
       auto bat = pProduct->GetBridgeAnalysisType(pgsTypes::Minimize); // minimize because we want the greatest downward deflection
 
-      Float64 camber = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftPretension, poiMS, bat, rtCumulative, false);
+      Float64 ps = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftPretension, poiMS, bat, rtCumulative, false);
+      Float64 girder = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftGirder, poiMS, bat, rtCumulative, false);
+      Float64 camber = ps + girder;
+      if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+      {
+         camber = WBFL::Units::ConvertFromSysUnits(camber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
+      }
       list_of_properties->push(new Schema::IfcPropertySingleValue(
          std::string("tpfBridge_CamberatPrestressingRelease"), 
          std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_CamberatPrestressingRelease"),
-         new Schema::IfcReal(camber + precamber), nullptr));
+         new Schema::IfcReal(camber + precamber), displacement_unit));
 
       auto lastIntervalIdx = pIntervals->GetIntervalCount() - 1;
       auto lastCompositeIntervalIdx = pIntervals->GetLastCompositeDeckInterval();
@@ -2735,7 +2813,7 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
       list_of_properties->push(new Schema::IfcPropertySingleValue(
          std::string("tpfBridge_DeflectionDuetoCompositLoads"), 
          std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_DeflectionDuetoCompositLoads"),
-         new Schema::IfcReal(d), nullptr));
+         new Schema::IfcReal(d), displacement_unit));
 
       // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/TPFBridge_MemberCamber
       auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_MemberCamber"), boost::none, list_of_properties);
