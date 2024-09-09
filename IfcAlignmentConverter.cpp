@@ -155,7 +155,7 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
 
          if (unit_component->Prefix() == Schema::IfcSIPrefix::IfcSIPrefix_MILLI)
          {
-            // lengths are in millimeter, so divide the convesion factor by 1000.
+            // lengths are in millimeter, so divide the conversion factor by 1000.
             // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
             conversion_factor /= 1000.0;
          }

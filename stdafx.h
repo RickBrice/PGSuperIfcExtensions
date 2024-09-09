@@ -37,6 +37,8 @@ extern CComModule _Module;
 
 #include <AgentTools.h>
 
+#undef max // this is a non-standard macro and it interferes with IfcOpenShell - undefine it.
+
 #pragma warning(disable:4250) // 
 #include <ifcparse/IfcHierarchyHelper.h>
 #include <ifcparse/IfcAlignmentHelper.h>
