@@ -138,7 +138,7 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
          {
             auto value_component = measure_with_unit->ValueComponent();
             ATLASSERT(value_component); // not dealing with anything but simple conversion factors
-            conversion_factor = static_cast<Float64>(*value_component->data().getArgument(0));
+            conversion_factor = (Float64)(value_component->data().get_attribute_value(0));
          }
          catch (IfcParse::IfcInvalidTokenException& e)
          {
@@ -148,9 +148,9 @@ void CIfcAlignmentConverter::InitUnits(IfcParse::IfcFile& file)
             // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
             // we'll just get the value and keep going
             TRACE(e.what());
-            Argument* pArgument = measure_with_unit->get("ValueComponent");
-            ATLASSERT(pArgument->type() == IfcUtil::Argument_DOUBLE);
-            conversion_factor = double(*pArgument);
+            auto pArgument = measure_with_unit->get("ValueComponent");
+            ATLASSERT(pArgument.type() == IfcUtil::Argument_DOUBLE);
+            conversion_factor = double(pArgument);
          }
 
          if (unit_component->Prefix() == Schema::IfcSIPrefix::IfcSIPrefix_MILLI)
