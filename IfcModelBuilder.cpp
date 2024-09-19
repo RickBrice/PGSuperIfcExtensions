@@ -1237,6 +1237,98 @@ typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsP
    return girder_section;
 }
 
+template <typename Schema>
+typename Schema::IfcTendonType* GetTendonType(IfcHierarchyHelper<Schema>& file, const WBFL::Materials::PsStrand* pStrand)
+{
+   USES_CONVERSION;
+   std::string name(T2A(pStrand->GetName().c_str()));
+
+   // search to see if an IfcTendonType has already been created
+   auto project = file.getSingle<typename Schema::IfcProject>();
+   auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
+   for (auto& rel_declares : *rel_declares_instances)
+   {
+      if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
+      {
+         auto related_definitions = rel_declares->RelatedDefinitions();
+         for (auto& reldef : *related_definitions)
+         {
+            auto tendon_type = reldef->as<typename Schema::IfcTendonType>();
+            if (tendon_type && tendon_type->Name() == name)
+            {
+               return tendon_type;
+            }
+         }
+      }
+   }
+
+   // if we get this far, we need a new IfcTendonType
+   auto tendon_type = new Schema::IfcTendonType(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      name, /*Name*/
+      boost::none, /*Description*/
+      boost::none, /*ApplicableOccurrence*/
+      boost::none, /*HasPropertySets*/
+      boost::none, /*RepresentationMaps*/
+      boost::none, /*Tag*/
+      boost::none, /*ElementType*/
+      Schema::IfcTendonTypeEnum::IfcTendonType_STRAND, /*PredefinedType*/
+      pStrand->GetNominalDiameter(), /*NominalDiameter*/
+      pStrand->GetNominalArea(), /*CrossSectionArea*/
+      boost::none /*SheathDiameter*/
+   );
+
+   //IfcTendonType(
+   //   std::string v1_GlobalId, 
+   //   ::Ifc4x3_add2::IfcOwnerHistory * v2_OwnerHistory, 
+   //   boost::optional< std::string > v3_Name, 
+   //   boost::optional< std::string > v4_Description, 
+   //   boost::optional< std::string > v5_ApplicableOccurrence, 
+   //   boost::optional< aggregate_of< ::Ifc4x3_add2::IfcPropertySetDefinition >::ptr > v6_HasPropertySets, 
+   //   boost::optional< aggregate_of< ::Ifc4x3_add2::IfcRepresentationMap >::ptr > v7_RepresentationMaps, 
+   //   boost::optional< std::string > v8_Tag, 
+   //   boost::optional< std::string > v9_ElementType, 
+   //   ::Ifc4x3_add2::IfcTendonTypeEnum::Value v10_PredefinedType, 
+   //   boost::optional< double > v11_NominalDiameter, 
+   //   boost::optional< double > v12_CrossSectionArea, 
+   //   boost::optional< double > v13_SheathDiameter);
+
+   file.addEntity(tendon_type);
+
+   // add the new definition to the project
+   if (rel_declares_instances->size() == 0)
+   {
+      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      related_definitions->push(tendon_type);
+
+      auto rel_declares = new Schema::IfcRelDeclares(
+         IfcParse::IfcGlobalId(),
+         nullptr,
+         boost::none,
+         boost::none,
+         project,
+         related_definitions);
+
+      file.addEntity(rel_declares);
+   }
+   else
+   {
+      for (auto& rel_declares : *rel_declares_instances)
+      {
+         if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
+         {
+            auto related_definitions = rel_declares->RelatedDefinitions();
+            related_definitions->push(tendon_type);
+            rel_declares->setRelatedDefinitions(related_definitions);
+            break;
+         }
+      }
+   }
+
+   return tendon_type;
+}
+
 template <typename Schema> 
 typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const pgsPointOfInterest& poiStart,const pgsPointOfInterest& poiEnd,typename Schema::IfcObjectPlacement* strand_placement)
 {
@@ -1326,54 +1418,89 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, pStrand->GetNominalDiameter() / 2, boost::none, boost::none, boost::none);
          file.addEntity(swept_disk_solid);
          strand_representation_items->push(swept_disk_solid);
+
+         auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+         ATLASSERT(geometric_representation_context);
+         auto strand_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), strand_representation_items);
+         typename aggregate_of<typename Schema::IfcRepresentation>::ptr strand_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+         strand_shape_representation_list->push(strand_shape_representation);
+         auto strand_product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, strand_shape_representation_list);
+
+         std::ostringstream os;
+         os << strStrandType[strandType] << ":" << strandIdx + 1;
+         auto strand = new Schema::IfcTendon(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, strand_placement, strand_product_definition_shape, boost::none, boost::none,
+            boost::none, /*Schema::IfcTendonTypeEnum::IfcTendonType_STRAND,*/ // per 4.1.3.2, this must not be used unless PredefinedType at the ObjecType level is set to NOTDEFINED
+            boost::none, /*pStrand->GetNominalDiameter() depreciated*/
+            boost::none, /*pStrand->GetNominalArea() depreciated*/
+            pStrandGeom->GetPjack(segmentKey, strandType),
+            pStrandGeom->GetJackingStress(segmentKey, strandType),
+            boost::none, boost::none, boost::none);
+         file.addEntity(strand);
+
+         auto* tendon_type = GetTendonType<Schema>(file,pStrand);
+
+         if (tendon_type->Types()->size() == 0)
+         {
+            typename aggregate_of<typename Schema::IfcObject>::ptr related_objects(new aggregate_of<typename Schema::IfcObject>());
+            related_objects->push(strand);
+
+            auto rel_defines_by_type = new Schema::IfcRelDefinesByType(
+               IfcParse::IfcGlobalId(),
+               nullptr,
+               std::string("strand defined by IfcTendonType"),
+               boost::none,
+               related_objects,
+               tendon_type);
+
+            file.addEntity(rel_defines_by_type);
+         }
+         else
+         {
+            auto rel_defines_set = tendon_type->Types();
+            auto rel_defines = *(rel_defines_set->begin());
+            auto rel_objects = rel_defines->RelatedObjects();
+            rel_objects->push(strand);
+            rel_defines->setRelatedObjects(rel_objects);
+         }
+
+
+         Classify_TPFPrestressing<Schema>(file, strand);
+
+         Float64 db_start, db_end;
+         bool bDebonded = pStrandGeom->IsStrandDebonded(segmentKey, strandIdx, strandType, nullptr, &db_start, &db_end);
+         Create_Pset_TPFBridge_ReinforcementCommon(file, strand, bDebonded, db_start); // assumes symmetric debonding since classification can't handle unsymmetric
+
+         // 6.3.4.9 Pset_ElementComponentCommon
+         typename aggregate_of<typename Schema::IfcProperty>::ptr element_component_common_properties(new aggregate_of<typename Schema::IfcProperty>());
+
+         if (strandType == pgsTypes::Temporary)
+         {
+            // 6.1.8.8 PEnum_ElementStatus
+            // This is the only PSet I could find with TEMPORARY so use it for temporary strands
+            std::vector<std::string> enum_values{ "DEMOLISH","EXISTING","NEW","TEMPORARY","OTHER","NOTKNOWN","UNSET" };
+            auto element_status_enum = createPropertyEnumeration<Schema>("PEnum_ElementStatus", enum_values);
+            auto enum_value = createPropertyEnumeratedValue<Schema>("Status", element_status_enum, "TEMPORARY");
+            element_component_common_properties->push(enum_value);
+         }
+
+         // 6.3.8.1 PEnum_ElementComponentCorrosionTreatment
+         std::vector<std::string> enum_values{ "EPOXYCOATED","GALVANISED","NONE","PAINTED","STAINLESS","NOTDEFINED" };
+         auto corrosion_treatment_enum_values = createPropertyEnumeration<Schema>("PEnum_ElementComponentCorrosionTreatment", enum_values);
+         auto corrosion_treatment_type = createPropertyEnumeratedValue<Schema>("CorrosionTreatment", corrosion_treatment_enum_values, pStrand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED");
+         element_component_common_properties->push(corrosion_treatment_type);
+
+         auto pset_element_component_common = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ElementComponentCommon"), boost::none, element_component_common_properties);
+         file.addEntity(pset_element_component_common);
+
+
+         typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_strands(new aggregate_of<typename Schema::IfcObjectDefinition>());
+         related_strands->push(strand);
+
+         auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_strands, pset_element_component_common);
+         file.addEntity(related_properties);
+
+         strands->push(strand);
       }
-
-      auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-      ATLASSERT(geometric_representation_context);
-      auto strand_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), strand_representation_items);
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr strand_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-      strand_shape_representation_list->push(strand_shape_representation);
-      auto strand_product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, strand_shape_representation_list);
-
-      auto strand = new Schema::IfcTendon(IfcParse::IfcGlobalId(), nullptr, strStrandType[strandType], boost::none, boost::none, strand_placement, strand_product_definition_shape, boost::none, boost::none,
-         Schema::IfcTendonTypeEnum::IfcTendonType_STRAND,
-         pStrand->GetNominalDiameter(),
-         pStrand->GetNominalArea(),
-         pStrandGeom->GetPjack(segmentKey, strandType),
-         pStrandGeom->GetJackingStress(segmentKey, strandType),
-         boost::none, boost::none, boost::none);
-      file.addEntity(strand);
-
-      strands->push(strand);
-
-      // 6.3.4.9 Pset_ElementComponentCommon
-      typename aggregate_of<typename Schema::IfcProperty>::ptr element_component_common_properties(new aggregate_of<typename Schema::IfcProperty>());
-
-      if (strandType == pgsTypes::Temporary)
-      {
-         // 6.1.8.8 PEnum_ElementStatus
-         // This is the only PSet I could find with TEMPORARY so use it for temporary strands
-         std::vector<std::string> enum_values{ "DEMOLISH","EXISTING","NEW","TEMPORARY","OTHER","NOTKNOWN","UNSET" };
-         auto element_status_enum = createPropertyEnumeration<Schema>("PEnum_ElementStatus", enum_values);
-         auto enum_value = createPropertyEnumeratedValue<Schema>("Status", element_status_enum, "TEMPORARY");
-         element_component_common_properties->push(enum_value);
-      }
-
-      // 6.3.8.1 PEnum_ElementComponentCorrosionTreatment
-      std::vector<std::string> enum_values{ "EPOXYCOATED","GALVANISED","NONE","PAINTED","STAINLESS","NOTDEFINED" };
-      auto corrosion_treatment_enum_values = createPropertyEnumeration<Schema>("PEnum_ElementComponentCorrosionTreatment", enum_values);
-      auto corrosion_treatment_type = createPropertyEnumeratedValue<Schema>("CorrosionTreatment", corrosion_treatment_enum_values, pStrand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED");
-      element_component_common_properties->push(corrosion_treatment_type);
-
-      auto pset_element_component_common = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ElementComponentCommon"), boost::none, element_component_common_properties);
-      file.addEntity(pset_element_component_common);
-
-
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_strands(new aggregate_of<typename Schema::IfcObjectDefinition>());
-      related_strands->push(strand);
-
-      auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_strands, pset_element_component_common);
-      file.addEntity(related_properties);
    }
 
    return strands;
@@ -2309,6 +2436,15 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
          std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2") /*Specification*/,
          boost::none /*ReferenceTokens*/);
       file.addEntity(classification);
+
+      auto project = file.getSingle<typename Schema::IfcProject>();
+
+      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr projects(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      projects->push(project);
+
+      auto rel_associates_classification = new Schema::IfcRelAssociatesClassification(
+      IfcParse::IfcGlobalId(),nullptr,boost::none,boost::none, projects, classification);
+      file.addEntity(rel_associates_classification);
    }
 
 
@@ -2827,6 +2963,39 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
 }
 
 template <typename Schema>
+void Create_Pset_TPFBridge_ReinforcementCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* tendon,bool bDebonded,Float64 ldb)
+{
+   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   list_of_properties->push(new Schema::IfcPropertySingleValue(
+      std::string("tpfBridge_TendonBonding"), 
+      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding"),
+#pragma Reminder("bSDD - should things be the string value or the URI reference to the string value?")
+      // not sure if this should be URI reference or "Debonded" "Bonded" both are strings
+      new Schema::IfcURIReference(bDebonded ? "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingDebonded" : "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingBonded"),
+      nullptr));
+
+   if (bDebonded)
+   {
+      std::ostringstream os;
+      os << ldb;
+      list_of_properties->push(new Schema::IfcPropertySingleValue(
+         std::string("tpfBridge_TendonDebondedLength"),
+         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonDebondedLength"),
+#pragma Reminder("bSDD - why is debond length a string?")
+         new Schema::IfcText(os.str()), // this could be IfcIdentifier, IfcLabel, or IfcText none actually represent a value
+         nullptr));
+   }
+
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_ReinforcementCommon"), boost::none, list_of_properties);
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_tendons(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_tendons->push(tendon);
+
+   auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, property_set);
+   file.addEntity(related_properties);
+}
+
+template <typename Schema>
 void Classify_TPFBridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridge* bridge)
 {
    auto classification = file.getSingle<typename Schema::IfcClassification>();
@@ -2924,4 +3093,25 @@ void Classify_TPFGirders(IfcHierarchyHelper<Schema>& file, std::vector<typename 
 {
    //Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("Girder - Prestressed Concrete"), std::string("IfcElementAssembly.GIRDER"));
    Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
+}
+
+template <typename Schema>
+void Classify_TPFPrestressing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTendon* tendon)
+{
+   auto classification = file.getSingle<typename Schema::IfcClassification>();
+
+   auto classification_reference = new Schema::IfcClassificationReference(
+      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Prestressing"),
+      std::string("tpfBridge_Prestressing") /*Identification*/,
+      std::string("Prestressing") /*Name*/,
+      classification,
+      boost::none /*Description*/, boost::none /*Sort*/);
+   file.addEntity(classification_reference);
+
+   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_tendons(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   related_tendons->push(tendon);
+
+   auto related_classes = new Schema::IfcRelAssociatesClassification(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, classification_reference);
+
+   file.addEntity(related_classes);
 }
