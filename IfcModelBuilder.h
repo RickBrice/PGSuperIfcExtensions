@@ -60,7 +60,7 @@ public:
    enum class SweepProfile
    {
       Polyline, // use IfcPolyline for sweep profile
-      IndexPolyCurve // use IfcIndexPolyCurve for sweep profile
+      IndexedPolyCurve // use IfcIndexedPolyCurve for sweep profile
    };
 
    enum class Railings
@@ -78,6 +78,7 @@ public:
    SweepProfile sweep_profile = SweepProfile::Polyline;
    Railings railings = Railings::Balustrade;
    bool include_camber = true;
+   bool include_quantities = true;
 };
 
 ///////////////////////////////////////////////////////////////////////////

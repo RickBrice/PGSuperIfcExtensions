@@ -192,16 +192,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExportOptions.h" />
+    <ClInclude Include="IfcAlignmentBuilder.h" />
     <ClInclude Include="IfcAlignmentConverter.h" />
     <ClInclude Include="IfcAlignmentConverterException.h" />
     <ClInclude Include="IfcExtensions.h" />
     <ClInclude Include="IfcModelBuilder.h" />
-    <ClInclude Include="OutputWindowAsStream.h" />
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />
+    <ClInclude Include="PsetEnum.h" />
+    <ClInclude Include="Referents.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="Units.h" />
+    <ClInclude Include="USBridge_Classifications.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="IfcExtensions.bmp" />

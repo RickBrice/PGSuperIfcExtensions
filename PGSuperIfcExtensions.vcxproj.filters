@@ -54,10 +54,19 @@
     <ClInclude Include="ExportOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OutputWindowAsStream.h">
+    <ClInclude Include="Units.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Units.h">
+    <ClInclude Include="IfcAlignmentBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PsetEnum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Referents.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="USBridge_Classifications.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
