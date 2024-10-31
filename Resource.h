@@ -25,6 +25,8 @@
 #define IDC_BSDD                        218
 #define IDC_WALL                        219
 #define IDC_RAILING                     220
+#define IDC_CHECK1                      221
+#define IDC_QUANTITIES                  221
 #define IDC_POLYLINE                    225
 #define IDC_GRADIENTCURVE               226
 #define IDC_POLYLINE_TANGENT            237
@@ -36,7 +38,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        208
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         221
+#define _APS_NEXT_CONTROL_VALUE         222
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

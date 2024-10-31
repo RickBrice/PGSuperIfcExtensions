@@ -50,6 +50,8 @@
 #include <EAF\EAFDisplayUnits.h>
 #include <EAF/EAFUIIntegration.h>
 
+#include <Plugins\BeamFamilyCLSID.h>
+
 // Build environment setup
 // Define the environment variable IFCOPENSHELL_DIR with the root location of IfcOpenShell (e.g. F:\IfcOpenShell)
 
