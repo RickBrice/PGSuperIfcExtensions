@@ -730,16 +730,147 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcObjectPlacement* rebar_placement)
+typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcObjectPlacement* segment_origin)
 {
    USES_CONVERSION;
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr rebars(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
 
-   // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups
-   // For Ibeams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
-   // This is just an experiment for how to model stirrups and a rebar cage.
-   // When this is re-built as an extension agent, bar shape will be an input
+   const auto& segmentKey = poiStart.GetSegmentKey();
+
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   WBFL::Materials::Rebar::Type bar_type;
+   WBFL::Materials::Rebar::Grade bar_grade;
+   pMaterials->GetSegmentTransverseRebarMaterial(segmentKey, &bar_type, &bar_grade);
+
+   WBFL::Materials::Rebar::Size bar_size = WBFL::Materials::Rebar::Size::bs4;
+
+   const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, bar_size);
+
+   auto* rebar_type = GetReinforcingBarType<Schema>(file, pRebar);
+   auto representation_maps = rebar_type->RepresentationMaps();
+   if (!representation_maps || (*representation_maps)->size() == 0)
+   {
+      // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
+      // For Ibeams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
+      // This is just an experiment for how to model stirrups and a rebar cage.
+      // When this is re-built as an extension agent, bar shape will be an input
+
+      GET_IFACE2(pBroker, IGirder, pGirder);
+      Float64 Hg = pGirder->GetHeight(poiStart);
+      Float64 t = pGirder->GetWebThickness(poiStart, 0);
+
+      GET_IFACE2(pBroker, IBridge, pBridge);
+      Float64 A = pBridge->GetSlabOffset(segmentKey, pgsTypes::metStart);
+
+      Float64 H1 = Hg + A + WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch); // h1 = Hg + "A" + 3"
+
+      Float64 cover = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+
+      Float64 db = WBFL::Units::ConvertToSysUnits(0.5, WBFL::Units::Measure::Inch); // Assuming #4 bar, which is a dummy value
+
+      Float64 dl = Hg - cover - db / 2;
+      Float64 du = H1 - dl;
+      Float64 dx = t / 2 - cover - db / 2;
+
+      std::vector<std::vector<double>> point_list;
+      point_list.push_back({ 0.0,-dx,du });
+      point_list.push_back({ 0.0,-dx,-(dl - dx) });
+      point_list.push_back({ 0.0,0.0,-dl });
+      point_list.push_back({ 0.0,dx,-(dl - dx) });
+      point_list.push_back({ 0.0,dx,du });
+
+      typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+      segments->push(new Schema::IfcLineIndex({ 1,2 }));
+      segments->push(new Schema::IfcArcIndex({ 2,3,4 }));
+      segments->push(new Schema::IfcLineIndex({ 4,5 }));
+
+      auto directrix = new Schema::IfcIndexedPolyCurve(new Schema::IfcCartesianPointList3D(point_list, boost::none), segments, boost::none);
+      file.addEntity(directrix);
+
+      auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
+      file.addEntity(swept_disk_solid);
+
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr rebar_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      rebar_representation_items->push(swept_disk_solid);
+
+      auto rebar_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), rebar_representation_items);
+
+      auto representation_map = new Schema::IfcRepresentationMap(file.addPlacement3d(), rebar_representation);
+
+      if (!representation_maps) {
+         typename aggregate_of<typename Schema::IfcRepresentationMap>::ptr rm(new aggregate_of<typename Schema::IfcRepresentationMap>());
+         representation_maps = rm;
+      }
+      (*representation_maps)->push(representation_map);
+      rebar_type->setRepresentationMaps(representation_maps);
+   }
+
+   representation_maps = rebar_type->RepresentationMaps();
+   auto rebar_representation = (*((*representation_maps)->begin()))->MappedRepresentation();
+
+   auto start = WBFL::Units::ConvertToSysUnits(1.5, WBFL::Units::Measure::Inch); // stirrups start 1.5" from face of beam
+   Float64 offset = start;
+   for (IndexType barIdx = 0; barIdx < 2; barIdx++, offset += 1.0)
+   {
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+
+      auto placement = segment_origin->as<typename Schema::IfcLocalPlacement>()->RelativePlacement()->as<typename Schema::IfcAxis2Placement3D>();
+      auto mapping_source = new Schema::IfcRepresentationMap(placement, rebar_representation);
+
+      auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset,0.,0. }), 1.0, nullptr);
+      auto mapped_item = new Schema::IfcMappedItem(mapping_source, mapping_target);
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      mapped_representation_items->push(mapped_item);
+
+      auto mapped_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), mapped_representation_items);
+
+      shape_representation_list->push(mapped_representation);
+
+      auto product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
+
+      std::ostringstream os;
+      os << "Dummy Stirrup " << barIdx;
+      auto rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, product_definition_shape, boost::none,
+         boost::none, // steel grade: depreciated
+         boost::none, // nominal diameter: depreciated
+         boost::none, // cross section area: depreciated
+         boost::none, // bar length: depreciated
+         boost::none, // predefined type: depreciated
+         boost::none  // predefined type: depreciated
+      );
+      file.addEntity(rebar);
+
+      if (rebar_type->Types()->size() == 0)
+      {
+         typename aggregate_of<typename Schema::IfcObject>::ptr related_objects(new aggregate_of<typename Schema::IfcObject>());
+         related_objects->push(rebar);
+
+         auto rel_defines_by_type = new Schema::IfcRelDefinesByType(
+            IfcParse::IfcGlobalId(),
+            nullptr,
+            std::string("rebar defined by IfcReinforcingBarType"),
+            boost::none,
+            related_objects,
+            rebar_type);
+
+         file.addEntity(rel_defines_by_type);
+      }
+      else
+      {
+         auto rel_defines_set = rebar_type->Types();
+         auto rel_defines = *(rel_defines_set->begin());
+         auto rel_objects = rel_defines->RelatedObjects();
+         rel_objects->push(rebar);
+         rel_defines->setRelatedObjects(rel_objects);
+      }
+
+      rebars->push(rebar);
+   }
+   return rebars;
+
+   ///////////////////
 
    //const CSegmentKey& segmentKey(poiStart.GetSegmentKey());
 
@@ -864,7 +995,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    //   rebar_layout_item.Release();
    //   layout_item_idx++;
    //}
-   return rebars;
+   //return rebars;
 }
 
 template <typename Schema>
