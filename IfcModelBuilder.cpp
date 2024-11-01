@@ -25,6 +25,7 @@
 #include "Referents.h"
 #include "USBridge_Classifications.h"
 #include "Units.h"
+#include "Rebar.h"
 
 #include <IFace\VersionInfo.h>
 #include <IFace\DocumentType.h>
@@ -339,86 +340,6 @@ typename Schema::IfcTendonType* GetTendonType(IfcHierarchyHelper<Schema>& file, 
    return tendon_type;
 }
 
-template <typename Schema>
-typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const WBFL::Materials::Rebar* pRebar)
-{
-   USES_CONVERSION;
-   std::string name(T2A(pRebar->GetName().c_str()));
-
-   // search to see if an IfcReinforcingBarType has already been created
-   auto project = file.getSingle<typename Schema::IfcProject>();
-   auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
-   for (auto& rel_declares : *rel_declares_instances)
-   {
-      if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
-      {
-         auto related_definitions = rel_declares->RelatedDefinitions();
-         for (auto& reldef : *related_definitions)
-         {
-            auto rebar_type = reldef->as<typename Schema::IfcReinforcingBarType>();
-            if (rebar_type && rebar_type->Name() == name)
-            {
-               return rebar_type;
-            }
-         }
-      }
-   }
-
-   // if we get this far, we need a new IfcReinforcingBarType
-   auto rebar_type = new Schema::IfcReinforcingBarType(
-      IfcParse::IfcGlobalId(),
-      nullptr,
-      name, /*Name*/
-      boost::none, /*Description*/
-      boost::none, /*ApplicableOccurrence*/
-      boost::none, /*HasPropertySets*/
-      boost::none, /*RepresentationMaps*/
-      boost::none, /*Tag*/
-      boost::none, /*ElementType*/
-      Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, /*PredefinedType*/
-      pRebar->GetNominalDimension(), /*NominalDiameter*/
-      pRebar->GetNominalArea(), /*CrossSectionArea*/
-      boost::none, /*BarLength*/
-      boost::none, /*BarSurface*/
-      boost::none, /*BendingShapeCode*/
-      boost::none /*BendingParameters*/
-   );
-
-   file.addEntity(rebar_type);
-
-   // add the new definition to the project
-   if (rel_declares_instances->size() == 0)
-   {
-      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());
-      related_definitions->push(rebar_type);
-
-      auto rel_declares = new Schema::IfcRelDeclares(
-         IfcParse::IfcGlobalId(),
-         nullptr,
-         boost::none,
-         boost::none,
-         project,
-         related_definitions);
-
-      file.addEntity(rel_declares);
-   }
-   else
-   {
-      for (auto& rel_declares : *rel_declares_instances)
-      {
-         if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
-         {
-            auto related_definitions = rel_declares->RelatedDefinitions();
-            related_definitions->push(rebar_type);
-            rel_declares->setRelatedDefinitions(related_definitions);
-            break;
-         }
-      }
-   }
-
-   return rebar_type;
-}
-
 template <typename Schema> 
 typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const pgsPointOfInterest& poiStart,const pgsPointOfInterest& poiEnd,typename Schema::IfcObjectPlacement* strand_placement)
 {
@@ -694,31 +615,8 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             );
             file.addEntity(rebar);
 
-            auto* rebar_type = GetReinforcingBarType<Schema>(file, pRebar);
-
-            if (rebar_type->Types()->size() == 0)
-            {
-               typename aggregate_of<typename Schema::IfcObject>::ptr related_objects(new aggregate_of<typename Schema::IfcObject>());
-               related_objects->push(rebar);
-
-               auto rel_defines_by_type = new Schema::IfcRelDefinesByType(
-                  IfcParse::IfcGlobalId(),
-                  nullptr,
-                  std::string("rebar defined by IfcReinforcingBarType"),
-                  boost::none,
-                  related_objects,
-                  rebar_type);
-
-               file.addEntity(rel_defines_by_type);
-            }
-            else
-            {
-               auto rel_defines_set = rebar_type->Types();
-               auto rel_defines = *(rel_defines_set->begin());
-               auto rel_objects = rel_defines->RelatedObjects();
-               rel_objects->push(rebar);
-               rel_defines->setRelatedObjects(rel_objects);
-            }
+            auto* rebar_type = GetReinforcingBarType<Schema>(file, "G4", false, pRebar);
+            DefineRebarWithRebarType<Schema>(file, rebar, rebar_type);
             rebars->push(rebar);
          }
          rebar_pattern.Release();
@@ -732,6 +630,11 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
 template <typename Schema>
 typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcObjectPlacement* segment_origin)
 {
+   // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
+   // For Ibeams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
+   // This is just an experiment for how to model stirrups and a rebar cage.
+   // When this is re-built as an extension agent, bar shape will be an input as part of the girder definition
+
    USES_CONVERSION;
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr rebars(new aggregate_of<typename Schema::IfcObjectDefinition>());
@@ -748,15 +651,13 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, bar_size);
 
-   auto* rebar_type = GetReinforcingBarType<Schema>(file, pRebar);
+   // This needs to be changed so GetReinforcingBarType has a representation - so we can get a "G2" bar type.
+   // For now, add the representation after the IfcReinforcingBarType has been created
+   auto* rebar_type = GetReinforcingBarType<Schema>(file, "G2", true, pRebar);
    auto representation_maps = rebar_type->RepresentationMaps();
    if (!representation_maps || (*representation_maps)->size() == 0)
    {
-      // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
-      // For Ibeams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
-      // This is just an experiment for how to model stirrups and a rebar cage.
-      // When this is re-built as an extension agent, bar shape will be an input
-
+      // Create geometry of a "G2" bar
       GET_IFACE2(pBroker, IGirder, pGirder);
       Float64 Hg = pGirder->GetHeight(poiStart);
       Float64 t = pGirder->GetWebThickness(poiStart, 0);
@@ -770,16 +671,19 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
       Float64 db = WBFL::Units::ConvertToSysUnits(0.5, WBFL::Units::Measure::Inch); // Assuming #4 bar, which is a dummy value
 
-      Float64 dl = Hg - cover - db / 2;
-      Float64 du = H1 - dl;
-      Float64 dx = t / 2 - cover - db / 2;
+      Float64 dl = Hg - cover - db / 2; // distance from top of beam to center of hair-pin bend
+      Float64 du = H1 - dl; // distance from top of beam upwards to the end of the bar
+      Float64 dx = t / 2 - cover - db / 2; // horizontal distance from CL Beam to CL bar (this is basically the bend radius)
 
       std::vector<std::vector<double>> point_list;
-      point_list.push_back({ 0.0,-dx,du });
-      point_list.push_back({ 0.0,-dx,-(dl - dx) });
-      point_list.push_back({ 0.0,0.0,-dl });
-      point_list.push_back({ 0.0,dx,-(dl - dx) });
-      point_list.push_back({ 0.0,dx,du });
+      // X = longitudinal axis of beam (use 0.0 for start face of beam)
+      // Y = horizontal distance relative to start face of beam, positive values to the left
+      // Z = vertical elevation. From PGSuper, elevation is 0.0 at top of beam
+      point_list.push_back({ 0.0,-dx,du }); // top left of bar
+      point_list.push_back({ 0.0,-dx,-(dl - dx) }); // left side of bar at start of bend
+      point_list.push_back({ 0.0,0.0,-dl }); // low point at center of hair-pin bend
+      point_list.push_back({ 0.0,dx,-(dl - dx) }); // right side of bar at end of bend
+      point_list.push_back({ 0.0,dx,du }); // top right of bar
 
       typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
       segments->push(new Schema::IfcLineIndex({ 1,2 }));
@@ -804,10 +708,10 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          representation_maps = rm;
       }
       (*representation_maps)->push(representation_map);
-      rebar_type->setRepresentationMaps(representation_maps);
+      //rebar_type->setRepresentationMaps(representation_maps);
    }
 
-   representation_maps = rebar_type->RepresentationMaps();
+   //representation_maps = rebar_type->RepresentationMaps();
    auto rebar_representation = (*((*representation_maps)->begin()))->MappedRepresentation();
 
    auto start = WBFL::Units::ConvertToSysUnits(1.5, WBFL::Units::Measure::Inch); // stirrups start 1.5" from face of beam
@@ -842,29 +746,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       );
       file.addEntity(rebar);
 
-      if (rebar_type->Types()->size() == 0)
-      {
-         typename aggregate_of<typename Schema::IfcObject>::ptr related_objects(new aggregate_of<typename Schema::IfcObject>());
-         related_objects->push(rebar);
-
-         auto rel_defines_by_type = new Schema::IfcRelDefinesByType(
-            IfcParse::IfcGlobalId(),
-            nullptr,
-            std::string("rebar defined by IfcReinforcingBarType"),
-            boost::none,
-            related_objects,
-            rebar_type);
-
-         file.addEntity(rel_defines_by_type);
-      }
-      else
-      {
-         auto rel_defines_set = rebar_type->Types();
-         auto rel_defines = *(rel_defines_set->begin());
-         auto rel_objects = rel_defines->RelatedObjects();
-         rel_objects->push(rebar);
-         rel_defines->setRelatedObjects(rel_objects);
-      }
+      DefineRebarWithRebarType<Schema>(file, rebar, rebar_type);
 
       rebars->push(rebar);
    }
