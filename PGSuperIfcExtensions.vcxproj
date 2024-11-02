@@ -192,6 +192,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ExportOptions.h" />
+    <ClInclude Include="GirderSheets.h" />
     <ClInclude Include="IfcAlignmentBuilder.h" />
     <ClInclude Include="IfcAlignmentConverter.h" />
     <ClInclude Include="IfcAlignmentConverterException.h" />

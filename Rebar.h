@@ -23,7 +23,8 @@
 
 
 template <typename Schema>
-typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar)
+typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar,
+   typename Schema::IfcShapeRepresentation* shape_representation,typename Schema::IfcAxis2Placement3D* placement)
 {
    // search to see if an IfcReinforcingBarType has already been created
    auto project = file.getSingle<typename Schema::IfcProject>();
@@ -44,6 +45,10 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
       }
    }
 
+   auto representation_map = new Schema::IfcRepresentationMap(placement, shape_representation);
+   typename aggregate_of<typename Schema::IfcRepresentationMap>::ptr representation_maps(new aggregate_of<typename Schema::IfcRepresentationMap>());
+   representation_maps->push(representation_map);
+
    // if we get this far, we need a new IfcReinforcingBarType
    auto rebar_type = new Schema::IfcReinforcingBarType(
       IfcParse::IfcGlobalId(),
@@ -52,7 +57,7 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
       boost::none, /*Description*/
       boost::none, /*ApplicableOccurrence*/
       boost::none, /*HasPropertySets*/
-      boost::none, /*RepresentationMaps*/
+      representation_maps, /*RepresentationMaps*/
       boost::none, /*Tag*/
       boost::none, /*ElementType*/
       bStirrup ? Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_LIGATURE : Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, /*PredefinedType*/
