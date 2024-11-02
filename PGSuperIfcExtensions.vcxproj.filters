@@ -69,6 +69,12 @@
     <ClInclude Include="USBridge_Classifications.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Rebar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GirderSheets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="PGSuperDataExporter.rgs">
