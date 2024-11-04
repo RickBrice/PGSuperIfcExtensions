@@ -32,6 +32,8 @@
 #include <IFace\DocumentType.h>
 #include <IFace\PrestressForce.h>
 
+#include "PGSuperColors.h"
+
 #include <EAF\EAFAutoProgress.h>
 #include <PgsExt\PrecastSegmentData.h>
 #include <WBFLGenericBridgeTools.h>
@@ -662,10 +664,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs5);
    Float64 db = pRebar->GetNominalDimension();
    Float64 wtf = pGirder->GetTopFlangeWidth(poiStart);
-   wtf -= 2 * cover; // length of bar bar is top flange width - 2*cover 
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., -wtf/2, 0.}));
-   points->push(new Schema::IfcCartesianPoint(std::vector<double>{0.,  wtf/2, 0.}));
+   points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., -(wtf-2*cover)/2, 0.}));
+   points->push(new Schema::IfcCartesianPoint(std::vector<double>{0.,  (wtf-2*cover)/2, 0.}));
    auto directrix = new Schema::IfcPolyline(points);
    auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
@@ -673,8 +674,48 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
    auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    std::ostringstream os;
-   os << "G5 Top Bars";
-   auto g5_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
+   os << "G3 Top Bars";
+   auto g3_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
+
+   // G10 bars
+   auto three_inch = WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch);
+   pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs3);
+   db = pRebar->GetNominalDimension();
+   Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart);
+   Float64 r = 4.5 * db;
+   Float64 h = three_inch - 5. * db;
+   Float64 d = 0.5 * (wbf - 2 * cover - db - 2 * r);
+   Float64 delta = PI_OVER_2;
+
+   std::vector<std::vector<double>> point_list;
+   point_list.push_back({0., (d + r), h + r});
+   point_list.push_back({0., (d + r), r});
+   point_list.push_back({0., (d + r*sin(delta/2)), r*cos(delta/2)});
+   point_list.push_back({0., d, 0.0});
+   point_list.push_back({0., -d, 0.0});
+   point_list.push_back({0., -(d + r * sin(delta / 2)), r* cos(delta / 2)});
+   point_list.push_back({0., -(d + r), r});
+   point_list.push_back({0., -(d + r), h + r});
+
+   typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+   segments->push(new Schema::IfcLineIndex({ 1,2 }));
+   segments->push(new Schema::IfcArcIndex({ 2,3,4 }));
+   segments->push(new Schema::IfcLineIndex({ 4,5 }));
+   segments->push(new Schema::IfcArcIndex({ 5,6,7 }));
+   segments->push(new Schema::IfcLineIndex({ 7,8 }));
+
+   auto g10_directrix = new Schema::IfcIndexedPolyCurve(new Schema::IfcCartesianPointList3D(point_list, boost::none), segments, boost::none);
+
+   swept_disk_solid = new Schema::IfcSweptDiskSolid(g10_directrix, db / 2, boost::none, boost::none, boost::none);
+   representation_items = aggregate_of<typename Schema::IfcRepresentationItem>::ptr(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   representation_items->push(swept_disk_solid);
+   shape_representation_list = aggregate_of<typename Schema::IfcRepresentation>::ptr(new aggregate_of<typename Schema::IfcRepresentation>());
+   shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+   os.str("");
+   os.clear();
+   os << "G10 Bottom Confinement Bars";
+   auto g10_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
+
 
    // Get some basic geometry for G2 stirrups
    Float64 Hg = pGirder->GetHeight(poiStart);
@@ -711,11 +752,11 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       // X = longitudinal axis of beam (use 0.0 for start face of beam)
       // Y = horizontal distance relative to start face of beam, positive values to the left
       // Z = vertical elevation. From PGSuper, elevation is 0.0 at top of beam
-      point_list.push_back({ 0.0,-dx,du }); // top left of bar
-      point_list.push_back({ 0.0,-dx,-(dl - dx) }); // left side of bar at start of bend
+      point_list.push_back({ 0.0,dx,du }); // top left of bar
+      point_list.push_back({ 0.0,dx,-(dl - dx) }); // left side of bar at start of bend
       point_list.push_back({ 0.0,0.0,-dl }); // low point at center of hair-pin bend
-      point_list.push_back({ 0.0,dx,-(dl - dx) }); // right side of bar at end of bend
-      point_list.push_back({ 0.0,dx,du }); // top right of bar
+      point_list.push_back({ 0.0,-dx,-(dl - dx) }); // right side of bar at end of bend
+      point_list.push_back({ 0.0,-dx,du }); // top right of bar
 
       typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
       segments->push(new Schema::IfcLineIndex({ 1,2 }));
@@ -740,7 +781,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       auto* g2_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), true, pRebar, rebar_representation, file.addPlacement3d());
 
       typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g2_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g5_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g3_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g10_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+
       Float64 offset = start + (start < Lg/2.0 ? 1.0 : -1.0)*spacing;
       IndexType nBars = (IndexType)((end - start) / spacing);
       for (IndexType barIdx = 0; barIdx < nBars; barIdx++, offset += spacing)
@@ -753,14 +796,20 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          auto g2_mapped_item = new Schema::IfcMappedItem(g2_mapping_source, g2_mapping_target);
          g2_mapped_representation_items->push(g2_mapped_item);
 
-         // G5 and G2 bars can't have the same offset, otherwise they will conflict with each other
-         // Offset the G5 bars 1-db towards the center of the beam (+1 db in left half, and -1 db in right half)
+         // G3 and G2 bars can't have the same offset, otherwise they will conflict with each other
+         // Offset the G3 bars 1-db towards the center of the beam (+1 db in left half, and -1 db in right half)
          Float64 sign = (offset < Lg/2.0 ? 1.0 : -1.0);
-         auto g5_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign*db, 0., -cover }), 1.0, nullptr);
-         auto g5_rebar_type_representation_maps = g5_rebar_type->RepresentationMaps();
-         auto g5_mapping_source = *((*g5_rebar_type_representation_maps)->begin());
-         auto g5_mapped_item = new Schema::IfcMappedItem(g5_mapping_source, g5_mapping_target);
-         g5_mapped_representation_items->push(g5_mapped_item);
+         auto g3_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign*db, 0., -cover }), 1.0, nullptr);
+         auto g3_rebar_type_representation_maps = g3_rebar_type->RepresentationMaps();
+         auto g3_mapping_source = *((*g3_rebar_type_representation_maps)->begin());
+         auto g3_mapped_item = new Schema::IfcMappedItem(g3_mapping_source, g3_mapping_target);
+         g3_mapped_representation_items->push(g3_mapped_item);
+
+         auto g10_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg-cover/* - db#3*/)}), 1.0, nullptr);
+         auto g10_rebar_type_representation_maps = g10_rebar_type->RepresentationMaps();
+         auto g10_mapping_source = *((*g10_rebar_type_representation_maps)->begin());
+         auto g10_mapped_item = new Schema::IfcMappedItem(g10_mapping_source, g10_mapping_target);
+         g10_mapped_representation_items->push(g10_mapped_item);
       }
 
       typename aggregate_of<typename Schema::IfcRepresentation>::ptr g2_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
@@ -787,16 +836,16 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       rebars->push(g2_rebar);
 
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g5_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-      auto g5_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g5_mapped_representation_items);
-      g5_shape_representation_list->push(g5_shape_representation);
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g3_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      auto g3_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g3_mapped_representation_items);
+      g3_shape_representation_list->push(g3_shape_representation);
 
-      auto g5_product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, g5_shape_representation_list);
+      auto g3_product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, g3_shape_representation_list);
 
       os.str("");
       os.clear();
       os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " Top Bars";
-      auto g5_rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g5_product_definition_shape, boost::none,
+      auto g3_rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g3_product_definition_shape, boost::none,
          boost::none, // steel grade: depreciated
          boost::none, // nominal diameter: depreciated
          boost::none, // cross section area: depreciated
@@ -804,11 +853,35 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          boost::none, // predefined type: depreciated
          boost::none  // predefined type: depreciated
       );
-      file.addEntity(g5_rebar);
+      file.addEntity(g3_rebar);
 
-      DefineRebarWithRebarType<Schema>(file, g5_rebar, g5_rebar_type);
+      DefineRebarWithRebarType<Schema>(file, g3_rebar, g3_rebar_type);
 
-      rebars->push(g5_rebar);
+      rebars->push(g3_rebar);
+
+
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g10_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      auto g10_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g10_mapped_representation_items);
+      g10_shape_representation_list->push(g10_shape_representation);
+
+      auto g10_product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, g10_shape_representation_list);
+
+      os.str("");
+      os.clear();
+      os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " Bottom Confinement Bars";
+      auto g10_rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g10_product_definition_shape, boost::none,
+         boost::none, // steel grade: depreciated
+         boost::none, // nominal diameter: depreciated
+         boost::none, // cross section area: depreciated
+         boost::none, // bar length: depreciated
+         boost::none, // predefined type: depreciated
+         boost::none  // predefined type: depreciated
+      );
+      file.addEntity(g10_rebar);
+
+      DefineRebarWithRebarType<Schema>(file, g10_rebar, g10_rebar_type);
+
+      rebars->push(g10_rebar);
    }
    return rebars;
 }
@@ -1742,8 +1815,12 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 }
 
 template <typename Schema>
-typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(std::string name,double r,double g,double b,typename Schema::IfcGeometricRepresentationContext* geometric_representation_context)
+typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(std::string name,COLORREF clr,typename Schema::IfcGeometricRepresentationContext* geometric_representation_context)
 {
+   double r = (double)GetRValue(clr)/255.;
+   double g = (double)GetGValue(clr) / 255.;
+   double b = (double)GetBValue(clr) / 255.;
+
    auto color = new Schema::IfcColourRgb(name,r,g,b);
    auto ssr = new Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
    typename aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>::ptr list_of_surface_styles(new aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>());
@@ -1901,9 +1978,12 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 
    // first create a representation object for the girder material. this is one way to add presentation information such as color.
    // this helper function just sets color and hard codes all the other parameters - this can be expanded in the future
-   auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", 7.6078431372549E-1, 7.72549019607843E-1, 8.E-1, geometric_representation_context);
-   auto strand_material_representation = CreateMaterialRepresentation<Schema>("Strand", 1, 0, 0, geometric_representation_context);
-   auto rebar_material_representation = CreateMaterialRepresentation<Schema>("Rebar", 0, 1, 0, geometric_representation_context);
+   auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", SEGMENT_BORDER_COLOR, geometric_representation_context);
+   //auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", GREEN, geometric_representation_context);
+   auto strand_material_representation = CreateMaterialRepresentation<Schema>("Strand", STRAND_BORDER_COLOR, geometric_representation_context);
+   auto rebar_material_representation = CreateMaterialRepresentation<Schema>("Rebar", REBAR_COLOR, geometric_representation_context);
+   auto stirrup_material_representation = CreateMaterialRepresentation<Schema>("Stirrups", STIRRUP_COLOR, geometric_representation_context);
+   //auto stirrup_material_representation = CreateMaterialRepresentation<Schema>("Stirrups", BLUE, geometric_representation_context);
 
    std::vector<typename Schema::IfcProduct*> girders;
    GET_IFACE2(pBroker, IBridge, pBridge);
@@ -1942,7 +2022,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 
             CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, segment, rebar_material_representation);
 
-            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment, rebar_material_representation);
+            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment, stirrup_material_representation);
 
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
