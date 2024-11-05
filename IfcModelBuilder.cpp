@@ -27,12 +27,12 @@
 #include "Units.h"
 #include "Rebar.h"
 #include "GirderSheets.h"
+#include "Materials.h"
 
 #include <IFace\VersionInfo.h>
 #include <IFace\DocumentType.h>
 #include <IFace\PrestressForce.h>
 
-#include "PGSuperColors.h"
 
 #include <EAF\EAFAutoProgress.h>
 #include <PgsExt\PrecastSegmentData.h>
@@ -1026,7 +1026,7 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 }
 
 template <typename Schema>
-void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options, typename Schema::IfcStyledRepresentation* styled_representation)
+void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -1042,40 +1042,29 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    CHECK(vPoi.size() == 1);
    const pgsPointOfInterest& poiMS = vPoi.front();
 
-   Float64 camber_ratio = 0.0;
-   if (options.include_camber)
-   {
-      // Compute the camber ratio
-      // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_PrecastConcreteElementGeneral.htm
-      // The camber deflection, measured from the midpoint of a cambered face of a piece to the midpoint of the chord joining the ends of the same face, 
-      // as shown in the figure below (figure not provided), divided by the original (nominal) straight length of the face of the piece.
-      GET_IFACE2(pBroker, ICamber, pCamber);
-      Float64 D = pCamber->GetDCamberForGirderSchedule(poiMS, pgsTypes::CreepTime::Max);
-      GET_IFACE2(pBroker, IBridge, pBridge);
-      Float64 Ls = pBridge->GetSegmentPlanLength(segmentKey);
-      camber_ratio = D / Ls;
-   }
+   Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
+   Float64 max_agg_size = pMaterials->GetSegmentMaxAggrSize(segmentKey);
 
-   // create the material
-   auto material = new Schema::IfcMaterial("Precast Segment Concrete", boost::none/*description*/, boost::none/*category*/);
-   file.addEntity(material);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, fc, max_agg_size, "Precast Concrete", SEGMENT_BORDER_COLOR);
 
-   // assigns the presentation styles to the material
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
-   list_of_representations->push(styled_representation);
-   auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, material);
-   file.addEntity(material_defintion_representation);
+   // need a list of entities that are associated with this material
+   // right now we are creating a unique material for each segment but we still need the list
+   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr segments(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   segments->push(segment);
 
+   // associate the material with the segment (ie segments collection)
+   auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Concrete_to_Precast_Segment"), boost::none, segments, material);
+   file.addEntity(rel_associates_materials);
+
+   // Gather data for Pset_PrecastConcreteElementGeneral
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
 
-   Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
    Float64 fci = pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx);
    Float64 fcl = pMaterials->GetSegmentFc(segmentKey, liftingIntervalIdx);
    Float64 fch = pMaterials->GetSegmentFc(segmentKey, haulingIntervalIdx);
    Float64 fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
-   Float64 max_agg_size = pMaterials->GetSegmentMaxAggrSize(segmentKey);
    if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
    {
       stress_unit = GetStressUnit<Schema>(file,pBroker);
@@ -1086,16 +1075,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
       fcl = WBFL::Units::ConvertFromSysUnits(fcl, pDisplayUnits->GetStressUnit().UnitOfMeasure);
       fch = WBFL::Units::ConvertFromSysUnits(fch, pDisplayUnits->GetStressUnit().UnitOfMeasure);
       fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-
-      max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
    }
-
-   // Pset_MaterialConcrete
-   typename aggregate_of<typename Schema::IfcProperty>::ptr material_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
-   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new Schema::IfcPressureMeasure(fc), stress_unit));
-   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new Schema::IfcPositiveLengthMeasure(max_agg_size), displacement_unit));
-   auto pset_material_concrete = new Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, material);
-   file.addEntity(pset_material_concrete);
 
    // Pset_PrecastConcreteElementGeneral
    typename aggregate_of<typename Schema::IfcProperty>::ptr precast_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
@@ -1107,20 +1087,30 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtStart"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtEnd"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
    if (options.include_camber) {
+      // Compute the camber ratio
+      // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_PrecastConcreteElementGeneral.htm
+      // The camber deflection, measured from the midpoint of a cambered face of a piece to the midpoint of the chord joining the ends of the same face, 
+      // as shown in the figure below (figure not provided), divided by the original (nominal) straight length of the face of the piece.
+      GET_IFACE2(pBroker, ICamber, pCamber);
+      Float64 D = pCamber->GetDCamberForGirderSchedule(poiMS, pgsTypes::CreepTime::Max);
+      GET_IFACE2(pBroker, IBridge, pBridge);
+      Float64 Ls = pBridge->GetSegmentPlanLength(segmentKey);
+      Float64 camber_ratio = D / Ls;
+
       precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("CamberAtMidspan"), boost::none, new Schema::IfcRatioMeasure(camber_ratio), nullptr));
    }
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("DesignLocationNumber"), boost::none, new Schema::IfcLabel(T2A(SEGMENT_LABEL(segmentKey))), nullptr));
-   auto pset_material_precast_concrete = new Schema::IfcMaterialProperties(std::string("Pset_PrecastConcreteElementGeneral"), boost::none, precast_concrete_properties, material);
-   file.addEntity(pset_material_precast_concrete);
+   auto pset_precast_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_PrecastConcreteElementGeneral"), boost::none, precast_concrete_properties);
+   file.addEntity(pset_precast_concrete_element_general);
 
-   // need a list of entities that are associated with this material
-   // right now we are creating a unique material for each segment but we still need the list
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr segments(new aggregate_of<typename Schema::IfcDefinitionSelect>());
-   segments->push(segment);
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   related_segments->push(segment);
 
-   // associate the material with the segment (ie segments collection)
-   auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Concrete_to_Precast_Segment"), boost::none, segments, material);
-   file.addEntity(rel_associates_materials);
+   auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_precast_concrete_element_general);
+   file.addEntity(related_properties);
+
+   // Pset_BeamCommon
+   // TODO: Add Pset_BeamCommon to the IfcBeam object - a single property set can be assigned to multiple beams if the are all the same
 
    if (options.include_quantities)
    {
@@ -1177,9 +1167,6 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
       auto qto_beambasequantities = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BeamBaseQuantities"), boost::none, boost::none, beam_quantities);
       file.addEntity(qto_beambasequantities);
 
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
-      related_segments->push(segment);
-
       auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, qto_bodygeometryvalidation);
       file.addEntity(rel_defines_by_properties);
 
@@ -1189,7 +1176,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
 }
 
 template <typename Schema>
-void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, typename Schema::IfcStyledRepresentation* styled_representation)
+void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
 {
    USES_CONVERSION;
 
@@ -1208,64 +1195,29 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
 
    if (0 < strands->size())
    {
-      // create the material
-      auto strand_material = new Schema::IfcMaterial("Prestressing Strand", boost::none/*description*/, boost::none/*category*/);
-      file.addEntity(strand_material);
-
-      // assigns the presentation styles to the material
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
-      list_of_representations->push(styled_representation);
-      auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
-      file.addEntity(material_defintion_representation);
-
-
       pgsTypes::StrandType strandType = pgsTypes::Straight;
       GET_IFACE2(pBroker, IMaterials, pMaterials);
       const auto* pStrand = pMaterials->GetStrandMaterial(segmentKey, strandType);
-      auto fy = pStrand->GetYieldStrength();
-      auto fpu = pStrand->GetUltimateStrength();
-      auto eu = 0.035; // from ASTM A416 spec
+      auto strand_material = GetStrandMaterial(file, pStrand);
 
-#pragma Reminder("WORKING HERE - Define strand material")
-      // Need to clean this up
-      // ASTM A416 is for low relaxation strand... PGSuper does low relaxation and stress relieved
-      // ASTM A416 is for Grade 250 and Grade 270... PGSuper does grade 300 as well, but there doesn't seem to be an ASTM
-      // We are assuming same material for all strands, but that is not the case in the PGSuper data model
-      // straight, harped, and temporary can be different - Grade 250, Grade 270, Grade 300
-      // Strand size/diameter is a property on IfcTendon
-      std::ostringstream os;
-      os << "ASTM A416 Grade " << T2A(WBFL::Materials::PsStrand::GetGrade(pStrand->GetGrade(), true/*US units*/).c_str());
-      auto grade = os.str();
-
-      // Pset_MaterialSteel
-      typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
-      //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new Schema::IfcPressureMeasure(fy), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new Schema::IfcPressureMeasure(fpu), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new Schema::IfcPositiveRatioMeasure(eu), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new Schema::IfcLabel(grade.c_str()), nullptr));
-      auto pset_material_steel = new Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, strand_material);
-      file.addEntity(pset_material_steel);
-
-      // need a list of entities that are associated with this material
-      // right now we are creating a unique material for each strand but we still need the list
       typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr strands_for_material(new aggregate_of<typename Schema::IfcDefinitionSelect>());
       for (auto& strand : *strands)
       {
          strands_for_material->push(strand);
       }
 
-      // associate the material with the segment (ie segments collection)
+      // associate the material with the strand
       auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Strand"), boost::none, strands_for_material, strand_material);
       file.addEntity(rel_associates_materials);
 
+      // strands are a aggregate part of a segment
       auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Strands"), boost::none, segment, strands);
       file.addEntity(rel_aggregates);
    }
 }
 
 template <typename Schema>
-void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, typename Schema::IfcStyledRepresentation* styled_representation)
+void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
 {
    USES_CONVERSION;
 
@@ -1285,38 +1237,12 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
 
    if (0 < rebars->size())
    {
-      // create the material
-      auto rebar_material = new Schema::IfcMaterial("Reinforcement", boost::none/*description*/, boost::none/*category*/);
-      file.addEntity(rebar_material);
-
-      // assigns the presentation styles to the material
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
-      list_of_representations->push(styled_representation);
-      auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
-      file.addEntity(material_defintion_representation);
-
       GET_IFACE2(pBroker, IMaterials, pMaterials);
       WBFL::Materials::Rebar::Type rebar_type;
       WBFL::Materials::Rebar::Grade rebar_grade;
       pMaterials->GetSegmentLongitudinalRebarMaterial(segmentKey, &rebar_type, &rebar_grade);
       const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebar_type, rebar_grade, WBFL::Materials::Rebar::Size::bs3);
-      auto fy = pRebar->GetYieldStrength();
-      auto fpu = pRebar->GetUltimateStrength();
-      auto eu = pRebar->GetElongation(); // depends on bar size and we are using a dummy #3 bar
-
-      std::ostringstream os;
-      os << T2A(pRebar->GetName().c_str());
-      auto grade = os.str();
-
-      // Pset_MaterialSteel
-      typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
-      //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new Schema::IfcPressureMeasure(fy), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new Schema::IfcPressureMeasure(fpu), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new Schema::IfcPositiveRatioMeasure(eu), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new Schema::IfcLabel(grade.c_str()), nullptr));
-      auto pset_material_steel = new Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, rebar_material);
-      file.addEntity(pset_material_steel);
+      auto rebar_material = GetRebarMaterial(file,pRebar, "Rebar", REBAR_COLOR);
 
       // need a list of entities that are associated with this material
       // right now we are creating a unique material for each strand but we still need the list
@@ -1338,7 +1264,7 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
 
 
 template <typename Schema>
-void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, typename Schema::IfcStyledRepresentation* styled_representation)
+void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
 {
    USES_CONVERSION;
 
@@ -1360,38 +1286,13 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
 
    if (0 < rebars->size())
    {
-      // create the material
-      auto rebar_material = new Schema::IfcMaterial("Reinforcement", boost::none/*description*/, boost::none/*category*/);
-      file.addEntity(rebar_material);
-
-      // assigns the presentation styles to the material
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
-      list_of_representations->push(styled_representation);
-      auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
-      file.addEntity(material_defintion_representation);
-
       GET_IFACE2(pBroker, IMaterials, pMaterials);
       WBFL::Materials::Rebar::Type rebar_type;
       WBFL::Materials::Rebar::Grade rebar_grade;
       pMaterials->GetSegmentLongitudinalRebarMaterial(segmentKey, &rebar_type, &rebar_grade);
       const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebar_type, rebar_grade, WBFL::Materials::Rebar::Size::bs3);
-      auto fy = pRebar->GetYieldStrength();
-      auto fpu = pRebar->GetUltimateStrength();
-      auto eu = pRebar->GetElongation(); // depends on bar size and we are using a dummy #3 bar
 
-      std::ostringstream os;
-      os << T2A(pRebar->GetName().c_str());
-      auto grade = os.str();
-
-      // Pset_MaterialSteel
-      typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
-      //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new Schema::IfcPressureMeasure(fy), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new Schema::IfcPressureMeasure(fpu), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new Schema::IfcPositiveRatioMeasure(eu), nullptr));
-      material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new Schema::IfcLabel(grade.c_str()), nullptr));
-      auto pset_material_steel = new Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, rebar_material);
-      file.addEntity(pset_material_steel);
+      auto rebar_material = GetRebarMaterial(file, pRebar, "Stirrup", STIRRUP_COLOR);
 
       // need a list of entities that are associated with this material
       // right now we are creating a unique material for each strand but we still need the list
@@ -1815,27 +1716,6 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 }
 
 template <typename Schema>
-typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(std::string name,COLORREF clr,typename Schema::IfcGeometricRepresentationContext* geometric_representation_context)
-{
-   double r = (double)GetRValue(clr)/255.;
-   double g = (double)GetGValue(clr) / 255.;
-   double b = (double)GetBValue(clr) / 255.;
-
-   auto color = new Schema::IfcColourRgb(name,r,g,b);
-   auto ssr = new Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
-   typename aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>::ptr list_of_surface_styles(new aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>());
-   list_of_surface_styles->push(ssr);
-   auto ss = new Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
-   typename aggregate_of<typename Schema::IfcPresentationStyle>::ptr list_of_presentation_styles(new aggregate_of<typename Schema::IfcPresentationStyle>());
-   list_of_presentation_styles->push(ss);
-   auto styled_item = new Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr styled_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-   styled_items->push(styled_item);
-   auto styled_representation = new Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
-   return styled_representation;
-}
-
-template <typename Schema>
 void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
@@ -1976,15 +1856,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // Add girders to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcElementAssembly::GIRDER
 
-   // first create a representation object for the girder material. this is one way to add presentation information such as color.
-   // this helper function just sets color and hard codes all the other parameters - this can be expanded in the future
-   auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", SEGMENT_BORDER_COLOR, geometric_representation_context);
-   //auto girder_material_representation = CreateMaterialRepresentation<Schema>("Girder", GREEN, geometric_representation_context);
-   auto strand_material_representation = CreateMaterialRepresentation<Schema>("Strand", STRAND_BORDER_COLOR, geometric_representation_context);
-   auto rebar_material_representation = CreateMaterialRepresentation<Schema>("Rebar", REBAR_COLOR, geometric_representation_context);
-   auto stirrup_material_representation = CreateMaterialRepresentation<Schema>("Stirrups", STIRRUP_COLOR, geometric_representation_context);
-   //auto stirrup_material_representation = CreateMaterialRepresentation<Schema>("Stirrups", BLUE, geometric_representation_context);
-
    std::vector<typename Schema::IfcProduct*> girders;
    GET_IFACE2(pBroker, IBridge, pBridge);
    GroupIndexType nGroups = pBridge->GetGirderGroupCount();
@@ -2016,13 +1887,13 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             auto segment_name = os_segment_name.str();
             auto segment = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
-            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, options, girder_material_representation);
+            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, options);
             
-            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment, strand_material_representation);
+            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment);
 
-            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, segment, rebar_material_representation);
+            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, segment);
 
-            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment, stirrup_material_representation);
+            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment);
 
             file.addEntity(segment);
             list_of_girder_segments->push(segment);

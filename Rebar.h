@@ -60,7 +60,7 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
       representation_maps, /*RepresentationMaps*/
       boost::none, /*Tag*/
       boost::none, /*ElementType*/
-      bStirrup ? Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_LIGATURE : Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, /*PredefinedType*/
+      bStirrup ? Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_SHEAR : Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, /*PredefinedType*/
       pRebar->GetNominalDimension(), /*NominalDiameter*/
       pRebar->GetNominalArea(), /*CrossSectionArea*/
       boost::none, /*BarLength*/

@@ -198,6 +198,7 @@
     <ClInclude Include="IfcAlignmentConverterException.h" />
     <ClInclude Include="IfcExtensions.h" />
     <ClInclude Include="IfcModelBuilder.h" />
+    <ClInclude Include="Materials.h" />
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />
     <ClInclude Include="PsetEnum.h" />
