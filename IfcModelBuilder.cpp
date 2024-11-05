@@ -1109,6 +1109,21 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_precast_concrete_element_general);
    file.addEntity(related_properties);
 
+   // Pset_ConcreteElementGeneral
+   typename aggregate_of<typename Schema::IfcProperty>::ptr concrete_element_general_properties(new aggregate_of<typename Schema::IfcProperty>());
+   // PEnum_AssemblyPlace
+   std::vector<std::string> assembly_place_enum_values{ "FACTORY","OFFSITE","SITE","OTHER","UNKNOWN","UNSET" };
+   auto assembly_place_property_enum_values = createPropertyEnumeration<Schema>("PEnum_AssemblyPlace", assembly_place_enum_values);
+   auto assembly_place = createPropertyEnumeratedValue<Schema>("AssemblyPlace", assembly_place_property_enum_values, "FACTORY");
+   concrete_element_general_properties->push(assembly_place);
+
+   std::vector<std::string> casting_method_enum_values{ "INSITU","MIXED","PRECAST","PRINTED","OTHER","UNKNOWN","UNSET" };
+   auto casting_method_property_enum_values = createPropertyEnumeration<Schema>("PEnum_ConcreteCastingMethod", assembly_place_enum_values);
+   auto casting_method = createPropertyEnumeratedValue<Schema>("CastingMethod", casting_method_property_enum_values, "PRECAST");
+   concrete_element_general_properties->push(casting_method);
+   auto pset_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
+   file.addEntity(new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_concrete_element_general));
+
    // Pset_BeamCommon
    // TODO: Add Pset_BeamCommon to the IfcBeam object - a single property set can be assigned to multiple beams if the are all the same
 
