@@ -572,7 +572,8 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             
             typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
             points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., 0., 0.}));
-            points->push(new Schema::IfcCartesianPoint(std::vector<double>{1., 0., 0.}));
+            //points->push(new Schema::IfcCartesianPoint(std::vector<double>{1., 0., 0.}));
+            points->push(new Schema::IfcCartesianPoint(std::vector<double>{bar_length, 0., 0.}));
             auto directrix = new Schema::IfcPolyline(points);
             auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
             typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
@@ -580,7 +581,8 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
             auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
             std::ostringstream os;
-            os << "Unit_Length_Straight_Bar_" << OLE2A(bar_name);
+            //os << "Unit_Length_Straight_Bar_" << OLE2A(bar_name);
+            os << "Girder_Longitudinal_Bar_" << OLE2A(bar_name);
             rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
          }
 
@@ -601,7 +603,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
             auto mapping_source = *((*rebar_type_representation_maps)->begin());
 
-            auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr);
+            //auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr);
+            //auto mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr, boost::none,boost::none);
+            auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,slope }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
             auto mapped_item = new Schema::IfcMappedItem(mapping_source, mapping_target);
             mapped_representation_items->push(mapped_item);
          }
@@ -677,34 +681,69 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    os << "G3 Top Bars";
    auto g3_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
 
-   // G10 bars
-   auto three_inch = WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch);
+   // G9 bars
    pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs3);
    db = pRebar->GetNominalDimension();
+
+   // This is a totally hard coded G9 bar without curves - need to update this later
+   std::vector<std::vector<double>> g9_point_list;
+   g9_point_list.push_back({ 0.0, 18.25 ,0.0 });
+   g9_point_list.push_back({ 0.0, 18.25 ,3.0 });
+   g9_point_list.push_back({ 0.0, 0.0 ,9.125 });
+   g9_point_list.push_back({ 0.0, -18.25 ,3.0 });
+   g9_point_list.push_back({ 0.0, -18.25 ,0.0 });
+   for (auto& p : g9_point_list)
+   {
+      for (auto& v : p)
+      {
+         v = WBFL::Units::ConvertToSysUnits(v, WBFL::Units::Measure::Inch);
+      }
+   }
+
+   typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr g9_segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+   g9_segments->push(new Schema::IfcLineIndex({ 1,2 }));
+   g9_segments->push(new Schema::IfcLineIndex({ 2,3 }));
+   g9_segments->push(new Schema::IfcLineIndex({ 3,4 }));
+   g9_segments->push(new Schema::IfcLineIndex({ 4,5 }));
+
+   auto g9_directrix = new Schema::IfcIndexedPolyCurve(new Schema::IfcCartesianPointList3D(g9_point_list, boost::none), g9_segments, boost::none);
+
+   swept_disk_solid = new Schema::IfcSweptDiskSolid(g9_directrix, db / 2, boost::none, boost::none, boost::none);
+   representation_items = aggregate_of<typename Schema::IfcRepresentationItem>::ptr(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   representation_items->push(swept_disk_solid);
+   shape_representation_list = aggregate_of<typename Schema::IfcRepresentation>::ptr(new aggregate_of<typename Schema::IfcRepresentation>());
+   shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+   os.str("");
+   os.clear();
+   os << "G9 Bottom Confinement Bars";
+   auto g9_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
+
+   // G10 bars
+   auto three_inch = WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch);
    Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart);
    Float64 r = 4.5 * db;
    Float64 h = three_inch - 5. * db;
    Float64 d = 0.5 * (wbf - 2 * cover - db - 2 * r);
    Float64 delta = PI_OVER_2;
 
-   std::vector<std::vector<double>> point_list;
-   point_list.push_back({0., (d + r), h + r});
-   point_list.push_back({0., (d + r), r});
-   point_list.push_back({0., (d + r*sin(delta/2)), r*cos(delta/2)});
-   point_list.push_back({0., d, 0.0});
-   point_list.push_back({0., -d, 0.0});
-   point_list.push_back({0., -(d + r * sin(delta / 2)), r* cos(delta / 2)});
-   point_list.push_back({0., -(d + r), r});
-   point_list.push_back({0., -(d + r), h + r});
+   std::vector<std::vector<double>> g10_point_list;
+   g10_point_list.push_back({0., (d + r), h + r});
+   g10_point_list.push_back({0., (d + r), r});
+   g10_point_list.push_back({0., (d + r*sin(delta/2)), r*cos(delta/2)});
+   g10_point_list.push_back({0., d, 0.0});
+   g10_point_list.push_back({0., -d, 0.0});
+   g10_point_list.push_back({0., -(d + r * sin(delta / 2)), r* cos(delta / 2)});
+   g10_point_list.push_back({0., -(d + r), r});
+   g10_point_list.push_back({0., -(d + r), h + r});
 
-   typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
-   segments->push(new Schema::IfcLineIndex({ 1,2 }));
-   segments->push(new Schema::IfcArcIndex({ 2,3,4 }));
-   segments->push(new Schema::IfcLineIndex({ 4,5 }));
-   segments->push(new Schema::IfcArcIndex({ 5,6,7 }));
-   segments->push(new Schema::IfcLineIndex({ 7,8 }));
+   typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr g10_segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+   g10_segments->push(new Schema::IfcLineIndex({ 1,2 }));
+   g10_segments->push(new Schema::IfcArcIndex({ 2,3,4 }));
+   g10_segments->push(new Schema::IfcLineIndex({ 4,5 }));
+   g10_segments->push(new Schema::IfcArcIndex({ 5,6,7 }));
+   g10_segments->push(new Schema::IfcLineIndex({ 7,8 }));
 
-   auto g10_directrix = new Schema::IfcIndexedPolyCurve(new Schema::IfcCartesianPointList3D(point_list, boost::none), segments, boost::none);
+   auto g10_directrix = new Schema::IfcIndexedPolyCurve(new Schema::IfcCartesianPointList3D(g10_point_list, boost::none), g10_segments, boost::none);
 
    swept_disk_solid = new Schema::IfcSweptDiskSolid(g10_directrix, db / 2, boost::none, boost::none, boost::none);
    representation_items = aggregate_of<typename Schema::IfcRepresentationItem>::ptr(new aggregate_of<typename Schema::IfcRepresentationItem>());
@@ -782,6 +821,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
       typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g2_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
       typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g3_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g9_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
       typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g10_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
 
       Float64 offset = start + (start < Lg/2.0 ? 1.0 : -1.0)*spacing;
@@ -804,6 +844,12 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          auto g3_mapping_source = *((*g3_rebar_type_representation_maps)->begin());
          auto g3_mapped_item = new Schema::IfcMappedItem(g3_mapping_source, g3_mapping_target);
          g3_mapped_representation_items->push(g3_mapped_item);
+
+         auto g9_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg - cover/* - db#3*/) }), 1.0, nullptr);
+         auto g9_rebar_type_representation_maps = g9_rebar_type->RepresentationMaps();
+         auto g9_mapping_source = *((*g9_rebar_type_representation_maps)->begin());
+         auto g9_mapped_item = new Schema::IfcMappedItem(g9_mapping_source, g9_mapping_target);
+         g9_mapped_representation_items->push(g9_mapped_item);
 
          auto g10_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg-cover/* - db#3*/)}), 1.0, nullptr);
          auto g10_rebar_type_representation_maps = g10_rebar_type->RepresentationMaps();
@@ -859,6 +905,29 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
       rebars->push(g3_rebar);
 
+      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g9_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      auto g9_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g9_mapped_representation_items);
+      g9_shape_representation_list->push(g9_shape_representation);
+
+      auto g9_product_definition_shape = new Schema::IfcProductDefinitionShape(boost::none, boost::none, g9_shape_representation_list);
+
+      os.str("");
+      os.clear();
+      os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " G9 Bottom Confinement Bars";
+      auto g9_rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g9_product_definition_shape, boost::none,
+         boost::none, // steel grade: depreciated
+         boost::none, // nominal diameter: depreciated
+         boost::none, // cross section area: depreciated
+         boost::none, // bar length: depreciated
+         boost::none, // predefined type: depreciated
+         boost::none  // predefined type: depreciated
+      );
+      file.addEntity(g9_rebar);
+
+      DefineRebarWithRebarType<Schema>(file, g9_rebar, g9_rebar_type);
+
+      rebars->push(g9_rebar);
+
 
       typename aggregate_of<typename Schema::IfcRepresentation>::ptr g10_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
       auto g10_shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g10_mapped_representation_items);
@@ -868,7 +937,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
       os.str("");
       os.clear();
-      os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " Bottom Confinement Bars";
+      os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " G10 Bottom Confinement Bars";
       auto g10_rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g10_product_definition_shape, boost::none,
          boost::none, // steel grade: depreciated
          boost::none, // nominal diameter: depreciated
