@@ -24,35 +24,35 @@
 template <typename Schema>
 std::vector<typename Schema::IfcDocumentReference*> GetGirderSheets()
 {
-   static typename Schema::IfcDocumentReference* sheet1 = new Schema::IfcDocumentReference(
+   auto sheet1 = new Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_1.PDF"), 
       boost::none, 
       std::string("WF Girder Details 1 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   static typename Schema::IfcDocumentReference* sheet2 = new Schema::IfcDocumentReference(
+   auto sheet2 = new Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_2.PDF"),
       boost::none,
       std::string("WF Girder Details 2 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   static typename Schema::IfcDocumentReference* sheet3 = new Schema::IfcDocumentReference(
+   auto sheet3 = new Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_3.PDF"),
       boost::none,
       std::string("WF Girder Details 3 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   static typename Schema::IfcDocumentReference* sheet4 = new Schema::IfcDocumentReference(
+   auto sheet4 = new Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_4.PDF"),
       boost::none,
       std::string("WF Girder Details 4 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   static typename Schema::IfcDocumentReference* sheet5 = new Schema::IfcDocumentReference(
+   auto sheet5 = new Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_5.PDF"),
       boost::none,
       std::string("WF Girder Details 5 of 5"),

@@ -1187,7 +1187,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    concrete_element_general_properties->push(assembly_place);
 
    std::vector<std::string> casting_method_enum_values{ "INSITU","MIXED","PRECAST","PRINTED","OTHER","UNKNOWN","UNSET" };
-   auto casting_method_property_enum_values = createPropertyEnumeration<Schema>("PEnum_ConcreteCastingMethod", assembly_place_enum_values);
+   auto casting_method_property_enum_values = createPropertyEnumeration<Schema>("PEnum_ConcreteCastingMethod", casting_method_enum_values);
    auto casting_method = createPropertyEnumeratedValue<Schema>("CastingMethod", casting_method_property_enum_values, "PRECAST");
    concrete_element_general_properties->push(casting_method);
    auto pset_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
@@ -1799,10 +1799,153 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
    return list_of_piers;
 }
 
+
+template <typename Schema>
+void CreateWorkPlan(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+{
+   USES_CONVERSION;
+
+   if (!options.include_work_plan)
+      return;
+
+   auto work_plan = new Schema::IfcWorkPlan(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Construction Sequence"), // Name
+      boost::none, // Description
+      boost::none, // ObjectType
+      boost::none, // Identification
+      std::string("Unknown"), // CreationData
+      boost::none, // Creators
+      boost::none, // Purpose
+      boost::none, // Duration
+      boost::none, // TotalFloat
+      std::string("Unknown"), // StartTime
+      boost::none, // FinishTime
+      Schema::IfcWorkPlanTypeEnum::IfcWorkPlanType_PLANNED
+   );
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+
+   auto task1 = new Schema::IfcTask(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Stage 1"), // Name
+      std::string("Set girders in place"), // Description
+      boost::none, // ObjectType
+      boost::none, // Identification
+      boost::none, // LongDescription
+      boost::none, // Status
+      boost::none, // WorkMethod
+      true, // IsMilestone
+      boost::none, // Priority, 
+      nullptr, // TaskTime, 
+      Schema::IfcTaskTypeEnum::IfcTaskType_MOVE
+   );
+
+   auto task2 = new Schema::IfcTask(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Stage 2"), // Name
+      std::string("Cast diaphragms and place bridge deck reinforcement"), // Description
+      boost::none, // ObjectType
+      boost::none, // Identification
+      boost::none, // LongDescription
+      boost::none, // Status
+      boost::none, // WorkMethod
+      true, // IsMilestone
+      boost::none, // Priority, 
+      nullptr, // TaskTime, 
+      Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
+   );
+
+   auto task3 = new Schema::IfcTask(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Stage 3"), // Name
+      std::string("Cast bridge deck"), // Description
+      boost::none, // ObjectType
+      boost::none, // Identification
+      boost::none, // LongDescription
+      boost::none, // Status
+      boost::none, // WorkMethod
+      true, // IsMilestone
+      boost::none, // Priority, 
+      nullptr, // TaskTime, 
+      Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
+   );
+
+   auto task4 = new Schema::IfcTask(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Stage 4"), // Name
+      std::string("Cast traffic barrier"), // Description
+      boost::none, // ObjectType
+      boost::none, // Identification
+      boost::none, // LongDescription
+      boost::none, // Status
+      boost::none, // WorkMethod
+      true, // IsMilestone
+      boost::none, // Priority, 
+      nullptr, // TaskTime, 
+      Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
+   );
+
+   tasks->push(task1);
+   tasks->push(task2);
+   tasks->push(task3);
+   tasks->push(task4);
+
+   auto rel_assigns_to_control = new Ifc4x3_add2::IfcRelAssignsToControl(
+      IfcParse::IfcGlobalId(),
+      nullptr, 
+      std::string("Construction Sequence Tasks"), // Name
+      boost::none, // Description, 
+      tasks, // RelatedObjects
+      boost::none, // RelatedObjectsType
+      work_plan
+   );
+
+   file.addEntity(rel_assigns_to_control);
+
+
+
+   auto project = file.getSingle<typename Schema::IfcProject>();
+   auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
+   if (rel_declares_instances->size() == 0)
+   {
+      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      related_definitions->push(work_plan);
+
+      auto rel_declares = new Schema::IfcRelDeclares(
+         IfcParse::IfcGlobalId(),
+         nullptr,
+         boost::none,
+         boost::none,
+         project,
+         related_definitions);
+
+      file.addEntity(rel_declares);
+   }
+   else
+   {
+      for (auto& rel_declares : *rel_declares_instances)
+      {
+         if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
+         {
+            auto related_definitions = rel_declares->RelatedDefinitions();
+            related_definitions->push(work_plan);
+         }
+      }
+   }
+}
+
 template <typename Schema>
 void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
+
+   CreateWorkPlan(file, pBroker, options);
 
    if (options.classify)
    {
