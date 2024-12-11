@@ -78,6 +78,7 @@ public:
    SweepProfile sweep_profile = SweepProfile::Polyline;
    Railings railings = Railings::Balustrade;
    bool include_work_plan = true;
+   bool include_rebar = true;
    bool include_camber = true;
    bool include_quantities = true;
 };
