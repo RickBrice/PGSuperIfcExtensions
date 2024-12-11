@@ -687,18 +687,13 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
    // This is a totally hard coded G9 bar without curves - need to update this later
    std::vector<std::vector<double>> g9_point_list;
-   g9_point_list.push_back({ 0.0, 18.25 ,0.0 });
-   g9_point_list.push_back({ 0.0, 18.25 ,3.0 });
-   g9_point_list.push_back({ 0.0, 0.0 ,9.125 });
-   g9_point_list.push_back({ 0.0, -18.25 ,3.0 });
-   g9_point_list.push_back({ 0.0, -18.25 ,0.0 });
-   for (auto& p : g9_point_list)
-   {
-      for (auto& v : p)
-      {
-         v = WBFL::Units::ConvertToSysUnits(v, WBFL::Units::Measure::Inch);
-      }
-   }
+   Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart, 0);
+   Float64 hbf = pGirder->GetBottomFlangeThickness(poiStart, 0);
+   g9_point_list.push_back({ 0.0, (wbf-2*cover)/2, 0.0});
+   g9_point_list.push_back({ 0.0, (wbf - 2 * cover) / 2, hbf });
+   g9_point_list.push_back({ 0.0, 0.0, WBFL::Units::ConvertToSysUnits(9.125, WBFL::Units::Measure::Inch) }); // no way to get height of bottom bulb, this is WSDOT's G9 bar dimension
+   g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, hbf });
+   g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, 0.0 });
 
    typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr g9_segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
    g9_segments->push(new Schema::IfcLineIndex({ 1,2 }));
@@ -720,7 +715,6 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
    // G10 bars
    auto three_inch = WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch);
-   Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart);
    Float64 r = 4.5 * db;
    Float64 h = three_inch - 5. * db;
    Float64 d = 0.5 * (wbf - 2 * cover - db - 2 * r);
@@ -1201,7 +1195,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
       // Qto_BeamBaseQuantities
 #pragma Reminder("NOTE: These are a little bit dummy quantities - updated in the future")
    // assuming simple sections (no change in cross section or depth like end blocks are variable depth hammerhead segments)
-   // need to update pgsuper so we can get the different surface areas directly instead of having to compute them here
+   // need to update PGSuper so we can get the different surface areas directly instead of having to compute them here
       GET_IFACE2(pBroker, IBridge, pBridge);
       GET_IFACE2(pBroker, ISectionProperties, pSectProps);
       auto L = pBridge->GetSegmentPlanLength(segmentKey);
@@ -1260,7 +1254,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
 }
 
 template <typename Schema>
-void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
+void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
@@ -1301,8 +1295,11 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
 }
 
 template <typename Schema>
-void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
+void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
 {
+   if (!options.include_rebar)
+      return;
+
    USES_CONVERSION;
 
    // place rebar relative to the segment origin
@@ -1348,8 +1345,11 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
 
 
 template <typename Schema>
-void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
+void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
 {
+   if (!options.include_rebar)
+      return;
+
    USES_CONVERSION;
 
    // For now, we only do stirrups for WF-Beams (that's because stirrups are dummy rebars)
@@ -2116,11 +2116,11 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
             CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, options);
             
-            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment);
+            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
 
-            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, segment);
+            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
 
-            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment);
+            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
 
             file.addEntity(segment);
             list_of_girder_segments->push(segment);
