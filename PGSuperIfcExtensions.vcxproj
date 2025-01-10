@@ -191,6 +191,7 @@
     <None Include="PGSuperDataExporter.rgs" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConstructionSequence.h" />
     <ClInclude Include="ExportOptions.h" />
     <ClInclude Include="GirderSheets.h" />
     <ClInclude Include="IfcAlignmentBuilder.h" />
