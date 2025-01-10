@@ -211,6 +211,26 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, IB
 
    if (bHasTempStrands)
    {
+      auto remove_temp_strands_task = new Schema::IfcTask(
+         IfcParse::IfcGlobalId(),
+         nullptr,
+         std::string("Remove temporary strands"), // Name
+         boost::none, // Description
+         boost::none, // ObjectType
+         boost::none, // Identification
+         std::string("Satisfies the requirements of AASHTO LRFD BDS 5.9.4.5"), // LongDescription
+         boost::none, // Status
+         boost::none, // WorkMethod
+         true, // IsMilestone
+         boost::none, // Priority, 
+         nullptr, // TaskTime, 
+         Schema::IfcTaskTypeEnum::IfcTaskType_REMOVAL
+      );
+
+      subtasks->push(remove_temp_strands_task);
+
+      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr remove_temp_strands_subtasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+
       auto remove_poly = new Schema::IfcTask(
          IfcParse::IfcGlobalId(),
          nullptr,
@@ -259,9 +279,12 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, IB
          Schema::IfcTaskTypeEnum::IfcTaskType_INSTALLATION
       );
 
-      subtasks->push(remove_poly);
-      subtasks->push(cut_strands);
-      subtasks->push(fill_blockouts);
+      remove_temp_strands_subtasks->push(remove_poly);
+      remove_temp_strands_subtasks->push(cut_strands);
+      remove_temp_strands_subtasks->push(fill_blockouts);
+
+      auto rel_nests = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, remove_temp_strands_task, remove_temp_strands_subtasks);
+      file.addEntity(rel_nests);
    }
 
 

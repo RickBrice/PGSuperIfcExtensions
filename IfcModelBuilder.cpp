@@ -691,9 +691,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart, 0);
    Float64 hbf = pGirder->GetBottomFlangeThickness(poiStart, 0);
    g9_point_list.push_back({ 0.0, (wbf-2*cover)/2, 0.0});
-   g9_point_list.push_back({ 0.0, (wbf - 2 * cover) / 2, hbf });
+   g9_point_list.push_back({ 0.0, (wbf - 2 * cover) / 2, hbf - 2*cover });
    g9_point_list.push_back({ 0.0, 0.0, WBFL::Units::ConvertToSysUnits(9.125, WBFL::Units::Measure::Inch) }); // no way to get height of bottom bulb, this is WSDOT's G9 bar dimension
-   g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, hbf });
+   g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, hbf - 2 * cover });
    g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, 0.0 });
 
    typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr g9_segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
