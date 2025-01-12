@@ -555,3 +555,20 @@ typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, IB
 
    return task;
 }
+
+
+template <typename Schema>
+typename Schema::IfcTask* GetStage1Task(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+{
+   auto bridge = file.getSingle<typename Schema::IfcBridge>();
+   auto assignments = bridge->HasAssignments();
+
+   // from assignments, get work plan
+   // from work plan get work schedule
+   // from work schedule, get tasks
+
+   return nullptr;
+
+   // As things like girders, deck, barriers are created, get the stage task and related it to the product with IfcRelAssignsToProduct
+   // see https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/annex_e/construction-scheduling/construction-scheduling-task.html
+}
