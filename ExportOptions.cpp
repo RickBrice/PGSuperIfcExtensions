@@ -31,7 +31,10 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 	DDX_RadioEnum<CIfcModelBuilderOptions::Representations>(pDX, IDC_REPRESENTATION_CURVE, options.representations);
 	DDX_RadioEnum<CIfcModelBuilderOptions::SweepProfile>(pDX, IDC_SWEEP_POLYLINE, options.sweep_profile);
 	DDX_RadioEnum<CIfcModelBuilderOptions::Railings>(pDX, IDC_WALL, options.railings);
+
 	DDX_Check_Bool(pDX, IDC_WORK_PLAN, options.include_work_plan);
+	DDX_RadioEnum<CIfcModelBuilderOptions::ConstructionSequence>(pDX, IDC_WORKPLAN, options.construction_sequence);
+
 	DDX_Check_Bool(pDX, IDC_INCLUDE_REBAR, options.include_rebar);
 	DDX_Check_Bool(pDX, IDC_INCLUDE_CAMBER, options.include_camber);
 	DDX_Check_Bool(pDX, IDC_QUANTITIES, options.include_quantities);
