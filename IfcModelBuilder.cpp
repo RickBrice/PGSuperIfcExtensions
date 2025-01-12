@@ -1805,8 +1805,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 {
    USES_CONVERSION;
 
-   CreateWorkPlan(file, pBroker, options);
-
    if (options.classify)
    {
       Add_TPF_Classification<Schema>(file);
@@ -1834,6 +1832,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 
    auto bridge = new Schema::IfcBridge(IfcParse::IfcGlobalId(), nullptr, bridge_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX, Schema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER);
    file.addEntity(bridge);
+
+   CreateAssumedConstructionSequence(file, pBroker, options); // must come after IfcBridge is created because this function looks up the bridge
 
    // create a list of bridges in the site
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_bridges_in_the_site(new aggregate_of<typename Schema::IfcObjectDefinition>());

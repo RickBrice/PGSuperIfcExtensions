@@ -137,8 +137,8 @@ BEGIN
     LTEXT           "Railings",IDC_STATIC,16,188,25,8
     CONTROL         "IfcWall.PARAPET",IDC_WALL,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,195,67,10
     CONTROL         "IfcRailing.BALUSTRADE",IDC_RAILING,"Button",BS_AUTORADIOBUTTON,140,195,91,10
-    CONTROL         "Include Construction Sequence as Work Plan",IDC_WORK_PLAN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,214,159,10
+    CONTROL         "Include Assumed Construction Sequence per LRFD 2.5.3",IDC_WORK_PLAN,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,208,197,10
     GROUPBOX        "Girders",IDC_STATIC,7,241,231,52
     CONTROL         "Include rebar (pseudo-dummy data)",IDC_INCLUDE_REBAR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,251,131,10
@@ -147,6 +147,8 @@ BEGIN
     CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,278,99,10
     DEFPUSHBUTTON   "OK",IDOK,125,300,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,179,300,50,14
+    CONTROL         "IfcWorkPlan",IDC_WORKPLAN,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,68,222,55,10
+    CONTROL         "IfcTask",IDC_TASK,"Button",BS_AUTORADIOBUTTON,132,223,39,10
 END
 
 

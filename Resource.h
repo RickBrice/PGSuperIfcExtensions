@@ -29,8 +29,11 @@
 #define IDC_WORK_PLAN                   222
 #define IDC_CHECK1                      223
 #define IDC_INCLUDE_REBAR               223
+#define IDC_WORKPLAN                    224
 #define IDC_POLYLINE                    225
 #define IDC_GRADIENTCURVE               226
+#define IDC_RADIO4                      227
+#define IDC_TASK                        227
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
 
@@ -40,7 +43,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        208
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         224
+#define _APS_NEXT_CONTROL_VALUE         228
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
