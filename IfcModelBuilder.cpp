@@ -1793,6 +1793,12 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Foundation is an aggregate component of pier"), boost::none, pier, list_of_foundations);
       file.addEntity(rel_aggregates);
 
+      if (options.include_work_plan)
+      {
+         // related the Stage 1 construction task to the pier product
+         auto task = GetStage1Task(file, pBroker, options);
+         AssignTaskToProduct(task, pier, file, pBroker, options);
+      }
 
       list_of_piers->push(pier);
    }
@@ -1833,6 +1839,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    auto bridge = new Schema::IfcBridge(IfcParse::IfcGlobalId(), nullptr, bridge_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX, Schema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER);
    file.addEntity(bridge);
 
+   // create the assumed construction sequence and related it to the bridge
    CreateAssumedConstructionSequence(file, pBroker, options); // must come after IfcBridge is created because this function looks up the bridge
 
    // create a list of bridges in the site
@@ -1902,6 +1909,13 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    file.addEntity(rel_aggregates_elements_of_superstructure_spatial_structure);
 
 
+   if (options.include_work_plan)
+   {
+      // related the Stage 1 construction task to the pier product
+      auto task = GetStage3Task(file, pBroker, options);
+      AssignTaskToProduct(task, deck, file, pBroker, options);
+   }
+
 
    // Add railings to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing
@@ -1940,6 +1954,14 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
       Create_Pset_TPFBridge_RailingCommon(file, railings);
    }
 
+   if (options.include_work_plan)
+   {
+      // related the Stage 1 construction task to the pier product
+      auto task = GetStage4Task(file, pBroker, options);
+      AssignTaskToProduct(task, left_railing, file, pBroker, options);
+      AssignTaskToProduct(task, right_railing, file, pBroker, options);
+   }
+
    // Add girders to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcElementAssembly::GIRDER
 
@@ -1964,6 +1986,14 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
          file.addEntity(girder);
          list_of_superstructure_elements->push(girder);
          girders.push_back(girder);
+
+
+         if (options.include_work_plan)
+         {
+            // related the Stage 1 construction task to the pier product
+            auto task = GetStage1Task(file, pBroker, options);
+            AssignTaskToProduct(task, girder, file, pBroker, options);
+         }
 
          typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_girder_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
          for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)

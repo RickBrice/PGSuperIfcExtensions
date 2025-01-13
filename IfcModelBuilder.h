@@ -66,13 +66,7 @@ public:
    enum class Railings
    {
       Parapet, // use IfcWall.PARAPET
-      Balustrade // Use IfcRailing.BALSTRADE
-   };
-
-   enum class ConstructionSequence
-   {
-      WorkPlan, // Use IfcWorkPlan
-      Task // Use IfcTask
+      Balustrade // Use IfcRailing.BALUSTRADE
    };
 
    Schema schema = Schema::Schema_4x3_add2;
@@ -84,7 +78,6 @@ public:
    SweepProfile sweep_profile = SweepProfile::Polyline;
    Railings railings = Railings::Balustrade;
    bool include_work_plan = true;
-   ConstructionSequence construction_sequence = ConstructionSequence::WorkPlan;
    bool include_rebar = true;
    bool include_camber = true;
    bool include_quantities = true;
