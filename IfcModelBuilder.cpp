@@ -1255,12 +1255,12 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
 }
 
 template <typename Schema>
-void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
+void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
    // place strands relative to the segment origin
-   auto strand_placement = file.addLocalPlacement(segment->ObjectPlacement());
+   auto strand_placement = file.addLocalPlacement(beam->ObjectPlacement());
 
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPoi;
@@ -1289,14 +1289,14 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
       auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Strand"), boost::none, strands_for_material, strand_material);
       file.addEntity(rel_associates_materials);
 
-      // strands are a aggregate part of a segment
-      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Strands"), boost::none, segment, strands);
+      // strands are a aggregate part of a beam
+      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Strands"), boost::none, beam, strands);
       file.addEntity(rel_aggregates);
    }
 }
 
 template <typename Schema>
-void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
+void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
 {
    if (!options.include_rebar)
       return;
@@ -1304,7 +1304,7 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
    USES_CONVERSION;
 
    // place rebar relative to the segment origin
-   auto rebar_placement = file.addLocalPlacement(segment->ObjectPlacement());
+   auto rebar_placement = file.addLocalPlacement(beam->ObjectPlacement());
 
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPoi;
@@ -1334,19 +1334,19 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
          rebars_for_material->push(rebar);
       }
 
-      // associate the material with the segment (ie segments collection)
+      // associate the material with the rebar
       auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Rebar"), boost::none, rebars_for_material, rebar_material);
       file.addEntity(rel_associates_materials);
 
-      // aggregate the rebar with the segment
-      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Rebars"), boost::none, segment, rebars);
+      // aggregate the rebar with the beam
+      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Rebars"), boost::none, beam, rebars);
       file.addEntity(rel_aggregates);
    }
 }
 
 
 template <typename Schema>
-void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
+void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
 {
    if (!options.include_rebar)
       return;
@@ -1365,7 +1365,7 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
 
 
    // place rebar relative to the segment origin
-   auto rebar_placement = file.addLocalPlacement(segment->ObjectPlacement());
+   auto rebar_placement = file.addLocalPlacement(beam->ObjectPlacement());
 
    auto rebars = CreateStirrups<Schema>(file, pBroker, segmentKey, rebar_placement);
 
@@ -1391,8 +1391,8 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
       auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Rebar"), boost::none, rebars_for_material, rebar_material);
       file.addEntity(rel_associates_materials);
 
-      // aggregate the rebar with the segment
-      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Rebars"), boost::none, segment, rebars);
+      // aggregate the rebar with the beam
+      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Rebars"), boost::none, beam, rebars);
       file.addEntity(rel_aggregates);
    }
 }
@@ -2002,56 +2002,24 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             std::ostringstream os_segment_name;
             os_segment_name << "Segment " << LABEL_SEGMENT(segIdx);
             auto segment_name = os_segment_name.str();
-            auto segment = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
-            CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, segment, options, body_model_representation_subcontext);
-            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, segment, options);
+            auto beam = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
+            CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, beam, options, body_model_representation_subcontext);
+            CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, beam, options);
             
-            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
+            CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
 
-            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
+            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
 
-            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, segment, options);
+            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
 
-            file.addEntity(segment);
-            list_of_girder_segments->push(segment);
+            file.addEntity(beam);
+            list_of_girder_segments->push(beam);
 
             if (nSegments == 1 && options.classify)
             {
                // TPFBridge_GirderCommon doesn't work for spliced girders so only do this for precast
                Create_Pset_TPFBridge_GirderCommon(file, pBroker, options, segmentKey, girder);
             }
-
-            // build segment internals (strand, rebar, etc)... need to do this for each strand, bar, etc
-            // Save this for later
-            //typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_segment_parts(new aggregate_of<typename Schema::IfcObjectDefinition>());
-
-            //auto strand = new Schema::IfcTendon(IfcParse::IfcGlobalId(), nullptr, std::string("strand"), boost::none, boost::none, nullptr, nullptr, boost::none, boost::none /*grade*/,
-            //   Schema::IfcTendonTypeEnum::IfcTendonType_STRAND, boost::none /*nominal diameter*/, boost::none /*area*/, boost::none/*force*/, boost::none/*prestress*/,
-            //   boost::none/*friction coefficient*/, boost::none /*anchorage slip*/, boost::none/*min curvature radius*/);
-            //file.addEntity(strand);
-            //list_of_segment_parts->push(strand);
-
-            //auto longitudinal_rebar = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, std::string("longitudinal rebar"), boost::none,
-            //   boost::none, nullptr, nullptr, boost::none, boost::none/*steel grade (depreciated)*/, boost::none/*nominal diameter (depreciated)*/,
-            //   boost::none /*nominal area*/, boost::none/*bar length (depreciated)*/, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, boost::none/*bar surface (depreciated)*/);
-            //file.addEntity(longitudinal_rebar);
-            //list_of_segment_parts->push(longitudinal_rebar);
-
-            //auto stirrups = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, std::string("stirrups"), boost::none,
-            //   boost::none, nullptr, nullptr, boost::none, boost::none/*steel grade (depreciated)*/, boost::none/*nominal diameter (depreciated)*/,
-            //   boost::none /*nominal area*/, boost::none/*bar length (depreciated)*/, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_SHEAR, boost::none/*bar surface (depreciated)*/);
-            //file.addEntity(stirrups);
-            //list_of_segment_parts->push(stirrups);
-
-            //auto lifting_loops = new Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, std::string("lifting loops"), boost::none,
-            //   boost::none, nullptr, nullptr, boost::none, boost::none/*steel grade (depreciated)*/, boost::none/*nominal diameter (depreciated)*/,
-            //   boost::none /*nominal area*/, boost::none/*bar length (depreciated)*/, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_LIGATURE, boost::none/*bar surface (depreciated)*/);
-            //file.addEntity(lifting_loops);
-            //list_of_segment_parts->push(lifting_loops);
-
-            //auto segment_parts_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("precast segment parts"), boost::none, segment, list_of_segment_parts);
-            //file.addEntity(segment_parts_aggregates);
-
 
             if (segIdx < nSegments - 1)
             {
