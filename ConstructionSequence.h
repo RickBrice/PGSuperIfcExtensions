@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2024  Washington State Department of Transportation
+// Copyright Â© 1999-2024  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -63,8 +63,14 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
 
    USES_CONVERSION;
 
-   // IfcProject - IfcRelDeclares - IfcWorkPlan - IfcRelAggregates - IfcWorkSchedule - IfcRelAssignsToControl - IfcTask - IfcRelNests - IfcTask
-   // IfcBridge - IfcRelAssignsToControl - IfcWorkPlan - IfcRelAggregates - IfcWorkSchedule - IfcRelAssignsToControl - IfcTask - IfcRelNests - IfcTask
+   // IfcProject - IfcRelDeclares - IfcWorkPlan - IfcRelAggregates - IfcWorkSchedule - IfcRelAssignsToControl - IfcTask (summary) - IfcRelNests - IfcTask, IfcTask, ec
+   //                                                                                                                |
+   //                                                                                                       IfcRelAssignsToProduct
+   //                                                                                                                |
+   //                                                                                                            IfcBridge
+   // Use IfcRelAssignsToProduct for each IfcTask, IfcBridgePart
+   // Use IfcRelSequence for each subtask
+   
 
    auto now = getCurrentISO8601Time();
 
@@ -87,6 +93,9 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
       Schema::IfcWorkPlanTypeEnum::IfcWorkPlanType_PLANNED
    );
 
+   // Declare the work plan in the project
+   ProjectDeclares(file, work_plan);
+   
    // Define the assumed construction sequence as a work schedule
    auto work_schedule = new Schema::IfcWorkSchedule(
       IfcParse::IfcGlobalId(),
@@ -107,8 +116,8 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
 
 
    // Aggregate work schedules with the work plan
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr schedules(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   schedules->push(work_schedule);
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr work_schedules(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   work_schedules->push(work_schedule);
 
    auto rel_aggregates = new Schema::IfcRelAggregates(
       IfcParse::IfcGlobalId(),
@@ -116,13 +125,16 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
       boost::none, // Name
       boost::none, // Description, 
       work_plan,
-      schedules
+      work_schedules
    );
 
    file.addEntity(rel_aggregates);
 
    // Define the tasks associated with the work schedule
-
+   
+   // ToDo: add summary task, construct bridge, here. see https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcTask.htm
+   // summary task aggregates with control. tasks1-4 nest with summary task
+   
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
 
    auto task1 = CreateStage1Tasks(file, pBroker, options);
@@ -171,25 +183,6 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
       file.addEntity(rel_sequence);
    }
 
-
-   // Declare the work plan in the project
-//   ProjectDeclares(file, work_plan); // if there is only one bridge in the project, the work plan can be declared for the project
-
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr bridges(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   auto bridge = file.getSingle<typename Schema::IfcBridge>();
-   bridges->push(bridge);
-
-   rel_assigns_to_control = new Schema::IfcRelAssignsToControl(
-      IfcParse::IfcGlobalId(),
-      nullptr,
-      std::string("Assigns work plan to bridge"), // Name
-      boost::none, // Description, 
-      bridges, // RelatedObjects
-      boost::none, // RelatedObjectsType
-      work_plan // RelatingControl
-   );
-
-   file.addEntity(rel_assigns_to_control);
 }
 
 template <typename Schema>
@@ -560,6 +553,7 @@ typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, IB
 template <typename Schema>
 typename Schema::IfcTask* GetStage1Task(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
 {
+   // this is going to be on project 
    auto bridge = file.getSingle<typename Schema::IfcBridge>();
    auto assignments = bridge->HasAssignments();
 
