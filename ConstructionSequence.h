@@ -192,7 +192,32 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
    );
    file.addEntity(rel_assigns_to_product);
 
+   //
+   // This is just a concept, but if the construction sequence is document based information, the document
+   // can be associated with the summary task
+   //
+
+   // define document reference
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   auto nSpans = pBridge->GetSpanCount();
+   auto document_reference = new Schema::IfcDocumentReference(
+      nSpans == 1 ? std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A2_1.PDF") 
+                  : std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A2_2.PDF"),
+      nSpans == 1 ? std::string("5.6 A2 1") : std::string("5.6 A2 2"), // Identification
+      std::string("Assumed construction sequence"), // Name
+      boost::none, // Description 
+      nullptr);
+
+   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr tasks2(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   tasks2->push(summary_task);
+
+   // associate document with task
+   auto rel_associates_document = new Schema::IfcRelAssociatesDocument(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, tasks2, document_reference);
+   file.addEntity(rel_associates_document);
+
+   //
    // Define sub-tasks of the summary task
+   //
    
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr sub_tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
 
