@@ -1913,7 +1913,15 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    {
       // related the Stage 1 construction task to the pier product
       auto task = GetStage3Task(file, pBroker, options);
-      AssignTaskToProduct(task, deck, file, pBroker, options);
+      auto rel_contained_in_spatial_structures = deck->ContainsElements();
+      for (auto& rel_contained_in_spatial_structure : *rel_contained_in_spatial_structures)
+      {
+         auto related_elements = rel_contained_in_spatial_structure->RelatedElements();
+         for (auto& related_element : *related_elements)
+         {
+            AssignTaskToProduct(task, related_element, file, pBroker, options);
+         }
+      }
    }
 
 
