@@ -106,7 +106,7 @@ IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
 // Dialog
 //
 
-IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 245, 321
+IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 245, 339
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Export Options"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -139,14 +139,16 @@ BEGIN
     CONTROL         "IfcRailing.BALUSTRADE",IDC_RAILING,"Button",BS_AUTORADIOBUTTON,140,195,91,10
     CONTROL         "Include Assumed Construction Sequence per LRFD 2.5.3",IDC_WORK_PLAN,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,208,197,10
-    GROUPBOX        "Girders",IDC_STATIC,7,241,231,52
+    GROUPBOX        "Girders",IDC_STATIC,7,241,231,72
     CONTROL         "Include rebar (pseudo-dummy data)",IDC_INCLUDE_REBAR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,251,131,10
     CONTROL         "Include camber in PSet_PrecastConcreteElementGeneral",IDC_INCLUDE_CAMBER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,265,196,10
     CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,278,99,10
-    DEFPUSHBUTTON   "OK",IDOK,125,300,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,179,300,50,14
+    DEFPUSHBUTTON   "OK",IDOK,125,318,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,179,318,50,14
+    CONTROL         "Linear Placement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,296,69,10
+    CONTROL         "Local Placement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,87,295,66,10
 END
 
 
@@ -164,7 +166,7 @@ BEGIN
         RIGHTMARGIN, 238
         VERTGUIDE, 16
         TOPMARGIN, 7
-        BOTTOMMARGIN, 314
+        BOTTOMMARGIN, 332
     END
 END
 #endif    // APSTUDIO_INVOKED

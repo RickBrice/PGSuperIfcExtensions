@@ -36,6 +36,8 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 	DDX_Check_Bool(pDX, IDC_INCLUDE_REBAR, options.include_rebar);
 	DDX_Check_Bool(pDX, IDC_INCLUDE_CAMBER, options.include_camber);
 	DDX_Check_Bool(pDX, IDC_QUANTITIES, options.include_quantities);
+
+	DDX_RadioEnum<CIfcModelBuilderOptions::BeamPlacement>(pDX, IDC_LINEAR_PLACEMENT, options.beam_placement);
 }
 
 
