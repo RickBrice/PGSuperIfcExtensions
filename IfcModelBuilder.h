@@ -69,6 +69,12 @@ public:
       Balustrade // Use IfcRailing.BALUSTRADE
    };
 
+   enum class BeamPlacement
+   {
+      Linear,
+      Local
+   };
+
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    bool classify = true;
@@ -81,6 +87,7 @@ public:
    bool include_rebar = true;
    bool include_camber = true;
    bool include_quantities = true;
+   BeamPlacement beam_placement = BeamPlacement::Linear;
 };
 
 ///////////////////////////////////////////////////////////////////////////

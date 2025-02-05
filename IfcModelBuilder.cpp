@@ -600,13 +600,14 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             p1->Location(&Y, &Z);
             X = start * sqrt(1 + slope * slope);
 
-            auto placement = segment_origin->as<typename Schema::IfcLocalPlacement>()->RelativePlacement()->as<typename Schema::IfcAxis2Placement3D>();
+            //auto placement = segment_origin->as<typename Schema::IfcLocalPlacement>()->RelativePlacement()->as<typename Schema::IfcAxis2Placement3D>();
             auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
             auto mapping_source = *((*rebar_type_representation_maps)->begin());
 
             //auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr);
             //auto mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr, boost::none,boost::none);
-            auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,slope }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
+            //auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,slope }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
+            auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,0.0 }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
             auto mapped_item = new Schema::IfcMappedItem(mapping_source, mapping_target);
             mapped_representation_items->push(mapped_item);
          }
@@ -1081,10 +1082,43 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    WBFL::Geometry::Vector3d z(0, 0, 1); // true up direction
    WBFL::Geometry::Vector3d y = z.Cross(ref_direction); // cross product gives Y axis perpendicular to ref_direction and up
    WBFL::Geometry::Vector3d axis = ref_direction.Cross(y); // cross product gives Z axis of the girder
-   auto segment_placement = file.addLocalPlacement(nullptr,
-      sx, sy, sz,
-      axis.X(), axis.Y(), axis.Z(),
-      ref_direction.X(), ref_direction.Y(), ref_direction.Z());
+   
+   
+   typename Schema::IfcObjectPlacement* segment_placement = nullptr;
+   if (options.beam_placement == CIfcModelBuilderOptions::BeamPlacement::Local)
+   {
+      segment_placement = file.addLocalPlacement(nullptr,
+         sx, sy, sz,
+         axis.X(), axis.Y(), axis.Z(),
+         ref_direction.X(), ref_direction.Y(), ref_direction.Z());
+   }
+   else
+   {
+      auto directrix = GetAlignmentDirectrix(file, options);
+      typename Schema::IfcCurve* basis_curve = nullptr;
+      if (auto gc = directrix->as<typename Schema::IfcGradientCurve>())
+      {
+         basis_curve = gc->BaseCurve();
+      }
+      else
+      {
+         basis_curve = directrix;
+      }
+      GET_IFACE2(pBroker, IRoadway, pAlignment);
+      Float64 startStation, startElevation, startGrade;
+      CComPtr<IPoint2d> startPoint;
+      pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+      Float64 station, offset;
+      pBridge->GetStationAndOffset(poiStart, &station, &offset);
+      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), offset, sz, boost::none, basis_curve);
+      auto a2pl = new Schema::IfcAxis2PlacementLinear(pde,
+         new Schema::IfcDirection({axis.X(), axis.Y(), axis.Z()}),
+         new Schema::IfcDirection({ ref_direction.X(),ref_direction.Y(),ref_direction.Z() })
+         );
+      segment_placement = new Schema::IfcLinearPlacement(nullptr, a2pl, nullptr);
+      file.addEntity(segment_placement);
+   }
+
    segment->setObjectPlacement(segment_placement);
    segment->setRepresentation(product_definition_shape);
 }
