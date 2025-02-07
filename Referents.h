@@ -39,10 +39,8 @@ void CreateReferents(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    auto station_format = pDisplayUnits->GetStationFormat();
 
    // get stationing information
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
 
    // Referents must be in order so start with the start of alignment referent
 
