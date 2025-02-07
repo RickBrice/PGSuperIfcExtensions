@@ -1104,10 +1104,10 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       {
          basis_curve = directrix;
       }
-      GET_IFACE2(pBroker, IRoadway, pAlignment);
+
       Float64 startStation, startElevation, startGrade;
-      CComPtr<IPoint2d> startPoint;
-      pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+      auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+
       Float64 station, offset;
       pBridge->GetStationAndOffset(poiStart, &station, &offset);
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), offset, sz, boost::none, basis_curve);
@@ -1115,7 +1115,12 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          new Schema::IfcDirection({axis.X(), axis.Y(), axis.Z()}),
          new Schema::IfcDirection({ ref_direction.X(),ref_direction.Y(),ref_direction.Z() })
          );
-      segment_placement = new Schema::IfcLinearPlacement(nullptr, a2pl, nullptr);
+
+      auto fallback_placement = file.addPlacement3d(sx, sy, sz,
+                                                    axis.X(), axis.Y(), axis.Z(),
+                                                    ref_direction.X(), ref_direction.Y(), ref_direction.Z());
+
+      segment_placement = new Schema::IfcLinearPlacement(nullptr, a2pl, fallback_placement);
       file.addEntity(segment_placement);
    }
 
@@ -1511,10 +1516,46 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
    WBFL::Geometry::Vector3d z(0, 0, 1); // true up direction
    WBFL::Geometry::Vector3d y = z.Cross(ref_direction); // cross product gives Y axis perpendicular to ref_direction and up
    WBFL::Geometry::Vector3d axis = ref_direction.Cross(y); // cross product gives Z axis of the girder
-   auto closure_placement = file.addLocalPlacement(nullptr,
-      sx, sy, sz,
-      axis.X(), axis.Y(), axis.Z(),
-      ref_direction.X(), ref_direction.Y(), ref_direction.Z());
+
+   typename Schema::IfcObjectPlacement* closure_placement = nullptr;
+   if (options.beam_placement == CIfcModelBuilderOptions::BeamPlacement::Local)
+   {
+      closure_placement = file.addLocalPlacement(nullptr,
+         sx, sy, sz,
+         axis.X(), axis.Y(), axis.Z(),
+         ref_direction.X(), ref_direction.Y(), ref_direction.Z());
+   }
+   else
+   {
+      auto directrix = GetAlignmentDirectrix(file, options);
+      typename Schema::IfcCurve* basis_curve = nullptr;
+      if (auto gc = directrix->as<typename Schema::IfcGradientCurve>())
+      {
+         basis_curve = gc->BaseCurve();
+      }
+      else
+      {
+         basis_curve = directrix;
+      }
+
+      Float64 startStation, startElevation, startGrade;
+      auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+
+      Float64 station, offset;
+      pBridge->GetStationAndOffset(poiStart, &station, &offset);
+      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), offset, sz, boost::none, basis_curve);
+      auto a2pl = new Schema::IfcAxis2PlacementLinear(pde,
+         new Schema::IfcDirection({ axis.X(), axis.Y(), axis.Z() }),
+         new Schema::IfcDirection({ ref_direction.X(),ref_direction.Y(),ref_direction.Z() })
+      );
+
+      auto fallback_placement = file.addPlacement3d(sx, sy, sz,
+         axis.X(), axis.Y(), axis.Z(),
+         ref_direction.X(), ref_direction.Y(), ref_direction.Z());
+
+      closure_placement = new Schema::IfcLinearPlacement(nullptr, a2pl, fallback_placement);
+      file.addEntity(closure_placement);
+   }
    closureJoint->setObjectPlacement(closure_placement);
    closureJoint->setRepresentation(product_definition_shape);
 }
@@ -1553,10 +1594,8 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    // get the directrix line of the alignment
    auto directrix = GetAlignmentDirectrix(file,options);
 
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
 
    IndexType nDeckSections = NUM_DECK_SECTIONS;
 
@@ -1566,6 +1605,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    IndexType point_count = 0;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
    typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
    typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
    for (IndexType i = 0; i <= nDeckSections; i++)
@@ -1697,8 +1737,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    auto directrix = GetAlignmentDirectrix(file, options);
 
    Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
 
    typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
    std::vector<typename aggregate_of<typename Schema::IfcProfileDef>::ptr> cross_sections;

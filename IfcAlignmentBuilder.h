@@ -150,6 +150,14 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
    return { curve_segment, alignment_segment };
 }
 
+CComPtr<IPoint2d> GetAlignmentStartPoint(IBroker* pBroker,Float64* pStation,Float64* pElevation,Float64* pGrade)
+{
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   CComPtr<IPoint2d> startPoint;
+   pAlignment->GetStartPoint(2, pStation, pElevation,pGrade, &startPoint);
+
+   return startPoint;
+}
 
 template <typename Schema>
 void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
@@ -157,15 +165,14 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroke
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
 
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
    Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   auto startPoint = GetAlignmentStartPoint(pBroker,&startStation,&startElevation,&startGrade);
 
    // create the start point
    auto ifc_start_point = ConvertPoint<Schema>(startPoint);
 
    // loop over all the horizontal curves
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
    CComPtr<IPoint2d> prevPoint = startPoint;
    auto ifc_prev_point = ifc_start_point;
    IndexType nHCurves = pAlignment->GetCurveCount();
@@ -371,17 +378,16 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
    // We can't use stations to define the profile.
    // Distance from start is taken to be Station - Start Station
 
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
    GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    Float64 startStation, startElevation, startGrade;
-   CComPtr<IPoint2d> startPoint;
-   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+   auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
 
    Float64 prev_end_dist_along = 0; // startStation; // this is distance along alignment, not station
    Float64 prev_end_gradient = startGrade;
    Float64 prev_end_height = startElevation;
 
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
    IndexType nVCurves = pAlignment->GetVertCurveCount();
    for (IndexType i = 0; i < nVCurves; i++)
    {
@@ -822,43 +828,6 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    list_alignments_referenced_in_site->push(alignment);
    auto rel_referenced_in_spatial_structure = new Schema::IfcRelReferencedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, list_alignments_referenced_in_site, site);
    file.addEntity(rel_referenced_in_spatial_structure);
-
-
-   //// add stationing information
-   //GET_IFACE2(pBroker, IRoadway, pAlignment);
-   //Float64 startStation, startElevation, startGrade;
-   //CComPtr<IPoint2d> startPoint;
-   //pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
-
-   //typename Schema::IfcCurve* curve = nullptr;
-   //if (gradient_curve) curve = gradient_curve;
-   //else if (composite_curve) curve = composite_curve;
-   //else curve = polyline;
-   //auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
-   //   new Schema::IfcLengthMeasure(0.0), 
-   //   boost::none, boost::none, boost::none, 
-   //   curve);
-   //auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
-   //auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
-
-
-   //typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
-   //pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(startStation), nullptr));
-
-   //auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
-   //file.addEntity(property_set);
-
-   //auto stationing_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
-   //file.addEntity(stationing_referent);
-
-   //typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_stationing_objects(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   //related_stationing_objects->push(stationing_referent);
-
-   //auto nests_stationing = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nests Referents with station information with alignment"), boost::none, alignment, related_stationing_objects);
-   //file.addEntity(nests_stationing);
-
-   //auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates station properties to referent"), boost::none, related_stationing_objects, property_set);
-   //file.addEntity(rel_defines_by_properties);
 }
 
 
