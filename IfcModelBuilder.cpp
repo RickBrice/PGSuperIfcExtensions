@@ -444,7 +444,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          std::ostringstream os;
          os << strStrandType[strandType] << ":" << strandIdx + 1;
          auto strand = new Schema::IfcTendon(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, strand_placement, strand_product_definition_shape, boost::none, boost::none,
-            boost::none, /*Schema::IfcTendonTypeEnum::IfcTendonType_STRAND,*/ // per 4.1.3.2, this must not be used unless PredefinedType at the ObjecType level is set to NOTDEFINED
+            boost::none, /*Schema::IfcTendonTypeEnum::IfcTendonType_STRAND,*/ // per 4.1.3.2, this must not be used unless PredefinedType at the ObjectType level is set to NOTDEFINED
             boost::none, /*pStrand->GetNominalDiameter() depreciated*/
             boost::none, /*pStrand->GetNominalArea() depreciated*/
             pStrandGeom->GetPjack(segmentKey, strandType),
@@ -582,7 +582,6 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
             auto shape_representation = new Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
             std::ostringstream os;
-            //os << "Unit_Length_Straight_Bar_" << OLE2A(bar_name);
             os << "Girder_Longitudinal_Bar_" << OLE2A(bar_name);
             rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation, file.addPlacement3d());
          }
@@ -604,9 +603,6 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
             auto mapping_source = *((*rebar_type_representation_maps)->begin());
 
-            //auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr);
-            //auto mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(new Schema::IfcDirection({1.0,0.0,slope}), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), bar_length, nullptr, boost::none,boost::none);
-            //auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,slope }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
             auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,0.0 }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
             auto mapped_item = new Schema::IfcMappedItem(mapping_source, mapping_target);
             mapped_representation_items->push(mapped_item);
@@ -644,7 +640,7 @@ template <typename Schema>
 typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcObjectPlacement* segment_origin)
 {
    // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
-   // For Ibeams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
+   // For I-beams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
    // This is just an experiment for how to model stirrups and a rebar cage.
    // When this is re-built as an extension agent, bar shape will be an input as part of the girder definition
 
@@ -1335,7 +1331,7 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
 }
 
 template <typename Schema>
-void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
+void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam,typename Schema::IfcElementAssembly* rebar_assembly, const CIfcModelBuilderOptions& options)
 {
    if (!options.include_rebar)
       return;
@@ -1377,15 +1373,15 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
       auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Rebar"), boost::none, rebars_for_material, rebar_material);
       file.addEntity(rel_associates_materials);
 
-      // aggregate the rebar with the beam
-      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Rebars"), boost::none, beam, rebars);
+      // aggregate the rebar with its assembly
+      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Rebar_Assembly_Aggregates_Rebars"), boost::none, rebar_assembly, rebars);
       file.addEntity(rel_aggregates);
    }
 }
 
 
 template <typename Schema>
-void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
+void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, typename Schema::IfcElementAssembly* rebar_assembly, const CIfcModelBuilderOptions& options)
 {
    if (!options.include_rebar)
       return;
@@ -1430,8 +1426,8 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
       auto rel_associates_materials = new Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, std::string("Associates_Steel_to_Rebar"), boost::none, rebars_for_material, rebar_material);
       file.addEntity(rel_associates_materials);
 
-      // aggregate the rebar with the beam
-      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Segment_Aggregates_Rebars"), boost::none, beam, rebars);
+      // aggregate the rebar with its assembly
+      auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Rebar_Assembly_Aggregates_Rebars"), boost::none, rebar_assembly, rebars);
       file.addEntity(rel_aggregates);
    }
 }
@@ -2089,9 +2085,28 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             
             CreateStrandRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
 
-            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
+            auto rebar_assembly = new Schema::IfcElementAssembly(
+               IfcParse::IfcGlobalId(), 
+               nullptr, // OwnerHistory
+               std::string("Girder Rebar"), // Name
+               boost::none, // Description
+               boost::none, // ObjectType
+               nullptr, // ObjectPlacement
+               nullptr, // Representation
+               boost::none, // Tag
+               Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY, // AssemblyPlace
+               Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_REINFORCEMENT_UNIT // PredefinedType
+               );
 
-            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
+            // aggregate the rebar assembly with its girder segment
+            typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_aggregate_elements(new aggregate_of<typename Schema::IfcObjectDefinition>());
+            beam_aggregate_elements->push(rebar_assembly);
+            auto rel_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Girder_Segment_Aggregates_Rebar_Assembly"), boost::none, beam, beam_aggregate_elements);
+            file.addEntity(rel_aggregates);
+
+            CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
+
+            CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
 
             file.addEntity(beam);
             list_of_girder_segments->push(beam);
