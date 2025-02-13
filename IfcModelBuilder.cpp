@@ -2042,6 +2042,20 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // Add girders to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcElementAssembly::GIRDER
 
+   auto beam_type = new Schema::IfcBeamType(
+      IfcParse::IfcGlobalId(),
+      nullptr, // OwnerHistory
+      std::string("Precast Girder Type"), // Name
+      boost::none, // Description
+      boost::none, // ApplicableOccurrence
+      boost::none, // HasPropertySets (properties common to all beams of this type)
+      boost::none, // RepresentationMaps (representations common to all beams of this type)
+      boost::none, // Tag
+      boost::none, // ElementType (type name if PredefinedType is USERDEFINED)
+      Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT
+   );
+   typename aggregate_of<typename Schema::IfcObject>::ptr beams(new aggregate_of<typename Schema::IfcObject>());
+
    std::vector<typename Schema::IfcProduct*> girders;
    GET_IFACE2(pBroker, IBridge, pBridge);
    GroupIndexType nGroups = pBridge->GetGirderGroupCount();
@@ -2079,7 +2093,19 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             std::ostringstream os_segment_name;
             os_segment_name << "Segment " << LABEL_SEGMENT(segIdx);
             auto segment_name = os_segment_name.str();
-            auto beam = new Schema::IfcBeam(IfcParse::IfcGlobalId(), nullptr, segment_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT);
+
+            auto beam = new Ifc4x3_add2::IfcBeam(
+               IfcParse::IfcGlobalId(), 
+               nullptr, // OwnerHistory
+               segment_name,  // Name
+               boost::none, // Description
+               boost::none, // ObjectType
+               nullptr,  // ObjectPlacement
+               nullptr,  // Representation
+               boost::none, // Tag
+               boost::none // PredefinedType (must not be used if defined in IfcBeamType)
+            );
+
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, beam, options, body_model_representation_subcontext);
             CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, beam, options);
             
@@ -2109,7 +2135,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
 
             file.addEntity(beam);
-            list_of_girder_segments->push(beam);
+            list_of_girder_segments->push(beam); // beams in this girder
+            beams->push(beam); // all beams
 
             if (nSegments == 1 && options.classify)
             {
@@ -2157,6 +2184,16 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
          file.addEntity(girder_aggregates);
       } // next girder
    } // next group
+
+   auto rel_defines_by_type = new Schema::IfcRelDefinesByType(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Beams defined by IfcBeamType"),
+      boost::none,
+      beams,
+      beam_type);
+
+   file.addEntity(rel_defines_by_type);
 
    if (options.classify)
    {
