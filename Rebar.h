@@ -23,11 +23,9 @@
 
 
 template <typename Schema>
-typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar,
-   typename Schema::IfcShapeRepresentation* shape_representation,typename Schema::IfcAxis2Placement3D* placement)
+typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar)
 {
    // search to see if an IfcReinforcingBarType has already been created
-   auto project = file.getSingle<typename Schema::IfcProject>();
    auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
    for (auto& rel_declares : *rel_declares_instances)
    {
@@ -45,6 +43,13 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
       }
    }
 
+   return nullptr;
+}
+
+template <typename Schema>
+typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcShapeRepresentation* shape_representation)
+{
+   auto placement = file.addPlacement3d();
    auto representation_map = new Schema::IfcRepresentationMap(placement, shape_representation);
    typename aggregate_of<typename Schema::IfcRepresentationMap>::ptr representation_maps(new aggregate_of<typename Schema::IfcRepresentationMap>());
    representation_maps->push(representation_map);
@@ -72,6 +77,8 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
    file.addEntity(rebar_type);
 
    // add the new definition to the project
+   auto project = file.getSingle<typename Schema::IfcProject>();
+   auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
    if (rel_declares_instances->size() == 0)
    {
       typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());

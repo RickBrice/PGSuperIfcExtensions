@@ -39,16 +39,28 @@ typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(IfcHierar
    double b = (double)GetBValue(clr) / 255.;
 
    auto color = new Schema::IfcColourRgb(name, r, g, b);
+   file.addEntity(color);
+
    auto ssr = new Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
+   file.addEntity(ssr);
+
    typename aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>::ptr list_of_surface_styles(new aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>());
    list_of_surface_styles->push(ssr);
+   
    auto ss = new Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
+   file.addEntity(ss);
+
    typename aggregate_of<typename Schema::IfcPresentationStyle>::ptr list_of_presentation_styles(new aggregate_of<typename Schema::IfcPresentationStyle>());
    list_of_presentation_styles->push(ss);
+   
    auto styled_item = new Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
+   file.addEntity(styled_item);
+
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr styled_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
    styled_items->push(styled_item);
    auto styled_representation = new Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
+   file.addEntity(styled_representation);
+
    return styled_representation;
 }
 
@@ -84,6 +96,7 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
    // if we got this far, the material was not previously created
    // create it now
    auto strand_material = new Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
+   file.addEntity(strand_material);
 
    // define strand properties
    auto fy = pStrand->GetYieldStrength();
@@ -140,6 +153,7 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
    // if we got this far, the material was not previously created
    // create it now
    auto rebar_material = new Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
+   file.addEntity(rebar_material);
 
    // define rebar properties
    auto fy = pRebar->GetYieldStrength();
@@ -189,6 +203,7 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
    // if we got this far, the material was not previously created
    // create it now
    auto concrete_material = new Schema::IfcMaterial(name, boost::none/*description*/, std::string("concrete")/*category*/);
+   file.addEntity(concrete_material);
 
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
