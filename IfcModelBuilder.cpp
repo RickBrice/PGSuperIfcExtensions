@@ -2265,7 +2265,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
     file.header().file_description().description(file_description);
 
     std::_tostringstream _os;
-    _os << _T("BridgeLink:") << (pDocType->IsPGSuperDocument() ? _T("PGSuper") : _T("PGSplice")) << _T(" Version ") << pVersionInfo->GetVersion(true).GetBuffer() << std::ends;
+    // https://github.com/buildingSMART/IFC4.x-IF/tree/header-policy/docs/IFC-file-header#originating_system
+    _os << _T("Washington State Department of Transportation") << _T(" - ") << _T("BridgeLink:") << (pDocType->IsPGSuperDocument() ? _T("PGSuper") : _T("PGSplice")) << _T(" - ") << pVersionInfo->GetVersion(true).GetBuffer() << std::ends;
     std::string strVersion(T2A(_os.str().c_str()));
     file.header().file_name().originating_system(strVersion);
 
