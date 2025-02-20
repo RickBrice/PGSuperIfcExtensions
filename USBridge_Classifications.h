@@ -35,7 +35,7 @@ void Add_TPF_Classification(IfcHierarchyHelper<Schema>& file)
       std::string("TPF Bridge")/*Source*/,
       std::string("2") /*Edition*/,
       std::string("2024-08-13") /*EditionDate*/,
-      std::string("TPFBridge (USA)"),
+      std::string("TPF Bridge (USA)"),
       boost::none /*Description*/,
       std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2") /*Specification*/,
       boost::none /*ReferenceTokens*/);
@@ -152,7 +152,7 @@ void Create_Pset_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElementAssembly* segment)
+void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
 {
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -393,9 +393,8 @@ void Classify_TPFRailings(IfcHierarchyHelper<Schema>& file, std::vector<typename
 }
 
 template <typename Schema>
-void Classify_TPFGirders(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
+void Classify_TPFPrecastGirderElements(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
 {
-   //Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("Girder - Prestressed Concrete"), std::string("IfcElementAssembly.GIRDER"));
    Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
 }
 
