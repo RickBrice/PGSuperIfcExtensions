@@ -1226,24 +1226,6 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_precast_concrete_element_general);
    file.addEntity(related_properties);
 
-   // Pset_ConcreteElementGeneral
-   typename aggregate_of<typename Schema::IfcProperty>::ptr concrete_element_general_properties(new aggregate_of<typename Schema::IfcProperty>());
-   // PEnum_AssemblyPlace
-   std::vector<std::string> assembly_place_enum_values{ "FACTORY","OFFSITE","SITE","OTHER","UNKNOWN","UNSET" };
-   auto assembly_place_property_enum_values = createPropertyEnumeration<Schema>("PEnum_AssemblyPlace", assembly_place_enum_values);
-   auto assembly_place = createPropertyEnumeratedValue<Schema>("AssemblyPlace", assembly_place_property_enum_values, "FACTORY");
-   concrete_element_general_properties->push(assembly_place);
-
-   std::vector<std::string> casting_method_enum_values{ "INSITU","MIXED","PRECAST","PRINTED","OTHER","UNKNOWN","UNSET" };
-   auto casting_method_property_enum_values = createPropertyEnumeration<Schema>("PEnum_ConcreteCastingMethod", casting_method_enum_values);
-   auto casting_method = createPropertyEnumeratedValue<Schema>("CastingMethod", casting_method_property_enum_values, "PRECAST");
-   concrete_element_general_properties->push(casting_method);
-   auto pset_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
-   file.addEntity(new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_concrete_element_general));
-
-   // Pset_BeamCommon
-   // TODO: Add Pset_BeamCommon to the IfcBeam object - a single property set can be assigned to multiple beams if the are all the same
-
    if (options.include_quantities)
    {
       // Qto_BeamBaseQuantities
@@ -1452,7 +1434,7 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
 
 
 template <typename Schema>
-void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CClosureKey& closureKey, typename Schema::IfcElementAssembly* closureJoint, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CClosureKey& closureKey, typename Schema::IfcBeam* closureJoint, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -2060,21 +2042,45 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
    // Add girders to the spatial structure of the superstructure
    // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcElementAssembly::GIRDER
 
+   // define the common properties of the precast girder type
+   // specifically, precast concrete is defined by Pset_ConcreteElementGeneral with AssemblyPlace=FACTORY, CastingMethod=PRECAST
+   typename aggregate_of<typename Schema::IfcPropertySetDefinition>::ptr property_sets(new aggregate_of<typename Schema::IfcPropertySetDefinition>());
+
+   // Pset_ConcreteElementGeneral
+   typename aggregate_of<typename Schema::IfcProperty>::ptr concrete_element_general_properties(new aggregate_of<typename Schema::IfcProperty>());
+   // PEnum_AssemblyPlace
+   std::vector<std::string> assembly_place_enum_values{ "FACTORY","OFFSITE","SITE","OTHER","UNKNOWN","UNSET" };
+   auto assembly_place_property_enum_values = createPropertyEnumeration<Schema>("PEnum_AssemblyPlace", assembly_place_enum_values);
+   auto assembly_place = createPropertyEnumeratedValue<Schema>("AssemblyPlace", assembly_place_property_enum_values, "FACTORY");
+   concrete_element_general_properties->push(assembly_place);
+   // PEnum_ConcreteCastingMethod
+   std::vector<std::string> casting_method_enum_values{ "INSITU","MIXED","PRECAST","PRINTED","OTHER","UNKNOWN","UNSET" };
+   auto casting_method_property_enum_values = createPropertyEnumeration<Schema>("PEnum_ConcreteCastingMethod", casting_method_enum_values);
+   auto casting_method = createPropertyEnumeratedValue<Schema>("CastingMethod", casting_method_property_enum_values, "PRECAST");
+   concrete_element_general_properties->push(casting_method);
+   // create Pset_ConcreteElementGeneral
+   auto pset_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
+   property_sets->push(pset_concrete_element_general);
+
    auto beam_type = new Schema::IfcBeamType(
       IfcParse::IfcGlobalId(),
       nullptr, // OwnerHistory
       std::string("Precast Girder Type"), // Name
       boost::none, // Description
       boost::none, // ApplicableOccurrence
-      boost::none, // HasPropertySets (properties common to all beams of this type)
+      property_sets, // HasPropertySets (properties common to all beams of this type)
       boost::none, // RepresentationMaps (representations common to all beams of this type)
       boost::none, // Tag
       boost::none, // ElementType (type name if PredefinedType is USERDEFINED)
       Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT
    );
-   
-   typename aggregate_of<typename Schema::IfcObject>::ptr beam_objects(new aggregate_of<typename Schema::IfcObject>());
 
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr precast_beam_types(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   precast_beam_types->push(beam_type);
+
+
+   // build the beams
+   typename aggregate_of<typename Schema::IfcObject>::ptr beam_objects(new aggregate_of<typename Schema::IfcObject>());
 
 
    std::vector<typename Schema::IfcProduct*> girders;
@@ -2097,7 +2103,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
             girder = new Schema::IfcElementAssembly(IfcParse::IfcGlobalId(), nullptr, girder_name, boost::none, boost::none,
                nullptr/*ObjectPlacement - to be set in CreateGirderSegmentRepresentation*/,
                nullptr/*Representation - to be set in CreateGirderSegmentRepresentation*/,
-               boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
+               boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_SITE, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
             file.addEntity(girder);
             list_of_superstructure_elements->push(girder);
             girders.push_back(girder);
@@ -2133,6 +2139,11 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                   boost::none // PredefinedType (must not be used if defined in IfcBeamType)
                );
 
+               file.addEntity(beam);
+               list_of_superstructure_elements->push(beam);
+               list_of_girder_segments->push(beam); // beams in this girder
+               beam_objects->push(beam); // all beams
+
                CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, beam, options, body_model_representation_subcontext);
                CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, beam, options);
 
@@ -2161,10 +2172,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 
                CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
 
-               file.addEntity(beam);
-               list_of_girder_segments->push(beam); // beams in this girder
-               beam_objects->push(beam); // all beams
-
                //if (nSegments == 1 && options.classify)
                //{
                //   // TPFBridge_GirderCommon doesn't work for spliced girders so only do this for precast
@@ -2176,10 +2183,42 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                   std::ostringstream os_closure_name;
                   os_closure_name << "Closure Joint " << LABEL_SEGMENT(segIdx);
                   auto closure_joint_name = os_closure_name.str();
-                  auto closure_joint = new Schema::IfcElementAssembly(IfcParse::IfcGlobalId(), nullptr, closure_joint_name, std::string("Cast in place concrete closure joint"), std::string("CLOSUREJOINT"), nullptr, nullptr, boost::none, Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_SITE, Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED);
-                  CreateClosureJointRepresentation<Schema>(file, pBroker, segmentKey, closure_joint, options, body_model_representation_subcontext);
+                  auto closure_joint = new Ifc4x3_add2::IfcBeam(
+                     IfcParse::IfcGlobalId(),
+                     nullptr, // OwnerHistory
+                     closure_joint_name,
+                     std::string("Cast in place concrete closure joint"),
+                     std::string("CLOSUREJOINT"),
+                     nullptr,  // ObjectPlacement
+                     nullptr,  // Representation
+                     boost::none, // Tag
+                     boost::none // PredefinedType (must not be used if defined in IfcBeamType)
+                  );
                   file.addEntity(closure_joint);
                   list_of_girder_segments->push(closure_joint);
+                  list_of_superstructure_elements->push(closure_joint);
+
+                  // Should do this in a IfcBeamType 
+                  typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+                  related_segments->push(closure_joint);
+
+                  // Pset_ConcreteElementGeneral
+                  typename aggregate_of<typename Schema::IfcProperty>::ptr concrete_element_general_properties(new aggregate_of<typename Schema::IfcProperty>());
+                  // PEnum_AssemblyPlace
+                  std::vector<std::string> assembly_place_enum_values{ "FACTORY","OFFSITE","SITE","OTHER","UNKNOWN","UNSET" };
+                  auto assembly_place_property_enum_values = createPropertyEnumeration<Schema>("PEnum_AssemblyPlace", assembly_place_enum_values);
+                  auto assembly_place = createPropertyEnumeratedValue<Schema>("AssemblyPlace", assembly_place_property_enum_values, "SITE");
+                  concrete_element_general_properties->push(assembly_place);
+
+                  std::vector<std::string> casting_method_enum_values{ "INSITU","MIXED","PRECAST","PRINTED","OTHER","UNKNOWN","UNSET" };
+                  auto casting_method_property_enum_values = createPropertyEnumeration<Schema>("PEnum_ConcreteCastingMethod", casting_method_enum_values);
+                  auto casting_method = createPropertyEnumeratedValue<Schema>("CastingMethod", casting_method_property_enum_values, "INSITU");
+                  concrete_element_general_properties->push(casting_method);
+                  auto pset_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
+                  file.addEntity(new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_concrete_element_general));
+
+
+                  CreateClosureJointRepresentation<Schema>(file, pBroker, segmentKey, closure_joint, options, body_model_representation_subcontext);
 
                   // need to do this for each bar, stirrup, etc
                   //typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_closure_joint_parts(new aggregate_of<typename Schema::IfcObjectDefinition>());
@@ -2200,6 +2239,12 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                   //file.addEntity(closure_joint_parts_aggregates);
                }
             } // next segment
+
+            std::ostringstream os_relationship_name;
+            os_relationship_name << "Elements of girder for Group " << LABEL_GROUP(grpIdx) << " Girder " << T2A(LABEL_GIRDER(gdrIdx));
+            auto girder_aggregation_name = os_relationship_name.str();
+            auto girder_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, girder_aggregation_name, boost::none, girder, list_of_girder_segments);
+            file.addEntity(girder_aggregates);
          }
          else
          {
@@ -2219,6 +2264,10 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
                boost::none, // Tag
                boost::none // PredefinedType (must not be used if defined in IfcBeamType)
             );
+
+            file.addEntity(beam);
+            beam_objects->push(beam); // all beams
+            list_of_superstructure_elements->push(beam);
 
             CreateGirderSegmentRepresentation<Schema>(file, pBroker, segmentKey, beam, options, body_model_representation_subcontext);
             CreateGirderSegmentMaterials<Schema>(file, pBroker, segmentKey, beam, options);
@@ -2248,21 +2297,11 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
 
             CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
 
-            file.addEntity(beam);
-            beam_objects->push(beam); // all beams
-            list_of_superstructure_elements->push(beam);
-
             if (options.classify)
             {
                Create_Pset_TPFBridge_GirderCommon(file, pBroker, options, segmentKey, beam);
             }
          }
-
-         //std::ostringstream os_relationship_name;
-         //os_relationship_name << "Elements of girder for Group " << LABEL_GROUP(grpIdx) << " Girder " << T2A(LABEL_GIRDER(gdrIdx));
-         //auto girder_aggregation_name = os_relationship_name.str();
-         //auto girder_aggregates = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, girder_aggregation_name, boost::none, girder, list_of_girder_segments);
-         //file.addEntity(girder_aggregates);
       } // next girder
    } // next group
 
