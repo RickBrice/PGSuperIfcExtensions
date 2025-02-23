@@ -26,8 +26,6 @@
 #include <chrono>
 #include <ctime>
 
-#include "ProjectDeclares.h"
-
 // Per AASHTO LRFD 2.5.3, "When the designer has assumed a particular sequence of construction in order to induce
 // certain stresses under dead load, that sequence shall be defined in the contract documents."
 // 
@@ -75,13 +73,13 @@ std::string getCurrentISO8601Time() {
 template <typename Schema>
 void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
 {
-   GET_IFACE2(pBroker, ILossParameters, pLossParams);
    // only doing the PGSuper assumed construction sequence for now. For time-step method (PGSplice) it is much more complex
+   USES_CONVERSION;
+
+   GET_IFACE2_NOCHECK(pBroker, ILossParameters, pLossParams);
 
    if (!options.include_work_plan || pLossParams->GetLossMethod() == PrestressLossCriteria::LossMethodType::TIME_STEP)
       return;
-
-   USES_CONVERSION;
 
 
    auto now = getCurrentISO8601Time();
@@ -106,7 +104,8 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
    );
 
    // Declare the work plan in the project
-   ProjectDeclares(file, work_plan);
+   auto project = file.getSingle<typename Schema::IfcProject>();
+   file.addRelatedObject<typename Schema::IfcRelDeclares>(project, work_plan);
    
    // Define the assumed construction sequence as a work schedule
    auto work_schedule = new Schema::IfcWorkSchedule(

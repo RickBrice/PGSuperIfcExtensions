@@ -267,13 +267,20 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_ReinforcementCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* tendon, bool bDebonded, Float64 ldb)
+void Create_Pset_TPFBridge_ReinforcementCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* tendon, Float64 Pjack, bool bDebonded, Float64 ldb)
 {
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+
+   list_of_properties->push(new Schema::IfcPropertySingleValue(
+      std::string("tpfBridge_TendonJackingForce"),
+      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonJackingForce"),
+      new Schema::IfcReal(Pjack),
+      nullptr));
+
    list_of_properties->push(new Schema::IfcPropertySingleValue(
       std::string("tpfBridge_TendonBonding"),
       std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding"),
-#pragma Reminder("bSDD - should things be the string value or the URI reference to the string value?")
+#pragma Reminder("bSDD - should the applicable values be the string value or the URI reference to the string value?")
       // not sure if this should be URI reference or "Debonded" "Bonded" both are strings
       new Schema::IfcURIReference(bDebonded ? "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingDebonded" : "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingBonded"),
       nullptr));
@@ -330,6 +337,9 @@ void Classify_TPFBridgePart(IfcHierarchyHelper<Schema>& file, typename Schema::I
 template <typename Schema>
 void Classify_TPFBridgeParts(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& parts, const std::string& uri, const std::string& code, const std::string& name, const std::string& part_type)
 {
+   if (parts.size() == 0)
+      return;
+
    auto classification = file.getSingle<typename Schema::IfcClassification>();
 
    auto classification_reference = new Schema::IfcClassificationReference(
@@ -393,13 +403,20 @@ void Classify_TPFRailings(IfcHierarchyHelper<Schema>& file, std::vector<typename
 }
 
 template <typename Schema>
-void Classify_TPFPrecastGirderElements(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
+void Classify_TPFGirders(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
 {
-   Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
+   Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Girder"), std::string("tpfBridge_Girder"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
 }
 
 template <typename Schema>
-void Classify_TPFPrestressing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTendon* tendon)
+void Classify_TPFPrecastGirderElements(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
+{
+   //Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
+   Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcBeamGIRDER_SEGMENT"), std::string("IfcBeam.GIRDER_SEGMENT"));
+}
+
+template <typename Schema>
+void Classify_TPFPrestressing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTendonType* tendon)
 {
    auto classification = file.getSingle<typename Schema::IfcClassification>();
 
