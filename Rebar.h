@@ -110,31 +110,3 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
 
    return rebar_type;
 }
-
-template <typename Schema>
-void DefineRebarWithRebarType(IfcHierarchyHelper<Schema>& file, typename Schema::IfcReinforcingBar* rebar, typename Schema::IfcReinforcingBarType* rebar_type)
-{
-   if (rebar_type->Types()->size() == 0)
-   {
-      typename aggregate_of<typename Schema::IfcObject>::ptr related_objects(new aggregate_of<typename Schema::IfcObject>());
-      related_objects->push(rebar);
-
-      auto rel_defines_by_type = new Schema::IfcRelDefinesByType(
-         IfcParse::IfcGlobalId(),
-         nullptr,
-         std::string("rebar defined by IfcReinforcingBarType"),
-         boost::none,
-         related_objects,
-         rebar_type);
-
-      file.addEntity(rel_defines_by_type);
-   }
-   else
-   {
-      auto rel_defines_set = rebar_type->Types();
-      auto rel_defines = *(rel_defines_set->begin());
-      auto rel_objects = rel_defines->RelatedObjects();
-      rel_objects->push(rebar);
-      rel_defines->setRelatedObjects(rel_objects);
-   }
-}

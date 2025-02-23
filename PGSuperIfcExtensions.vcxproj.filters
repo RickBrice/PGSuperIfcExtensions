@@ -81,9 +81,6 @@
     <ClInclude Include="ConstructionSequence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProjectDeclares.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="PGSuperDataExporter.rgs">
