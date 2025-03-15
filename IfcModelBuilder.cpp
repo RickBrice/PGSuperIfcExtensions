@@ -788,7 +788,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
      
       std::ostringstream os;
-      os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " - G2 bars";
+      os << "G2 bars";
       auto* g2_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), true, pRebar);
       if (g2_rebar_type == nullptr)
       {
