@@ -205,7 +205,7 @@ typename Schema::IfcCurve* CreatePolyline(IPoint2dCollection* polyPoints)
 }
 
 template <typename Schema>
-typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderOptions& options)
+typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderOptions& options,double skew=0.0)
 {
    CComPtr<IPoint2dCollection> polyPoints;
    shape->get_PolyPoints(&polyPoints);
@@ -237,7 +237,15 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderO
    {
       CComPtr<IPoint2d> point;
       polyPoints->get_Item(idx, &point);
-      points->push(ConvertPoint<Schema>(point,true/*mirror about Y axis*/));
+
+      double x, y;
+      point->Location(&x, &y);
+      x /= cos(skew);
+      CComPtr<IPoint2d> new_point;
+      new_point.CoCreateInstance(CLSID_Point2d);
+      new_point->Move(x, y);
+
+      points->push(ConvertPoint<Schema>(new_point,true/*mirror about Y axis*/));
    }
 
    // we know that points is open (last point is not the same as the first)
@@ -266,7 +274,7 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderO
 
 
 template <typename Schema>
-typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcModelBuilderOptions& options)
+typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcModelBuilderOptions& options,double skew=0.0)
 {
    CComPtr<IShape> shape;
    IndexType gdrIdx, slabIdx;
@@ -291,7 +299,7 @@ typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsP
       gdrShape = _gdrShape;
    }
 
-   auto polyline = CreatePolyline<Schema>(gdrShape, options);
+   auto polyline = CreatePolyline<Schema>(gdrShape, options,skew);
    auto girder_section = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, std::string("CrossSectionProfile"), polyline);
 
    return girder_section;
@@ -1083,10 +1091,24 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    pntStart->Location(&sx, &sy);
    Float64 sz = pGirder->GetTopGirderChordElevation(poiStart);
 
-
    Float64 ex, ey;
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
+
+   CComPtr<IAngle> start_skew_angle;
+   pBridge->GetSegmentSkewAngle(poiStart.GetSegmentKey(), pgsTypes::metStart, &start_skew_angle);
+   CComPtr<IAngle> end_skew_angle;
+   pBridge->GetSegmentSkewAngle(poiEnd.GetSegmentKey(), pgsTypes::metEnd, &end_skew_angle);
+
+   Float64 start_skew, end_skew;
+   start_skew_angle->get_Value(&start_skew);
+   end_skew_angle->get_Value(&end_skew);
+
+   // skew angle function - linear interpolation of skew angle along length of segment
+   auto skew = [start_skew, end_skew, Ls](Float64 x)->Float64 {
+      return std::lerp(start_skew, end_skew, x / Ls);
+      };
+
 
    typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
    // build the girder model in a simple coordinate system, then use ObjectPlacement to local in space
@@ -1105,7 +1127,8 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 
    for (const pgsPointOfInterest& poi : vPoi)
    {
-      auto girder_perimeter = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options);
+      auto skew_angle = skew(poi.GetDistFromStart());
+      auto girder_perimeter = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, PI_OVER_2 - skew_angle);
       file.addEntity(girder_perimeter);
       cross_sections->push(girder_perimeter);
 
@@ -1113,7 +1136,9 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
       file.addEntity(pde);
 
-      auto lp = new Schema::IfcAxis2PlacementLinear(pde, nullptr, nullptr);
+      auto rd = new Schema::IfcDirection({sin(skew_angle),cos(skew_angle),1.0});
+      auto axis = new Schema::IfcDirection({0,0,1});
+      auto lp = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       file.addEntity(lp);
 
       cross_section_positions->push(lp);
@@ -1162,7 +1187,8 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 
       Float64 station, offset;
       pBridge->GetStationAndOffset(poiStart, &station, &offset);
-      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), offset, sz, boost::none, basis_curve);
+      // per PGSuper, positive offset is to the right, per IFC, positive value is to the left.... use -offset
+      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), -offset, sz, boost::none, basis_curve);
       auto a2pl = new Schema::IfcAxis2PlacementLinear(pde,
          new Schema::IfcDirection({axis.X(), axis.Y(), axis.Z()}),
          new Schema::IfcDirection({ ref_direction.X(),ref_direction.Y(),ref_direction.Z() })
