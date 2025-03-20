@@ -1136,8 +1136,10 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
       file.addEntity(pde);
 
-      auto rd = new Schema::IfcDirection({sin(skew_angle),cos(skew_angle),1.0});
-      auto axis = new Schema::IfcDirection({0,0,1});
+      // contrary to the IFC documentation, the RefDirection is normal to the plane of the cross section (at least that is how many of implemented it)
+      //auto rd = new Schema::IfcDirection({-cos(skew_angle),sin(skew_angle),0.0}); // in the plane of the cross section
+      auto rd = new Schema::IfcDirection({sin(skew_angle),cos(skew_angle),0.0}); // normal to the plane of the cross section
+      auto axis = new Schema::IfcDirection({0,0,1}); // up
       auto lp = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       file.addEntity(lp);
 
