@@ -554,6 +554,11 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    GET_IFACE2(pBroker, IBridge, pBridge);
    Float64 slope = pBridge->GetSegmentSlope(segmentKey);
 
+   CComPtr<IAngle> start_skew_angle;
+   pBridge->GetSegmentSkewAngle(segmentKey, pgsTypes::metStart, &start_skew_angle);
+   Float64 start_skew;
+   start_skew_angle->get_Value(&start_skew);
+
    GET_IFACE2(pBroker, ILongitudinalRebar, pLongRebar);
    const CLongitudinalRebarData* pLRD = pLongRebar->GetSegmentLongitudinalRebarData(segmentKey);
 
@@ -630,6 +635,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             Float64 X, Y, Z;
             p1->Location(&Y, &Z);
             X = start * sqrt(1 + slope * slope);
+
+            // adjust start position based on girder start end skew
+            X += Y/tan(M_PI - start_skew);
 
             auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
             auto mapping_source = *((*rebar_type_representation_maps)->begin());
