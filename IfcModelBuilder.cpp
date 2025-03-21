@@ -526,6 +526,14 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    Float64 start_skew;
    start_skew_angle->get_Value(&start_skew);
 
+
+   CComPtr<IAngle> end_skew_angle;
+   pBridge->GetSegmentSkewAngle(segmentKey, pgsTypes::metEnd, &end_skew_angle);
+   Float64 end_skew;
+   end_skew_angle->get_Value(&end_skew);
+
+   Float64 segment_length = pBridge->GetSegmentLength(segmentKey);
+
    GET_IFACE2(pBroker, ILongitudinalRebar, pLongRebar);
    const CLongitudinalRebarData* pLRD = pLongRebar->GetSegmentLongitudinalRebarData(segmentKey);
 
@@ -553,9 +561,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    CComPtr<IRebarLayoutItem> rebar_layout_item;
    while (enum_items->Next(1, &rebar_layout_item, nullptr) != S_FALSE)
    {
-      Float64 start, bar_length;
+      Float64 start, centerline_bar_length;
       rebar_layout_item->get_Start(&start);
-      rebar_layout_item->get_Length(&bar_length);
+      rebar_layout_item->get_Length(&centerline_bar_length); // length of the bar measured at CL Girder
 
       CComPtr<IEnumRebarPatterns> enum_patterns;
       rebar_layout_item->get__EnumRebarPatterns(&enum_patterns);
@@ -576,9 +584,12 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             Float64 db;
             rb->get_NominalDiameter(&db);
             
+            // create a basic representation of the bar based on the bar's length at the centerline of the girder
+            // This will be used in mapped representations and the bar length will be scaled to the actual bar length
+            // accounting for the actual bar's offset from centerline of beam as well as the effect of girder end face skew
             typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
             points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., 0., 0.}));
-            points->push(new Schema::IfcCartesianPoint(std::vector<double>{bar_length, 0., 0.}));
+            points->push(new Schema::IfcCartesianPoint(std::vector<double>{centerline_bar_length, 0., 0.}));
             auto directrix = new Schema::IfcPolyline(points);
             auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
             typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
@@ -601,15 +612,39 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
 
             Float64 X, Y, Z;
             p1->Location(&Y, &Z);
-            X = start * sqrt(1 + slope * slope);
+            // p1.X = horizontal from CL beam, p1.Y is distance from top of beam
+            // p1.X = -Y in IFC beam coordinates
+            // p1.Y = Z in IFC beam coordinates
+            Y *= -1.0;
 
-            // adjust start position based on girder start end skew
-            X += Y/tan(M_PI - start_skew);
+            // X is distance along CL beam in IFC beam coordinates
+            X = start;
+
+            Float64 start_offset = 0.0;
+            Float64 end_offset = 0.0;
+
+            if (IsEqual(segment_length, centerline_bar_length))
+            {
+               // Bar runs full length of segment so adjust it's length based on rebar offset from CL of beam and skews
+               // No adjustments are made for partial length bars
+               // TODO: will need to update this and adjust for partial length bars that are tied to the end faces of the beam
+
+               // adjust start position based on girder start face skew
+               start_offset = -Y / tan(M_PI - start_skew);
+               X -= start_offset;
+
+               // length adjustment based on girder end face skew
+               end_offset = Y / tan(M_PI - end_skew);
+            }
+
+            Float64 actual_bar_length = start_offset + centerline_bar_length + end_offset;
+            Float64 scaleX = actual_bar_length / centerline_bar_length;
 
             auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
             auto mapping_source = *((*rebar_type_representation_maps)->begin());
 
-            auto mapping_target = new Schema::IfcCartesianTransformationOperator3D(new Schema::IfcDirection({ 1.0,0.0,0.0 }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), 1.0, nullptr);
+            // Use a nonUniform transformation so we can scale only the length of the bar (Uniform transformation scales in all directions which would increase the diameter of the bar - we don't want that)
+            auto mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(new Schema::IfcDirection({ 1.0,0.0,0.0 }), nullptr, new Schema::IfcCartesianPoint({ X,Y,Z }), scaleX, nullptr, boost::none, boost::none);
             auto mapped_item = new Schema::IfcMappedItem(mapping_source, mapping_target);
             mapped_representation_items->push(mapped_item);
          }
