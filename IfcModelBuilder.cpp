@@ -173,7 +173,7 @@ typename Schema::IfcCurve* CreatePolyline(IPoint2dCollection* polyPoints)
 }
 
 template <typename Schema>
-typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderOptions& options,double skew=0.0)
+typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderOptions& options,double cut_angle = PI_OVER_2)
 {
    CComPtr<IPoint2dCollection> polyPoints;
    shape->get_PolyPoints(&polyPoints);
@@ -208,7 +208,7 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderO
 
       double x, y;
       point->Location(&x, &y);
-      x /= cos(skew);
+      x /= sin(cut_angle);
       CComPtr<IPoint2d> new_point;
       new_point.CoCreateInstance(CLSID_Point2d);
       new_point->Move(x, y);
@@ -242,7 +242,7 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderO
 
 
 template <typename Schema>
-typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcModelBuilderOptions& options,double skew=0.0)
+typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcModelBuilderOptions& options,double cut_angle=PI_OVER_2)
 {
    CComPtr<IShape> shape;
    IndexType gdrIdx, slabIdx;
@@ -267,7 +267,7 @@ typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsP
       gdrShape = _gdrShape;
    }
 
-   auto polyline = CreatePolyline<Schema>(gdrShape, options,skew);
+   auto polyline = CreatePolyline<Schema>(gdrShape, options, cut_angle);
    auto girder_section = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, std::string("CrossSectionProfile"), polyline);
 
    return girder_section;
@@ -522,13 +522,13 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    Float64 slope = pBridge->GetSegmentSlope(segmentKey);
 
    CComPtr<IAngle> start_skew_angle;
-   pBridge->GetSegmentSkewAngle(segmentKey, pgsTypes::metStart, &start_skew_angle);
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &start_skew_angle);
    Float64 start_skew;
    start_skew_angle->get_Value(&start_skew);
 
 
    CComPtr<IAngle> end_skew_angle;
-   pBridge->GetSegmentSkewAngle(segmentKey, pgsTypes::metEnd, &end_skew_angle);
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &end_skew_angle);
    Float64 end_skew;
    end_skew_angle->get_Value(&end_skew);
 
@@ -630,11 +630,11 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
                // TODO: will need to update this and adjust for partial length bars that are tied to the end faces of the beam
 
                // adjust start position based on girder start face skew
-               start_offset = -Y / tan(M_PI - start_skew);
+               start_offset = -Y / tan(start_skew);
                X -= start_offset;
 
                // length adjustment based on girder end face skew
-               end_offset = Y / tan(M_PI - end_skew);
+               end_offset = Y / tan(end_skew);
             }
 
             Float64 actual_bar_length = start_offset + centerline_bar_length + end_offset;
@@ -713,13 +713,14 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    std::ostringstream os;
    os << "G3 Top Bars";
    auto g3_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar);
+   Float64 wtf = pGirder->GetTopFlangeWidth(poiStart);
+   Float64 g3_bar_length = wtf - 2*cover;
    if (g3_rebar_type == nullptr)
    {
       Float64 db = pRebar->GetNominalDimension();
-      Float64 wtf = pGirder->GetTopFlangeWidth(poiStart);
       typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-      points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., -(wtf - 2 * cover) / 2, 0.}));
-      points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., (wtf - 2 * cover) / 2, 0.}));
+      points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., -g3_bar_length / 2, 0.}));
+      points->push(new Schema::IfcCartesianPoint(std::vector<double>{0., g3_bar_length / 2, 0.}));
       auto directrix = new Schema::IfcPolyline(points);
       auto swept_disk_solid = new Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
       typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
@@ -821,6 +822,41 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    Float64 H1 = Hg + A + WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch); // h1 = Hg + "A" + 3"
 
 
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &angle_start_face);
+   Float64 start_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
+
+
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &angle_end_face);
+   Float64 end_face_angle;
+   angle_end_face->get_Value(&end_face_angle);
+
+   // Interpolation function of bar angle relative to CL beam.
+   // This can be any function, but for now, we hard code it to look like
+   // the splay layout on the WSDOT WF Girder 4 of 5 Details sheet
+   // except that the length of Zone 1 is taken to be wtf/tan(angle)/2
+   // and the length of Zone 2 is taken to be 10 ft. These parameters
+   // can be updated in the future based on the stirrup zone layouts
+   auto fn_bar_angle = [start_face_angle, 
+                        end_face_angle, 
+                        Lstart = std::max(wtf,wbf) / fabs(tan(start_face_angle)) / 2,
+                        Lsplay = WBFL::Units::ConvertToSysUnits(10.0,WBFL::Units::Measure::Feet), 
+                        Lend   = std::max(wtf, wbf) / fabs(tan(end_face_angle)) / 2,
+                        Lg](Float64 x)->Float64 {
+      if (x < Lstart)
+         return start_face_angle;
+      else if (x < Lstart + Lsplay)
+         return std::lerp(start_face_angle, PI_OVER_2, (x - Lstart) / Lsplay);
+      else if (Lg - Lend - Lsplay < x && x < Lg - Lend)
+         return std::lerp(PI_OVER_2, end_face_angle, (x - (Lg - Lsplay - Lend)) / Lsplay);
+      else if (Lg - Lend < x)
+         return end_face_angle;
+      else
+         return PI_OVER_2;
+      };
+
    GET_IFACE2(pBroker, IStirrupGeometry, pStirrupGeometry);
    ZoneIndexType nZones = pStirrupGeometry->GetPrimaryZoneCount(segmentKey);
 
@@ -883,10 +919,16 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g10_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
 
       Float64 offset = start + (start < Lg/2.0 ? 1.0 : -1.0)*spacing;
+      Float64 sign = (offset < Lg / 2.0 ? 1.0 : -1.0);
       IndexType nBars = (IndexType)((end - start) / spacing);
       for (IndexType barIdx = 0; barIdx < nBars; barIdx++, offset += spacing)
       {
-         auto g2_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset, 0.,0. }), 1.0, nullptr);
+         Float64 bar_angle = fn_bar_angle(offset); // angle of bar in plan view, measured from horizontal
+         auto X_direction = new Schema::IfcDirection({ sin(bar_angle),-cos(bar_angle),0.0 });
+         auto Y_direction = new Schema::IfcDirection({ cos(bar_angle),sin(bar_angle),0.0 });
+         Float64 scaleY = fabs(1 / sin(bar_angle));
+
+         auto g2_mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new Schema::IfcCartesianPoint({ offset, 0., -cover }), 1.0, nullptr, scaleY, boost::none);
          auto g2_rebar_type_representation_maps = g2_rebar_type->RepresentationMaps();
          auto g2_mapping_source = *((*g2_rebar_type_representation_maps)->begin());
          auto g2_mapped_item = new Schema::IfcMappedItem(g2_mapping_source, g2_mapping_target);
@@ -894,20 +936,19 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
          // G3 and G2 bars can't have the same offset, otherwise they will conflict with each other
          // Offset the G3 bars 1-db towards the center of the beam (+1 db in left half, and -1 db in right half)
-         Float64 sign = (offset < Lg/2.0 ? 1.0 : -1.0);
-         auto g3_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign*db, 0., -cover }), 1.0, nullptr);
+         auto g3_mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -cover }), 1.0, nullptr, scaleY, boost::none);
          auto g3_rebar_type_representation_maps = g3_rebar_type->RepresentationMaps();
          auto g3_mapping_source = *((*g3_rebar_type_representation_maps)->begin());
          auto g3_mapped_item = new Schema::IfcMappedItem(g3_mapping_source, g3_mapping_target);
          g3_mapped_representation_items->push(g3_mapped_item);
 
-         auto g9_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg - cover/* - db#3*/) }), 1.0, nullptr);
+         auto g9_mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg - cover/* - db#3*/) }), 1.0, nullptr, scaleY, boost::none);
          auto g9_rebar_type_representation_maps = g9_rebar_type->RepresentationMaps();
          auto g9_mapping_source = *((*g9_rebar_type_representation_maps)->begin());
          auto g9_mapped_item = new Schema::IfcMappedItem(g9_mapping_source, g9_mapping_target);
          g9_mapped_representation_items->push(g9_mapped_item);
 
-         auto g10_mapping_target = new Schema::IfcCartesianTransformationOperator3D(nullptr, nullptr, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg-cover/* - db#3*/)}), 1.0, nullptr);
+         auto g10_mapping_target = new Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg - cover/* - db#3*/) }), 1.0, nullptr, scaleY, boost::none);
          auto g10_rebar_type_representation_maps = g10_rebar_type->RepresentationMaps();
          auto g10_mapping_source = *((*g10_rebar_type_representation_maps)->begin());
          auto g10_mapped_item = new Schema::IfcMappedItem(g10_mapping_source, g10_mapping_target);
@@ -1100,18 +1141,18 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
-   CComPtr<IAngle> start_skew_angle;
-   pBridge->GetSegmentSkewAngle(poiStart.GetSegmentKey(), pgsTypes::metStart, &start_skew_angle);
-   CComPtr<IAngle> end_skew_angle;
-   pBridge->GetSegmentSkewAngle(poiEnd.GetSegmentKey(), pgsTypes::metEnd, &end_skew_angle);
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(poiStart.GetSegmentKey(), pgsTypes::metStart, &angle_start_face);
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(poiEnd.GetSegmentKey(), pgsTypes::metEnd, &angle_end_face);
 
-   Float64 start_skew, end_skew;
-   start_skew_angle->get_Value(&start_skew);
-   end_skew_angle->get_Value(&end_skew);
+   Float64 start_face_angle, end_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
+   angle_end_face->get_Value(&end_face_angle);
 
-   // skew angle function - linear interpolation of skew angle along length of segment
-   auto skew = [start_skew, end_skew, Ls](Float64 x)->Float64 {
-      return std::lerp(start_skew, end_skew, x / Ls);
+   // linear interpolation of skew angle along length of segment
+   auto fn_cut_angle = [start_face_angle, end_face_angle, Ls](Float64 x)->Float64 {
+      return std::lerp(start_face_angle, end_face_angle, x / Ls);
       };
 
 
@@ -1132,8 +1173,8 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 
    for (const pgsPointOfInterest& poi : vPoi)
    {
-      auto skew_angle = skew(poi.GetDistFromStart());
-      auto girder_perimeter = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, PI_OVER_2 - skew_angle);
+      auto cut_angle = fn_cut_angle(poi.GetDistFromStart());
+      auto girder_perimeter = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, cut_angle);
       file.addEntity(girder_perimeter);
       cross_sections->push(girder_perimeter);
 
@@ -1142,8 +1183,7 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       file.addEntity(pde);
 
       // contrary to the IFC documentation, the RefDirection is normal to the plane of the cross section (at least that is how many of implemented it)
-      //auto rd = new Schema::IfcDirection({-cos(skew_angle),sin(skew_angle),0.0}); // in the plane of the cross section
-      auto rd = new Schema::IfcDirection({sin(skew_angle),cos(skew_angle),0.0}); // normal to the plane of the cross section
+      auto rd = new Schema::IfcDirection({sin(cut_angle),-cos(cut_angle),0.0}); // normal to the plane of the cross section
       auto axis = new Schema::IfcDirection({0,0,1}); // up
       auto lp = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       file.addEntity(lp);
