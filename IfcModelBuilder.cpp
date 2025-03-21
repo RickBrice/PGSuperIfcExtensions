@@ -1216,17 +1216,21 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    for (const pgsPointOfInterest& poi : vPoi)
    {
       auto cut_angle = fn_cut_angle(poi.GetDistFromStart());
-      auto girder_perimeter = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, cut_angle);
-      file.addEntity(girder_perimeter);
-      cross_sections->push(girder_perimeter);
+      auto girder_profile = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, cut_angle);
+      file.addEntity(girder_profile);
+      cross_sections->push(girder_profile);
 
       Float64 x = poi.GetDistFromStart() * sqrt(1 + slope * slope); // adjust distance along plan length to distance along girder
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
       file.addEntity(pde);
 
       // contrary to the IFC documentation, the RefDirection is normal to the plane of the cross section (at least that is how many of implemented it)
+      
+      WBFL::Geometry::Vector3d up(options.batter_ends ? slope : 0, 0, 1); // along the length of the girder
+      up.Normalize();
+
       auto rd = new Schema::IfcDirection({sin(cut_angle),-cos(cut_angle),0.0}); // normal to the plane of the cross section
-      auto axis = new Schema::IfcDirection({0,0,1}); // up
+      auto axis = new Schema::IfcDirection({up.X(),up.Y(),up.Z()}); // up
       auto lp = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       file.addEntity(lp);
 
@@ -1347,6 +1351,14 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
       fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
    }
 
+   Float64 batter = 0.0;
+   if (options.batter_ends)
+   {
+      GET_IFACE2(pBroker, IBridge, pBridge);
+      Float64 slope = pBridge->GetSegmentSlope(segmentKey);
+      batter = atan(slope);
+   }
+
    // Pset_PrecastConcreteElementGeneral
    typename aggregate_of<typename Schema::IfcProperty>::ptr precast_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("FormStrippingStrength"), boost::none, new Schema::IfcPressureMeasure(fci), stress_unit));
@@ -1354,8 +1366,8 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("ReleaseStrength"), boost::none, new Schema::IfcPressureMeasure(fci), stress_unit));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("TransportationStrength"), boost::none, new Schema::IfcPressureMeasure(fch), stress_unit));
    precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("InitialTension"), boost::none, new Schema::IfcPressureMeasure(fpj), stress_unit));
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtStart"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
-   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtEnd"), boost::none, new Schema::IfcPlaneAngleMeasure(0.0), nullptr));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtStart"), boost::none, new Schema::IfcPlaneAngleMeasure(batter), nullptr));
+   precast_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("BatterAtEnd"), boost::none, new Schema::IfcPlaneAngleMeasure(batter), nullptr));
    if (options.include_camber) {
       // Compute the camber ratio
       // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_PrecastConcreteElementGeneral.htm
