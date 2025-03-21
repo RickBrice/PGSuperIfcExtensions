@@ -359,12 +359,24 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
 
    const CSegmentKey& segmentKey(poiStart.GetSegmentKey());
 
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &angle_start_face);
+   Float64 start_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
+
+
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &angle_end_face);
+   Float64 end_face_angle;
+   angle_end_face->get_Value(&end_face_angle);
+
+   Float64 segment_length = pBridge->GetSegmentPlanLength(segmentKey);
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey); // need slope to adjust poi (which is a plan view measure) to an along the girder distance
+
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);
    GET_IFACE2_NOCHECK(pBroker, IMaterials, pMaterials);
-
-   GET_IFACE2(pBroker, IBridge, pBridge);
-   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
 
    // place strands relative to the segment origin
    typename Schema::IfcLocalPlacement* strand_placement = nullptr;
@@ -408,7 +420,13 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
 
          Float64 X, Y, Z; // X = distance along beam, Z = vertical distance in beam section, Y = horizontal distance in beam section = Z.cross(X)
          pntStart->Location(&Y, &Z);
+         Y *= -1.0;
+
          X = poiStart.GetDistFromStart() * sqrt(1 + slope * slope); // adjust distance along plan length to distance along girder
+
+         auto start_offset = Y / tan(start_face_angle);
+         
+         X += start_offset;
 
          auto start_point = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, Z});
 
@@ -426,16 +444,42 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
             const pgsPointOfInterest& poiHP = vHP[i];
 
             point->Location(&Y, &Z);
+            Y *= -1.0;
+
             X = poiHP.GetDistFromStart() * sqrt(1 + slope * slope);
             auto hp = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, Z});
             points->push(hp);
+
+            if (iter == begin)
+            {
+               // if this is the first harp point, the strand elevation at the start face of the beam
+               // needs to be adjusted for the start_offset distance.
+               auto dx = X - (start_point->Coordinates()[0] - start_offset);
+               auto dz = Z - start_point->Coordinates()[2];
+               auto harped_strand_slope = dz / dx;
+               start_point->Coordinates()[2] += start_offset * harped_strand_slope;
+            }
          }
 
          CComPtr<IPoint2d> pntEnd;
          strand_points_end->get_Item(strandIdx, &pntEnd);
 
          pntEnd->Location(&Y, &Z);
+         Y *= -1.0;
+
          X = poiEnd.GetDistFromStart() * sqrt(1 + slope * slope);
+         auto end_offset = Y / tan(end_face_angle);
+         X += end_offset;
+
+         if (strandType == pgsTypes::Harped)
+         { 
+            auto last_point = *(points->end()-1);
+            auto dx = (X - end_offset) - last_point->Coordinates()[0];
+            auto dz = Z - last_point->Coordinates()[2];
+            auto harped_strand_slope = dz / dx;
+            Z += end_offset * harped_strand_slope;
+         }
+
          auto end_point = new Schema::IfcCartesianPoint(std::vector<Float64>{X, Y, Z});
          points->push(end_point);
 
@@ -519,8 +563,6 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    const CSegmentKey& segmentKey(poiStart.GetSegmentKey());
 
    GET_IFACE2(pBroker, IBridge, pBridge);
-   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
-
    CComPtr<IAngle> start_skew_angle;
    pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &start_skew_angle);
    Float64 start_skew;
@@ -532,7 +574,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    Float64 end_skew;
    end_skew_angle->get_Value(&end_skew);
 
-   Float64 segment_length = pBridge->GetSegmentLength(segmentKey);
+   Float64 segment_length = pBridge->GetSegmentPlanLength(segmentKey);
 
    GET_IFACE2(pBroker, ILongitudinalRebar, pLongRebar);
    const CLongitudinalRebarData* pLRD = pLongRebar->GetSegmentLongitudinalRebarData(segmentKey);
