@@ -88,6 +88,13 @@ public:
    bool include_camber = true;
    bool include_quantities = true;
    BeamPlacement beam_placement = BeamPlacement::Linear;
+
+   // Sometimes when girders are installed at a very steep angle, the ends of the girders
+   // are battered so that the end faces are vertical when the beam is erected.
+   // This parameter controls batter. It does two things:
+   // 1) It batters the end faces of the girder, BUT DOES NOT ADJUST THE REINFORCEMENT (@todo - update reinforcement for batter)
+   // 2) Puts the batter angle in the Pset_PrecastConcreteElementGeneral
+   bool batter_ends = false; // set to false because PGSuper doesn't support batter
 };
 
 ///////////////////////////////////////////////////////////////////////////
