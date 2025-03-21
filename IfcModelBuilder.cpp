@@ -41,38 +41,6 @@
 #include <PgsExt\BridgeDescription2.h>
 #include <Plugins\BeamFamilyCLSID.h>
 
-
-template <typename Schema>
-void addRelatedObject(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* relating_type,
-                                                            typename Schema::IfcObjectDefinition* related_object,
-                                                            typename Schema::IfcOwnerHistory* owner_hist = nullptr) {
-    typename Schema::IfcRelDefinesByType::list::ptr li = file.instances_by_type<typename Schema::IfcRelDefinesByType>();
-    bool found = false;
-    for (typename Schema::IfcRelDefinesByType::list::it i = li->begin(); i != li->end(); ++i) {
-        typename Schema::IfcRelDefinesByType* rel = *i;
-        if (rel->RelatingType() == relating_type) {
-            typename Schema::IfcObject::list::ptr objects = rel->RelatedObjects();
-            objects->push((typename Schema::IfcObject*)related_object);
-            rel->setRelatedObjects(objects);
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        if (!owner_hist) {
-            owner_hist = file.getSingle<typename Schema::IfcOwnerHistory>();
-        }
-        if (!owner_hist) {
-            owner_hist = file.addOwnerHistory();
-        }
-        typename Schema::IfcObject::list::ptr related_objects(new aggregate_of<typename Schema::IfcObject>());
-        related_objects->push((typename Schema::IfcObject*)related_object);
-        typename Schema::IfcRelDefinesByType* t = new typename Schema::IfcRelDefinesByType(IfcParse::IfcGlobalId(), owner_hist, boost::none, boost::none, related_objects, (typename Schema::IfcTypeObject*)relating_type);
-
-        file.addEntity(t);
-    }
-}
-
 constexpr IndexType NUM_DECK_SECTIONS = 10;
 
 #define CLOCKWISE 0
@@ -499,8 +467,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          file.addEntity(strand);
 
          auto* tendon_type = GetTendonType<Schema>(file,pStrand);
-         //file.addRelatedObject<typename Schema::IfcRelDefinesByType>(tendon_type, strand);
-         addRelatedObject<Schema>(file, tendon_type, strand);
+         file.addRelatedObject<typename Schema::IfcRelDefinesByType>(tendon_type, strand);
 
 
          Float64 Pjack = pStrandGeom->GetPjack(segmentKey, strandType);
@@ -665,8 +632,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
          );
          file.addEntity(rebar);
 
-         //file.addRelatedObject<typename Schema::IfcRelDefinesByType>(rebar_type, rebar);
-         addRelatedObject<Schema>(file, rebar_type, rebar);
+         file.addRelatedObject<typename Schema::IfcRelDefinesByType>(rebar_type, rebar);
 
          rebars->push(rebar);
          rebar_pattern.Release();
@@ -934,8 +900,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       );
       file.addEntity(g2_rebar);
 
-      //file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g2_rebar_type, g2_rebar);
-      addRelatedObject<Schema>(file, g2_rebar_type, g2_rebar);
+      file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g2_rebar_type, g2_rebar);
 
       rebars->push(g2_rebar);
 
@@ -960,8 +925,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       );
       file.addEntity(g3_rebar);
 
-      //file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g3_rebar_type, g3_rebar);
-      addRelatedObject<Schema>(file, g3_rebar_type, g3_rebar);
+      file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g3_rebar_type, g3_rebar);
 
       rebars->push(g3_rebar);
 
@@ -985,8 +949,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       );
       file.addEntity(g9_rebar);
 
-      //file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g9_rebar_type, g9_rebar);
-      addRelatedObject<Schema>(file, g9_rebar_type, g9_rebar);
+      file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g9_rebar_type, g9_rebar);
 
       rebars->push(g9_rebar);
 
@@ -1011,8 +974,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       );
       file.addEntity(g10_rebar);
 
-      //file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g10_rebar_type, g10_rebar);
-      addRelatedObject<Schema>(file, g10_rebar_type, g10_rebar);
+      file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g10_rebar_type, g10_rebar);
 
       rebars->push(g10_rebar);
    }
@@ -1981,8 +1943,7 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
 
    // do this last so the beam is complete defined before it is put into the model
    file.addEntity(beam);
-   //file.addRelatedObject<typename Schema::IfcRelDefesByType>(beam_type, beam);
-   addRelatedObject<Schema>(file, beam_type, beam);
+   file.addRelatedObject<typename Schema::IfcRelDefinesByType>(beam_type, beam);
    return beam;
 }
 
