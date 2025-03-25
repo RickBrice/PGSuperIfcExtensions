@@ -1733,16 +1733,16 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    Float64 startBrgStation = pBridge->GetBearingStation(0, pgsTypes::Ahead);
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
 
-   CComPtr<IDirection> objDir;
-   pBridge->GetPierDirection(0, &objDir);
-   Float64 startDir;
-   objDir->get_Value(&startDir);
-   objDir.Release();
-   pBridge->GetPierDirection(pBridge->GetPierCount() - 1, &objDir);
-   Float64 endDir;
-   objDir->get_Value(&endDir);
+   CComPtr<IAngle> objAngle;
+   pBridge->GetPierSkew(0, &objAngle);
+   Float64 start_skew;
+   objAngle->get_Value(&start_skew);
+   objAngle.Release();
+   pBridge->GetPierSkew(pBridge->GetPierCount() - 1, &objAngle);
+   Float64 end_skew;
+   objAngle->get_Value(&end_skew);
 
-   auto fn_cut_direction = [startDir, endDir, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return std::lerp(startDir, endDir, x / L); };
+   auto fn_cut_angle = [start_skew, end_skew, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return PI_OVER_2 + std::lerp(start_skew, end_skew, x / L); };
 
    // get the directrix line of the alignment
    auto directrix = GetAlignmentDirectrix(file,options);
@@ -1751,9 +1751,6 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
 
    IndexType nDeckSections = NUM_DECK_SECTIONS;
-
-   objDir.Release();
-   objDir.CoCreateInstance(CLSID_Direction);
 
    IndexType point_count = 0;
 
@@ -1801,8 +1798,13 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       CComQIPtr<IXYPosition> pos(slab_shape);
       pos->Offset(0.0, -elev);
 
-      auto dir = fn_cut_direction(station);
-      auto polyline = CreatePolyline<Schema>(slab_shape, options, dir);
+      auto cut_angle = fn_cut_angle(station);
+      auto polyline = CreatePolyline<Schema>(slab_shape, options, cut_angle);
+
+      CComPtr<IDirection> objDir;
+      pAlignment->GetBearingNormal(station, &objDir);
+      Float64 normal_angle;
+      objDir->get_Value(&normal_angle);
 
       std::ostringstream os;
       os << "Deck Section at Station " << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str());
@@ -1811,7 +1813,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       file.addEntity(deck_perimeter);
 
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), boost::none, boost::none, boost::none, directrix);
-      auto rd = new Schema::IfcDirection({ sin(dir),-cos(dir),0.0 }); // normal to the plane of the cross section
+      auto rd = new Schema::IfcDirection({ cos(normal_angle + cut_angle),sin(normal_angle + cut_angle),0.0 }); // normal to the plane of the cross section
       auto axis = new Schema::IfcDirection({ 0,0,1 }); // up
       auto deck_section_placement = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       cross_section_positions->push(deck_section_placement);
@@ -1855,16 +1857,16 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
 
 
-   CComPtr<IDirection> objDir;
-   pBridge->GetPierDirection(0, &objDir);
-   Float64 startDir;
-   objDir->get_Value(&startDir);
-   objDir.Release();
-   pBridge->GetPierDirection(pBridge->GetPierCount() - 1, &objDir);
-   Float64 endDir;
-   objDir->get_Value(&endDir);
+   CComPtr<IAngle> objAngle;
+   pBridge->GetPierSkew(0, &objAngle);
+   Float64 start_skew;
+   objAngle->get_Value(&start_skew);
+   objAngle.Release();
+   pBridge->GetPierSkew(pBridge->GetPierCount() - 1, &objAngle);
+   Float64 end_skew;
+   objAngle->get_Value(&end_skew);
 
-   auto fn_cut_direction = [startDir, endDir, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return std::lerp(startDir, endDir, x / L); };
+   auto fn_cut_angle = [start_skew, end_skew, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return PI_OVER_2 + std::lerp(start_skew, end_skew, x / L); };
 
    IndexType nSections = NUM_DECK_SECTIONS;
    std::vector<std::pair<Float64,CComPtr<IShape>>> barrier_shapes;
@@ -1933,11 +1935,17 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       ATLASSERT(nShapesPerBarrier == _nShapes); // if this fires the actual number of shapes is not the same as the expected number of shapes
 #endif
 
-      auto dir = fn_cut_direction(station);
+      auto cut_angle = fn_cut_angle(station);
+
+
+      CComPtr<IDirection> objDir;
+      pAlignment->GetBearingNormal(station, &objDir);
+      Float64 normal_angle;
+      objDir->get_Value(&normal_angle);
 
       auto distance_along = station - startStation;
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), boost::none, boost::none, boost::none, directrix);
-      auto rd = new Schema::IfcDirection({ sin(dir),-cos(dir),0.0 }); // normal to the plane of the cross section
+      auto rd = new Schema::IfcDirection({ cos(normal_angle + cut_angle),sin(normal_angle + cut_angle),0.0 }); // normal to the plane of the cross section
       auto axis = new Schema::IfcDirection({ 0,0,1 }); // up
       auto placement = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       cross_section_positions->push(placement);
@@ -1952,7 +1960,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          CComPtr<IShape> shape;
          shape_item->get_Shape(&shape);
 
-         auto polyline = CreatePolyline<Schema>(shape, options, dir);
+         auto polyline = CreatePolyline<Schema>(shape, options, cut_angle);
          if (polyline)
          {
             std::ostringstream os;
