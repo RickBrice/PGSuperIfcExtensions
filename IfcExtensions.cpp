@@ -64,8 +64,8 @@
 CComModule _Module;
 
 BEGIN_OBJECT_MAP(ObjectMap)
-   OBJECT_ENTRY(CLSID_PGSuperDataImporter,    CPGSuperDataImporter)
-   OBJECT_ENTRY(CLSID_PGSuperDataExporter,    CPGSuperDataExporter)
+   OBJECT_ENTRY(CLSID_PGSuperIfcImporter,    CPGSuperDataImporter)
+   OBJECT_ENTRY(CLSID_PGSuperIfcExporter,    CPGSuperDataExporter)
 END_OBJECT_MAP()
 
 class CIFCExtensionsApp : public CWinApp
@@ -131,13 +131,13 @@ void RegisterPlugins(bool bRegister)
 
    // PGSuper
    //WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperProjectImporter, CATID_PGSuperProjectImporter, bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperDataImporter,    CATID_PGSuperDataImporter,    bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperDataExporter,    CATID_PGSuperDataExporter,    bRegister);
+   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperIfcImporter,    CATID_PGSuperDataImporter,    bRegister);
+   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperIfcExporter,    CATID_PGSuperDataExporter,    bRegister);
 
    // PGSplice
    //WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSpliceProjectImporter, CATID_PGSpliceProjectImporter, bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperDataImporter, CATID_PGSpliceDataImporter, bRegister);
-   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperDataExporter, CATID_PGSpliceDataExporter, bRegister);
+   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperIfcImporter, CATID_PGSpliceDataImporter, bRegister);
+   WBFL::System::ComCatMgr::RegWithCategory(CLSID_PGSuperIfcExporter, CATID_PGSpliceDataExporter, bRegister);
 }
 
 /////////////////////////////////////////////////////////////////////////////
