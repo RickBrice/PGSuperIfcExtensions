@@ -1718,7 +1718,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    // Consider modeling the slab separately from the haunch. The basic slab is the same everywhere.
    // Each girder has it's own haunch.
    // This should eliminate the problem with different number of points in the cross section profile.
-   // The deck representation would be a composite of the main slab and each haunch
+   // The deck representation would be a composite of the main slab and each haunch (This is what Representation.Items is for. Deck + each haunch are items)
 
    // This is not a good model of the deck. This model just creates NUM_DECK_SECTIONS cross sections and extrudes between them.
    GET_IFACE2(pBroker, IBridge, pBridge);
@@ -1741,6 +1741,8 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
    pBridge->GetPierDirection(pBridge->GetPierCount() - 1, &objDir);
    Float64 endDir;
    objDir->get_Value(&endDir);
+
+   auto fn_cut_direction = [startDir, endDir, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return std::lerp(startDir, endDir, x / L); };
 
    // get the directrix line of the alignment
    auto directrix = GetAlignmentDirectrix(file,options);
@@ -1766,9 +1768,12 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       // This code, and the objDir in GetSlabShape, are trying to account for skew by sweeping the cut line angle
       // between the start and end of the bridge. However, there appears to be an issue in WBFL::CoordinateGeometry 
       // that causes the top of deck section from the roadway to have duplicate points. Duplicate points are
-      // not valid for the IFC section shape so we will just use a normal section cut for now
+      // not valid for the IFC section shape so we will just use a normal section cut for now.
+      // NOTE: Below, we skew the normal cut section polygon similar to what we do for girders.
       //auto dir = i * (endDir - startDir) / nDeckSections + startDir;
       //objDir->put_Value(dir);
+
+
 
       CComPtr<IShape> slab_shape;
       pShapes->GetSlabShape(station, nullptr/*objDir*/, true/*include haunch*/, &slab_shape);
@@ -1796,7 +1801,9 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       CComQIPtr<IXYPosition> pos(slab_shape);
       pos->Offset(0.0, -elev);
 
-      auto polyline = CreatePolyline<Schema>(slab_shape, options);
+      auto dir = fn_cut_direction(station);
+      auto polyline = CreatePolyline<Schema>(slab_shape, options, dir);
+
       std::ostringstream os;
       os << "Deck Section at Station " << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str());
       auto deck_perimeter = new Schema::IfcArbitraryClosedProfileDef(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, os.str(), polyline);
@@ -1804,7 +1811,9 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       file.addEntity(deck_perimeter);
 
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), boost::none, boost::none, boost::none, directrix);
-      auto deck_section_placement = new Schema::IfcAxis2PlacementLinear(pde, nullptr/*axis*/, nullptr/*ref_direction*/);
+      auto rd = new Schema::IfcDirection({ sin(dir),-cos(dir),0.0 }); // normal to the plane of the cross section
+      auto axis = new Schema::IfcDirection({ 0,0,1 }); // up
+      auto deck_section_placement = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       cross_section_positions->push(deck_section_placement);
       file.addEntity(pde);
       file.addEntity(deck_section_placement);
@@ -1844,6 +1853,18 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
    GET_IFACE2(pBroker, IBridge, pBridge);
    Float64 startBrgStation = pBridge->GetBearingStation(0, pgsTypes::Ahead);
    Float64 endBrgStation = pBridge->GetBearingStation(pBridge->GetPierCount() - 1, pgsTypes::Back);
+
+
+   CComPtr<IDirection> objDir;
+   pBridge->GetPierDirection(0, &objDir);
+   Float64 startDir;
+   objDir->get_Value(&startDir);
+   objDir.Release();
+   pBridge->GetPierDirection(pBridge->GetPierCount() - 1, &objDir);
+   Float64 endDir;
+   objDir->get_Value(&endDir);
+
+   auto fn_cut_direction = [startDir, endDir, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return std::lerp(startDir, endDir, x / L); };
 
    IndexType nSections = NUM_DECK_SECTIONS;
    std::vector<std::pair<Float64,CComPtr<IShape>>> barrier_shapes;
@@ -1912,9 +1933,13 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
       ATLASSERT(nShapesPerBarrier == _nShapes); // if this fires the actual number of shapes is not the same as the expected number of shapes
 #endif
 
+      auto dir = fn_cut_direction(station);
+
       auto distance_along = station - startStation;
       auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), boost::none, boost::none, boost::none, directrix);
-      auto placement = new Schema::IfcAxis2PlacementLinear(pde, nullptr, nullptr);
+      auto rd = new Schema::IfcDirection({ sin(dir),-cos(dir),0.0 }); // normal to the plane of the cross section
+      auto axis = new Schema::IfcDirection({ 0,0,1 }); // up
+      auto placement = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
       cross_section_positions->push(placement);
       file.addEntity(pde);
       file.addEntity(placement);
@@ -1927,7 +1952,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
          CComPtr<IShape> shape;
          shape_item->get_Shape(&shape);
 
-         auto polyline = CreatePolyline<Schema>(shape, options);
+         auto polyline = CreatePolyline<Schema>(shape, options, dir);
          if (polyline)
          {
             std::ostringstream os;
