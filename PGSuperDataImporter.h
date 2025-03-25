@@ -33,7 +33,7 @@
 // CPGSuperDataImporter
 class ATL_NO_VTABLE CPGSuperDataImporter : 
 	public CComObjectRootEx<CComSingleThreadModel>,
-	public CComCoClass<CPGSuperDataImporter, &CLSID_PGSuperDataImporter>,
+	public CComCoClass<CPGSuperDataImporter, &CLSID_PGSuperIfcImporter>,
    public IPGSDataImporter
 {
 public:
