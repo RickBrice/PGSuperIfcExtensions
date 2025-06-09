@@ -71,7 +71,7 @@ std::string getCurrentISO8601Time() {
 
 
 template <typename Schema>
-void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    // only doing the PGSuper assumed construction sequence for now. For time-step method (PGSplice) it is much more complex
    USES_CONVERSION;
@@ -268,7 +268,7 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, IBroker
 }
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    auto task = new Schema::IfcTask(
       IfcParse::IfcGlobalId(),
@@ -501,7 +501,7 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, IB
 }
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    auto task = new Schema::IfcTask(
       IfcParse::IfcGlobalId(),
@@ -588,7 +588,7 @@ typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, IB
 }
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage3Tasks(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* CreateStage3Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    auto task = new Schema::IfcTask(
       IfcParse::IfcGlobalId(),
@@ -611,7 +611,7 @@ typename Schema::IfcTask* CreateStage3Tasks(IfcHierarchyHelper<Schema>& file, IB
 
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    auto task = new Schema::IfcTask(
       IfcParse::IfcGlobalId(),
@@ -634,7 +634,7 @@ typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, IB
 
 
 template <typename Schema>
-typename Schema::IfcTask* GetConstructBridgeSummaryTask(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* GetConstructBridgeSummaryTask(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    // the summary IfcTask is assigned to the IfcWorkSchedule control
    auto assignments = file.instances_by_type<typename Schema::IfcRelAssignsToControl>();
@@ -653,7 +653,7 @@ typename Schema::IfcTask* GetConstructBridgeSummaryTask(IfcHierarchyHelper<Schem
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStageTask(IndexType idx,IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* GetStageTask(IndexType idx,IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    auto summary_task = GetConstructBridgeSummaryTask(file, pBroker, options);
    auto nested_by = summary_task->IsNestedBy();
@@ -667,31 +667,31 @@ typename Schema::IfcTask* GetStageTask(IndexType idx,IfcHierarchyHelper<Schema>&
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage1Task(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* GetStage1Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    return GetStageTask(0, file, pBroker, options);
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage2Task(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* GetStage2Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    return GetStageTask(1, file, pBroker, options);
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage3Task(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* GetStage3Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    return GetStageTask(2, file, pBroker, options);
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage4Task(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename Schema::IfcTask* GetStage4Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    return GetStageTask(3, file, pBroker, options);
 }
 
 template <typename Schema>
-void AssignTaskToProduct(typename Schema::IfcTask* task,typename Schema::IfcProduct* product,IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+void AssignTaskToProduct(typename Schema::IfcTask* task,typename Schema::IfcProduct* product,IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
    tasks->push(task);

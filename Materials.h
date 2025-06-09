@@ -180,7 +180,7 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
+typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
 {
    USES_CONVERSION;
 
@@ -207,7 +207,7 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
-   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
       stress_unit = GetStressUnit<Schema>(file, pBroker);
       displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);

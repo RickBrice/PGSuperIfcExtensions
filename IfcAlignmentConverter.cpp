@@ -24,7 +24,9 @@
 #include "IfcAlignmentConverterException.h"
 
 #include <MFCTools\Prompts.h>
-#include <EAF\EAFAutoProgress.h>
+
+#include <IFace/Tools.h>
+#include <EAF/AutoProgress.h>
 
 #include <Units\Units.h>
 
@@ -640,7 +642,7 @@ class ProgressStringBuf : public std::stringbuf
 {
 public:
     ProgressStringBuf() : _accum(""), _lineNum(0), m_pProgress(nullptr) {};
-    void SetProgress(IProgress* pProgress) { m_pProgress = pProgress; }
+    void SetProgress(std::shared_ptr<IEAFProgress> pProgress) { m_pProgress = pProgress; }
 protected:
     virtual std::streamsize xsputn(const char* s, std::streamsize num)
     {
@@ -665,27 +667,27 @@ protected:
 private:
     std::string _accum;
     uint32_t _lineNum;
-    IProgress* m_pProgress;
+    std::shared_ptr<IEAFProgress> m_pProgress;
 };
 
 class ProgressStream : public std::ostream
 {
 public:
     ProgressStream() : std::ostream(&_progress) {};
-    void SetProgress(IProgress* pProgress) { _progress.SetProgress(pProgress); }
+    void SetProgress(std::shared_ptr<IEAFProgress> pProgress) { _progress.SetProgress(pProgress); }
 private:
     ProgressStringBuf _progress;
 };
 
-HRESULT CIfcAlignmentConverter::ConvertToPGSuper(IBroker* pBroker, CString& strFilePath)
+HRESULT CIfcAlignmentConverter::ConvertToPGSuper(std::shared_ptr<WBFL::EAF::Broker> pBroker, CString& strFilePath)
 {
     USES_CONVERSION;
 
     std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
 
     { // scope the progress window so it closes automatically when we are done with it
-        GET_IFACE2(pBroker, IProgress, pProgress);
-        CEAFAutoProgress ap(pProgress);
+        GET_IFACE2(pBroker, IEAFProgress, pProgress);
+        WBFL::EAF::AutoProgress ap(pProgress);
 
         auto del = [&](std::streambuf* p) {std::cout.rdbuf(p); };
         std::unique_ptr<std::streambuf, decltype(del)> origBuffer(std::cout.rdbuf(), del);

@@ -23,6 +23,7 @@
 
 #include "IfcModelBuilder.h"
 
+#include <IFace/Tools.h>
 #include <IFace\Project.h>
 #include <IFace\Alignment.h>
 #include <EAF\EAFDisplayUnits.h>
@@ -150,7 +151,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
    return { curve_segment, alignment_segment };
 }
 
-CComPtr<IPoint2d> GetAlignmentStartPoint(IBroker* pBroker,Float64* pStation,Float64* pElevation,Float64* pGrade)
+CComPtr<IPoint2d> GetAlignmentStartPoint(std::shared_ptr<WBFL::EAF::Broker> pBroker,Float64* pStation,Float64* pElevation,Float64* pGrade)
 {
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    CComPtr<IPoint2d> startPoint;
@@ -160,7 +161,7 @@ CComPtr<IPoint2d> GetAlignmentStartPoint(IBroker* pBroker,Float64* pStation,Floa
 }
 
 template <typename Schema>
-void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
+void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -369,7 +370,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroke
 }
 
 template <typename Schema>
-void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcRelNests** pnests_vertical_segments, typename Schema::IfcGradientCurve** palignment_gradient_curve)
+void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcRelNests** pnests_vertical_segments, typename Schema::IfcGradientCurve** palignment_gradient_curve)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr profile_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -673,7 +674,7 @@ void CreateAlignmentSegmentRepresentations(IfcHierarchyHelper<typename Schema>& 
 }
 
 template <typename Schema>
-void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 

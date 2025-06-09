@@ -24,42 +24,39 @@
 #include "stdafx.h"
 #include "IfcExtensions.h"
 #include "PGSuperDataImporter.h"
-#include <EAF\EAFAutoProgress.h>
+#include <EAF/AutoProgress.h>
 #include <IFace\Project.h>
 #include "IfcAlignmentConverter.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CPGSuperDataImporter
-HRESULT CPGSuperDataImporter::FinalConstruct()
+CPGSuperDataImporter::CPGSuperDataImporter()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    VERIFY(m_Bitmap.LoadBitmap(IDB_BSI));
-   return S_OK;
 }
+
 STDMETHODIMP CPGSuperDataImporter::Init(UINT nCmdID)
 {
    return S_OK;
 }
 
-STDMETHODIMP CPGSuperDataImporter::GetMenuText(BSTR*  bstrText) const
+CString CPGSuperDataImporter::GetMenuText() const
 {
-   *bstrText = CComBSTR("Alignment from IFC File");
-   return S_OK;
+   return CString("Alignment from IFC File");
 }
 
-STDMETHODIMP CPGSuperDataImporter::GetBitmapHandle(HBITMAP* phBmp) const
+HBITMAP CPGSuperDataImporter::GetBitmapHandle() const
 {
-   *phBmp = m_Bitmap;
-   return S_OK;
+   return m_Bitmap;
 }
 
-STDMETHODIMP CPGSuperDataImporter::GetCommandHintText(BSTR*  bstrText) const
+CString CPGSuperDataImporter::GetCommandHintText() const
 {
-   *bstrText = CComBSTR("Status line hint text\nTool tip text");
-   return S_OK;   
+   return CString("Status line hint text\nTool tip text");
 }
 
-STDMETHODIMP CPGSuperDataImporter::Import(IBroker* pBroker)
+HRESULT CPGSuperDataImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    CFileDialog dlg(TRUE, _T("ifc"),NULL,OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,_T("IFC Files (*.ifc)|*.ifc||"));

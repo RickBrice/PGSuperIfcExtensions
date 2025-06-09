@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include <IFace/Tools.h>
 #include <IFace\Project.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -34,7 +35,7 @@ public:
    ~CIfcAlignmentConverter(void);
 
    // Converts Ifc data to PGSuper data
-   HRESULT ConvertToPGSuper(IBroker* pBroker, CString& strFilePath);
+   HRESULT ConvertToPGSuper(std::shared_ptr<WBFL::EAF::Broker> pBroker, CString& strFilePath);
 
    // Returns a list of notes that were generated during the IFC to PGSuper conversion process
    std::vector<std::_tstring> GetNotes();
@@ -56,8 +57,8 @@ private:
    bool m_bAlignmentStarted;
    int m_ProfileState; // -1 = not yet started, 0 = started, but grade not determined, 1 = first point established
 
-   //LX::CrossSects* CreateCrossSections(IBroker* pBroker, LX::IFactory* pFactory);
-   //LX::Roadway*    CreateRoadway(IBroker* pBroker, LX::IFactory* pFactory);
+   //LX::CrossSects* CreateCrossSections(std::shared_ptr<WBFL::EAF::Broker> pBroker, LX::IFactory* pFactory);
+   //LX::Roadway*    CreateRoadway(std::shared_ptr<WBFL::EAF::Broker> pBroker, LX::IFactory* pFactory);
 
 
    template <typename Schema>

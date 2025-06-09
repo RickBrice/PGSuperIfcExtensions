@@ -21,6 +21,8 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include <IFace/Tools.h>
+#include <IFace/PointOfInterest.h>
 #include <IFace\Bridge.h>
 #include <IFace\AnalysisResults.h>
 #include <IFace\Intervals.h>
@@ -114,7 +116,7 @@ void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file, typename Schema:
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridge* bridge)
+void Create_Pset_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
    auto nSpans = pBridge->GetSpanCount();
@@ -152,7 +154,7 @@ void Create_Pset_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
 {
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -165,7 +167,7 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
 
-   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
       stress_unit = GetStressUnit<Schema>(file, pBroker);
       displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
@@ -174,7 +176,7 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
    auto fci = pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx);
    auto fc = pMaterials->GetSegmentFc28(segmentKey);
    auto fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
-   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
       fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
       fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
@@ -214,7 +216,7 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
       Float64 precamber = pGirder->GetPrecamber(segmentKey);
       if (!IsZero(precamber))
       {
-         if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+         if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
          {
             precamber = WBFL::Units::ConvertFromSysUnits(precamber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
          }
@@ -233,7 +235,7 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, IBroke
       Float64 ps = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftPretension, poiMS, bat, rtCumulative, false);
       Float64 girder = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftGirder, poiMS, bat, rtCumulative, false);
       Float64 camber = ps + girder;
-      if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+      if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
       {
          camber = WBFL::Units::ConvertFromSysUnits(camber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
       }
