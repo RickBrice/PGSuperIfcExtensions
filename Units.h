@@ -38,7 +38,7 @@ typename Schema::IfcConversionBasedUnit* FindUnitByName(IfcHierarchyHelper<Schem
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetStressUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetStressUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("ksi");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
@@ -57,7 +57,7 @@ typename Schema::IfcConversionBasedUnit* GetStressUnit(IfcHierarchyHelper<Schema
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetDisplacementUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetDisplacementUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("inch");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
@@ -76,7 +76,7 @@ typename Schema::IfcConversionBasedUnit* GetDisplacementUnit(IfcHierarchyHelper<
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("foot");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
@@ -95,7 +95,7 @@ typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Sc
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetBigAreaUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetBigAreaUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("square foot");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
@@ -113,7 +113,7 @@ typename Schema::IfcConversionBasedUnit* GetBigAreaUnit(IfcHierarchyHelper<Schem
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetSmallAreaUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetSmallAreaUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("square inch");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
@@ -132,7 +132,7 @@ typename Schema::IfcConversionBasedUnit* GetSmallAreaUnit(IfcHierarchyHelper<Sch
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetVolumeUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetVolumeUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("cubic foot");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
@@ -150,7 +150,7 @@ typename Schema::IfcConversionBasedUnit* GetVolumeUnit(IfcHierarchyHelper<Schema
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetMassUnit(IfcHierarchyHelper<Schema>& file, IBroker* pBroker)
+typename Schema::IfcConversionBasedUnit* GetMassUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("pound");
    typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);

@@ -72,8 +72,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <CustomBuildStep>
-      <Message />
-      <Command />
+      <Message>Copy manifest to BridgeLink</Message>
+      <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
+      <Outputs>$(ARPDIR)/BrdgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -122,8 +123,9 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <CustomBuildStep>
-      <Message />
-      <Command />
+      <Message>Copy manifest to BridgeLink</Message>
+      <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
+      <Outputs>$(ARPDIR)/BrdgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -187,8 +189,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def" />
-    <None Include="PGSuperDataImporter.rgs" />
-    <None Include="PGSuperDataExporter.rgs" />
+    <None Include="IfcExtensions.Manifest.PGSuper" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConstructionSequence.h" />

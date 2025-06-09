@@ -27,42 +27,37 @@
 #include "IfcModelBuilder.h"
 #include "ExportOptions.h"
 
+#include <IFace/Tools.h>
+#include <EAF/EAFDocument.h>
 #include <EAF/EAFUIIntegration.h>
 
-HRESULT CPGSuperDataExporter::FinalConstruct()
+CPGSuperDataExporter::CPGSuperDataExporter()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    VERIFY(m_Bitmap.LoadBitmap(IDB_BSI));
-   return S_OK;
 }
-
-/////////////////////////////////////////////////////////////////////////////
-// CPGSuperDataExporter
 
 STDMETHODIMP CPGSuperDataExporter::Init(UINT nCmdID)
 {
    return S_OK;
 }
 
-STDMETHODIMP CPGSuperDataExporter::GetMenuText(BSTR*  bstrText) const
+CString CPGSuperDataExporter::GetMenuText() const
 {
-   *bstrText = CComBSTR("Bridge Model to IFC");
-   return S_OK;
+   return CString("Bridge Model to IFC");
 }
 
-STDMETHODIMP CPGSuperDataExporter::GetBitmapHandle(HBITMAP* phBmp) const
+HBITMAP CPGSuperDataExporter::GetBitmapHandle() const
 {
-   *phBmp = m_Bitmap;
-   return S_OK;
+   return m_Bitmap;
 }
 
-STDMETHODIMP CPGSuperDataExporter::GetCommandHintText(BSTR*  bstrText) const
+CString CPGSuperDataExporter::GetCommandHintText() const
 {
-   *bstrText = CComBSTR("Status line hint text\nTool tip text");
-   return S_OK;   
+   return CString("Status line hint text\nTool tip text");
 }
 
-STDMETHODIMP CPGSuperDataExporter::Export(IBroker* pBroker)
+STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
 
@@ -77,16 +72,16 @@ STDMETHODIMP CPGSuperDataExporter::Export(IBroker* pBroker)
    CString default_file_name;
    default_file_name.Format(_T("%s%s.ifc"), file_root, file_title);
 
-	CFileDialog  dlg(FALSE,_T("ifc"),default_file_name,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IFC File (*.ifc)|*.ifc||"));
-	if (dlg.DoModal() == IDOK)
-	{
-		CString file_path = dlg.GetPathName();
+   CFileDialog  dlg(FALSE, _T("ifc"), default_file_name, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IFC File (*.ifc)|*.ifc||"));
+   if (dlg.DoModal() == IDOK)
+   {
+      CString file_path = dlg.GetPathName();
 
-       CIfcModelBuilder builder;
-       bool bResult = builder.BuildModel(pBroker, file_path, options_dlg.options);
-       CString strMsg;
-       strMsg.Format(_T("Model export %s for %s"), (bResult ? _T("successful") : _T("failed")), file_path);
-       AfxMessageBox(strMsg, MB_OK | (bResult ? MB_ICONEXCLAMATION : MB_ICONSTOP));
+      CIfcModelBuilder builder;
+      bool bResult = builder.BuildModel(pBroker, file_path, options_dlg.options);
+      CString strMsg;
+      strMsg.Format(_T("Model export %s for %s"), (bResult ? _T("successful") : _T("failed")), file_path);
+      AfxMessageBox(strMsg, MB_OK | (bResult ? MB_ICONEXCLAMATION : MB_ICONSTOP));
    }
 
    return S_OK;

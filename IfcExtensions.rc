@@ -85,16 +85,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// REGISTRY
-//
-
-IDR_PGSUPERDATAIMPORTER REGISTRY                "PGSuperDataImporter.rgs"
-
-IDR_PGSUPERDATAEXPORTER REGISTRY                "PGSuperDataExporter.rgs"
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Bitmap
 //
 
@@ -180,17 +170,6 @@ END
 IDD_EXPORT_OPTIONS AFX_DIALOG_LAYOUT
 BEGIN
     0
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// String Table
-//
-
-STRINGTABLE
-BEGIN
-    IDS_PROJNAME            "IFCExporter"
 END
 
 #endif    // English (United States) resources

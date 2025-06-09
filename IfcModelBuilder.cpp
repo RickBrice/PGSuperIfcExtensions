@@ -30,16 +30,19 @@
 #include "Materials.h"
 #include "ConstructionSequence.h"
 
+#include <IFace/Tools.h>
 #include <IFace\VersionInfo.h>
 #include <IFace\DocumentType.h>
 #include <IFace\PrestressForce.h>
 
 
-#include <EAF\EAFAutoProgress.h>
-#include <PgsExt\PrecastSegmentData.h>
+#include <EAF/AutoProgress.h>
+#include <PsgLib\PrecastSegmentData.h>
+#include <psgLib/GirderLibraryEntry.h>
 #include <WBFLGenericBridgeTools.h>
-#include <PgsExt\BridgeDescription2.h>
+#include <PsgLib\BridgeDescription2.h>
 #include <Plugins\BeamFamilyCLSID.h>
+#include <GeomModel/GeomModel.h>
 
 constexpr IndexType NUM_DECK_SECTIONS = 10;
 
@@ -242,7 +245,7 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcModelBuilderO
 
 
 template <typename Schema>
-typename Schema::IfcProfileDef* CreateSectionProfile(IShapes* pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcModelBuilderOptions& options,double cut_angle=PI_OVER_2)
+typename Schema::IfcProfileDef* CreateSectionProfile(std::shared_ptr<IShapes> pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcModelBuilderOptions& options,double cut_angle=PI_OVER_2)
 {
    CComPtr<IShape> shape;
    IndexType gdrIdx, slabIdx;
@@ -353,7 +356,7 @@ typename Schema::IfcTendonType* GetTendonType(IfcHierarchyHelper<Schema>& file, 
 }
 
 template <typename Schema> 
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(IfcHierarchyHelper<Schema>& file, IBroker* pBroker,const pgsPointOfInterest& poiStart,const pgsPointOfInterest& poiEnd,typename Schema::IfcBeam* beam)
+typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker,const pgsPointOfInterest& poiStart,const pgsPointOfInterest& poiEnd,typename Schema::IfcBeam* beam)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr strands(new aggregate_of<typename Schema::IfcObjectDefinition>());
 
@@ -556,7 +559,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcBeam* beam)
+typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcBeam* beam)
 {
    USES_CONVERSION;
 
@@ -721,7 +724,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
+typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
 {
    // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
    // For I-beams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
@@ -1100,7 +1103,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 }
 
 template <typename Schema>
-void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -1300,7 +1303,7 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 }
 
 template <typename Schema>
-void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
+void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -1339,7 +1342,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
    Float64 fcl = pMaterials->GetSegmentFc(segmentKey, liftingIntervalIdx);
    Float64 fch = pMaterials->GetSegmentFc(segmentKey, haulingIntervalIdx);
    Float64 fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
-   if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
       stress_unit = GetStressUnit<Schema>(file,pBroker);
       displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
@@ -1415,7 +1418,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
       typename Schema::IfcConversionBasedUnit* mass_unit = nullptr;
       typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
 
-      if (pDisplayUnits->GetUnitMode() == eafTypes::umUS)
+      if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
       {
          big_area_unit = GetBigAreaUnit<Schema>(file, pBroker);
          small_area_unit = GetSmallAreaUnit<Schema>(file, pBroker);
@@ -1455,7 +1458,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, IBroker* pBr
 }
 
 template <typename Schema>
-void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
+void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
@@ -1493,7 +1496,7 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBrok
 }
 
 template <typename Schema>
-void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam,typename Schema::IfcElementAssembly* rebar_assembly, const CIfcModelBuilderOptions& options)
+void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam,typename Schema::IfcElementAssembly* rebar_assembly, const CIfcModelBuilderOptions& options)
 {
    if (!options.include_rebar)
       return;
@@ -1540,7 +1543,7 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, IBr
 
 
 template <typename Schema>
-void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, typename Schema::IfcElementAssembly* rebar_assembly, const CIfcModelBuilderOptions& options)
+void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, typename Schema::IfcElementAssembly* rebar_assembly, const CIfcModelBuilderOptions& options)
 {
    if (!options.include_rebar)
       return;
@@ -1552,8 +1555,7 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
    const CGirderGroupData* pGroup = pBridgeDesc->GetGirderGroup(segmentKey.groupIndex);
    const GirderLibraryEntry* pGdrEntry = pGroup->GetGirderLibraryEntry(segmentKey.girderIndex);
-   CComPtr<IBeamFactory> beam_factory;
-   pGdrEntry->GetBeamFactory(&beam_factory);
+   auto beam_factory = pGdrEntry->GetBeamFactory();
    if (!::IsEqualGUID(beam_factory->GetFamilyCLSID(), CLSID_WFBeamFamily))
       return;
 
@@ -1590,7 +1592,7 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBro
 
 
 template <typename Schema>
-void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CClosureKey& closureKey, typename Schema::IfcBeam* closureJoint, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CClosureKey& closureKey, typename Schema::IfcBeam* closureJoint, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -1712,7 +1714,7 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, IBroker*
 }
 
 template <typename Schema>
-void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridgePart* deck, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
 #pragma Reminder("WORKING HERE - Deck Model - need to re-think this approach")
    // Consider modeling the slab separately from the haunch. The basic slab is the same everywhere.
@@ -1754,6 +1756,8 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
    IndexType point_count = 0;
 
+   bool bIncludeHaunch = IsZero(start_skew) && IsZero(end_skew) ? true : false;
+
    GET_IFACE2(pBroker, IShapes, pShapes);
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
@@ -1773,7 +1777,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
 
       CComPtr<IShape> slab_shape;
-      pShapes->GetSlabShape(station, nullptr/*objDir*/, true/*include haunch*/, &slab_shape);
+      pShapes->GetSlabShape(station, nullptr/*objDir*/, bIncludeHaunch, &slab_shape);
 
       // All of the deck cross sections must have exactly the same number of points or it is an invalid IFC representation
       // Capture the number of points for the first deck section, then compare all other deck sections
@@ -1812,7 +1816,8 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
       cross_sections->push(deck_perimeter);
       file.addEntity(deck_perimeter);
 
-      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(station - startStation), boost::none, boost::none, boost::none, directrix);
+      auto distance_along = station - startStation;
+      auto pde = new Schema::IfcPointByDistanceExpression(new Schema::IfcLengthMeasure(distance_along), boost::none, boost::none, boost::none, directrix);
       auto rd = new Schema::IfcDirection({ cos(normal_angle + cut_angle),sin(normal_angle + cut_angle),0.0 }); // normal to the plane of the cross section
       auto axis = new Schema::IfcDirection({ 0,0,1 }); // up
       auto deck_section_placement = new Schema::IfcAxis2PlacementLinear(pde, axis, rd);
@@ -1843,7 +1848,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker
 
 
 template <typename Schema>
-void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcProduct* railing, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcProduct* railing, const CIfcModelBuilderOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    GET_IFACE2(pBroker, IBarriers, pBarriers);
 
@@ -2003,7 +2008,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, IBroker
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
@@ -2061,7 +2066,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 }
 
 template <typename Schema>
-typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType* beam_type,const CIfcModelBuilderOptions& options)
+typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType* beam_type,const CIfcModelBuilderOptions& options)
 {
    auto beam = new Ifc4x3_add2::IfcBeam(
       IfcParse::IfcGlobalId(),
@@ -2110,7 +2115,7 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
 }
 
 template <typename Schema>
-void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
@@ -2479,7 +2484,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
  }
 
   template <typename Schema>
- void InitializeFile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CString& strFilePath)
+ void InitializeFile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath)
  {
     USES_CONVERSION;
 
@@ -2570,12 +2575,12 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfc
  }
 
 template <typename Schema>
-bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options)
+bool CIfcModelBuilder::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
-   GET_IFACE2(pBroker, IProgress, pProgress);
-   CEAFAutoProgress ap(pProgress);
+   GET_IFACE2(pBroker, IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Exporting IFC model"));
 
    IfcHierarchyHelper<Schema> file;
@@ -2611,7 +2616,7 @@ CIfcModelBuilder::~CIfcModelBuilder(void)
 {
 }
 
-bool CIfcModelBuilder::BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options)
+bool CIfcModelBuilder::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options)
 {
    bool bResult = false;
    switch (options.schema)

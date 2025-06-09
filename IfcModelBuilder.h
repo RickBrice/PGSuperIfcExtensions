@@ -21,6 +21,8 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+namespace WBFL { namespace EAF { class Broker; }; };
+
 class CIfcModelBuilderOptions
 {
 public:
@@ -105,10 +107,10 @@ public:
     CIfcModelBuilder(void);
     ~CIfcModelBuilder(void);
 
-    bool BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
 
 private:
     template <typename Schema>
-    bool BuildModel(IBroker* pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
 };
 

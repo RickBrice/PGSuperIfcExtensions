@@ -83,15 +83,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="PGSuperDataExporter.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="PGSuperDataImporter.rgs">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="IfcExtensions.def">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="IfcExtensions.Manifest.PGSuper" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
