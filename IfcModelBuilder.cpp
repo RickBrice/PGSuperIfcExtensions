@@ -2301,6 +2301,9 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    auto pset_concrete_element_general = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
    property_sets->push(pset_concrete_element_general);
 
+   GET_IFACE2(pBroker, IDocumentType, pDocType);
+   bool bIsPGSplice = pDocType->IsPGSpliceDocument();
+
    auto beam_type = new Schema::IfcBeamType(
       IfcParse::IfcGlobalId(),
       nullptr, // OwnerHistory
@@ -2311,7 +2314,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       boost::none, // RepresentationMaps (representations common to all beams of this type)
       boost::none, // Tag
       boost::none, // ElementType (type name if PredefinedType is USERDEFINED)
-      Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT
+      bIsPGSplice ? Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT : Schema::IfcBeamTypeEnum::IfcBeamType_BEAM
    );
    file.addEntity(beam_type);
 
