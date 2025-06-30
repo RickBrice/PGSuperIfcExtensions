@@ -1438,7 +1438,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
       beam_quantities->push(new Schema::IfcQuantityArea(std::string("GrossSurfaceArea"), boost::none, big_area_unit, GSA, boost::none));
       beam_quantities->push(new Schema::IfcQuantityVolume(std::string("GrossVolume"), boost::none, volume_unit, GV, boost::none));
 
-      auto qto_bodygeometryvalidation = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BodyGeometryValidation"), boost::none, boost::none, beam_quantities);
+      auto qto_bodygeometryvalidation = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BodyGeometryValidation"), boost::none, std::string("BaseQuantities"), beam_quantities);
       file.addEntity(qto_bodygeometryvalidation);
 
       beam_quantities->push(new Schema::IfcQuantityLength(std::string("Length"), boost::none, length_unit, L, boost::none));
@@ -1446,7 +1446,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
       beam_quantities->push(new Schema::IfcQuantityArea(std::string("OuterSurfaceArea"), boost::none, big_area_unit, OSA, boost::none));
       beam_quantities->push(new Schema::IfcQuantityWeight(std::string("GrossWeight"), boost::none, mass_unit, Mass, boost::none));
 
-      auto qto_beambasequantities = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BeamBaseQuantities"), boost::none, boost::none, beam_quantities);
+      auto qto_beambasequantities = new Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BeamBaseQuantities"), boost::none, std::string("BaseQuantities"), beam_quantities);
       file.addEntity(qto_beambasequantities);
 
       auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, qto_bodygeometryvalidation);
@@ -2014,6 +2014,15 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_piers(new aggregate_of<typename Schema::IfcObjectDefinition>());
 
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   auto station_format = pDisplayUnits->GetStationFormat();
+
+   // get stationing information
+   Float64 startStation, startElevation, startGrade;
+   auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+
+   auto directrix = GetAlignmentDirectrix(file, options);
+
    GET_IFACE2(pBroker, IBridge, pBridge);
    auto nPiers = pBridge->GetPierCount();
    for (IndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
@@ -2058,6 +2067,46 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
          auto task = GetStage1Task(file, pBroker, options);
          AssignTaskToProduct(task, pier, file, pBroker, options);
       }
+
+      // referent position
+      auto pierStation = pBridge->GetPierStation(pierIdx);
+
+      auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
+         new Schema::IfcLengthMeasure(pierStation - startStation),
+         boost::none, boost::none, boost::none,
+         directrix);
+      auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
+      auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
+
+      // create referent
+      std::ostringstream os2;
+      os2 << "Station " << T2A(WBFL::COGO::Station(pierStation).AsString(station_format).c_str()) << " " << T2A(LABEL_PIER_EX(pBridge->IsAbutment(pierIdx), pierIdx));
+      auto referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, os2.str(), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_POSITION);
+      file.addEntity(referent);
+
+      // create and assign Pset_Stationing
+      typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
+      pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(pierStation), nullptr));
+
+      auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
+      file.addEntity(property_set);
+
+      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      referents->push(referent);
+
+      auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates pier station properties to referent"), boost::none, referents, property_set);
+      file.addEntity(rel_defines_by_properties);
+
+      // IfcReferent <-> IfcRelPositions <-> IfcBridgePart::PIER,FOUNDATION
+      // Without providing geometry, this is how the pier and foundation are positions - referent informs on the position of the products it positions
+      typename aggregate_of<typename Schema::IfcProduct>::ptr related_products(new aggregate_of<typename Schema::IfcProduct>());
+      related_products->push(pier);
+      related_products->push(foundation);
+      auto rel_positions = new Schema::IfcRelPositions(IfcParse::IfcGlobalId(), nullptr, std::string("Referent positions pier and foundation"), boost::none, referent, related_products);
+      file.addEntity(rel_positions);
+
+      auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+      file.addRelatedObject<typename Schema::IfcRelNests>(alignment, referent);
 
       list_of_piers->push(pier);
    }
@@ -2183,14 +2232,21 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       Classify_TPFSubstructure<Schema>(file, substructure);
    }
 
+   auto deck = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Deck"), boost::none, boost::none, nullptr, nullptr, boost::none,
+      Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
+      Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
+      Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
+   CreateDeckRepresentation(file, pBroker, deck, options, body_model_representation_subcontext);
+   file.addEntity(deck);
+
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_bridge_parts(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   list_of_bridge_parts->push(deck);
    list_of_bridge_parts->push(superstructure);
    list_of_bridge_parts->push(substructure);
 
-   // IfcBridge <-> IfcRelAggregates <-> IfcBridgePart::SUPERSTRUCTURE, SUBSTRUCTURE
+   // IfcBridge <-> IfcRelAggregates <-> IfcBridgePart::DECK, SUPERSTRUCTURE, SUBSTRUCTURE
    auto bridge_spatial_elements = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in bridge spatial structure"), boost::none, bridge, list_of_bridge_parts);
    file.addEntity(bridge_spatial_elements);
-
 
 
    // Create spatial structure of substructure
@@ -2198,24 +2254,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    auto list_of_piers = CreatePiers(file, pBroker, options);
    auto substructure_spatial_elements = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in substructure spatial structure"), boost::none, substructure, list_of_piers);
    file.addEntity(substructure_spatial_elements);
-
-   // Create spatial structure of superstructure
-   // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelAggregates <-> IfcBridgePart::DECK, 
-   // NOTE: Could also be DECK_SEGMENT if we looked at the spliced girder staged deck construction model
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_superstructure_spatial_elements(new aggregate_of<typename Schema::IfcObjectDefinition>());
-
-   auto deck = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Deck"), boost::none, boost::none, nullptr, nullptr, boost::none,
-      Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
-      Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
-      Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
-   CreateDeckRepresentation(file, pBroker, deck, options, body_model_representation_subcontext);
-   file.addEntity(deck);
-   list_of_superstructure_spatial_elements->push(deck);
-
-   // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelAggregates <-> IfcBridgePart::DECK
-   auto rel_aggregates_elements_of_superstructure_spatial_structure = new Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in superstructure spatial structure"), boost::none, superstructure, list_of_superstructure_spatial_elements);
-   file.addEntity(rel_aggregates_elements_of_superstructure_spatial_structure);
-
 
    if (options.include_work_plan)
    {
@@ -2234,7 +2272,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
 
    // Add railings to the spatial structure of the superstructure
-   // IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcRailing
+   // IfcBridgePart::DECK <-> IfcRelContainedInSpatialStructure <-> IfcRailing
 
 #pragma Reminder("PGSUPER needs the concept of No Railing - here we define a railing product with no representation which says there is a railing")
    typename Schema::IfcProduct* left_railing;
@@ -2248,7 +2286,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    }
    CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboLeft, left_railing, options, body_model_representation_subcontext);
    file.addEntity(left_railing);
-   file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, left_railing);
+   file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, left_railing);
 
    typename Schema::IfcProduct* right_railing;
    if (options.railings == CIfcModelBuilderOptions::Railings::Parapet)
@@ -2261,7 +2299,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    }
    CreateRailingSystemRepresentation(file, pBroker, pgsTypes::tboRight, right_railing, options, body_model_representation_subcontext);
    file.addEntity(right_railing);
-   file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, right_railing);
+   file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, right_railing);
 
    std::vector<typename Schema::IfcProduct*> railings{ left_railing,right_railing };
    if (options.classify)
