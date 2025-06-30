@@ -563,18 +563,19 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    const CSegmentKey& segmentKey(poiStart.GetSegmentKey());
 
    GET_IFACE2(pBroker, IBridge, pBridge);
-   CComPtr<IAngle> start_skew_angle;
-   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &start_skew_angle);
-   Float64 start_skew;
-   start_skew_angle->get_Value(&start_skew);
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &angle_start_face);
+   Float64 start_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
 
 
-   CComPtr<IAngle> end_skew_angle;
-   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &end_skew_angle);
-   Float64 end_skew;
-   end_skew_angle->get_Value(&end_skew);
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &angle_end_face);
+   Float64 end_face_angle;
+   angle_end_face->get_Value(&end_face_angle);
 
-   Float64 segment_length = pBridge->GetSegmentPlanLength(segmentKey);
+   Float64 segment_length = pBridge->GetSegmentPlanLength(segmentKey); // length along grade
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey); // need slope to adjust bar start/end distance (which is a plan view measure) to an along the girder distance
 
    GET_IFACE2(pBroker, ILongitudinalRebar, pLongRebar);
    const CLongitudinalRebarData* pLRD = pLongRebar->GetSegmentLongitudinalRebarData(segmentKey);
@@ -605,7 +606,10 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    {
       Float64 start, centerline_bar_length;
       rebar_layout_item->get_Start(&start);
-      rebar_layout_item->get_Length(&centerline_bar_length); // length of the bar measured at CL Girder
+      rebar_layout_item->get_Length(&centerline_bar_length); // length of the bar measured along CL Girder
+
+      start *= sqrt(1 + slope * slope);
+      centerline_bar_length *= sqrt(1 + slope * slope);
 
       CComPtr<IEnumRebarPatterns> enum_patterns;
       rebar_layout_item->get__EnumRebarPatterns(&enum_patterns);
@@ -672,14 +676,14 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
                // TODO: will need to update this and adjust for partial length bars that are tied to the end faces of the beam
 
                // adjust start position based on girder start face skew
-               start_offset = -Y / tan(start_skew);
-               X -= start_offset;
+               start_offset = Y / tan(start_face_angle);
+               X += start_offset;
 
                // length adjustment based on girder end face skew
-               end_offset = Y / tan(end_skew);
+               end_offset = Y / tan(end_face_angle);
             }
 
-            Float64 actual_bar_length = start_offset + centerline_bar_length + end_offset;
+            Float64 actual_bar_length = -start_offset + centerline_bar_length + end_offset;
             Float64 scaleX = actual_bar_length / centerline_bar_length;
 
             auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
