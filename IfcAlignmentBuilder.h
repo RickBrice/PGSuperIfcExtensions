@@ -528,6 +528,11 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, t
 
       // check elevation
       ATLASSERT(IsEqual(endElevation, prev_end_height + length * prev_end_gradient));
+
+      // parameters at end of segment
+      prev_end_dist_along += length;
+      prev_end_height += length * prev_end_gradient;
+
    }
 
    // Add terminator segment
