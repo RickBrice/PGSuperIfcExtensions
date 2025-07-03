@@ -2103,10 +2103,18 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 
       // IfcReferent <-> IfcRelPositions <-> IfcBridgePart::PIER,FOUNDATION
       // Without providing geometry, this is how the pier and foundation are positions - referent informs on the position of the products it positions
+      std::string strPositions("Positions pier and foundation");
       typename aggregate_of<typename Schema::IfcProduct>::ptr related_products(new aggregate_of<typename Schema::IfcProduct>());
       related_products->push(pier);
       related_products->push(foundation);
-      auto rel_positions = new Schema::IfcRelPositions(IfcParse::IfcGlobalId(), nullptr, std::string("Referent positions pier and foundation"), boost::none, referent, related_products);
+      if (pierIdx == 0 || pierIdx == nPiers - 1)
+      {
+         auto bridge = file.getSingle<typename Schema::IfcBridge>();
+         related_products->push(bridge);
+         strPositions = "Positions ends of bridge";
+      }
+
+      auto rel_positions = new Schema::IfcRelPositions(IfcParse::IfcGlobalId(), nullptr, strPositions, boost::none, referent, related_products);
       file.addEntity(rel_positions);
 
       auto alignment = file.getSingle<typename Schema::IfcAlignment>();
@@ -2642,8 +2650,6 @@ bool CIfcModelBuilder::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, co
    {
       CreateBridge<Schema>(file, pBroker, options); // creates bridge with site spatial structure
    }
-
-   CreateReferents(file, pBroker, options);
 
 
    std::ofstream ofs(T2A(strFilePath));
