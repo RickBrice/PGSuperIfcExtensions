@@ -27,7 +27,7 @@
 #include <WBFLCogo\CogoHelpers.h>
 
 template <typename Schema>
-void CreateReferents(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
+void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
