@@ -833,6 +833,8 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const C
    list_alignments_referenced_in_site->push(alignment);
    auto rel_referenced_in_spatial_structure = new Schema::IfcRelReferencedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, list_alignments_referenced_in_site, site);
    file.addEntity(rel_referenced_in_spatial_structure);
+
+   CreateAlignmentStartStationReferent(file, pBroker, options);
 }
 
 
