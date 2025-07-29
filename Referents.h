@@ -27,7 +27,7 @@
 #include <WBFLCogo\CogoHelpers.h>
 
 template <typename Schema>
-void CreateReferents(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
+void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, IBroker* pBroker, const CIfcModelBuilderOptions& options)
 {
    USES_CONVERSION;
 
