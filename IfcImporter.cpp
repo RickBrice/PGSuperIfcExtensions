@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "IfcImporter.h"
 #include "IfcImporterException.h"
+#include "Properties.h"
 
 #include <MFCTools\Prompts.h>
 
@@ -61,40 +62,6 @@ Ifc4x3_add2::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3
 Ifc4x3_add2::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_add2::IfcAlignmentSegment* alignment_segment)
 {
    return alignment_segment->DesignParameters()->as<Ifc4x3_add2::IfcAlignmentVerticalSegment>();
-}
-
-Ifc4x3_add2::IfcPropertySet* GetPropertySet(Ifc4x3_add2::IfcObject* object, std::string name)
-{
-   auto rels = object->IsDefinedBy();
-   for (auto rel : *rels)
-   {
-      auto prop_set = rel->RelatingPropertyDefinition()->as<Ifc4x3_add2::IfcPropertySet>();
-      if (prop_set->Name() == name)
-      {
-         return prop_set;
-      }
-   }
-
-   return nullptr;
-}
-
-template <typename T>
-T* GetProperty(Ifc4x3_add2::IfcObject* object, std::string pset_name, std::string property_name)
-{
-   auto pset = GetPropertySet(object, pset_name);
-   if (pset)
-   {
-      auto properties = pset->HasProperties();
-      for (auto property : *properties)
-      {
-         if (property->Name() == property_name)
-         {
-            auto p = property->as<Ifc4x3_add2::IfcPropertySingleValue>();
-            return p->NominalValue()->as<T>();
-         }
-      }
-   }
-   return nullptr;
 }
 
 Ifc4x3_add2::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridgePartTypeEnum part_type)
@@ -569,7 +536,7 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
 
    SpanIndexType nSpans = INVALID_INDEX;
    GirderIndexType nGirders = INVALID_INDEX;
-   auto value = GetProperty<Ifc4x3_add2::IfcInteger>(bridge, "TPFBridge_BridgeCommon", "tpfBridge_NumberOfSpans");
+   auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcInteger>(bridge, "TPFBridge_BridgeCommon", "tpfBridge_NumberOfSpans");
    if (value)
    {
       nSpans = (SpanIndexType)(*value);
@@ -767,7 +734,7 @@ void CIfcImporter::GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, std::vecto
 
 Float64 CIfcImporter::GetStartStation(Ifc4x3_add2::IfcAlignment* pAlignment)
 {
-   auto value = GetProperty<Ifc4x3_add2::IfcReal>(pAlignment, "Pset_Stationing", "Station");
+   auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcReal>(pAlignment, "Pset_Stationing", "Station");
    if (value)
    {
       return (Float64)(*value);
