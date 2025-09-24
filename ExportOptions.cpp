@@ -23,21 +23,21 @@ CExportOptions::~CExportOptions()
 void CExportOptions::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_RadioEnum<CIfcModelBuilderOptions::Schema>(pDX, IDC_4X3_ADD2, options.schema);
+	DDX_RadioEnum<CIfcExportOptions::Schema>(pDX, IDC_4X3_ADD2, options.schema);
 	DDX_Check_Bool(pDX, IDC_BSDD, options.classify);
-	DDX_RadioEnum<CIfcModelBuilderOptions::ModelElements>(pDX, IDC_ALIGNMENT_ONLY, options.model_elements);
-	DDX_RadioEnum<CIfcModelBuilderOptions::AlignmentModel>(pDX, IDC_POLYLINE, options.alignment_model);
-	DDX_RadioEnum<CIfcModelBuilderOptions::Tangents>(pDX, IDC_POLYLINE_TANGENT, options.tangents);
-	DDX_RadioEnum<CIfcModelBuilderOptions::Representations>(pDX, IDC_REPRESENTATION_CURVE, options.representations);
-	DDX_RadioEnum<CIfcModelBuilderOptions::SweepProfile>(pDX, IDC_SWEEP_POLYLINE, options.sweep_profile);
-	DDX_RadioEnum<CIfcModelBuilderOptions::Railings>(pDX, IDC_WALL, options.railings);
+	DDX_RadioEnum<CIfcExportOptions::ModelElements>(pDX, IDC_ALIGNMENT_ONLY, options.model_elements);
+	DDX_RadioEnum<CIfcExportOptions::AlignmentModel>(pDX, IDC_POLYLINE, options.alignment_model);
+	DDX_RadioEnum<CIfcExportOptions::Tangents>(pDX, IDC_POLYLINE_TANGENT, options.tangents);
+	DDX_RadioEnum<CIfcExportOptions::Representations>(pDX, IDC_REPRESENTATION_CURVE, options.representations);
+	DDX_RadioEnum<CIfcExportOptions::SweepProfile>(pDX, IDC_SWEEP_POLYLINE, options.sweep_profile);
+	DDX_RadioEnum<CIfcExportOptions::Railings>(pDX, IDC_WALL, options.railings);
 
 	DDX_Check_Bool(pDX, IDC_WORK_PLAN, options.include_work_plan);
 	DDX_Check_Bool(pDX, IDC_INCLUDE_REBAR, options.include_rebar);
 	DDX_Check_Bool(pDX, IDC_INCLUDE_CAMBER, options.include_camber);
 	DDX_Check_Bool(pDX, IDC_QUANTITIES, options.include_quantities);
 
-	DDX_RadioEnum<CIfcModelBuilderOptions::BeamPlacement>(pDX, IDC_LINEAR_PLACEMENT, options.beam_placement);
+	DDX_RadioEnum<CIfcExportOptions::BeamPlacement>(pDX, IDC_LINEAR_PLACEMENT, options.beam_placement);
 }
 
 

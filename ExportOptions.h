@@ -1,6 +1,6 @@
 #pragma once
 #include "afxdialogex.h"
-#include "IfcModelBuilder.h"
+#include "IfcExporter.h"
 
 // CExportOptions dialog
 
@@ -12,7 +12,7 @@ public:
 	CExportOptions(CWnd* pParent = nullptr);   // standard constructor
 	virtual ~CExportOptions();
 
-	CIfcModelBuilderOptions options;
+	CIfcExportOptions options;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

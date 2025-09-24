@@ -24,7 +24,7 @@
 #include "stdafx.h"
 #include "IfcExtensions.h"
 #include "PGSuperDataExporter.h"
-#include "IfcModelBuilder.h"
+#include "IfcExporter.h"
 #include "ExportOptions.h"
 
 #include <IFace/Tools.h>
@@ -77,7 +77,7 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    {
       CString file_path = dlg.GetPathName();
 
-      CIfcModelBuilder builder;
+      CIfcExporter builder;
       bool bResult = builder.BuildModel(pBroker, file_path, options_dlg.options);
       CString strMsg;
       strMsg.Format(_T("Model export %s for %s"), (bResult ? _T("successful") : _T("failed")), file_path);

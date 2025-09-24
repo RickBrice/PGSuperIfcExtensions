@@ -175,11 +175,12 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ImportOptions.cpp" />
     <ClCompile Include="ExportOptions.cpp" />
-    <ClCompile Include="IfcAlignmentConverter.cpp" />
-    <ClCompile Include="IfcAlignmentConverterException.cpp" />
+    <ClCompile Include="IfcImporter.cpp" />
+    <ClCompile Include="IfcImporterException.cpp" />
     <ClCompile Include="IfcExtensions.cpp" />
-    <ClCompile Include="IfcModelBuilder.cpp" />
+    <ClCompile Include="IfcExporter.cpp" />
     <ClCompile Include="PGSuperDataImporter.cpp" />
     <ClCompile Include="PGSuperDataExporter.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -192,14 +193,15 @@
     <None Include="IfcExtensions.Manifest.PGSuper" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ImportOptions.h" />
     <ClInclude Include="ConstructionSequence.h" />
     <ClInclude Include="ExportOptions.h" />
     <ClInclude Include="GirderSheets.h" />
     <ClInclude Include="IfcAlignmentBuilder.h" />
-    <ClInclude Include="IfcAlignmentConverter.h" />
-    <ClInclude Include="IfcAlignmentConverterException.h" />
+    <ClInclude Include="IfcImporter.h" />
+    <ClInclude Include="IfcImporterException.h" />
     <ClInclude Include="IfcExtensions.h" />
-    <ClInclude Include="IfcModelBuilder.h" />
+    <ClInclude Include="IfcExporter.h" />
     <ClInclude Include="Materials.h" />
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />

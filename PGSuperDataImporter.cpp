@@ -26,7 +26,8 @@
 #include "PGSuperDataImporter.h"
 #include <EAF/AutoProgress.h>
 #include <IFace\Project.h>
-#include "IfcAlignmentConverter.h"
+#include "IfcImporter.h"
+#include "ImportOptions.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CPGSuperDataImporter
@@ -43,7 +44,7 @@ STDMETHODIMP CPGSuperDataImporter::Init(UINT nCmdID)
 
 CString CPGSuperDataImporter::GetMenuText() const
 {
-   return CString("Alignment from IFC File");
+   return CString("Bridge Model from IFC");
 }
 
 HBITMAP CPGSuperDataImporter::GetBitmapHandle() const
@@ -64,7 +65,11 @@ HRESULT CPGSuperDataImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
    {
       CString fileName = dlg.GetPathName();
 
-      HRESULT hr = m_IfcConverter.ConvertToPGSuper(pBroker, fileName);
+      CImportOptions options_dlg;
+      if (options_dlg.DoModal() == IDCANCEL)
+         return S_OK;
+
+      HRESULT hr = m_IfcImporter.ImportFromIFC(pBroker, fileName, options_dlg.options);
    }
    return S_OK;
 }

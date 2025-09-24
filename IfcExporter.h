@@ -23,15 +23,11 @@
 
 namespace WBFL { namespace EAF { class Broker; }; };
 
-class CIfcModelBuilderOptions
+class CIfcExportOptions
 {
 public:
    enum class Schema
    {
-      //Schema_4x3_rc3,
-      //Schema_4x3_rc4
-      //Schema_4x3_tc1,
-      //Schema_4x3_add1,
       Schema_4x3_add2
    };
 
@@ -100,17 +96,17 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////
-// CIfcModelBuilder
-class CIfcModelBuilder
+// CIfcExporter
+class CIfcExporter
 {
 public:
-    CIfcModelBuilder(void);
-    ~CIfcModelBuilder(void);
+    CIfcExporter(void);
+    ~CIfcExporter(void);
 
-    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options);
 
 private:
     template <typename Schema>
-    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcModelBuilderOptions& options);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options);
 };
 
