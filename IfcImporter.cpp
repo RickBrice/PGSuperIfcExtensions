@@ -77,6 +77,20 @@ Ifc4x3_add2::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, Ifc4x3_add2::
    return nullptr;
 }
 
+std::vector<Ifc4x3_add2::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridgePartTypeEnum part_type)
+{
+   std::vector<Ifc4x3_add2::IfcBridgePart*> parts_found;
+   auto parts = file.instances_by_type<Ifc4x3_add2::IfcBridgePart>();
+   for (auto part : *parts)
+   {
+      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
+      {
+         parts_found.push_back(part);
+      }
+   }
+   return parts_found;
+}
+
 CIfcImporter::CIfcImporter(void)
 {
    m_pLengthUnit = nullptr;
@@ -563,10 +577,11 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
    m_Notes.push_back(std::_tstring(_T("Bridge Number of Girders: ")) + std::to_tstring(nGirders));
 
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   auto bridge_desc = *(pIBridgeDesc->GetBridgeDescription());
+
    SpanIndexType nSpansToAdd = nSpans - pIBridgeDesc->GetSpanCount();
    if (0 < nSpansToAdd)
    {
-      auto bridge_desc = *(pIBridgeDesc->GetBridgeDescription());
       for (SpanIndexType i = 0; i < nSpansToAdd; i++)
       {
          bridge_desc.AppendSpan(nullptr, nullptr, true, 0);
@@ -575,9 +590,33 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       bridge_desc.UseSameNumberOfGirdersInAllGroups(true);
       bridge_desc.UseSameGirderForEntireBridge(true);
       bridge_desc.SetGirderCount(nGirders);
-
-      pIBridgeDesc->SetBridgeDescription(bridge_desc);
    }
+
+   //
+   // Position the abuments and piers
+   //
+
+   // get the abutments and piers and put into a single vector
+   std::vector<Ifc4x3_add2::IfcBridgePart*> abutments = GetBridgeParts(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
+   std::vector<Ifc4x3_add2::IfcBridgePart*> piers = GetBridgeParts(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
+   piers.insert(piers.begin(), abutments.front());
+   piers.insert(piers.end(), abutments.back());
+
+   PierIndexType nPiers = bridge_desc.GetPierCount();
+   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
+   {
+      // get the pier station from the positioning element and set it on the pgsuper pier
+      auto pPier = bridge_desc.GetPier(pierIdx);
+      auto pier = piers[pierIdx];
+      auto rel_positions = pier->PositionedRelativeTo();
+      auto positioning_element = (*rel_positions->begin())->RelatingPositioningElement();
+      auto ref = positioning_element->as<Ifc4x3_add2::IfcReferent>();
+      auto station = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcLengthMeasure>(ref, "Pset_Stationing", "Station");
+      pPier->SetStation(*station);
+   }
+
+
+   pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
    return true;
 }
