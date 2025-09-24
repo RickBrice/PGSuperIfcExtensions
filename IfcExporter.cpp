@@ -755,7 +755,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
    GET_IFACE2(pBroker, IGirder, pGirder);
    Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart, 0);
-   Float64 hbf = pGirder->GetBottomFlangeThickness(poiStart, 0);
+   Float64 hbf = pGirder->GetBottomFlangeThickness(poiStart, 0) - WBFL::Units::ConvertToSysUnits(4.5,WBFL::Units::Measure::Inch);
 
    // Create G3 #5 bar type and representation (this is a dummy bar only for WSDOT girders)
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs5);
