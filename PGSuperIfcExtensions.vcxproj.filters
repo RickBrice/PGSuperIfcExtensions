@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="IfcAlignmentConverter.cpp">
+    <ClCompile Include="IfcImporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IfcAlignmentConverterException.cpp">
+    <ClCompile Include="IfcImporterException.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IfcExtensions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IfcModelBuilder.cpp">
+    <ClCompile Include="IfcExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PGSuperDataExporter.cpp">
@@ -25,12 +25,15 @@
     <ClCompile Include="ExportOptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImportOptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IfcAlignmentConverter.h">
+    <ClInclude Include="IfcImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IfcAlignmentConverterException.h">
+    <ClInclude Include="IfcImporterException.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcExtensions.h">
@@ -45,7 +48,7 @@
     <ClInclude Include="StdAfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IfcModelBuilder.h">
+    <ClInclude Include="IfcExporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PGSuperDataImporter.h">
@@ -79,6 +82,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConstructionSequence.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ImportOptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

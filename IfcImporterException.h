@@ -19,25 +19,19 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
-#include "StdAfx.h"
-#include "IfcAlignmentConverterException.h"
+#pragma once
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
-
-CIfcAlignmentConverterException::CIfcAlignmentConverterException(LPCTSTR strWhat) :
-   m_strWhat(strWhat)
+// Use this exception class when we encounter IFC tags that can't be handled.
+// Right now, it just gives a simple text message, but this class can be made
+// more safisticated in the future if need be.
+class CIfcImporterException
 {
-}
+public:
+   CIfcImporterException(LPCTSTR strMsg);
+   ~CIfcImporterException(void);
 
-CIfcAlignmentConverterException::~CIfcAlignmentConverterException(void)
-{
-}
+   LPCTSTR What() const;
 
-LPCTSTR CIfcAlignmentConverterException::What() const
-{
-   return m_strWhat.c_str();
-}
+private:
+   std::_tstring m_strWhat;
+};

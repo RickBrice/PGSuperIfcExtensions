@@ -154,7 +154,7 @@ void Create_Pset_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
 {
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);

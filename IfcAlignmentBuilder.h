@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "IfcModelBuilder.h"
+#include "IfcExporter.h"
 
 #include <IFace/Tools.h>
 #include <IFace\Project.h>
@@ -31,7 +31,7 @@
 
 // creates geometry and business logic segments for horizontal alignment tangent runs
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_tangent(typename Schema::IfcCartesianPoint* p, double dir, double length, const CIfcModelBuilderOptions& options)
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_tangent(typename Schema::IfcCartesianPoint* p, double dir, double length, const CIfcExportOptions& options)
 {
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(
@@ -42,7 +42,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
    // geometry
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       curve_segment = mapAlignmentSegment(alignment_segment).first;
    }
@@ -52,7 +52,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
 // creates geometry and business logic segments for horizontal alignment horizonal curves
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_hcurve(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double lc, const CIfcModelBuilderOptions& options)
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_hcurve(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double lc, const CIfcExportOptions& options)
 {
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, radius, lc, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC);
@@ -60,7 +60,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
    // geometry
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       curve_segment = mapAlignmentSegment(alignment_segment).first;
    }
@@ -70,7 +70,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
 // creates geometry and business logic segments for horizontal alignment entry clothoid transition curve
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_entry_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_entry_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcExportOptions& options)
 {
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, 0.0, radius, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
@@ -78,7 +78,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
    // geometry
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       curve_segment = mapAlignmentSegment(alignment_segment).first;
    }
@@ -88,7 +88,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
 // creates geometry and business logic segments for horizontal alignment exit clothoid transition curve
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_exit_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcModelBuilderOptions& options)
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_exit_spiral(typename Schema::IfcCartesianPoint* pc, double dir, double radius, double ls, const CIfcExportOptions& options)
 {
    // business logic
    auto design_parameters = new Schema::IfcAlignmentHorizontalSegment(boost::none, boost::none, pc, dir, radius, 0.0, ls, boost::none, Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID);
@@ -96,7 +96,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
    // geometry
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       curve_segment = mapAlignmentSegment(alignment_segment).first;
    }
@@ -106,7 +106,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
 // creates geometry and business logic segments for vertical profile gradient runs
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_gradient(typename Schema::IfcCartesianPoint* p, double slope, double length, const CIfcModelBuilderOptions& options)
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_gradient(typename Schema::IfcCartesianPoint* p, double slope, double length, const CIfcExportOptions& options)
 {
    CHECK(0 <= length);
 
@@ -116,7 +116,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
    // geometry
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       curve_segment = mapAlignmentSegment(alignment_segment).first;
    }
@@ -126,7 +126,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
 // creates geometry and business logic segments for vertical profile parabolic vertical curves
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_vcurve(typename Schema::IfcCartesianPoint* p, double start_slope, double end_slope, double length, const CIfcModelBuilderOptions& options)
+std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegment*> create_vcurve(typename Schema::IfcCartesianPoint* p, double start_slope, double end_slope, double length, const CIfcExportOptions& options)
 {
    CHECK(0 < length);
 
@@ -143,7 +143,7 @@ std::pair<typename Schema::IfcCurveSegment*, typename Schema::IfcAlignmentSegmen
 
    // geometry
    typename Schema::IfcCurveSegment* curve_segment = nullptr;
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       curve_segment = mapAlignmentSegment(alignment_segment).first;
    }
@@ -161,7 +161,7 @@ CComPtr<IPoint2d> GetAlignmentStartPoint(std::shared_ptr<WBFL::EAF::Broker> pBro
 }
 
 template <typename Schema>
-void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
+void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -370,7 +370,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr
 }
 
 template <typename Schema>
-void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcModelBuilderOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcRelNests** pnests_vertical_segments, typename Schema::IfcGradientCurve** palignment_gradient_curve)
+void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcExportOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcRelNests** pnests_vertical_segments, typename Schema::IfcGradientCurve** palignment_gradient_curve)
 {
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr profile_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
@@ -679,7 +679,7 @@ void CreateAlignmentSegmentRepresentations(IfcHierarchyHelper<typename Schema>& 
 }
 
 template <typename Schema>
-void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcModelBuilderOptions& options)
+void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    USES_CONVERSION;
 
@@ -698,7 +698,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    typename Schema::IfcGradientCurve* gradient_curve = nullptr;
    typename Schema::IfcPolyline* polyline = nullptr;
 
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       typename Schema::IfcRelNests* nests_horizontal_segments;
       CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &nests_horizontal_segments, &composite_curve);
@@ -708,7 +708,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
 
       // Need FootPrint representation for Horizontal+Vertical composite curve
       typename Schema::IfcGeometricRepresentationSubContext* footprint_model_representation_subcontext = nullptr;
-      if (options.representations == CIfcModelBuilderOptions::Representations::Curve3dAndFootPrint)
+      if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
       {
          footprint_model_representation_subcontext = new Schema::IfcGeometricRepresentationSubContext(std::string("FootPrint"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
          file.addEntity(footprint_model_representation_subcontext);
@@ -718,7 +718,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
       horizontal_representation_items->push(composite_curve);
 
       typename Schema::IfcShapeRepresentation* footprint_curve2d_shape_representation = nullptr;
-      if (options.representations == CIfcModelBuilderOptions::Representations::Curve3dAndFootPrint)
+      if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
       {
          footprint_curve2d_shape_representation = new Schema::IfcShapeRepresentation(footprint_model_representation_subcontext, std::string("FootPrint"), std::string("Curve2D"), horizontal_representation_items);
          file.addEntity(footprint_curve2d_shape_representation);
@@ -731,7 +731,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
       file.addEntity(curve3d_shape_representation);
 
       typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
-      if (options.representations == CIfcModelBuilderOptions::Representations::Curve3dAndFootPrint)
+      if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
       {
          representations->push(footprint_curve2d_shape_representation); // 2D alignment geometry (Horizontal + Vertical)
       }
@@ -804,7 +804,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    auto alignment = new Schema::IfcAlignment(IfcParse::IfcGlobalId(), nullptr, strAlignmentName, boost::none, boost::none, local_placement, alignment_representation, boost::none);
    file.addEntity(alignment);
 
-   if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
       // 4.1.4.4.1 Alignments nest horizontal and vertical layouts
       // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Nesting/Alignment_Layouts/content.html
@@ -840,7 +840,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
 
 
 template <typename Schema>
-typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& file, const CIfcModelBuilderOptions& options)
+typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& file, const CIfcExportOptions& options)
 {
    // get the directrix line of the alignment
    auto alignment = file.getSingle<typename Schema::IfcAlignment>();
@@ -852,7 +852,7 @@ typename Schema::IfcCurve* GetAlignmentDirectrix(IfcHierarchyHelper<Schema>& fil
       for (auto& representation_item : *alignment_representation_items)
       {
          auto directrix = representation_item->as<typename Schema::IfcCurve>();
-         if (options.alignment_model == CIfcModelBuilderOptions::AlignmentModel::GradientCurve)
+         if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
          {
             if (directrix->as<typename Schema::IfcGradientCurve>())
                return directrix;

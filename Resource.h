@@ -9,6 +9,8 @@
 #define IDC_4X3_ADD2                    203
 #define IDB_BSI                         205
 #define IDD_EXPORT_OPTIONS              206
+#define IDD_DIALOG1                     208
+#define IDD_IMPORT_OPTIONS              208
 #define IDC_REPRESENTATION_CURVE        209
 #define IDC_RADIO2                      210
 #define IDC_REPRESENTATION_FOOTPRINT    210
@@ -41,7 +43,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        208
+#define _APS_NEXT_RESOURCE_VALUE        210
 #define _APS_NEXT_COMMAND_VALUE         32770
 #define _APS_NEXT_CONTROL_VALUE         229
 #define _APS_NEXT_SYMED_VALUE           107
