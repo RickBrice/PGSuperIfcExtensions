@@ -30,16 +30,16 @@
 #include "PsetEnum.h"
 
 template <typename Schema>
-void Add_TPF_Classification(IfcHierarchyHelper<Schema>& file)
+void Add_USBridge_Classification(IfcHierarchyHelper<Schema>& file)
 {
    // we are using the TPFBridge bSDD for classifications
    auto classification = new Schema::IfcClassification(
-      std::string("TPF Bridge")/*Source*/,
-      std::string("2") /*Edition*/,
-      std::string("2024-08-13") /*EditionDate*/,
-      std::string("TPF Bridge (USA)"),
+      std::string("US Bridge")/*Source*/,
+      std::string("1") /*Edition*/,
+      std::string("2024-11-12") /*EditionDate*/,
+      std::string("US Bridge"),
       boost::none /*Description*/,
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2") /*Specification*/,
+      std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1") /*Specification*/,
       boost::none /*ReferenceTokens*/);
    file.addEntity(classification);
 
@@ -76,23 +76,25 @@ void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_ProjectCommon(IfcHierarchyHelper<Schema>& file)
+void Create_Pset_usBridge_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 {
-   auto project = file.getSingle<typename Schema::IfcProject>();
+   // Was in TPFBridge, but not in USBridge
+    
+   //auto project = file.getSingle<typename Schema::IfcProject>();
 
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ContractNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("DesignNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ProjectNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ProjectWebsite"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   //typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   //list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ContractNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   //list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("DesignNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   //list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ProjectNumber"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
+   //list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("ProjectWebsite"), boost::none, new Schema::IfcLabel(std::string("Unknown")), nullptr));
 
-   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_ProjectCommon"), boost::none, list_of_properties);
+   //auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_ProjectCommon"), boost::none, list_of_properties);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_projects(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   related_projects->push(project);
+   //typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_projects(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   //related_projects->push(project);
 
-   auto project_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_projects, property_set);
-   file.addEntity(project_properties);
+   //auto project_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_projects, property_set);
+   //file.addEntity(project_properties);
 }
 
 template <typename Schema>
@@ -116,17 +118,17 @@ void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file, typename Schema:
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
+void Create_Pset_usBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
    auto nSpans = pBridge->GetSpanCount();
    auto nPiers = pBridge->GetPierCount();
 
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_NumberOfSpans"), boost::none, new Schema::IfcInteger((int)nSpans), nullptr));
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_NumberOfSupports"), boost::none, new Schema::IfcInteger((int)nPiers), nullptr));
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("usBridge_NumberOfSpans"), boost::none, new Schema::IfcInteger((int)nSpans), nullptr));
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("usBridge_NumberOfSupports"), boost::none, new Schema::IfcInteger((int)nPiers), nullptr));
 
-   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_BridgeCommon"), boost::none, list_of_properties);
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_BridgeCommon"), boost::none, list_of_properties);
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_bridges(new aggregate_of<typename Schema::IfcObjectDefinition>());
    related_bridges->push(bridge);
@@ -136,12 +138,12 @@ void Create_Pset_TPFBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, std::s
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*> railings)
+void Create_Pset_usBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*> railings)
 {
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
-   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_MASHCompliantRailing"), boost::none, new Schema::IfcBoolean(true), nullptr));
+   list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("usBridge_MASHCompliantRailing"), boost::none, new Schema::IfcBoolean(true), nullptr));
 
-   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_RailingCommon"), boost::none, list_of_properties);
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_RailingCommon"), boost::none, list_of_properties);
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_railings(new aggregate_of<typename Schema::IfcObjectDefinition>());
    for (auto& railing : railings)
@@ -154,7 +156,7 @@ void Create_Pset_TPFBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
 {
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);
@@ -184,22 +186,21 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::s
    }
 
    list_of_properties->push(new Schema::IfcPropertySingleValue(
-      std::string("tpfBridge_GirderStrengthatTimeOfPrestress"),
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_ConcreteStrengthatTimeOfPrestressing"),
+      std::string("usBridge_ConcreteStrengthatTimeOfPrestressing"),
+      std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_ConcreteStrengthatTimeOfPrestressing"),
       new Schema::IfcInteger((int)fci), stress_unit));
 
    list_of_properties->push(new Schema::IfcPropertySingleValue(
-      std::string("tpfBridge_ConceteStrengthat28Days"),
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_ConceteStrengthat28Days"),
+      std::string("usBridge_ConceteStrengthat28Days"),
+      std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_ConceteStrengthat28Days"),
       new Schema::IfcInteger((int)fc), stress_unit));
 
    list_of_properties->push(new Schema::IfcPropertySingleValue(
-      std::string("tpfBridge_JackingForce"),
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_JackingForce"),
+      std::string("usBridge_JackingForce"),
+      std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_JackingForce"),
       new Schema::IfcReal(fpj), stress_unit));
 
-   // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/TPFBridge_GirderCommon
-   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_GirderCommon"), boost::none, list_of_properties);
+   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_GirderCommon"), boost::none, list_of_properties);
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
    related_segments->push(segment);
@@ -220,7 +221,10 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::s
          {
             precamber = WBFL::Units::ConvertFromSysUnits(precamber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
          }
-         list_of_properties->push(new Schema::IfcPropertySingleValue(std::string("tpfBridge_BuiltInCamber"), boost::none, new Schema::IfcReal(precamber), displacement_unit));
+         list_of_properties->push(new Schema::IfcPropertySingleValue(
+            std::string("usBridge_BuiltInCamber"), 
+            std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_BuiltInCamber"), 
+            new Schema::IfcReal(precamber), displacement_unit));
       }
 
       GET_IFACE2(pBroker, IPointOfInterest, pPoi);
@@ -240,8 +244,8 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::s
          camber = WBFL::Units::ConvertFromSysUnits(camber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
       }
       list_of_properties->push(new Schema::IfcPropertySingleValue(
-         std::string("tpfBridge_CamberatPrestressingRelease"),
-         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_CamberatPrestressingRelease"),
+         std::string("usBridge_CamberatPrestressingRelease"),
+         std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_CamberatPrestressingRelease"),
          new Schema::IfcReal(camber + precamber), displacement_unit));
 
       auto lastIntervalIdx = pIntervals->GetIntervalCount() - 1;
@@ -253,12 +257,12 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::s
       Float64 dw_composite = pCombined->GetDeflection(lastCompositeIntervalIdx, lcDW, poiMS, bat, rtCumulative);
       Float64 d = (dc_final - dc_composite) + (dw_final - dw_composite);
       list_of_properties->push(new Schema::IfcPropertySingleValue(
-         std::string("tpfBridge_DeflectionDuetoCompositLoads"),
-         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_DeflectionDuetoCompositLoads"),
+         std::string("usBridge_DeflectionDuetoCompositLoads"),
+         std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_DeflectionDuetoCompositLoads"),
          new Schema::IfcReal(d), displacement_unit));
 
       // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/TPFBridge_MemberCamber
-      auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_MemberCamber"), boost::none, list_of_properties);
+      auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_MemberCamber"), boost::none, list_of_properties);
 
       typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
       related_segments->push(segment);
@@ -269,53 +273,55 @@ void Create_Pset_TPFBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::s
 }
 
 template <typename Schema>
-void Create_Pset_TPFBridge_ReinforcementCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* tendon, Float64 Pjack, bool bDebonded, Float64 ldb)
+void Create_Pset_usBridge_ReinforcementCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* tendon, Float64 Pjack, bool bDebonded, Float64 ldb)
 {
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
-
-   list_of_properties->push(new Schema::IfcPropertySingleValue(
-      std::string("tpfBridge_TendonJackingForce"),
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonJackingForce"),
-      new Schema::IfcReal(Pjack),
-      nullptr));
-
-   list_of_properties->push(new Schema::IfcPropertySingleValue(
-      std::string("tpfBridge_TendonBonding"),
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding"),
-#pragma Reminder("bSDD - should the applicable values be the string value or the URI reference to the string value?")
-      // not sure if this should be URI reference or "Debonded" "Bonded" both are strings
-      new Schema::IfcURIReference(bDebonded ? "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingDebonded" : "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingBonded"),
-      nullptr));
-
-   if (bDebonded)
-   {
-      std::ostringstream os;
-      os << ldb;
-      list_of_properties->push(new Schema::IfcPropertySingleValue(
-         std::string("tpfBridge_TendonDebondedLength"),
-         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonDebondedLength"),
-#pragma Reminder("bSDD - why is debond length a string?")
-         new Schema::IfcText(os.str()), // this could be IfcIdentifier, IfcLabel, or IfcText none actually represent a value
-         nullptr));
-   }
-
-   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_ReinforcementCommon"), boost::none, list_of_properties);
-
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_tendons(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   related_tendons->push(tendon);
-
-   auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, property_set);
-   file.addEntity(related_properties);
+   // Was in TPF Bridge, but not in USBridge
+   
+//   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+//
+//   list_of_properties->push(new Schema::IfcPropertySingleValue(
+//      std::string("tpfBridge_TendonJackingForce"),
+//      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonJackingForce"),
+//      new Schema::IfcReal(Pjack),
+//      nullptr));
+//
+//   list_of_properties->push(new Schema::IfcPropertySingleValue(
+//      std::string("tpfBridge_TendonBonding"),
+//      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding"),
+//#pragma Reminder("bSDD - should the applicable values be the string value or the URI reference to the string value?")
+//      // not sure if this should be URI reference or "Debonded" "Bonded" both are strings
+//      new Schema::IfcURIReference(bDebonded ? "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingDebonded" : "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingBonded"),
+//      nullptr));
+//
+//   if (bDebonded)
+//   {
+//      std::ostringstream os;
+//      os << ldb;
+//      list_of_properties->push(new Schema::IfcPropertySingleValue(
+//         std::string("tpfBridge_TendonDebondedLength"),
+//         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonDebondedLength"),
+//#pragma Reminder("bSDD - why is debond length a string?")
+//         new Schema::IfcText(os.str()), // this could be IfcIdentifier, IfcLabel, or IfcText none actually represent a value
+//         nullptr));
+//   }
+//
+//   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_ReinforcementCommon"), boost::none, list_of_properties);
+//
+//   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_tendons(new aggregate_of<typename Schema::IfcObjectDefinition>());
+//   related_tendons->push(tendon);
+//
+//   auto related_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, property_set);
+//   file.addEntity(related_properties);
 }
 
 template <typename Schema>
-void Classify_TPFBridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridge* bridge)
+void Classify_Bridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridge* bridge)
 {
    auto classification = file.getSingle<typename Schema::IfcClassification>();
 
    auto classification_reference = new Schema::IfcClassificationReference(
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Bridge"),
-      std::string("tpfBridge_Bridge") /*Identification*/,
+      std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Bridge"),
+      std::string("usBridge_Bridge") /*Identification*/,
       std::string("Bridge") /*Name*/,
       classification,
       boost::none /*Description*/, boost::none /*Sort*/);
@@ -330,14 +336,14 @@ void Classify_TPFBridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBr
 }
 
 template <typename Schema>
-void Classify_TPFBridgePart(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* part, const std::string& uri, const std::string& code, const std::string& name, const std::string& part_type)
+void Classify_BridgePart(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* part, const std::string& uri, const std::string& code, const std::string& name, const std::string& part_type)
 {
    std::vector<typename Schema::IfcProduct*> parts{ part };
-   Classify_TPFBridgeParts(file, parts, uri, code, name, part_type);
+   Classify_BridgeParts(file, parts, uri, code, name, part_type);
 }
 
 template <typename Schema>
-void Classify_TPFBridgeParts(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& parts, const std::string& uri, const std::string& code, const std::string& name, const std::string& part_type)
+void Classify_BridgeParts(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& parts, const std::string& uri, const std::string& code, const std::string& name, const std::string& part_type)
 {
    if (parts.size() == 0)
       return;
@@ -363,77 +369,72 @@ void Classify_TPFBridgeParts(IfcHierarchyHelper<Schema>& file, std::vector<typen
 }
 
 template <typename Schema>
-void Classify_TPFSuperstructure(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* superstructure)
+void Classify_Superstructure(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* superstructure)
 {
-   //Classify_TPFBridgePart(file, superstructure, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_BridgeSuperstructure"), std::string("tpfBridge_BridgeSuperstructure"), std::string("Bridge Superstructure"), std::string("IfcBridgePart.SUPERSTRUCTURE"));
-   Classify_TPFBridgePart(file, superstructure, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_BridgeSuperstructure"), std::string("tpfBridge_BridgeSuperstructure"), std::string("IfcBridgePartSUPERSTRUCTURE"), std::string("IfcBridgePart.SUPERSTRUCTURE"));
+   Classify_BridgePart(file, superstructure, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_BridgeSuperstructure"), std::string("usBridge_BridgeSuperstructure"), std::string("IfcBridgePartSUPERSTRUCTURE"), std::string("IfcBridgePart.SUPERSTRUCTURE"));
 }
 
 template <typename Schema>
-void Classify_TPFSubstructure(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* substructure)
+void Classify_Substructure(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* substructure)
 {
-   //Classify_TPFBridgePart(file, substructure, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_BridgeSubstructure"), std::string("tpfBridge_BridgeSubstructure"), std::string("Bridge Substructure"), std::string("IfcBridgePart.SUBSTRUCTURE"));
-   Classify_TPFBridgePart(file, substructure, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_BridgeSubstructure"), std::string("tpfBridge_BridgeSubstructure"), std::string("IfcBridgePartSUBSTRUCTURE"), std::string("IfcBridgePart.SUBSTRUCTURE"));
+   Classify_BridgePart(file, substructure, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_BridgeSubstructure"), std::string("usBridge_BridgeSubstructure"), std::string("IfcBridgePartSUBSTRUCTURE"), std::string("IfcBridgePart.SUBSTRUCTURE"));
 }
 
 template <typename Schema>
-void Classify_TPFAbutment(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* abutment)
+void Classify_Abutment(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* abutment)
 {
-   //Classify_TPFBridgePart(file, abutment, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_AbutmentSpatial"), std::string("tpfBridge_AbutmentSpatial"), std::string("Abutment (Spatial)"), std::string("IfcBridgePart.ABUTMENT"));
-   Classify_TPFBridgePart(file, abutment, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_AbutmentSpatial"), std::string("tpfBridge_AbutmentSpatial"), std::string("IfcBridgePartABUTMENT"), std::string("IfcBridgePart.ABUTMENT"));
+   Classify_BridgePart(file, abutment, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_AbutmentSpatial"), std::string("usBridge_AbutmentSpatial"), std::string("IfcBridgePartABUTMENT"), std::string("IfcBridgePart.ABUTMENT"));
 }
 
 template <typename Schema>
-void Classify_TPFPier(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* pier)
+void Classify_Pier(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* pier)
 {
-   //Classify_TPFBridgePart(file, pier, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_PierSpatial"), std::string("tpfBridge_PierSpatial"), std::string("Pier (Spatial)"), std::string("IfcBridgePart.PIER"));
-   Classify_TPFBridgePart(file, pier, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_PierSpatial"), std::string("tpfBridge_PierSpatial"), std::string("IfcBridgePartPIER"), std::string("IfcBridgePart.PIER"));
+   Classify_BridgePart(file, pier, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_PierSpatial"), std::string("usBridge_PierSpatial"), std::string("IfcBridgePartPIER"), std::string("IfcBridgePart.PIER"));
 }
 
 template <typename Schema>
-void Classify_TPFFoundation(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* foundation)
+void Classify_Foundation(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* foundation)
 {
-   //Classify_TPFBridgePart(file, foundation, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Foundation"), std::string("tpfBridge_Foundation"), std::string("Foundation"), std::string("IfcBridgePart.FOUNDATION"));
-   Classify_TPFBridgePart(file, foundation, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Foundation"), std::string("tpfBridge_Foundation"), std::string("IfcBridgePartFOUNDATION"), std::string("IfcBridgePart.FOUNDATION"));
+   Classify_BridgePart(file, foundation, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Foundation"), std::string("usBridge_Foundation"), std::string("IfcBridgePartFOUNDATION"), std::string("IfcBridgePart.FOUNDATION"));
 }
 
 template <typename Schema>
-void Classify_TPFRailings(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& railings)
+void Classify_Railings(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& railings)
 {
-   //Classify_TPFBridgeParts(file, railings, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Railing"), std::string("tpfBridge_Railing"), std::string("Railing"), std::string("IfcRailing.BALUSTRADE"));
-   Classify_TPFBridgeParts(file, railings, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Railing"), std::string("tpfBridge_Railing"), std::string("IfcRailingBALUSTRADE"), std::string("IfcRailing.BALUSTRADE"));
+   Classify_BridgeParts(file, railings, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Railing"), std::string("usBridge_Railing"), std::string("IfcRailingBALUSTRADE"), std::string("IfcRailing.BALUSTRADE"));
 }
 
 template <typename Schema>
-void Classify_TPFGirders(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
+void Classify_Girders(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
 {
-   Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Girder"), std::string("tpfBridge_Girder"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
+   Classify_BridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Girder"), std::string("usBridge_Girder"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
 }
 
 template <typename Schema>
-void Classify_TPFPrecastGirderElements(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
+void Classify_PrecastGirderElements(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*>& girders)
 {
-   //Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcElementAssemblyGIRDER"), std::string("IfcElementAssembly.GIRDER"));
-   Classify_TPFBridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_GirderPrestressedConcrete"), std::string("tpfBridge_GirderPrestressedConcrete"), std::string("IfcBeamGIRDER_SEGMENT"), std::string("IfcBeam.GIRDER_SEGMENT"));
+   Classify_BridgeParts(file, girders, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_GirderPrestressedConcrete"), std::string("usBridge_GirderPrestressedConcrete"), std::string("IfcBeamGIRDER_SEGMENT"), std::string("IfcBeam.GIRDER_SEGMENT"));
 }
 
 template <typename Schema>
-void Classify_TPFPrestressing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTendonType* tendon)
+void Classify_Prestressing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTendonType* tendon)
 {
-   auto classification = file.getSingle<typename Schema::IfcClassification>();
+   // Was in TPF Bridge, but not in USBridge
 
-   auto classification_reference = new Schema::IfcClassificationReference(
-      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Prestressing"),
-      std::string("tpfBridge_Prestressing") /*Identification*/,
-      std::string("Prestressing") /*Name*/,
-      classification,
-      boost::none /*Description*/, boost::none /*Sort*/);
-   file.addEntity(classification_reference);
+   //auto classification = file.getSingle<typename Schema::IfcClassification>();
 
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_tendons(new aggregate_of<typename Schema::IfcDefinitionSelect>());
-   related_tendons->push(tendon);
+   //auto classification_reference = new Schema::IfcClassificationReference(
+   //   std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/class/tpfBridge_Prestressing"),
+   //   std::string("tpfBridge_Prestressing") /*Identification*/,
+   //   std::string("Prestressing") /*Name*/,
+   //   classification,
+   //   boost::none /*Description*/, boost::none /*Sort*/);
+   //file.addEntity(classification_reference);
 
-   auto related_classes = new Schema::IfcRelAssociatesClassification(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, classification_reference);
+   //typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_tendons(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   //related_tendons->push(tendon);
 
-   file.addEntity(related_classes);
+   //auto related_classes = new Schema::IfcRelAssociatesClassification(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, classification_reference);
+
+   //file.addEntity(related_classes);
 }

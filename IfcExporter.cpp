@@ -318,7 +318,7 @@ typename Schema::IfcTendonType* GetTendonType(IfcHierarchyHelper<Schema>& file, 
       boost::none /*SheathDiameter*/
    );
 
-   Classify_TPFPrestressing<Schema>(file, tendon_type);
+   Classify_Prestressing<Schema>(file, tendon_type);
 
    file.addEntity(tendon_type);
 
@@ -520,7 +520,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          Float64 Pjack = pStrandGeom->GetPjack(segmentKey, strandType);
          Float64 db_start, db_end;
          bool bDebonded = pStrandGeom->IsStrandDebonded(segmentKey, strandIdx, strandType, nullptr, &db_start, &db_end);
-         Create_Pset_TPFBridge_ReinforcementCommon(file, strand, Pjack, bDebonded, db_start); // assumes symmetric debonding since classification can't handle unsymmetric
+         Create_Pset_usBridge_ReinforcementCommon(file, strand, Pjack, bDebonded, db_start); // assumes symmetric debonding since classification can't handle unsymmetric
 
          // 6.3.4.9 Pset_ElementComponentCommon
          typename aggregate_of<typename Schema::IfcProperty>::ptr element_component_common_properties(new aggregate_of<typename Schema::IfcProperty>());
@@ -2041,9 +2041,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       if (options.classify)
       {
          if (pBridge->IsAbutment(pierIdx))
-            Classify_TPFAbutment<Schema>(file, pier);
+            Classify_Abutment<Schema>(file, pier);
          else
-            Classify_TPFPier<Schema>(file, pier);
+            Classify_Pier<Schema>(file, pier);
       }
 
       std::ostringstream os;
@@ -2055,7 +2055,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       file.addEntity(foundation);
       if (options.classify)
       {
-         Classify_TPFFoundation<Schema>(file, foundation);
+         Classify_Foundation<Schema>(file, foundation);
       }
 
       typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_foundations(new aggregate_of<typename Schema::IfcObjectDefinition>());
@@ -2182,7 +2182,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
    if (options.classify)
    {
-      Add_TPF_Classification<Schema>(file);
+      Add_USBridge_Classification<Schema>(file);
    }
 
 
@@ -2231,7 +2231,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    file.addEntity(superstructure);
    if (options.classify)
    {
-      Classify_TPFSuperstructure<Schema>(file, superstructure);
+      Classify_Superstructure<Schema>(file, superstructure);
    }
 
    auto substructure = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Substructure"), boost::none, boost::none, nullptr, nullptr, boost::none,
@@ -2241,7 +2241,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    file.addEntity(substructure);
    if (options.classify)
    {
-      Classify_TPFSubstructure<Schema>(file, substructure);
+      Classify_Substructure<Schema>(file, substructure);
    }
 
    auto deck = new Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Deck"), boost::none, boost::none, nullptr, nullptr, boost::none,
@@ -2316,8 +2316,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    std::vector<typename Schema::IfcProduct*> railings{ left_railing,right_railing };
    if (options.classify)
    {
-      Classify_TPFRailings(file, railings);
-      Create_Pset_TPFBridge_RailingCommon(file, railings);
+      Classify_Railings(file, railings);
+      Create_Pset_usBridge_RailingCommon(file, railings);
    }
 
    if (options.include_work_plan)
@@ -2503,7 +2503,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
             file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, beam);
             if (options.classify)
             {
-               Create_Pset_TPFBridge_GirderCommon(file, pBroker, options, segmentKey, beam);
+               Create_Pset_usBridge_GirderCommon(file, pBroker, options, segmentKey, beam);
             }
          }
       } // next girder
@@ -2516,9 +2516,9 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       {
          beams.push_back(beam_object->as<typename Schema::IfcProduct>(beam_object));
       }
-      Classify_TPFPrecastGirderElements(file, beams);
+      Classify_PrecastGirderElements(file, beams);
 
-      Classify_TPFGirders(file, girders);
+      Classify_Girders(file, girders);
    }
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_object_definitions(new aggregate_of<typename Schema::IfcObjectDefinition>());
@@ -2531,8 +2531,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    Create_Pset_BridgeCommon<Schema>(file,bridge);
    if (options.classify)
    {
-      Create_Pset_TPFBridge_BridgeCommon<Schema>(file, pBroker, bridge);
-      Classify_TPFBridge<Schema>(file, bridge);
+      Create_Pset_usBridge_BridgeCommon<Schema>(file, pBroker, bridge);
+      Classify_Bridge<Schema>(file, bridge);
    }
  }
 
@@ -2641,7 +2641,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    Create_Pset_ProjectCommon<Schema>(file);
    if (options.classify)
    {
-      Create_Pset_TPFBridge_ProjectCommon<Schema>(file);
+      Create_Pset_usBridge_ProjectCommon<Schema>(file);
    }
 
    CreateAlignment<Schema>(file, pBroker, options); // creates alignment and aggregates with project, references into site spatial structure
