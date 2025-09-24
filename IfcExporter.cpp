@@ -2118,7 +2118,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       file.addEntity(rel_positions);
 
       auto alignment = file.getSingle<typename Schema::IfcAlignment>();
-      file.addRelatedObject<typename Schema::IfcRelNests>(alignment, referent);
+      AddReferent(file, alignment, referent);
 
       list_of_piers->push(pier);
    }

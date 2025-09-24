@@ -205,6 +205,7 @@
     <ClInclude Include="Materials.h" />
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />
+    <ClInclude Include="Properties.h" />
     <ClInclude Include="PsetEnum.h" />
     <ClInclude Include="Rebar.h" />
     <ClInclude Include="Referents.h" />

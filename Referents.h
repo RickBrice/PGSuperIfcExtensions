@@ -21,10 +21,58 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "Properties.h"
 #include <IFace\Bridge.h>
 #include <PsgLib\GirderLabel.h>
 
 #include <WBFLCogo\CogoHelpers.h>
+
+template <typename Schema>
+Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment)
+{
+   auto nests = alignment->IsNestedBy();
+   for (auto nest : *nests)
+   {
+      auto related_objects = nest->RelatedObjects();
+      for (auto related_object : *related_objects)
+      {
+         if (auto referent = related_object->as<Ifc4x3_add2::IfcReferent>())
+         {
+            return nest;
+         }
+      }
+   }
+
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   auto rel_nests = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests referents"), alignment, referents);
+   file.addEntity(rel_nests);
+   return rel_nests;
+}
+
+template <typename Schema>
+void AddReferent(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment, typename Schema::IfcReferent* referent)
+{
+   auto nest = GetReferentNest<Schema>(file, alignment);
+   auto related_objects = nest->RelatedObjects();
+   related_objects->push(referent);
+   //std::sort(related_objects->begin(), related_objects->end(),
+   //   [](typename Schema::IfcObjectDefinition* obj1, typename Schema::IfcObjectDefinition* obj2)
+   //   {
+   //      auto ref1 = obj1->as<typename Schema::IfcReferent>();
+   //      auto ref2 = obj2->as<typename Schema::IfcReferent>();
+   //      if (ref1 && ref2)
+   //      {
+   //         auto value1 = GetProperty<Schema, Schema::IfcReal>(ref1, "Pset_Stationing", "Station");
+   //         auto value2 = GetProperty<Schema, Schema::IfcReal>(ref2, "Pset_Stationing", "Station");
+   //         if (value1 && value2)
+   //         {
+   //            return (Float64)(*value1) < (Float64)(*value2);
+   //         }
+   //      }
+   //      return false;
+   //   });
+   nest->setRelatedObjects(related_objects);
+}
 
 template <typename Schema>
 void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
@@ -76,5 +124,5 @@ void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::
    // Nest the referent to alignment
    //
    auto alignment = file.getSingle<typename Schema::IfcAlignment>();
-   file.addRelatedObject<typename Schema::IfcRelNests>(alignment, start_station_referent);
+   AddReferent(file, alignment, start_station_referent);
 }
