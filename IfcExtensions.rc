@@ -107,8 +107,8 @@ BEGIN
     LTEXT           "Export",IDC_STATIC,16,36,22,8
     CONTROL         "Alignment Only",IDC_ALIGNMENT_ONLY,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,36,64,10
     CONTROL         "Alignment and Bridge",IDC_ALIGNMENT_AND_BRIDGE,"Button",BS_AUTORADIOBUTTON,144,36,83,10
-    CONTROL         "Classify with TPFBridge USA Data Dictionary (bSDD)",IDC_BSDD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,50,181,10
+    CONTROL         "Classify with USBridge Data Dictionary (bSDD)",IDC_BSDD,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,50,163,10
     GROUPBOX        "Alignment",IDC_STATIC,7,68,230,81
     LTEXT           "Alignment Model",IDC_STATIC,16,84,53,8
     CONTROL         "IfcPolyLine",IDC_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,84,51,10
