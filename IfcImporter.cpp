@@ -180,7 +180,8 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
          {
             auto value_component = measure_with_unit->ValueComponent();
             ATLASSERT(value_component); // not dealing with anything but simple conversion factors
-            conversion_factor = (Float64)(value_component->data().get_attribute_value(0));
+            conversion_factor = (Float64)(*value_component->as<Ifc4x3_add2::IfcReal>());
+            //conversion_factor = (Float64)(value_component->data().get_attribute_value(0));
          }
          catch (IfcParse::IfcInvalidTokenException& e)
          {
@@ -550,7 +551,7 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
 
    SpanIndexType nSpans = INVALID_INDEX;
    GirderIndexType nGirders = INVALID_INDEX;
-   auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcInteger>(bridge, "TPFBridge_BridgeCommon", "tpfBridge_NumberOfSpans");
+   auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
    if (value)
    {
       nSpans = (SpanIndexType)(*value);
@@ -593,7 +594,7 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
    }
 
    //
-   // Position the abuments and piers
+   // Position the abutments and piers
    //
 
    // get the abutments and piers and put into a single vector
@@ -605,7 +606,7 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
    PierIndexType nPiers = bridge_desc.GetPierCount();
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
-      // get the pier station from the positioning element and set it on the pgsuper pier
+      // get the pier station from the positioning element and set it on the PGSuper pier
       auto pPier = bridge_desc.GetPier(pierIdx);
       auto pier = piers[pierIdx];
       auto rel_positions = pier->PositionedRelativeTo();
@@ -679,7 +680,11 @@ Ifc4x3_add2::IfcAlignment* CIfcImporter::GetAlignment(IfcParse::IfcFile& file)
          auto strLabel = (alignment->Name() ? *(alignment->Name()) : alignment->Description() ? *(alignment->Description()) : "Unnamed");
          os << strLabel << std::endl;
       }
-      int result = AfxChoose(_T("Select Alignment"), _T("Select alignment to import"), A2T(os.str().c_str()), 0, TRUE);
+      
+      int result = 0;
+      if (1 < valid_alignments.size()) // prompt to select if more than one alignment
+         result = AfxChoose(_T("Select Alignment"), _T("Select alignment to import"), A2T(os.str().c_str()), 0, TRUE);
+
       if (result < 0)
          return nullptr; // dialog was canceled
       else

@@ -111,7 +111,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_build-vs2022-$(Platform)\$(Configuration)\IfcParse.lib</AdditionalDependencies>
+      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_build-vs2022-$(Platform)\$(Configuration)\IfcParse.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\rocksdb\lib\rocksdb.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\zstd\lib\zstd_static.lib;rpcrt4.lib;shlwapi.lib</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -164,7 +164,7 @@
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_build-vs2022-$(Platform)\$(Configuration)\IfcParse.lib</AdditionalDependencies>
+      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_build-vs2022-$(Platform)\$(Configuration)\IfcParse.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\rocksdb\lib\rocksdb.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\zstd\lib\zstd_static.lib;rpcrt4.lib;shlwapi.lib</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
