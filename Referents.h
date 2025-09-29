@@ -52,21 +52,21 @@ Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, typename 
 template <typename Schema>
 void AddReferent(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment, typename Schema::IfcReferent* referent)
 {
-   auto nest = GetReferentNest<Schema>(file, alignment);
-   auto related_objects = nest->RelatedObjects();
+   typename Schema::IfcRelNests* nest = GetReferentNest<Schema>(file, alignment);
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_objects = nest->RelatedObjects();
    related_objects->push(referent);
    //std::sort(related_objects->begin(), related_objects->end(),
    //   [](typename Schema::IfcObjectDefinition* obj1, typename Schema::IfcObjectDefinition* obj2)
    //   {
-   //      auto ref1 = obj1->as<typename Schema::IfcReferent>();
-   //      auto ref2 = obj2->as<typename Schema::IfcReferent>();
+   //      typename Schema::IfcReferent* ref1 = obj1->as<typename Schema::IfcReferent>();
+   //      typename Schema::IfcReferent* ref2 = obj2->as<typename Schema::IfcReferent>();
    //      if (ref1 && ref2)
    //      {
-   //         auto value1 = GetProperty<Schema, Schema::IfcReal>(ref1, "Pset_Stationing", "Station");
-   //         auto value2 = GetProperty<Schema, Schema::IfcReal>(ref2, "Pset_Stationing", "Station");
+   //         typename Schema::IfcReal* value1 = GetProperty<Schema, Schema::IfcReal>(ref1, "Pset_Stationing", "Station");
+   //         typename Schema::IfcReal* value2 = GetProperty<Schema, Schema::IfcReal>(ref2, "Pset_Stationing", "Station");
    //         if (value1 && value2)
    //         {
-   //            return (Float64)(*value1) < (Float64)(*value2);
+   //            return (double)(*value1) < (double)(*value2);
    //         }
    //      }
    //      return false;
