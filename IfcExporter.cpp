@@ -2555,26 +2555,31 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
     auto owner_history = file.addOwnerHistory();
 
     // See https://standards.buildingsmart.org/documents/Implementation/ImplementationGuide_IFCHeaderData_Version_1.0.2.pdf for details about required information
-    file.header().file_name()->setname(T2A(strFileName)); // filename without path
+    //file.header().file_name()->setname(T2A(strFileName)); // filename without path
+    file.header().file_name().name(T2A(strFileName)); // filename without path
     std::vector<std::string> authors;
     authors.push_back(T2A(pProjectProperties->GetEngineer()));
-    file.header().file_name()->setauthor(authors);
+    //file.header().file_name()->setauthor(authors);
+    file.header().file_name().author(authors);
     std::vector<std::string> organizations;
     organizations.push_back(T2A(pProjectProperties->GetCompany()));
-    file.header().file_name()->setorganization(organizations);
+    //file.header().file_name()->setorganization(organizations);
+    file.header().file_name().organization(organizations);
     //file.header().file_name().preprocessor_version(); // this is info about the toolkit we are using which is IfcOpenShell... this field is filled in by default
 
     std::vector<std::string> file_description;
     std::ostringstream os;
     os << "ViewDefinition[Alignment-basedView]" << std::ends;
     file_description.push_back(os.str().c_str());
-    file.header().file_description()->setdescription(file_description);
+    //file.header().file_description()->setdescription(file_description);
+    file.header().file_description().description(file_description);
 
     std::_tostringstream _os;
     // https://github.com/buildingSMART/IFC4.x-IF/tree/header-policy/docs/IFC-file-header#originating_system
     _os << _T("Washington State Department of Transportation") << _T(" - ") << _T("BridgeLink:") << (pDocType->IsPGSuperDocument() ? _T("PGSuper") : _T("PGSplice")) << _T(" - ") << pVersionInfo->GetVersion(true).GetBuffer() << std::ends;
     std::string strVersion(T2A(_os.str().c_str()));
-    file.header().file_name()->setoriginating_system(strVersion);
+    //file.header().file_name()->setoriginating_system(strVersion);
+    file.header().file_name().originating_system(strVersion);
 
     //auto project = file.addProject(); // Don't like the default units in IfcOpenShell so we have do build our own
     /////////////////////////// The following is copied from IfcHierarchyHelper<Schema>::addProject and tweaked
