@@ -507,7 +507,7 @@ HRESULT CIfcImporter::ImportFromIFC(std::shared_ptr<WBFL::EAF::Broker> pBroker, 
    else
    {
       AfxMessageBox(_T("Schema not supported"));
-      ATLASSERT(false); // is there a new schema?
+      ATLASSERT(false); // is there a new typename Schema?
    }
 
    auto notes = GetNotes();

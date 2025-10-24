@@ -28,7 +28,7 @@
 #include <WBFLCogo\CogoHelpers.h>
 
 template <typename Schema>
-Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment)
+typename Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment)
 {
    auto nests = alignment->IsNestedBy();
    for (auto nest : *nests)
@@ -44,7 +44,7 @@ Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, typename 
    }
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   auto rel_nests = new Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests referents"), alignment, referents);
+   auto rel_nests = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests referents"), alignment, referents);
    file.addEntity(rel_nests);
    return rel_nests;
 }
@@ -95,29 +95,29 @@ void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::
    //
 
    // Referent position
-   auto point_on_alignment = new Schema::IfcPointByDistanceExpression(
-      new Schema::IfcLengthMeasure(0.0),
+   auto point_on_alignment = new typename Schema::IfcPointByDistanceExpression(
+      new typename Schema::IfcLengthMeasure(0.0),
       boost::none, boost::none, boost::none,
       directrix);
-   auto relative_placement = new Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
-   auto referent_placement = new Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
+   auto relative_placement = new typename Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
+   auto referent_placement = new typename Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
 
    // Create referent
-   auto start_station_referent = new Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
+   auto start_station_referent = new typename Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
 
    // Define properties for Pset_Stationing
    typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
-   pset_station_properties->push(new Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new Schema::IfcLengthMeasure(startStation), nullptr));
+   pset_station_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new typename Schema::IfcLengthMeasure(startStation), nullptr));
 
    // Create Pset and assign properties
-   auto property_set = new Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
    file.addEntity(property_set);
 
    // Assign the property set to the referent
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
    referents->push(start_station_referent);
 
-   auto rel_defines_by_properties = new Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates start station properties to referent"), boost::none, referents, property_set);
+   auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates start station properties to referent"), boost::none, referents, property_set);
    file.addEntity(rel_defines_by_properties);
 
    //

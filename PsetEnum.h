@@ -32,10 +32,10 @@ typename Schema::IfcPropertyEnumeration* createPropertyEnumeration(const std::st
    typename aggregate_of<typename Schema::IfcValue>::ptr enum_values(new aggregate_of<typename Schema::IfcValue>());
    for (const auto& value : enumValues)
    {
-      enum_values->push(new Schema::IfcLabel(value));
+      enum_values->push(new typename Schema::IfcLabel(value));
    }
 
-   auto property_enum = new Schema::IfcPropertyEnumeration(name, enum_values, unit);
+   auto property_enum = new typename Schema::IfcPropertyEnumeration(name, enum_values, unit);
    return property_enum;
 }
 
@@ -43,7 +43,7 @@ template <typename Schema>
 typename Schema::IfcPropertyEnumeratedValue* createPropertyEnumeratedValue(const std::string& property_name, typename Schema::IfcPropertyEnumeration* enumeration, const std::string& value)
 {
    typename aggregate_of<typename Schema::IfcValue>::ptr list_of_selected_enum_values(new aggregate_of<typename Schema::IfcValue>());
-   list_of_selected_enum_values->push(new Schema::IfcLabel(value));
-   auto property_enum_value = new Schema::IfcPropertyEnumeratedValue(property_name, boost::none, list_of_selected_enum_values, enumeration);
+   list_of_selected_enum_values->push(new typename Schema::IfcLabel(value));
+   auto property_enum_value = new typename Schema::IfcPropertyEnumeratedValue(property_name, boost::none, list_of_selected_enum_values, enumeration);
    return property_enum_value;
 }

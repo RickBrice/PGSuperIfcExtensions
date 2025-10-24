@@ -50,12 +50,12 @@ template <typename Schema>
 typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcShapeRepresentation* shape_representation)
 {
    auto placement = file.addPlacement3d();
-   auto representation_map = new Schema::IfcRepresentationMap(placement, shape_representation);
+   auto representation_map = new typename Schema::IfcRepresentationMap(placement, shape_representation);
    typename aggregate_of<typename Schema::IfcRepresentationMap>::ptr representation_maps(new aggregate_of<typename Schema::IfcRepresentationMap>());
    representation_maps->push(representation_map);
 
    // if we get this far, we need a new IfcReinforcingBarType
-   auto rebar_type = new Schema::IfcReinforcingBarType(
+   auto rebar_type = new typename Schema::IfcReinforcingBarType(
       IfcParse::IfcGlobalId(),
       nullptr,
       name, /*Name*/
@@ -84,7 +84,7 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
       typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());
       related_definitions->push(rebar_type);
 
-      auto rel_declares = new Schema::IfcRelDeclares(
+      auto rel_declares = new typename Schema::IfcRelDeclares(
          IfcParse::IfcGlobalId(),
          nullptr,
          boost::none,

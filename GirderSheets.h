@@ -24,35 +24,35 @@
 template <typename Schema>
 std::vector<typename Schema::IfcDocumentReference*> GetGirderSheets()
 {
-   auto sheet1 = new Schema::IfcDocumentReference(
+   auto sheet1 = new typename Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_1.PDF"), 
       boost::none, 
       std::string("WF Girder Details 1 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   auto sheet2 = new Schema::IfcDocumentReference(
+   auto sheet2 = new typename Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_2.PDF"),
       boost::none,
       std::string("WF Girder Details 2 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   auto sheet3 = new Schema::IfcDocumentReference(
+   auto sheet3 = new typename Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_3.PDF"),
       boost::none,
       std::string("WF Girder Details 3 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   auto sheet4 = new Schema::IfcDocumentReference(
+   auto sheet4 = new typename Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_4.PDF"),
       boost::none,
       std::string("WF Girder Details 4 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
       nullptr);
 
-   auto sheet5 = new Schema::IfcDocumentReference(
+   auto sheet5 = new typename Schema::IfcDocumentReference(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_5.PDF"),
       boost::none,
       std::string("WF Girder Details 5 of 5"),
@@ -77,7 +77,7 @@ void AssociateDocuments(IfcHierarchyHelper<Schema>& file, typename aggregate_of<
 
    for (auto& sheet : sheets)
    {
-      auto rel_associates_document = new Schema::IfcRelAssociatesDocument(IfcParse::IfcGlobalId(), nullptr, std::string("Standard Girder Plans"), boost::none, related_objects, sheet);
+      auto rel_associates_document = new typename Schema::IfcRelAssociatesDocument(IfcParse::IfcGlobalId(), nullptr, std::string("Standard Girder Plans"), boost::none, related_objects, sheet);
       file.addEntity(rel_associates_document);
    }
 }
