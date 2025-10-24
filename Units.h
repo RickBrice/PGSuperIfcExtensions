@@ -46,11 +46,11 @@ typename Schema::IfcConversionBasedUnit* GetStressUnit(IfcHierarchyHelper<Schema
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetStressUnit().UnitOfMeasure.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(-1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0), // pressure = force/area = (force = mass*length*time^-2) / (area = length^2) = mass*length^-1*time^-2
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(-1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0), // pressure = force/area = (force = mass*length*time^-2) / (area = length^2) = mass*length^-1*time^-2
          Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcPressureMeasure(cf), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcPressureMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL))
       );
    }
    return unit;
@@ -65,11 +65,11 @@ typename Schema::IfcConversionBasedUnit* GetDisplacementUnit(IfcHierarchyHelper<
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetDeflectionUnit().UnitOfMeasure.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcLengthMeasure(cf), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
       );
    }
    return unit;
@@ -84,11 +84,11 @@ typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Sc
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcLengthMeasure(cf), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
       );
    }
    return unit;
@@ -102,11 +102,11 @@ typename Schema::IfcConversionBasedUnit* GetBigAreaUnit(IfcHierarchyHelper<Schem
    if (unit == nullptr)
    {
       auto cf = WBFL::Units::Measure::Feet2.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_AREAUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcAreaMeasure(cf), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcAreaMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
       );
    }
    return unit;
@@ -121,11 +121,11 @@ typename Schema::IfcConversionBasedUnit* GetSmallAreaUnit(IfcHierarchyHelper<Sch
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetAreaUnit().UnitOfMeasure.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_AREAUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcAreaMeasure(cf), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcAreaMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
       );
    }
    return unit;
@@ -139,11 +139,11 @@ typename Schema::IfcConversionBasedUnit* GetVolumeUnit(IfcHierarchyHelper<Schema
    if (unit == nullptr)
    {
       auto cf = WBFL::Units::Measure::Feet3.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(3/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(3/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcVolumeMeasure(cf), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_CUBIC_METRE))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcVolumeMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_CUBIC_METRE))
       );
    }
    return unit;
@@ -158,11 +158,11 @@ typename Schema::IfcConversionBasedUnit* GetMassUnit(IfcHierarchyHelper<Schema>&
    {
       auto cf = WBFL::Units::Measure::PoundMass.GetConvFactor(); // converts to base mass units which is KG
       auto cf2 = WBFL::Units::Measure::Gram.GetConvFactor();
-      unit = new Schema::IfcConversionBasedUnit(
-         new Schema::IfcDimensionalExponents(0/*length*/, 1/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(0/*length*/, 1/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_MASSUNIT,
          name,
-         new Schema::IfcMeasureWithUnit(new Schema::IfcMassMeasure(cf * cf2), new Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcMassMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
       );
    }
    return unit;

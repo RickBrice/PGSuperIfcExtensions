@@ -38,27 +38,27 @@ typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(IfcHierar
    double g = (double)GetGValue(clr) / 255.;
    double b = (double)GetBValue(clr) / 255.;
 
-   auto color = new Schema::IfcColourRgb(name, r, g, b);
+   auto color = new typename Schema::IfcColourRgb(name, r, g, b);
    file.addEntity(color);
 
-   auto ssr = new Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
+   auto ssr = new typename Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
    file.addEntity(ssr);
 
    typename aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>::ptr list_of_surface_styles(new aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>());
    list_of_surface_styles->push(ssr);
    
-   auto ss = new Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
+   auto ss = new typename Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
    file.addEntity(ss);
 
    typename aggregate_of<typename Schema::IfcPresentationStyle>::ptr list_of_presentation_styles(new aggregate_of<typename Schema::IfcPresentationStyle>());
    list_of_presentation_styles->push(ss);
    
-   auto styled_item = new Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
+   auto styled_item = new typename Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
    file.addEntity(styled_item);
 
    typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr styled_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
    styled_items->push(styled_item);
-   auto styled_representation = new Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
+   auto styled_representation = new typename Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
    file.addEntity(styled_representation);
 
    return styled_representation;
@@ -70,11 +70,11 @@ void AssignPset_MaterialSteel(IfcHierarchyHelper<Schema>& file, typename Schema:
    // Pset_MaterialSteel
    typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
    //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
-   material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new Schema::IfcPressureMeasure(fy), nullptr));
-   material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new Schema::IfcPressureMeasure(fpu), nullptr));
-   material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new Schema::IfcPositiveRatioMeasure(eu), nullptr));
-   material_steel_properties->push(new Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new Schema::IfcLabel(grade.c_str()), nullptr));
-   auto pset_material_steel = new Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, material);
+   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new typename Schema::IfcPressureMeasure(fy), nullptr));
+   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new typename Schema::IfcPressureMeasure(fpu), nullptr));
+   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new typename Schema::IfcPositiveRatioMeasure(eu), nullptr));
+   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new typename Schema::IfcLabel(grade.c_str()), nullptr));
+   auto pset_material_steel = new typename Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, material);
    file.addEntity(pset_material_steel);
 }
 
@@ -95,7 +95,7 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
 
    // if we got this far, the material was not previously created
    // create it now
-   auto strand_material = new Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
+   auto strand_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
    file.addEntity(strand_material);
 
    // define strand properties
@@ -122,7 +122,7 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
    // assigns the presentation styles to the material
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
    list_of_representations->push(material_representation);
-   auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
+   auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
    file.addEntity(material_defintion_representation);
 
    return strand_material;
@@ -152,7 +152,7 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
 
    // if we got this far, the material was not previously created
    // create it now
-   auto rebar_material = new Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
+   auto rebar_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
    file.addEntity(rebar_material);
 
    // define rebar properties
@@ -173,7 +173,7 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
    // assigns the presentation styles to the material
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
    list_of_representations->push(material_representation);
-   auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
+   auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
    file.addEntity(material_defintion_representation);
 
    return rebar_material;
@@ -202,7 +202,7 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    // if we got this far, the material was not previously created
    // create it now
-   auto concrete_material = new Schema::IfcMaterial(name, boost::none/*description*/, std::string("concrete")/*category*/);
+   auto concrete_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("concrete")/*category*/);
    file.addEntity(concrete_material);
 
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
@@ -218,9 +218,9 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    // Pset_MaterialConcrete
    typename aggregate_of<typename Schema::IfcProperty>::ptr material_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
-   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new Schema::IfcPressureMeasure(fc), stress_unit));
-   material_concrete_properties->push(new Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new Schema::IfcPositiveLengthMeasure(max_agg_size), displacement_unit));
-   auto pset_material_concrete = new Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, concrete_material);
+   material_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new typename Schema::IfcPressureMeasure(fc), stress_unit));
+   material_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new typename Schema::IfcPositiveLengthMeasure(max_agg_size), displacement_unit));
+   auto pset_material_concrete = new typename Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, concrete_material);
    file.addEntity(pset_material_concrete);
 
    // create the representation style
@@ -229,7 +229,7 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
    // assigns the presentation styles to the material
    typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
    list_of_representations->push(material_representation);
-   auto material_defintion_representation = new Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, concrete_material);
+   auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, concrete_material);
    file.addEntity(material_defintion_representation);
 
    return concrete_material;
