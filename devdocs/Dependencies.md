@@ -13,7 +13,7 @@ This may work too, but I haven't tested it
 git config --global --add safe.directory F:/IfcOpenShell/*
 ~~~
 
-Option 2 - Make git trust the following directories
+Option 2 - Make git trust the following directories (more directories may be added to this list as IfcOpenShell evolves with time)
 ~~~
 git config --global --add safe.directory F:/IfcOpenShell
 git config --global --add safe.directory F:/IfcOpenShell/_deps/mpfr
@@ -32,14 +32,11 @@ Checkout the v0.8.0 branch and updated submodules (The cityjson submodule gets m
 git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
 ~~~
 
-The build system uses an old version of Python. We want to use the latest version of python, make sure you have it installed. I've installed it in F:\Python\Python312 (for version 3.12).
-
-Set the following environment variable in the Visual Studio command window to prevent IfcOpenShell from installing python.
+Uninstall Python and use the version that comes with IfcOpenShell. If you want to use a different version of Python, you'll need to dig into the documentation and figure it out. 
 
 Open the `x64 Native Tools Command Prompt for VS 2022` window.
 ~~~
 Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
-set IFCOS_INSTALL_PYTHON=FALSE
 ~~~
 
 This is an optional step. One of my computers has a 24 core processor. The default is to use all 24 cores, but this ends up with out of memory errors. I find that using 12 cores works well.
@@ -49,64 +46,41 @@ set IFCOS_NUM_BUILD_PROCS=12
 
 Build the IfcOpenShell dependencies by running the following commands.
 This will take a long time. 
-When building the Debug dependencies, there will be 3 assert windows that you need to press the Ignore button - if you step away from the build, the test programs asserting will eventually error out and the asserts will go away.
+I have experienced the scripts failing the first time I run them. Just run them a second time.
+
+First build the Debug version of the dependencies.
 
 ~~~
 cd F:\IfcOpenShell\win
 build-deps.cmd vs2022-x64 Debug
+~~~
+
+Python has been installed. You need to manually uninstall it. Go to Control Panel and remove Python.
+
+Rename the IfcOpenShell folder to IfcOpenShell_Debug. You will need to close the command prompt, and maybe even reboot.
+
+Now we need to start over for the Release dependencies.
+
+~~~
+Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
+git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
+set IFCOS_NUM_BUILD_PROCS=12
+cd F:\IfcOpenShell\win
 build-deps.cmd vs2022-x64 Release
+run-cmake.cmd vs2022-x64
 ~~~
 
-If the build of the boost libraries errors out, you'll need to apply the patch https://github.com/boostorg/boost/issues/914#issuecomment-2159445304 and restart the overall build process (ie. run `build-deps.cmd vs2022-x64 Debug` again)
+Next, merge the debug libraries into the release folder structure.
+1. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\rocksdb\lib. Make of copy of rocksdb.lib and rename it to rocksdbd.lib. Move rocksdbd.lib to IfcOpenShell\_deps-vs2022-x64-installed\rocksdb\lib.
+2. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\zstd\lib. Make of copy of zstd_static.lib and rename it to zstd_staticd.lib. Move zstd_staticd.lib to IfcOpenShell\_deps-vs2022-x64-installed\zstd\lib.
+3. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib. Copy all of the lib files (their names should end with _D.lib) to IfcOpenShell\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib
+4. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada. Copy all of the lib files (their names should end with d.lib) to IfcOpenShell\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada
 
-Now that we've got good builds of the dependencies, run the batch file for cmake to create the visual studio solution file.
-
-If you did not have IfcOpenShell install Python, you need to tell it what Python version you
-have installed and where it is located.
-
-Use the following commands
-~~~
-echo PY_VER_MAJOR_MINOR=312>> BuildDepsCache-x64.txt
-echo PYTHONHOME=F:\Python\Python312>> BuildDepsCache-x64.txt
-~~~
-
-Ok, ready to run cmake
-~~~
-run-cmake.bat vs2022-x64
-~~~
-
-Fire up Visual Studio and open the solution file. The solution file is in `F:\IfcOpenShell\build-vs2022-x64\IfcOpenShell.sln`
-
-The HDF5 libraries need to be changed to the debugging version for multiple projects. The list include IfcHouse, IfcAdvancedHouse, _ifcopenshell_wrapper, IfcGeomServer, IfcConvert. An _D needs to be appended to the HDF file name in the linker settings.
-
-Now build the Debug and Release configurations.
-
-Also see https://github.com/IfcOpenShell/IfcOpenShell/issues/4584
-
----
-
-## Obsolete
-Below are notes for things that are now obsolete. Since the v0.8.0 branch of IfcOpenShell is the bleeding edge, this information is retained here in case we need it in the future.
-
-### Boost 1.78 is now the default library
-
-Edit the win\build-deps.cmd and win\run-cmake.bat files. In these files search for BOOST_VERSION and change the version from 1.74.0 to 1.78.0.
+5. Go to the folder IfcOpenShell\_deps\boost_1_86_0 and run b2.exe. This will compile all of the boost libraries need by BridgeLink.
 
 
-### The cgal kernel is now compiling with VS2022.
+Now we are ready to build IfcOpenShell. The solution file is IfcOpenShell\_build-vs2022-x64\IfcOpenShell.sln
 
-The geometry_kernel_cgal and geometry_kernel_cgal_simple projects are not compatible with VS2022. Change the toolset to VS2019
-~~~
-Select geometry_kernel_cgal and geometry_kernel_cgal_simple
-Right click, select Properties
-Change configurations to "All Configurations"
-Select Configuration Properties > General
-Change Platform Toolset to "Visual Studio 2019 (v142)"
-~~~
+Select the Debug configuration and build only the IfcParse project.
 
-### City Json project are now correct
-
-Before building, the cityjson_converter project is missing an include path. Right-click on the cityjson_convter project and select `Properties > C/C++ > General > Additional Include Directories` and add 
-~~~
-F:\IfcOpenshell\_deps-vs2022-x64-installed\json
-~~~
+Select the Release configuration and build the INSTALL project, found in the folder CMakePredefinedTargets.

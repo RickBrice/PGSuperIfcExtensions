@@ -2633,16 +2633,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 template <typename Schema>
 bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options)
 {
-   //std::streambuf* backup;
-   //backup = std::cout.rdbuf();
-   //std::stringstream ss;
-   //std::cout.rdbuf(ss.rdbuf());
-
-   //IfcHierarchyHelper<Schema> file;
-
-   //OutputDebugStringA(ss.str().c_str());
-   //std::cout.rdbuf(backup);
-
    USES_CONVERSION;
 
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
