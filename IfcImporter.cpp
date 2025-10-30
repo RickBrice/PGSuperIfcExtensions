@@ -544,13 +544,31 @@ bool CIfcImporter::ImportAlignment(std::shared_ptr<WBFL::EAF::Broker> pBroker, I
    }
 }
 
+std::pair<GroupIndexType, GirderIndexType> ExtractSpanAndGirder(const std::string& s)
+{
+   GroupIndexType grpIdx = INVALID_INDEX;
+   GirderIndexType gdrIdx = INVALID_INDEX;
+   std::istringstream iss(s);
+   std::string word;
+
+   while (iss >> word)
+   {
+      if (word == "Span")
+         iss >> grpIdx;
+      else if (word == "Girder")
+         iss >> gdrIdx;
+   }
+
+   return { grpIdx,gdrIdx };
+}
+
 bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file)
 {
    auto bridges = file.instances_by_type<Ifc4x3_add2::IfcBridge>();
    auto bridge = (*bridges->begin());
 
    SpanIndexType nSpans = INVALID_INDEX;
-   GirderIndexType nGirders = INVALID_INDEX;
+   //GirderIndexType nGirders = INVALID_INDEX;
    auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
    if (value)
    {
@@ -558,7 +576,8 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       m_Notes.push_back(std::_tstring(_T("Bridge Number of Spans: ")) + std::to_tstring(nSpans));
    }
 
-   GirderIndexType nTotalGirders = 0;
+   std::vector<GirderIndexType> nGirders;
+   nGirders.assign(nSpans, 0);
    auto superstructure = GetBridgePart(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_SUPERSTRUCTURE);
    auto rel_contained_elements = superstructure->ContainsElements();
    for (auto contained_element : *rel_contained_elements)
@@ -569,13 +588,14 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
          auto beam = related_element->as<Ifc4x3_add2::IfcBeam>();
          if (beam)
          {
-            nTotalGirders++;
+            Ifc4x3_add2::IfcLabel* value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+            auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
+            nGirders[spanIdx-1]++;
          }
       }
    }
 
-   nGirders = nTotalGirders / nSpans;
-   m_Notes.push_back(std::_tstring(_T("Bridge Number of Girders: ")) + std::to_tstring(nGirders));
+   bool bSameNumGirdersInAllSpans = std::adjacent_find(nGirders.begin(), nGirders.end(), std::not_equal_to<>()) == nGirders.end() ? true : false;
 
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    auto bridge_desc = *(pIBridgeDesc->GetBridgeDescription());
@@ -588,9 +608,22 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
          bridge_desc.AppendSpan(nullptr, nullptr, true, 0);
       }
 
-      bridge_desc.UseSameNumberOfGirdersInAllGroups(true);
       bridge_desc.UseSameGirderForEntireBridge(true);
-      bridge_desc.SetGirderCount(nGirders);
+
+      if (bSameNumGirdersInAllSpans)
+      {
+         bridge_desc.UseSameNumberOfGirdersInAllGroups(true);
+         bridge_desc.SetGirderCount(nGirders.front());
+      }
+   }
+
+   if (!bSameNumGirdersInAllSpans)
+   {
+      bridge_desc.UseSameNumberOfGirdersInAllGroups(false);
+      for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++)
+      {
+         bridge_desc.GetGirderGroup(spanIdx)->SetGirderCount(nGirders[spanIdx]);
+      }
    }
 
    //

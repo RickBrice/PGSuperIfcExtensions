@@ -1386,7 +1386,12 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
 
       precast_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CamberAtMidspan"), boost::none, new typename Schema::IfcRatioMeasure(camber_ratio), nullptr));
    }
-   precast_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DesignLocationNumber"), boost::none, new typename Schema::IfcLabel(T2A(SEGMENT_LABEL(segmentKey))), nullptr));
+
+   {
+      pgsAutoGirderLabel autoLabel;
+      pgsGirderLabel::UseAlphaLabel(false);
+      precast_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DesignLocationNumber"), boost::none, new typename Schema::IfcLabel(T2A(SEGMENT_LABEL(segmentKey))), nullptr));
+   }
    auto pset_precast_concrete_element_general = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_PrecastConcreteElementGeneral"), boost::none, precast_concrete_properties);
    file.addEntity(pset_precast_concrete_element_general);
 
