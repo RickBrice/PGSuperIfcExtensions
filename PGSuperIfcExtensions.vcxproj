@@ -73,7 +73,7 @@
     <CustomBuildStep>
       <Message>Copy manifest to BridgeLink</Message>
       <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
-      <Outputs>$(ARPDIR)/BrdgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
+      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -126,7 +126,7 @@
     <CustomBuildStep>
       <Message>Copy manifest to BridgeLink</Message>
       <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
-      <Outputs>$(ARPDIR)/BrdgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
+      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
