@@ -80,3 +80,37 @@ std::vector<T*> GetPropertyList(typename Schema::IfcObject* object, std::string 
    return result;
 }
 
+
+template <typename Schema>
+typename Schema::IfcMaterialProperties* GetMaterialPropertySet(typename Schema::IfcMaterialDefinition* matdef, std::string name)
+{
+   auto has_properties = matdef->HasProperties();
+   for (auto material_properties : *has_properties)
+   {
+      if (material_properties->Name() == name)
+      {
+         return material_properties;
+      }
+   }
+
+   return nullptr;
+}
+
+template <typename Schema, typename T>
+typename T* GetMaterialProperty(typename Schema::IfcMaterialDefinition* matdef, std::string pset_name, std::string property_name)
+{
+   auto pset = GetMaterialPropertySet<Schema>(matdef, pset_name);
+   if (pset)
+   {
+      auto properties = pset->Properties();
+      for (auto property : *properties)
+      {
+         if (property->Name() == property_name)
+         {
+            auto p = property->as<typename Schema::IfcPropertySingleValue>();
+            return p->NominalValue()->as<T>();
+         }
+      }
+   }
+   return nullptr;
+}

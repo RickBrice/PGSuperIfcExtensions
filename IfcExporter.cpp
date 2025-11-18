@@ -1344,17 +1344,17 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
    Float64 fcl = pMaterials->GetSegmentFc(segmentKey, liftingIntervalIdx);
    Float64 fch = pMaterials->GetSegmentFc(segmentKey, haulingIntervalIdx);
    Float64 fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
-   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-   {
-      stress_unit = GetStressUnit<Schema>(file,pBroker);
-      displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
+   //if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   //{
+   //   stress_unit = GetStressUnit<Schema>(file,pBroker);
+   //   displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
 
-      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      fcl = WBFL::Units::ConvertFromSysUnits(fcl, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      fch = WBFL::Units::ConvertFromSysUnits(fch, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-   }
+   //   fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   fcl = WBFL::Units::ConvertFromSysUnits(fcl, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   fch = WBFL::Units::ConvertFromSysUnits(fch, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //}
 
    Float64 batter = 0.0;
    if (options.batter_ends)
@@ -1425,20 +1425,20 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
       typename Schema::IfcConversionBasedUnit* mass_unit = nullptr;
       typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
 
-      if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-      {
-         big_area_unit = GetBigAreaUnit<Schema>(file, pBroker);
-         small_area_unit = GetSmallAreaUnit<Schema>(file, pBroker);
-         volume_unit = GetVolumeUnit<Schema>(file, pBroker);
-         mass_unit = GetMassUnit<Schema>(file, pBroker);
-         length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
+      //if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+      //{
+      //   big_area_unit = GetBigAreaUnit<Schema>(file, pBroker);
+      //   small_area_unit = GetSmallAreaUnit<Schema>(file, pBroker);
+      //   volume_unit = GetVolumeUnit<Schema>(file, pBroker);
+      //   mass_unit = GetMassUnit<Schema>(file, pBroker);
+      //   length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
 
-         GSA = WBFL::Units::ConvertFromSysUnits(GSA, WBFL::Units::Measure::Feet2);
-         GV = WBFL::Units::ConvertFromSysUnits(GV, WBFL::Units::Measure::Feet3);
-         L = WBFL::Units::ConvertFromSysUnits(L, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
-         A = WBFL::Units::ConvertFromSysUnits(A, pDisplayUnits->GetAreaUnit().UnitOfMeasure);
-         Mass = WBFL::Units::ConvertFromSysUnits(Mass, WBFL::Units::Measure::PoundMass);
-      }
+      //   GSA = WBFL::Units::ConvertFromSysUnits(GSA, WBFL::Units::Measure::Feet2);
+      //   GV = WBFL::Units::ConvertFromSysUnits(GV, WBFL::Units::Measure::Feet3);
+      //   L = WBFL::Units::ConvertFromSysUnits(L, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+      //   A = WBFL::Units::ConvertFromSysUnits(A, pDisplayUnits->GetAreaUnit().UnitOfMeasure);
+      //   Mass = WBFL::Units::ConvertFromSysUnits(Mass, WBFL::Units::Measure::PoundMass);
+      //}
 
 
       typename aggregate_of<typename Schema::IfcPhysicalQuantity>::ptr beam_quantities(new aggregate_of<typename Schema::IfcPhysicalQuantity>());

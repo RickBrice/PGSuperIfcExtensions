@@ -559,7 +559,7 @@ std::pair<GroupIndexType, GirderIndexType> ExtractSpanAndGirder(const std::strin
          iss >> gdrIdx;
    }
 
-   return { grpIdx,gdrIdx };
+   return { grpIdx-1,gdrIdx-1 };
 }
 
 bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file)
@@ -590,7 +590,7 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
          {
             Ifc4x3_add2::IfcLabel* value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
             auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
-            nGirders[spanIdx-1]++;
+            nGirders[spanIdx]++;
          }
       }
    }
@@ -687,6 +687,8 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
          }
       }
    }
+
+   SetGirderProperties(file, bridge_desc);
 
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
@@ -1574,5 +1576,82 @@ void CIfcImporter::CheckSpiralType(Ifc4x3_add2::IfcAlignmentHorizontalSegment* p
       ATLASSERT(false); // is there a new spiral type???
       m_Notes.push_back(std::_tstring(_T("Spiral type not defined. Assuming clothoid.")));
       break;
+   }
+}
+
+
+bool HasClassification(Ifc4x3_add2::IfcObjectDefinition* object, std::string identifier)
+{
+   auto associations = object->HasAssociations();
+   if (associations)
+   {
+      for (auto rel : *associations)
+      {
+         auto rel_associates_classification = rel->as < Ifc4x3_add2::IfcRelAssociatesClassification>();
+         auto classification_reference = rel_associates_classification->RelatingClassification()->as<Ifc4x3_add2::IfcClassificationReference>();
+         if (classification_reference && classification_reference->Identification().value_or("") == identifier)
+            return true;
+      }
+   }
+
+   return false;
+}
+
+template <typename Schema>
+typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* objectdef)
+{
+   auto associations = objectdef->HasAssociations();
+   if (associations)
+   {
+      for (auto rel : *associations)
+      {
+         auto rel_associates_material = rel->as<Ifc4x3_add2::IfcRelAssociatesMaterial>();
+         if (rel_associates_material)
+         {
+            auto material = rel_associates_material->RelatingMaterial();
+            return material->as<typename Schema::IfcMaterial>();
+         }
+      }
+   }
+
+   return nullptr;
+}
+
+template <typename O,typename T,typename E>
+E GetPredefinedType(Ifc4x3_add2::IfcObject* object)
+{
+   auto types = object->IsTypedBy();
+   for (auto type : *types)
+   {
+      return type->RelatingType()->as<T>()->PredefinedType();
+   }
+
+   return object->as<T>()->PredefinedType();
+}
+
+void CIfcImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc)
+{
+   auto beams = file.instances_by_type<Ifc4x3_add2::IfcBeam>();
+   aggregate_of<Ifc4x3_add2::IfcBeam>::ptr prestressed_beams(new aggregate_of<Ifc4x3_add2::IfcBeam>());
+   for (auto beam : *beams)
+   {
+      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum>(beam);
+      if (predefined_type == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
+      {
+         if (HasClassification(beam,"usBridge_GirderPrestressedConcrete"))
+            prestressed_beams->push(beam);
+      }
+   }
+
+   for (auto beam : *prestressed_beams)
+   {
+      Ifc4x3_add2::IfcLabel* value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+      auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
+      auto fci = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcPressureMeasure>(beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
+      bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fci = *fci;
+
+      auto material = GetMaterial<Ifc4x3_add2>(beam);
+      auto fc = GetMaterialProperty<Ifc4x3_add2, Ifc4x3_add2::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
+      bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fc = *fc;
    }
 }

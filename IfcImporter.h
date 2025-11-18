@@ -123,5 +123,7 @@ private:
 
    // returns true if the alignment is a valid PGSuper alignment
    bool IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
+
+   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
 };
 
