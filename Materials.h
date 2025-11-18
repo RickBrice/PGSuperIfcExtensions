@@ -207,14 +207,14 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
-   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-   {
-      stress_unit = GetStressUnit<Schema>(file, pBroker);
-      displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
+   //if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   //{
+   //   stress_unit = GetStressUnit<Schema>(file, pBroker);
+   //   displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
 
-      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
-   }
+   //   fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
+   //}
 
    // Pset_MaterialConcrete
    typename aggregate_of<typename Schema::IfcProperty>::ptr material_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());

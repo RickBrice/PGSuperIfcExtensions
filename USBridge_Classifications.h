@@ -178,12 +178,12 @@ void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::sh
    auto fci = pMaterials->GetSegmentFc(segmentKey, releaseIntervalIdx);
    auto fc = pMaterials->GetSegmentFc28(segmentKey);
    auto fpj = pStrandGeom->GetJackingStress(segmentKey, pgsTypes::Permanent);
-   if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-   {
-      fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-   }
+   //if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   //{
+   //   fci = WBFL::Units::ConvertFromSysUnits(fci, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //   fpj = WBFL::Units::ConvertFromSysUnits(fpj, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   //}
 
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(
       std::string("usBridge_ConcreteStrengthatTimeOfPrestressing"),
@@ -239,10 +239,10 @@ void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::sh
       Float64 ps = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftPretension, poiMS, bat, rtCumulative, false);
       Float64 girder = pProduct->GetDeflection(releaseIntervalIdx, pgsTypes::pftGirder, poiMS, bat, rtCumulative, false);
       Float64 camber = ps + girder;
-      if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-      {
-         camber = WBFL::Units::ConvertFromSysUnits(camber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
-      }
+      //if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+      //{
+      //   camber = WBFL::Units::ConvertFromSysUnits(camber, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
+      //}
       list_of_properties->push(new typename Schema::IfcPropertySingleValue(
          std::string("usBridge_CamberatPrestressingRelease"),
          std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/usBridge_CamberatPrestressingRelease"),
