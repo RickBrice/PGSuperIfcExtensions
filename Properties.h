@@ -57,3 +57,26 @@ typename T* GetProperty(typename Schema::IfcObject* object, std::string pset_nam
    return nullptr;
 }
 
+template <typename Schema,typename T>
+std::vector<T*> GetPropertyList(typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+{
+   std::vector<T*> result;
+   auto pset = GetPropertySet<Schema>(object, pset_name);
+   if (pset)
+   {
+      auto properties = pset->HasProperties();
+      for (auto property : *properties)
+      {
+         if (property->Name() == property_name)
+         {
+            auto list = *(property->as<typename Schema::IfcPropertyListValue>()->ListValues());
+            for (auto value : *list)
+            {
+               result.push_back(value->as<T>());
+            }
+         }
+      }
+   }
+   return result;
+}
+
