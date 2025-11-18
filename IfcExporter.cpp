@@ -1849,6 +1849,7 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
 
    auto slab = new typename Schema::IfcSlab(IfcParse::IfcGlobalId(), nullptr, std::string("Deck Slab"), boost::none, boost::none, deck_placement, product_definition_shape, boost::none,
       Schema::IfcSlabTypeEnum::IfcSlabType_FLOOR); // see Ifc 4x3 6.1.2.19.2 (FLOOR represents a bridge deck), name is option but AASHTO IDS requires it
+   file.addEntity(slab);
 
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, slab);
 }
