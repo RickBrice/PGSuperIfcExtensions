@@ -381,6 +381,12 @@ void Classify_Substructure(IfcHierarchyHelper<Schema>& file, typename Schema::If
 }
 
 template <typename Schema>
+void Classify_Deck(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* deck)
+{
+   Classify_BridgePart(file, deck, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Deck"), std::string("usBridge_Deck"), std::string("IfcBridgePartDECK"), std::string("IfcBridgePart.DECK"));
+}
+
+template <typename Schema>
 void Classify_Abutment(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* abutment)
 {
    Classify_BridgePart(file, abutment, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_AbutmentSpatial"), std::string("usBridge_AbutmentSpatial"), std::string("IfcBridgePartABUTMENT"), std::string("IfcBridgePart.ABUTMENT"));
@@ -396,6 +402,12 @@ template <typename Schema>
 void Classify_Foundation(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridgePart* foundation)
 {
    Classify_BridgePart(file, foundation, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Foundation"), std::string("usBridge_Foundation"), std::string("IfcBridgePartFOUNDATION"), std::string("IfcBridgePart.FOUNDATION"));
+}
+
+template <typename Schema>
+void Classify_Slab(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* slab)
+{
+   Classify_BridgePart(file, slab, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_DeckSlab"), std::string("usBridge_DeckSlab"), std::string("IfcSlabFLOOR"), std::string("IfcSlab.FLOOR"));
 }
 
 template <typename Schema>
