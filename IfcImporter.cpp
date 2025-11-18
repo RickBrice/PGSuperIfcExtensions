@@ -649,6 +649,44 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       pPier->SetStation(*station);
    }
 
+   // NOTE: This is not the cleanest way to do this, but it gets the job done for now.
+   // I want to keep girder spacing from a custom property set separate from the pier stationing.
+   bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
+   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
+   {
+      auto pier = piers[pierIdx];
+      auto pPier = bridge_desc.GetPier(pierIdx);
+      if (0 < pierIdx)
+      {
+         auto spacing = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(pier, "pgsSpacing", "Back_Spacing");
+
+         auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Back);
+         girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
+         girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtCenterlineBearing);
+         girder_spacing->ExpandAll();
+         IndexType idx = 0;
+         for (auto s : spacing)
+         {
+            girder_spacing->SetGirderSpacing(idx++, *s);
+         }
+      }
+
+      if (pierIdx < nPiers - 1)
+      {
+         auto spacing = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(pier, "pgsSpacing", "Ahead_Spacing");
+
+         auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Ahead);
+         girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
+         girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtCenterlineBearing);
+
+         girder_spacing->ExpandAll();
+         IndexType idx = 0;
+         for (auto s : spacing)
+         {
+            girder_spacing->SetGirderSpacing(idx++, *s);
+         }
+      }
+   }
 
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
