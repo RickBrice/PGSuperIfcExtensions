@@ -1336,7 +1336,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
    file.addEntity(rel_associates_materials);
 
    // Gather data for Pset_PrecastConcreteElementGeneral
-   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   //GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
 
@@ -1851,6 +1851,11 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
       Schema::IfcSlabTypeEnum::IfcSlabType_FLOOR); // see Ifc 4x3 6.1.2.19.2 (FLOOR represents a bridge deck), name is option but AASHTO IDS requires it
    file.addEntity(slab);
 
+   if (options.classify)
+   {
+      Classify_Slab(file, slab);
+   }
+
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, slab);
 }
 
@@ -2287,6 +2292,10 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
    CreateDeckRepresentation(file, pBroker, deck, options, body_model_representation_subcontext);
    file.addEntity(deck);
+   if (options.classify)
+   {
+      Classify_Deck<Schema>(file, deck);
+   }
 
    typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_bridge_parts(new aggregate_of<typename Schema::IfcObjectDefinition>());
    list_of_bridge_parts->push(deck);
