@@ -112,7 +112,7 @@
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
-      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_build-vs2022-$(Platform)\$(Configuration)\IfcParse.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\rocksdb\lib\rocksdb.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\zstd\lib\zstd_static.lib;rpcrt4.lib;shlwapi.lib;$(BOOSTDIR)\stage\vs2022-x64\lib\libboost_iostreams-vc143-mt-x64-1_86.lib</AdditionalDependencies>
+      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_installed-vs2022-$(Platform)\lib\IfcParse.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\rocksdb\lib\rocksdb.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\zstd\lib\zstd_static.lib;rpcrt4.lib;shlwapi.lib;$(BOOSTDIR)\stage\vs2022-x64\lib\libboost_iostreams-vc143-mt-x64-1_86.lib</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -167,7 +167,7 @@
       <DataExecutionPrevention />
       <TargetMachine>MachineX64</TargetMachine>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
-      <AdditionalDependencies>bcrypt.lib;IfcParse.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\rocksdb\lib\rocksdbd.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\zstd\lib\zstd_staticd.lib;rpcrt4.lib;shlwapi.lib;$(BOOSTDIR)\stage\lib\libboost_iostreams-vc143-mt-gd-x64-1_86.lib</AdditionalDependencies>
+      <AdditionalDependencies>bcrypt.lib;$(IFCOPENSHELL_DIR)\_installed-vs2022-$(Platform)\lib\IfcParse.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\rocksdb\lib\rocksdb.lib;$(IFCOPENSHELL_DIR)\_deps-vs2022-$(Platform)-installed\zstd\lib\zstd_static.lib;rpcrt4.lib;shlwapi.lib;$(BOOSTDIR)\stage\lib\libboost_iostreams-vc143-mt-gd-x64-1_86.lib</AdditionalDependencies>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
