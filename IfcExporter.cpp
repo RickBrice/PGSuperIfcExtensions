@@ -2615,7 +2615,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
     std::vector<std::string> file_description;
     std::ostringstream os;
-    os << "ViewDefinition[Alignment-basedView]" << std::ends;
+    os << "ViewDefinition [Alignment-basedView]" << std::ends;
     file_description.push_back(os.str().c_str());
     file.header().file_description()->setdescription(file_description);
     //file.header().file_description().description(file_description);
