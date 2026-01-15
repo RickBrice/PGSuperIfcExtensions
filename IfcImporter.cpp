@@ -568,7 +568,6 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
    auto bridge = (*bridges->begin());
 
    SpanIndexType nSpans = INVALID_INDEX;
-   //GirderIndexType nGirders = INVALID_INDEX;
    auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
    if (value)
    {
