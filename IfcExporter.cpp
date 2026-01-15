@@ -2414,6 +2414,10 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    );
    file.addEntity(beam_type);
 
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_object_definitions(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   beam_object_definitions->push(beam_type);
+   AssociateDocuments<Schema>(file, beam_object_definitions);
+
 
    // build the beams
    typename aggregate_of<typename Schema::IfcObject>::ptr beam_objects(new aggregate_of<typename Schema::IfcObject>());
@@ -2566,13 +2570,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
       Classify_Girders(file, girders);
    }
-
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_object_definitions(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   for (auto beam_object : *beam_objects)
-   {
-      beam_object_definitions->push(beam_object);
-   }
-   AssociateDocuments<Schema>(file, beam_object_definitions);
 
    Create_Pset_BridgeCommon<Schema>(file,bridge);
    if (options.classify)
