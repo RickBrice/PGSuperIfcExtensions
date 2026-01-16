@@ -23,10 +23,10 @@
 // PGSuperDataImporter.cpp : Implementation of CPGSuperDataImporter
 #include "stdafx.h"
 #include "IfcExtensions.h"
+#include "IfcImporter.h"
 #include "PGSuperDataImporter.h"
 #include <EAF/AutoProgress.h>
 #include <IFace\Project.h>
-#include "IfcImporter.h"
 #include "ImportOptions.h"
 
 /////////////////////////////////////////////////////////////////////////////
@@ -69,7 +69,7 @@ HRESULT CPGSuperDataImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
       if (options_dlg.DoModal() == IDCANCEL)
          return S_OK;
 
-      HRESULT hr = m_IfcImporter.ImportFromIFC(pBroker, fileName, options_dlg.options);
+      HRESULT hr = CIfcImporter(pBroker).ImportFromIFC(fileName, options_dlg.options);
    }
    return S_OK;
 }

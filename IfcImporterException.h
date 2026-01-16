@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+
 // Use this exception class when we encounter IFC tags that can't be handled.
 // Right now, it just gives a simple text message, but this class can be made
 // more sophisticated in the future if need be.
@@ -35,3 +36,7 @@ public:
 private:
    std::_tstring m_strWhat;
 };
+
+
+// Use this throw macro when the data conversion cannot continue
+#define IFC_THROW(_s_) throw CIfcImporterException(_s_);

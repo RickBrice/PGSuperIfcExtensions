@@ -21,75 +21,34 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <IFace/Tools.h>
+#include "IfcExporter.h"
 #include <IFace\Project.h>
 
-///////////////////////////////////////////////////////////////////////////
-// CIfcImporter
-//
-// Converts data between IFC and PGSuper data structures
-class CIfcImporter
+class CIfcImporter;
+
+class CIfcAlignmentImporter
 {
 public:
-   CIfcImporter(void);
-   ~CIfcImporter(void);
-
-   // Converts Ifc data to PGSuper data
-   HRESULT ImportFromIFC(std::shared_ptr<WBFL::EAF::Broker> pBroker, CString& strFilePath);
-
-   // Returns a list of notes that were generated during the IFC to PGSuper conversion process
-   std::vector<std::_tstring> GetNotes();
-
-   static Float64 GetPrecision() { return m_Precision; }
+   CIfcAlignmentImporter(CIfcImporter& importer);
+   bool Import(IfcParse::IfcFile& file);
 
 private:
-   static Float64 m_Precision;
-   const WBFL::Units::Length* m_pLengthUnit;
-   const WBFL::Units::Angle* m_pAngleUnit;
-   std::vector<std::_tstring> m_Notes;
-   CComPtr<ICogoEngine> m_CogoEngine;
-   CComPtr<IGeomUtil2d> m_GeomUtil;
-
+   CIfcImporter& m_Importer;
    AlignmentData2 m_AlignmentData;
    ProfileData2   m_ProfileData;
    RoadwaySectionData m_RoadwaySectionData;
-
    bool m_bAlignmentStarted;
    int m_ProfileState; // -1 = not yet started, 0 = started, but grade not determined, 1 = first point established
+   CComPtr<ICogoEngine> m_CogoEngine;
+   CComPtr<IGeomUtil2d> m_GeomUtil;
 
-   //LX::CrossSects* CreateCrossSections(std::shared_ptr<WBFL::EAF::Broker> pBroker, LX::IFactory* pFactory);
-   //LX::Roadway*    CreateRoadway(std::shared_ptr<WBFL::EAF::Broker> pBroker, LX::IFactory* pFactory);
-
-   bool ImportAlignment(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file);
-
-   bool GetAlignmentParameters(IfcParse::IfcFile& file, AlignmentData2* pAlignmentData, ProfileData2* pProfileData, RoadwaySectionData* pRoadwaySectionData);
-
+   bool InitAlignmentParameters(IfcParse::IfcFile& file);
    Ifc4x3_add2::IfcAlignment* GetAlignment(IfcParse::IfcFile& file);
-
-   void InitUnits(IfcParse::IfcFile& file);
-
-   //Float64 GetStartDistAlong(Ifc4x3_rc2::IfcAlignmentHorizontal* pHorizontal);
-   //Float64 GetStartDistAlong(Ifc4x3_rc3::IfcAlignmentHorizontal* pHorizontal);
-   //Float64 GetStartDistAlong(Ifc4x3_rc4::IfcAlignmentHorizontal* pHorizontal);
-   //Float64 GetStartDistAlong(Ifc4x3_tc1::IfcAlignmentHorizontal* pHorizontal);
-   //Float64 GetStartDistAlong(Ifc4x3_add1::IfcAlignmentHorizontal* pHorizontal);
-   Float64 GetStartDistAlong(Ifc4x3_add2::IfcAlignmentHorizontal* pHorizontal);
-
-   void GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
-
    Float64 LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
-
-   void LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment,Float64 stationAdjustment);
-
-   //void LoadCrossSections(LX::CrossSects* pCrossSects, LX::String& strSurfaceName);
-
-   void GetPoint(Ifc4x3_add2::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY)
-   {
-      auto coordinates = pPoint->Coordinates();
-      ATLASSERT(2 <= coordinates.size());
-      *pX = WBFL::Units::ConvertToSysUnits(coordinates[0],*m_pLengthUnit);
-      *pY = WBFL::Units::ConvertToSysUnits(coordinates[1],*m_pLengthUnit);
-   }
+   void LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment, Float64 stationAdjustment);
+   bool IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
+   void GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
+   Float64 GetStartStation(Ifc4x3_add2::IfcAlignment* pAlignment);
 
    enum LastAlignmentType { Unknown, Line, Curve } m_LastAlignmentType;
 
@@ -112,7 +71,5 @@ private:
 
    void CheckSpiralType(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral);
 
-   // returns true if the alignment is a valid PGSuper alignment
-   bool IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
+   void GetPoint(Ifc4x3_add2::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY);
 };
-

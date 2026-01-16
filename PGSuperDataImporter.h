@@ -26,7 +26,6 @@
 
 #include <Plugins\PGSuperIEPlugin.h>
 #include "resource.h"       // main symbols
-#include "IfcImporter.h"
 #include <EAF\ComponentObject.h>
 
 class CPGSuperDataImporter : public WBFL::EAF::ComponentObject,
@@ -44,7 +43,4 @@ public:
    HBITMAP GetBitmapHandle() const override;
    CString GetCommandHintText() const override;
    HRESULT Import(std::shared_ptr<WBFL::EAF::Broker> pBroker) override;
-
-private:
-   CIfcImporter m_IfcImporter;
 };

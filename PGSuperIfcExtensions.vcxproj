@@ -178,6 +178,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="IfcAlignmentImporter.cpp" />
     <ClCompile Include="ImportOptions.cpp" />
     <ClCompile Include="ExportOptions.cpp" />
     <ClCompile Include="IfcImporter.cpp" />
@@ -196,6 +197,7 @@
     <None Include="IfcExtensions.Manifest.PGSuper" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="ImportOptions.h" />
     <ClInclude Include="ConstructionSequence.h" />
     <ClInclude Include="ExportOptions.h" />
