@@ -2400,23 +2400,60 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    GET_IFACE2(pBroker, IDocumentType, pDocType);
    bool bIsPGSplice = pDocType->IsPGSpliceDocument();
 
-   auto beam_type = new typename Schema::IfcBeamType(
-      IfcParse::IfcGlobalId(),
-      nullptr, // OwnerHistory
-      std::string("Precast Girder Type"), // Name
-      boost::none, // Description
-      boost::none, // ApplicableOccurrence
-      property_sets, // HasPropertySets (properties common to all beams of this type)
-      boost::none, // RepresentationMaps (representations common to all beams of this type)
-      boost::none, // Tag
-      boost::none, // ElementType (type name if PredefinedType is USERDEFINED)
-      bIsPGSplice ? Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT : Schema::IfcBeamTypeEnum::IfcBeamType_BEAM
-   );
-   file.addEntity(beam_type);
+   std::set<std::_tstring> beam_names;
+   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   GroupIndexType nGroups = pIBridgeDesc->GetGirderGroupCount();
+   for (GroupIndexType grpIdx = 0; grpIdx < nGroups; grpIdx++)
+   {
+      GirderIndexType nGirders = pIBridgeDesc->GetGirderGroup(grpIdx)->GetGirderCount();
+      for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+      {
+         auto pGirder = pIBridgeDesc->GetGirder(CGirderKey(grpIdx, gdrIdx));
+         beam_names.insert(pGirder->GetGirderName());
+      }
+   }
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_object_definitions(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   beam_object_definitions->push(beam_type);
-   AssociateDocuments<Schema>(file, beam_object_definitions);
+   std::map<std::_tstring, typename Schema::IfcBeamType*> beam_types;
+   if (bIsPGSplice)
+   {
+      auto beam_type = new typename Schema::IfcBeamType(
+         IfcParse::IfcGlobalId(),
+         nullptr, // OwnerHistory
+         std::string("Precast Girder Type"), // Name
+         boost::none, // Description
+         boost::none, // ApplicableOccurrence
+         property_sets, // HasPropertySets (properties common to all beams of this type)
+         boost::none, // RepresentationMaps (representations common to all beams of this type)
+         boost::none, // Tag
+         boost::none, // ElementType (type name if PredefinedType is USERDEFINED)
+         Schema::IfcBeamTypeEnum::IfcBeamType_GIRDER_SEGMENT
+      );
+      file.addEntity(beam_type);
+      beam_types.insert(std::make_pair(_T("Spliced_Girder_Type"), beam_type));
+   }
+   else
+   {
+      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_object_definitions(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      for (auto beam_name : beam_names)
+      {
+         auto beam_type = new typename Schema::IfcBeamType(
+            IfcParse::IfcGlobalId(),
+            nullptr, // OwnerHistory
+            std::string(T2A(beam_name.c_str())), // Name
+            boost::none, // Description
+            boost::none, // ApplicableOccurrence
+            property_sets, // HasPropertySets (properties common to all beams of this type)
+            boost::none, // RepresentationMaps (representations common to all beams of this type)
+            boost::none, // Tag
+            boost::none, // ElementType (type name if PredefinedType is USERDEFINED)
+            Schema::IfcBeamTypeEnum::IfcBeamType_BEAM
+         );
+         file.addEntity(beam_type);
+         beam_object_definitions->push(beam_type);
+         beam_types.insert(std::make_pair(beam_name, beam_type));
+      }
+      AssociateDocuments<Schema>(file, beam_object_definitions);
+   }
 
 
    // build the beams
@@ -2424,18 +2461,16 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
 
    std::vector<typename Schema::IfcProduct*> girders;
-   GET_IFACE2(pBroker, IBridge, pBridge);
-   GroupIndexType nGroups = pBridge->GetGirderGroupCount();
    for (GroupIndexType grpIdx = 0; grpIdx < nGroups; grpIdx++)
    {
-      GirderIndexType nGirders = pBridge->GetGirderCount(grpIdx);
+      GirderIndexType nGirders = pIBridgeDesc->GetGirderGroup(grpIdx)->GetGirderCount();
       for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
       {
          std::_tostringstream os;
          os << GIRDER_LABEL(CGirderKey(grpIdx, gdrIdx));
          std::string girder_name(T2A(os.str().c_str()));
 
-         SegmentIndexType nSegments = pBridge->GetSegmentCount(grpIdx, gdrIdx);
+         SegmentIndexType nSegments = pIBridgeDesc->GetGirderGroup(grpIdx)->GetGirder(gdrIdx)->GetSegmentCount();
 
          typename Schema::IfcElementAssembly* girder = nullptr;
          if (1 < nSegments)
@@ -2467,6 +2502,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
                os_segment_name << "Segment " << LABEL_SEGMENT(segIdx);
                auto segment_name = os_segment_name.str();
 
+               auto beam_type = beam_types[_T("Spliced_Girder_Type")];
                auto beam = CreatePrecastSegment(file, pBroker, segment_name, segmentKey, beam_type, options);
 
                list_of_girder_segments->push(beam); // beams in this girder
@@ -2547,6 +2583,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
             os << GIRDER_LABEL(CGirderKey(grpIdx, gdrIdx));
             std::string girder_name(T2A(os.str().c_str()));
 
+            auto beam_type = beam_types[pIBridgeDesc->GetGirder(segmentKey)->GetGirderName()];
             auto beam = CreatePrecastSegment(file, pBroker, girder_name, segmentKey, beam_type, options);
 
             beam_objects->push(beam); // all beams
