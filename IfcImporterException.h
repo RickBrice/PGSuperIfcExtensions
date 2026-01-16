@@ -23,7 +23,7 @@
 
 // Use this exception class when we encounter IFC tags that can't be handled.
 // Right now, it just gives a simple text message, but this class can be made
-// more safisticated in the future if need be.
+// more sophisticated in the future if need be.
 class CIfcImporterException
 {
 public:

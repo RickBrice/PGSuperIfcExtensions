@@ -32,14 +32,15 @@
 #include <Units\Units.h>
 
 #include <psgLib/BridgeDescription2.h>
+#include <psgLib/GirderLabel.h>
+#include <psgLib/GirderLibraryEntry.h>
 
 // Constants for tracking the state of converting the profile data
 #define PROFILE_NOT_STARTED -1
 #define PROFILE_ESTABLISHED  1
 
 // Use this throw macro when the data conversion cannot continue
-// The catcher, or other, is responsible for deleting it
-#define IFC_THROW(_s_) throw new CIfcImporterException(_s_);
+#define IFC_THROW(_s_) throw CIfcImporterException(_s_);
 
 Float64 CIfcImporter::m_Precision = 0.001;
 
@@ -267,8 +268,6 @@ bool IsTransitionCurve(Ifc4x3_add2::IfcAlignmentHorizontalSegment* horizontal_se
    return (found == transition_curve_types.end() ? false : true);
 }
 
-
-
 bool IsCircularCurve(Ifc4x3_add2::IfcAlignmentHorizontalSegment* horizontal_segment)
 {
     return horizontal_segment->PredefinedType() == Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC ? true : false;
@@ -457,58 +456,66 @@ HRESULT CIfcImporter::ImportFromIFC(std::shared_ptr<WBFL::EAF::Broker> pBroker, 
 {
     USES_CONVERSION;
 
-    std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
+    try
+    {
+       std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
 
-    { // scope the progress window so it closes automatically when we are done with it
-        GET_IFACE2(pBroker, IEAFProgress, pProgress);
-        WBFL::EAF::AutoProgress ap(pProgress);
+       { // scope the progress window so it closes automatically when we are done with it
+          GET_IFACE2(pBroker, IEAFProgress, pProgress);
+          WBFL::EAF::AutoProgress ap(pProgress);
 
-        auto del = [&](std::streambuf* p) {std::cout.rdbuf(p); };
-        std::unique_ptr<std::streambuf, decltype(del)> origBuffer(std::cout.rdbuf(), del);
-        ProgressStream p;
-        p.SetProgress(pProgress);
+          auto del = [&](std::streambuf* p) {std::cout.rdbuf(p); };
+          std::unique_ptr<std::streambuf, decltype(del)> origBuffer(std::cout.rdbuf(), del);
+          ProgressStream p;
+          p.SetProgress(pProgress);
 
-        p.copyfmt(std::cout);
-        std::cout.rdbuf(p.rdbuf());
+          p.copyfmt(std::cout);
+          std::cout.rdbuf(p.rdbuf());
 
-        Logger::SetOutput(&std::cout, &std::cout);
+          Logger::SetOutput(&std::cout, &std::cout);
 
-        pFile = std::make_unique<IfcParse::IfcFile>(T2A(strFilePath.GetBuffer()));
+          pFile = std::make_unique<IfcParse::IfcFile>(T2A(strFilePath.GetBuffer()));
 
-        if (!pFile->good())
-        {
-            AfxMessageBox(_T("Unable to parse .ifc file"));
-            return S_OK;
-        }
+          if (!pFile->good())
+          {
+             IFC_THROW(_T("Unable to parse .ifc file"));
+          }
+       }
+
+       m_Notes.clear();
+
+       auto strSchemaName = pFile->schema()->name();
+       if (strSchemaName == std::string("IFC4X3_ADD2"))
+       {
+          GET_IFACE2(pBroker, IEvents, pEvents);
+          pEvents->HoldEvents();
+
+          InitUnits(*pFile);
+
+          if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentOnly)
+          {
+             ImportAlignment(pBroker, *pFile);
+          }
+          else
+          {
+             if (ImportAlignment(pBroker, *pFile))
+                ImportBridge(pBroker, *pFile);
+          }
+
+          pEvents->FirePendingEvents();
+       }
+       else
+       {
+          IFC_THROW(_T("Schema not supported"));
+       }
     }
-
-   m_Notes.clear();
-
-   auto strSchemaName = pFile->schema()->name();
-   if (strSchemaName == std::string("IFC4X3_ADD2"))
-   {
-      GET_IFACE2(pBroker, IEvents, pEvents);
-      pEvents->HoldEvents();
-
-      InitUnits(*pFile);
-
-      if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentOnly)
-      {
-         ImportAlignment(pBroker, *pFile);
-      }
-      else
-      {
-         if (ImportAlignment(pBroker, *pFile))
-            ImportBridge(pBroker, *pFile);
-      }
-
-      pEvents->FirePendingEvents();
-   }
-   else
-   {
-      AfxMessageBox(_T("Schema not supported"));
-      ATLASSERT(false); // is there a new typename Schema?
-   }
+    catch (CIfcImporterException& e)
+    {
+       std::_tostringstream os;
+       os << _T("IFC import failed:\n") << e.What();
+       AfxMessageBox(os.str().c_str());
+       return E_FAIL;
+    }
 
    auto notes = GetNotes();
    std::_tstring strNotes;
@@ -557,6 +564,16 @@ std::pair<GroupIndexType, GirderIndexType> ExtractSpanAndGirder(const std::strin
          iss >> grpIdx;
       else if (word == "Girder")
          iss >> gdrIdx;
+      else if (word == ",")
+      { // do nothing
+      }
+      else
+      {
+         USES_CONVERSION;
+         std::_tostringstream os;
+         os << _T("Unexpected DesignLocationNumber property in Pset_PrecastConcreteElementGeneral property set (") << A2T(s.c_str()) << _T(")");
+         IFC_THROW(os.str().c_str());
+      }
    }
 
    return { grpIdx-1,gdrIdx-1 };
@@ -596,6 +613,8 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
 
    bool bSameNumGirdersInAllSpans = std::adjacent_find(nGirders.begin(), nGirders.end(), std::not_equal_to<>()) == nGirders.end() ? true : false;
 
+   // Get the existing bridge description. We are going to modify the bridge description with
+   // information extracted from the IFC file.
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    auto bridge_desc = *(pIBridgeDesc->GetBridgeDescription());
 
@@ -629,7 +648,8 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
    // Position the abutments and piers
    //
 
-   // get the abutments and piers and put into a single vector
+   // Per TPF modeling guide, piers and abutments are different types.
+   // Get the abutments and piers and put into a single vector because we need to treat them the same in PGSuper
    std::vector<Ifc4x3_add2::IfcBridgePart*> abutments = GetBridgeParts(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
    std::vector<Ifc4x3_add2::IfcBridgePart*> piers = GetBridgeParts(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
    piers.insert(piers.begin(), abutments.front());
@@ -642,9 +662,30 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       auto pPier = bridge_desc.GetPier(pierIdx);
       auto pier = piers[pierIdx];
       auto rel_positions = pier->PositionedRelativeTo();
+      if (rel_positions->size() == 0)
+      {
+         std::_tostringstream os;
+         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": must be positioned with an IfcReferent");
+         IFC_THROW(os.str().c_str());
+      }
+
       auto positioning_element = (*rel_positions->begin())->RelatingPositioningElement();
       auto ref = positioning_element->as<Ifc4x3_add2::IfcReferent>();
+      if (!ref)
+      {
+         std::_tostringstream os;
+         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": must be positioned with an IfcReferent");
+         IFC_THROW(os.str().c_str());
+      }
+
       auto station = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcLengthMeasure>(ref, "Pset_Stationing", "Station");
+      if (!station)
+      {
+         std::_tostringstream os;
+         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Station property in Pset_Stationing not found");
+         IFC_THROW(os.str().c_str());
+      }
+
       pPier->SetStation(*station);
    }
 
@@ -658,6 +699,12 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       if (0 < pierIdx)
       {
          auto spacing = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(pier, "pgsSpacing", "Back_Spacing");
+         if (spacing.empty())
+         {
+            std::_tostringstream os;
+            os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Back_Spacing property in pgsSpacing property set not found");
+            IFC_THROW(os.str().c_str());
+         }
 
          auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Back);
          girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
@@ -673,6 +720,12 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       if (pierIdx < nPiers - 1)
       {
          auto spacing = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(pier, "pgsSpacing", "Ahead_Spacing");
+         if (spacing.empty())
+         {
+            std::_tostringstream os;
+            os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Ahead_Spacing property in pgsSpacing property set not found");
+            IFC_THROW(os.str().c_str());
+         }
 
          auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Ahead);
          girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
@@ -687,7 +740,7 @@ bool CIfcImporter::ImportBridge(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
       }
    }
 
-   SetGirderProperties(file, bridge_desc);
+   SetGirderProperties(pBroker, file, bridge_desc);
 
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
@@ -1616,7 +1669,32 @@ typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* 
    return nullptr;
 }
 
-template <typename O,typename T,typename E>
+int GetBeamTypeCount(IfcParse::IfcFile& file)
+{
+   int count = 0;
+   auto beam_types = file.instances_by_type<Ifc4x3_add2::IfcBeamType>();
+   for (auto beam_type : *beam_types)
+   {
+      if (beam_type->PredefinedType() == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
+         count++;
+   }
+
+   return count;
+}
+
+template <typename E>
+E* GetType(Ifc4x3_add2::IfcObject* object)
+{
+   auto types = object->IsTypedBy();
+   for (auto type : *types)
+   {
+      return type->RelatingType()->as<E>();
+   }
+
+   return nullptr;
+}
+
+template <typename T,typename E>
 E GetPredefinedType(Ifc4x3_add2::IfcObject* object)
 {
    auto types = object->IsTypedBy();
@@ -1628,29 +1706,73 @@ E GetPredefinedType(Ifc4x3_add2::IfcObject* object)
    return object->as<T>()->PredefinedType();
 }
 
-void CIfcImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc)
+void CIfcImporter::SetGirderProperties(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc)
 {
+   USES_CONVERSION;
+
    auto beams = file.instances_by_type<Ifc4x3_add2::IfcBeam>();
    aggregate_of<Ifc4x3_add2::IfcBeam>::ptr prestressed_beams(new aggregate_of<Ifc4x3_add2::IfcBeam>());
    for (auto beam : *beams)
    {
-      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum>(beam);
-      if (predefined_type == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
+      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum>(beam);
+      if (predefined_type == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM && HasClassification(beam,"usBridge_GirderPrestressedConcrete"))
+         prestressed_beams->push(beam);
+   }
+
+   int beam_type_count = GetBeamTypeCount(file);
+
+   bridge_desc.UseSameGirderForEntireBridge(beam_type_count == 1 ? true : false);
+   GET_IFACE2(pBroker, ILibrary, pLibrary);
+   if (bridge_desc.UseSameGirderForEntireBridge())
+   {
+      auto type = GetType<Ifc4x3_add2::IfcBeamType>(*beams->begin());
+      auto girder_name = type->Name().get_value_or(std::string("Unknown"));
+      auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
+      if (!girder_library_entry)
       {
-         if (HasClassification(beam,"usBridge_GirderPrestressedConcrete"))
-            prestressed_beams->push(beam);
+         std::ostringstream os;
+         os << "Girder type \"" << girder_name << "\" not found in the library";
+         throw CIfcImporterException(A2T(os.str().c_str()));
       }
+      bridge_desc.SetGirderName(girder_library_entry->GetName().c_str());
    }
 
    for (auto beam : *prestressed_beams)
    {
-      Ifc4x3_add2::IfcLabel* value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+      auto value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+      if (!value)
+      {
+         throw CIfcImporterException(_T("DesignLocationNumber in Pset_PrecastConcreteElement property set not found"));
+      }
+
       auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
       auto fci = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcPressureMeasure>(beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
+      if (!fci)
+      {
+         throw CIfcImporterException(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+      }
       bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fci = *fci;
 
       auto material = GetMaterial<Ifc4x3_add2>(beam);
       auto fc = GetMaterialProperty<Ifc4x3_add2, Ifc4x3_add2::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
+      if (!fc)
+      {
+         throw CIfcImporterException(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+      }
       bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fc = *fc;
+
+      if (!bridge_desc.UseSameGirderForEntireBridge())
+      {
+         auto type = GetType<Ifc4x3_add2::IfcBeamType>(beam);
+         auto girder_name = type->Name().get_value_or(std::string("Unknown"));
+         auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
+         if (!girder_library_entry)
+         {
+            std::ostringstream os;
+            os << "Girder type \"" << girder_name << "\" not found in the library";
+            throw CIfcImporterException(A2T(os.str().c_str()));
+         }
+         bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->SetGirderName(girder_library_entry->GetName().c_str());
+      }
    }
 }
