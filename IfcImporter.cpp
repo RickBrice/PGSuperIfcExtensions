@@ -665,7 +665,7 @@ void CIfcImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescripti
          os << "Girder type \"" << girder_name << "\" not found in the library";
          IFC_THROW(A2T(os.str().c_str()));
       }
-      bridge_desc.SetGirderName(girder_library_entry->GetName().c_str());
+      bridge_desc.SetGirderLibraryEntry(girder_library_entry);
       bridge_desc.SetGirderFamilyName(girder_library_entry->GetGirderFamilyName().c_str());
 
 #pragma Reminder("WORKING HERE - This is assuming the first supported orientation. The IFC file doesn't have this information.")
@@ -709,7 +709,7 @@ void CIfcImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescripti
             os << "Girder type \"" << girder_name << "\" not found in the library";
             IFC_THROW(A2T(os.str().c_str()));
          }
-         bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->SetGirderName(girder_library_entry->GetName().c_str());
+         bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->SetGirderLibraryEntry(girder_library_entry);
          bridge_desc.SetGirderFamilyName(girder_library_entry->GetGirderFamilyName().c_str());
 
 #pragma Reminder("WORKING HERE - This is assuming the first supported orientation. The IFC file doesn't have this information.")
