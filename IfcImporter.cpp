@@ -27,6 +27,8 @@
 
 #include <MFCTools\Prompts.h>
 
+#include <boost/range/combine.hpp>
+
 #include <IFace/Tools.h>
 #include <EAF/AutoProgress.h>
 
@@ -626,6 +628,8 @@ bool CIfcImporter::ImportBridge(IfcParse::IfcFile& file)
 
    SetGirderProperties(file, bridge_desc);
 
+   ImportSlab(file, bridge_desc);
+
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
    return true;
@@ -718,5 +722,55 @@ void CIfcImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescripti
          auto orientations = factory->GetSupportedGirderOrientation();
          bridge_desc.SetGirderOrientation(orientations.front());
       }
+   }
+}
+
+void CIfcImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc)
+{
+   auto slabs = file.instances_by_type<Ifc4x3_add2::IfcSlab>();
+   auto it = std::find_if(slabs->begin(), slabs->end(), [](const auto& slab) {return slab->PredefinedType() == Ifc4x3_add2::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
+   if (it == slabs->end())
+      return; // no slabs
+
+   auto slab = *it;
+
+   auto stations = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "Stations");
+   if (stations.empty())
+   {
+      IFC_THROW(_T("Stations property in pgsDeck property set not found"));
+   }
+
+   auto left_edges = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdges");
+   if (left_edges.empty())
+   {
+      IFC_THROW(_T("LeftEdges property in pgsDeck property set not found"));
+   }
+
+   auto right_edges = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "RightEdges");
+   if (right_edges.empty())
+   {
+      IFC_THROW(_T("RightEdges property in pgsDeck property set not found"));
+   }
+
+   if (stations.size() != left_edges.size() || stations.size() != right_edges.size())
+   {
+      IFC_THROW(_T("Stations, LeftEdges, and RightEdges properties in pgsDeck property set must have the same number of values"));
+   }
+
+   auto* pDeck = bridge_desc.GetDeckDescription();
+   pDeck->DeckEdgePoints.clear();
+   for (auto&& [station, left_edge, right_edge] : boost::combine(stations, left_edges, right_edges))
+   {
+      CDeckPoint deck_point;
+      
+      // dummy, default values
+      deck_point.MeasurementType = pgsTypes::OffsetMeasurementType::omtBridge;
+      deck_point.LeftTransitionType = stations.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+      deck_point.RightTransitionType = stations.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+
+      deck_point.Station = *station;
+      deck_point.LeftEdge = *left_edge;
+      deck_point.RightEdge = *right_edge;
+      pDeck->DeckEdgePoints.emplace_back(deck_point);
    }
 }

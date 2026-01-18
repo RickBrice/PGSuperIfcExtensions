@@ -77,5 +77,6 @@ private:
    void InitUnits(IfcParse::IfcFile& file);
 
    void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
+   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
 };
 
