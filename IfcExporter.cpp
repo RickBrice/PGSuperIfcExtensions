@@ -1721,7 +1721,7 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::sha
 }
 
 template <typename Schema>
-void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridgePart* deck, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridgePart* deck, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
 #pragma Reminder("WORKING HERE - Deck Model - need to re-think this approach")
    // Consider modeling the slab separately from the haunch. The basic slab is the same everywhere.
@@ -1855,6 +1855,30 @@ void CreateDeckRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
    {
       Classify_Slab(file, slab);
    }
+
+   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   const auto* deck_desc = pIBridgeDesc->GetDeckDescription();
+
+   typename aggregate_of<typename Schema::IfcProperty>::ptr deck_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename aggregate_of<typename Schema::IfcValue>::ptr station_list(new aggregate_of<typename Schema::IfcValue>());
+   typename aggregate_of<typename Schema::IfcValue>::ptr left_list(new aggregate_of<typename Schema::IfcValue>());
+   typename aggregate_of<typename Schema::IfcValue>::ptr right_list(new aggregate_of<typename Schema::IfcValue>());
+   for (const auto& deck_point : deck_desc->DeckEdgePoints)
+   {
+      station_list->push(new typename Schema::IfcLengthMeasure(deck_point.Station));
+      left_list->push(new typename Schema::IfcLengthMeasure(deck_point.LeftEdge));   
+      right_list->push(new typename Schema::IfcLengthMeasure(deck_point.RightEdge));
+   }
+   deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("Stations"), boost::none, station_list, nullptr));
+   deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("LeftEdges"), boost::none, left_list, nullptr));
+   deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("RightEdges"), boost::none, right_list, nullptr));
+
+   auto pset_deck = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsDeck"), boost::none, deck_properties);
+   file.addEntity(pset_deck);
+   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr decks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   decks->push(slab);
+   auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Defines slab edge offset geometry"), boost::none, decks, pset_deck);
+   file.addEntity(rel_defines_by_properties);
 
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, slab);
 }
@@ -2290,7 +2314,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
-   CreateDeckRepresentation(file, pBroker, deck, options, body_model_representation_subcontext);
+   CreateSlab(file, pBroker, deck, options, body_model_representation_subcontext);
    file.addEntity(deck);
    if (options.classify)
    {
