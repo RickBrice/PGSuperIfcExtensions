@@ -758,6 +758,37 @@ void CIfcImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& brid
    }
 
    auto* pDeck = bridge_desc.GetDeckDescription();
+
+   auto* gross_depth = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "GrossDepth");
+   if (gross_depth)
+   {
+      pDeck->GrossDepth = *gross_depth;
+   }
+   else
+   {
+      IFC_THROW(_T("GrossDepth property in pgsDeck property set not found"));
+   }
+
+   auto* left_edge_depth = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdgeDepth");
+   if(left_edge_depth)
+   {
+      pDeck->OverhangEdgeDepth[pgsTypes::stLeft] = *left_edge_depth;
+   }
+   else
+   {
+      IFC_THROW(_T("LeftEdgeDepth property in pgsDeck property set not found"));
+   }
+
+   auto* right_edge_depth = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "RightEdgeDepth");
+   if (right_edge_depth)
+   {
+      pDeck->OverhangEdgeDepth[pgsTypes::stRight] = *right_edge_depth;
+   }
+   else
+   {
+      IFC_THROW(_T("RightEdgeDepth property in pgsDeck property set not found"));
+   }
+
    pDeck->DeckEdgePoints.clear();
    for (auto&& [station, left_edge, right_edge] : boost::combine(stations, left_edges, right_edges))
    {
