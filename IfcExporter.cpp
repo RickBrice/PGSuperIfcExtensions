@@ -1860,6 +1860,10 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    const auto* deck_desc = pIBridgeDesc->GetDeckDescription();
 
    typename aggregate_of<typename Schema::IfcProperty>::ptr deck_properties(new aggregate_of<typename Schema::IfcProperty>());
+   deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("GrossDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->GrossDepth), nullptr));
+   deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LeftEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stLeft]), nullptr));
+   deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RightEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stRight]), nullptr));
+
    typename aggregate_of<typename Schema::IfcValue>::ptr station_list(new aggregate_of<typename Schema::IfcValue>());
    typename aggregate_of<typename Schema::IfcValue>::ptr left_list(new aggregate_of<typename Schema::IfcValue>());
    typename aggregate_of<typename Schema::IfcValue>::ptr right_list(new aggregate_of<typename Schema::IfcValue>());
