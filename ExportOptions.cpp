@@ -38,6 +38,7 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 	DDX_Check_Bool(pDX, IDC_QUANTITIES, options.include_quantities);
 
 	DDX_RadioEnum<CIfcExportOptions::BeamPlacement>(pDX, IDC_LINEAR_PLACEMENT, options.beam_placement);
+	DDX_RadioEnum<CIfcExportOptions::BeamModel>(pDX, IDC_MODEL_SSH, options.beam_model);
 }
 
 
