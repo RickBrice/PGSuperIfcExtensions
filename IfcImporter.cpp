@@ -553,7 +553,7 @@ bool CIfcImporter::ImportBridge(IfcParse::IfcFile& file)
    piers.insert(piers.begin(), abutments.front());
    piers.insert(piers.end(), abutments.back());
 
-   PierIndexType nPiers = bridge_desc.GetPierCount();
+   nPiers = bridge_desc.GetPierCount();
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
       // get the pier station from the positioning element and set it on the PGSuper pier
