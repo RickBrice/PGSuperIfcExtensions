@@ -461,13 +461,25 @@ bool CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)
 bool CIfcImporter::ImportBridge(IfcParse::IfcFile& file)
 {
    auto bridges = file.instances_by_type<Ifc4x3_add2::IfcBridge>();
+#pragma Reminder("Assuming only one bridge in the model, there could be more")
    auto bridge = (*bridges->begin());
+
+   auto parts = file.instances_by_type<Ifc4x3_add2::IfcBridgePart>();
+   PierIndexType nPiers = 0;
+   for (auto& part : *parts)
+   {
+      if (part->PredefinedType().has_value() && part->PredefinedType().get() == Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_PIER)
+         nPiers++;
+   }
+
 
    SpanIndexType nSpans = INVALID_INDEX;
    auto value = GetProperty<Ifc4x3_add2,Ifc4x3_add2::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
    if (value)
    {
       nSpans = (SpanIndexType)(*value);
+      if (nSpans != nPiers-1)
+         IFC_THROW(_T("Number of spans modeled does not match number of spans in usBridge_BridgeCommon property set"));
    }
    else
    {
