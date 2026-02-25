@@ -1105,12 +1105,215 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 }
 
 template <typename Schema>
-void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void GirderSegment_SectionedSolidHorizontal(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker,const CSegmentKey& segmentKey,const PoiList& vPoi,std::function<Float64(Float64)>fn_cut_angle, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
-   USES_CONVERSION;
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   Float64 Lg = pBridge->GetSegmentPlanLength(segmentKey);
+   typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+   girder_line_points->push(new typename Schema::IfcCartesianPoint({ 0,0,0 }));
+   girder_line_points->push(new typename Schema::IfcCartesianPoint({ Lg,0,0 })); // due East from origin, length is plan length, not basic segment length
+   auto girder_line = new typename Schema::IfcPolyline(girder_line_points);
+   file.addEntity(girder_line);
+
+
+   typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
+
+   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   GET_IFACE2(pBroker, IShapes, pShapes);
+
+   typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
 
    GET_IFACE2(pBroker, IIntervals, pIntervals);
    IntervalIndexType intervalIdx = pIntervals->GetErectSegmentInterval(segmentKey);
+
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
+
+   for (const pgsPointOfInterest& poi : vPoi)
+   {
+      auto cut_angle = fn_cut_angle(poi.GetDistFromStart());
+      auto girder_profile = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, cut_angle);
+      file.addEntity(girder_profile);
+      cross_sections->push(girder_profile);
+
+      Float64 x = poi.GetDistFromStart() * sqrt(1 + slope * slope); // adjust distance along plan length to distance along girder
+      auto pde = new typename Schema::IfcPointByDistanceExpression(new typename Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
+      file.addEntity(pde);
+
+      // contrary to the IFC documentation, the RefDirection is normal to the plane of the cross section (at least that is how many of implemented it)
+
+      WBFL::Geometry::Vector3d up(options.batter_ends ? slope : 0, 0, 1); // along the length of the girder
+      up.Normalize();
+
+      auto rd = new typename Schema::IfcDirection({ sin(cut_angle),-cos(cut_angle),0.0 }); // normal to the plane of the cross section
+      auto axis = new typename Schema::IfcDirection({ up.X(),up.Y(),up.Z() }); // up
+      auto lp = new typename Schema::IfcAxis2PlacementLinear(pde, axis, rd);
+      file.addEntity(lp);
+
+      cross_section_positions->push(lp);
+   }
+
+   auto sectioned_solid = new typename Schema::IfcSectionedSolidHorizontal(girder_line, cross_sections, cross_section_positions);
+   file.addEntity(sectioned_solid);
+   representation_items->push(sectioned_solid);
+
+   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+   shape_representation_list->push(shape_representation);
+   auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
+   segment->setRepresentation(product_definition_shape);
+}
+
+std::pair<IndexType,std::vector<std::vector<double>>> generate_point_list(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, const PoiList& vPoi, std::function<Float64(Float64)>fn_cut_angle)
+{
+   std::vector<std::vector<double>> point_list;
+   IndexType nPointsPerProfile = 0;
+
+   GET_IFACE2(pBroker, IIntervals, pIntervals);
+   auto intervalIdx = pIntervals->GetPrestressReleaseInterval(segmentKey);
+
+   GET_IFACE2(pBroker, IShapes, pShapes);
+   
+   for (const pgsPointOfInterest& poi : vPoi)
+   {
+#pragma Reminder("WORKING HERE - polygons - need to adjust z for girder slope")
+      auto z = poi.GetDistFromStart(); 
+
+      CComPtr<IShape> shape;
+      pShapes->GetSegmentShape(intervalIdx, poi, false, pgsTypes::scGirder, &shape);
+
+      CComPtr<IPoint2dCollection> shape_points;
+      shape->get_PolyPoints(&shape_points);
+
+      IndexType nPoints;
+      shape_points->get_Count(&nPoints);
+
+      CComPtr<IPoint2d> p0, pn;
+      shape_points->get_Item(0, &p0);
+      shape_points->get_Item(nPoints - 1, &pn);
+      Float64 dist;
+      p0->DistanceEx(pn, &dist);
+      if (IsZero(dist))
+         nPoints--; // profile is closed so skip the last point
+
+      nPointsPerProfile = nPoints;
+
+      for (auto i = 0; i < nPoints; i++)
+      {
+         CComPtr<IPoint2d> pnt;
+         shape_points->get_Item(i, &pnt);
+
+         Float64 x, y;
+         pnt->Location(&x, &y);
+
+         // the polygonal face set points are in global X,Y,Z
+         // Distance along beam (z) = Global X
+         // Vertical Beam Dimension (y) = Global Z
+         // Horizontal Beam Dimension (x) = Global Y (negative x because of difference in PGSuper coordinates and IFC global coordinates)
+#pragma Reminder("WORKING HERE - polygons - need to skew adjust the local x coordinate")
+         point_list.push_back({z, -x, y});
+      }
+   }
+
+   return { nPointsPerProfile,point_list };
+}
+
+std::vector<std::vector<int>> build_faces(IndexType nPointsPerProfile, const std::vector<std::vector<double>>& vPoints)
+{
+   // outer face vertices must connect counter-clockwise when seen from the outside
+   auto nSideFaces = nPointsPerProfile - 1;
+
+   std::vector<std::vector<int>> face_indices;
+   auto get_point_index = [nPointsPerProfile](IndexType profileIdx, IndexType pntIdx)->int {return int(profileIdx * nPointsPerProfile + pntIdx) + 1; };
+   auto nProfiles = vPoints.size() / nPointsPerProfile;
+   for (auto profileIdx = 0; profileIdx < nProfiles - 1; profileIdx++)
+   {
+      for (auto profilePointIdx = 0; profilePointIdx < nSideFaces; profilePointIdx++)
+      {
+         auto idx0 = get_point_index(profileIdx, profilePointIdx + 1);
+         auto idx1 = get_point_index(profileIdx, profilePointIdx);
+         auto idx2 = get_point_index(profileIdx + 1, profilePointIdx);
+         auto idx3 = get_point_index(profileIdx + 1, profilePointIdx + 1);
+         face_indices.push_back({ idx0,idx1,idx2,idx3 });
+      }
+
+      // last face on perimeter of girder
+      auto idx0 = get_point_index(profileIdx, 0);
+      auto idx1 = get_point_index(profileIdx, nSideFaces);
+      auto idx2 = get_point_index(profileIdx + 1, nSideFaces);
+      auto idx3 = get_point_index(profileIdx + 1, 0);
+      face_indices.push_back({ idx0,idx1,idx2,idx3 });
+   }
+
+   // start face
+   std::vector<int> start_point_indices;
+   for (auto profilePointIdx = 0; profilePointIdx < nPointsPerProfile; profilePointIdx++)
+   {
+      start_point_indices.push_back(get_point_index(0, profilePointIdx));
+   }
+   face_indices.push_back(start_point_indices);
+
+
+   // end face
+   std::vector<int> end_point_indices;
+   for (auto profilePointIdx = nSideFaces; profilePointIdx != INVALID_INDEX; profilePointIdx--)
+   {
+      end_point_indices.push_back(get_point_index(nProfiles-1, profilePointIdx));
+   }
+   face_indices.push_back(end_point_indices);
+
+   return face_indices;
+}
+
+template <typename Schema>
+void GirderSegment_PolygonalFaceSet(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, const PoiList& vPoi, std::function<Float64(Float64)>fn_cut_angle, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+{
+   //std::vector<std::vector<double>> point_list;
+   //point_list.push_back({ 0.0, 0.0, 0.0 });
+   //point_list.push_back({ 1.0, 0.0, 0.0 });
+   //point_list.push_back({ 1.0, 1.0, 0.0 });
+   //point_list.push_back({ 0.0, 1.0, 0.0 });
+   //point_list.push_back({ 0.0, 0.0, 2.0 });
+   //point_list.push_back({ 1.0, 0.0, 2.0 });
+   //point_list.push_back({ 1.0, 1.0, 2.0 });
+   //point_list.push_back({ 0.0, 1.0, 2.0 });
+   //auto coordinates = new typename Schema::IfcCartesianPointList3D(point_list, boost::none);
+   //auto nPointsPerProfile = 4;
+
+   //std::vector<std::vector<int>> face_indices_list;
+   //face_indices_list.push_back({ 1,2,6,5 });
+   //face_indices_list.push_back({ 6,2,3,7 });
+   //face_indices_list.push_back({ 7,3,4,8 });
+   //face_indices_list.push_back({ 8,4,1,5 });
+   //face_indices_list.push_back({ 1,4,3,2 });
+   //face_indices_list.push_back({ 6,7,8,5 });
+
+   auto [nPointsPerProfile, point_list] = generate_point_list(pBroker,segmentKey,vPoi,fn_cut_angle);
+   auto coordinates = new typename Schema::IfcCartesianPointList3D(point_list, boost::none);
+   auto face_indices_list = build_faces(nPointsPerProfile, point_list);
+
+   typename aggregate_of<typename Schema::IfcIndexedPolygonalFace>::ptr faces(new aggregate_of<typename Schema::IfcIndexedPolygonalFace>());
+   for (auto face_indices : face_indices_list)
+   {
+      auto face = new typename Schema::IfcIndexedPolygonalFace(face_indices);
+      faces->push(face);
+   }
+
+   auto faceset = new typename Schema::IfcPolygonalFaceSet(coordinates,boost::none,faces,boost::none);
+
+   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   representation_items->push(faceset);
+
+   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("Tessellation"), representation_items);
+   shape_representation_list->push(shape_representation);
+   auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
+   segment->setRepresentation(product_definition_shape);
+}
+
+template <typename Schema>
+void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+{
+   USES_CONVERSION;
 
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    const CPrecastSegmentData* pSegment = pIBridgeDesc->GetPrecastSegmentData(segmentKey);
@@ -1124,8 +1327,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
    ATLASSERT(2 <= vPoi.size());
 
    Float64 Ls = pBridge->GetSegmentLength(segmentKey);
-   Float64 Lg = pBridge->GetSegmentPlanLength(segmentKey);
-   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
 
    if (variationType == pgsTypes::svtParabolic)
    {
@@ -1171,6 +1372,40 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
    }
 
 
+
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &angle_start_face);
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &angle_end_face);
+
+   Float64 start_face_angle, end_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
+   angle_end_face->get_Value(&end_face_angle);
+
+   // linear interpolation of skew angle along length of segment
+   auto fn_cut_angle = [start_face_angle, end_face_angle, Ls](Float64 x)->Float64 {
+      return std::lerp(start_face_angle, end_face_angle, x / Ls);
+      };
+
+
+   // create the solid model
+   // build the girder model in a simple coordinate system, then use segment->setObjectPlacement(segment_placement) to position beam in space
+   switch (options.beam_model)
+   {
+   case CIfcExportOptions::BeamModel::SectionedSolidHorizontal:
+      GirderSegment_SectionedSolidHorizontal(file, pBroker, segmentKey, vPoi, fn_cut_angle, segment, options, pGeometricRepresentationSubContext);
+      break;
+   case CIfcExportOptions::BeamModel::PolygonalFaceSet:
+      GirderSegment_PolygonalFaceSet(file, pBroker, segmentKey, vPoi, fn_cut_angle, segment, options, pGeometricRepresentationSubContext);
+      break;
+   default:
+      ASSERT(false);
+   }
+
+
+
+   // Place the segment in 3D space
+
    const pgsPointOfInterest& poiStart(vPoi.front());
    const pgsPointOfInterest& poiEnd(vPoi.back());
 
@@ -1188,70 +1423,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
    pntEnd->Location(&ex, &ey);
    Float64 ez = pGirder->GetTopGirderChordElevation(poiEnd);
 
-   CComPtr<IAngle> angle_start_face;
-   pBridge->GetSegmentAngle(poiStart.GetSegmentKey(), pgsTypes::metStart, &angle_start_face);
-   CComPtr<IAngle> angle_end_face;
-   pBridge->GetSegmentAngle(poiEnd.GetSegmentKey(), pgsTypes::metEnd, &angle_end_face);
-
-   Float64 start_face_angle, end_face_angle;
-   angle_start_face->get_Value(&start_face_angle);
-   angle_end_face->get_Value(&end_face_angle);
-
-   // linear interpolation of skew angle along length of segment
-   auto fn_cut_angle = [start_face_angle, end_face_angle, Ls](Float64 x)->Float64 {
-      return std::lerp(start_face_angle, end_face_angle, x / Ls);
-      };
-
-
-   typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
-   // build the girder model in a simple coordinate system, then use ObjectPlacement to local in space
-   girder_line_points->push(new typename Schema::IfcCartesianPoint({ 0,0,0 }));
-   girder_line_points->push(new typename Schema::IfcCartesianPoint({ Lg,0,0 })); // due East from origin, length is plan length, not basic segment length
-   auto girder_line = new typename Schema::IfcPolyline(girder_line_points);
-   file.addEntity(girder_line);
-
-
-   typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
-
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-   GET_IFACE2(pBroker, IShapes, pShapes);
-
-   typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
-
-   for (const pgsPointOfInterest& poi : vPoi)
-   {
-      auto cut_angle = fn_cut_angle(poi.GetDistFromStart());
-      auto girder_profile = CreateSectionProfile<Schema>(pShapes, poi, intervalIdx, options, cut_angle);
-      file.addEntity(girder_profile);
-      cross_sections->push(girder_profile);
-
-      Float64 x = poi.GetDistFromStart() * sqrt(1 + slope * slope); // adjust distance along plan length to distance along girder
-      auto pde = new typename Schema::IfcPointByDistanceExpression(new typename Schema::IfcLengthMeasure(x), boost::none, boost::none, boost::none, girder_line);
-      file.addEntity(pde);
-
-      // contrary to the IFC documentation, the RefDirection is normal to the plane of the cross section (at least that is how many of implemented it)
-      
-      WBFL::Geometry::Vector3d up(options.batter_ends ? slope : 0, 0, 1); // along the length of the girder
-      up.Normalize();
-
-      auto rd = new typename Schema::IfcDirection({sin(cut_angle),-cos(cut_angle),0.0}); // normal to the plane of the cross section
-      auto axis = new typename Schema::IfcDirection({up.X(),up.Y(),up.Z()}); // up
-      auto lp = new typename Schema::IfcAxis2PlacementLinear(pde, axis, rd);
-      file.addEntity(lp);
-
-      cross_section_positions->push(lp);
-   }
-
-   auto sectioned_solid = new typename Schema::IfcSectionedSolidHorizontal(girder_line, cross_sections, cross_section_positions);
-   file.addEntity(sectioned_solid);
-   representation_items->push(sectioned_solid);
-
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
-   auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
-   shape_representation_list->push(shape_representation);
-   auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
-
-   // Place the segment in 3D space
    WBFL::Geometry::Vector3d ref_direction(ex - sx, ey - sy, ez - sz); // along the length of the girder
    ref_direction.Normalize();
    WBFL::Geometry::Vector3d z(0, 0, 1); // true up direction
@@ -1301,7 +1472,6 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
    }
 
    segment->setObjectPlacement(segment_placement);
-   segment->setRepresentation(product_definition_shape);
 }
 
 template <typename Schema>

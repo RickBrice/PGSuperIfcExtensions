@@ -73,6 +73,12 @@ public:
       Local
    };
 
+   enum class BeamModel
+   {
+      SectionedSolidHorizontal,
+      PolygonalFaceSet
+   };
+
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    bool classify = true;
@@ -86,6 +92,7 @@ public:
    bool include_camber = true;
    bool include_quantities = true;
    BeamPlacement beam_placement = BeamPlacement::Linear;
+   BeamModel beam_model = BeamModel::SectionedSolidHorizontal;
 
    // Sometimes when girders are installed at a very steep angle, the ends of the girders
    // are battered so that the end faces are vertical when the beam is erected.
