@@ -258,12 +258,13 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
           InitUnits(*pFile);
 
-          if (ImportAlignment(*pFile) == AlignmentImportResult::Fail)
+          if (ImportAlignment(*pFile) == ImportResult::Fail)
              hr = E_FAIL;
 
           if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentAndBridge)
           {
-             if (ImportBridge(*pFile))
+             auto import_result = ImportBridge(*pFile);
+             if (import_result == ImportResult::Fail || import_result == ImportResult::NotFound)
                 hr = E_FAIL;
           }
 
@@ -296,12 +297,12 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
    return hr;
 }
 
-CIfcImporter::AlignmentImportResult CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)
 {
    return CIfcAlignmentImporter(*this).Import(file);
 }
 
-bool CIfcImporter::ImportBridge(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcImporter::ImportBridge(IfcParse::IfcFile& file)
 {
    return CIfcBridgeImporter(*this).Import(file);
 }

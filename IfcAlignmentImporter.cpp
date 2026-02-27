@@ -133,10 +133,10 @@ CIfcAlignmentImporter::CIfcAlignmentImporter(CIfcImporter& importer) :
    m_LastAlignmentType = Unknown;
 }
 
-CIfcImporter::AlignmentImportResult CIfcAlignmentImporter::Import(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcAlignmentImporter::Import(IfcParse::IfcFile& file)
 {
    auto result = InitAlignmentParameters(file);
-   if (result == CIfcImporter::AlignmentImportResult::Success)
+   if (result == CIfcImporter::ImportResult::Success)
    {
       GET_IFACE2(m_Importer.GetBroker(),IRoadwayData, pRoadwayData);
       pRoadwayData->SetAlignmentData2(m_AlignmentData);
@@ -147,11 +147,11 @@ CIfcImporter::AlignmentImportResult CIfcAlignmentImporter::Import(IfcParse::IfcF
 }
 
 
-CIfcImporter::AlignmentImportResult CIfcAlignmentImporter::InitAlignmentParameters(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcAlignmentImporter::InitAlignmentParameters(IfcParse::IfcFile& file)
 {
    auto alignment = GetAlignment(file);
    if (alignment == nullptr)
-      return CIfcImporter::AlignmentImportResult::NotFound;
+      return CIfcImporter::ImportResult::NotFound;
 
    Float64 alignment_adjustment = LoadAlignment(file, alignment);
 
@@ -169,7 +169,7 @@ CIfcImporter::AlignmentImportResult CIfcAlignmentImporter::InitAlignmentParamete
    m_RoadwaySectionData.ProfileGradePointIdx = 1;
    m_RoadwaySectionData.RoadwaySectionTemplates.push_back(roadway_template);
 
-   return CIfcImporter::AlignmentImportResult::Success;
+   return CIfcImporter::ImportResult::Success;
 }
 
 
@@ -178,41 +178,42 @@ Ifc4x3_add2::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile
    USES_CONVERSION;
 
    auto alignments = file.instances_by_type<Ifc4x3_add2::IfcAlignment>();
-   if (alignments->size() == 0)
-   {
-      m_Importer.AddNote(_T("IFC model does not contain alignments. Assuming a default East-West alignment."));
-      return nullptr;
-   }
 
-   std::vector<Ifc4x3_add2::IfcAlignment*> valid_alignments;
+   if (1 <= alignments->size())
+   {
+      std::vector<Ifc4x3_add2::IfcAlignment*> valid_alignments;
 
-   for (auto alignment : *alignments)
-   {
-      if (IsValidAlignment(file, alignment))
-         valid_alignments.push_back(alignment);
-   }
-
-   if (valid_alignments.size() == 0)
-   {
-      m_Importer.AddNote(_T("IFC model does not contain alignments that are compatible with this software. Assuming a default East-West alignment."));
-   }
-   else
-   {
-      std::ostringstream os;
-      for (auto alignment : valid_alignments)
+      for (auto alignment : *alignments)
       {
-         auto strLabel = (alignment->Name() ? *(alignment->Name()) : alignment->Description() ? *(alignment->Description()) : "Unnamed");
-         os << strLabel << std::endl;
+         if (IsValidAlignment(file, alignment))
+            valid_alignments.push_back(alignment);
       }
 
-      int result = 0;
-      if (1 < valid_alignments.size()) // prompt to select if more than one alignment
-         result = AfxChoose(_T("Select Alignment"), _T("Select alignment to import"), A2T(os.str().c_str()), 0, TRUE);
 
-      if (result < 0)
-         return nullptr; // dialog was canceled
+      if (valid_alignments.size() == 0)
+      {
+         m_Importer.AddNote(_T("IFC model does not contain an alignment that is compatible with this software. Assuming a default East-West alignment."));
+      }
       else
+      {
+         int result = 0;
+         if (1 < valid_alignments.size())
+         {
+            // only prompt if there is more than one alignment
+            std::ostringstream os;
+            for (auto alignment : valid_alignments)
+            {
+               auto strLabel = (alignment->Name() ? *(alignment->Name()) : alignment->Description() ? *(alignment->Description()) : "Unnamed");
+               os << strLabel << std::endl;
+            }
+
+            result = AfxChoose(_T("Select Alignment"), _T("Select alignment to import"), A2T(os.str().c_str()), 0, TRUE);
+            if (result < 0)
+               return nullptr; // dialog was canceled
+         }
+
          return valid_alignments[result];
+      }
    }
 
    return nullptr;

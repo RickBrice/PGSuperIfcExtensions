@@ -44,7 +44,7 @@ public:
 class CIfcImporter
 {
 public:
-   enum class AlignmentImportResult
+   enum class ImportResult
    {
       Success,
       Fail,
@@ -79,8 +79,8 @@ private:
    std::vector<std::_tstring> m_Notes;
 
 
-   AlignmentImportResult ImportAlignment(IfcParse::IfcFile& file);
-   bool ImportBridge(IfcParse::IfcFile& file);
+   ImportResult ImportAlignment(IfcParse::IfcFile& file);
+   ImportResult ImportBridge(IfcParse::IfcFile& file);
 
    void InitUnits(IfcParse::IfcFile& file);
 };

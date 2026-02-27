@@ -21,24 +21,42 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "IfcImporter.h"
-#include <IFace\Project.h>
-
-class CIfcBridgeImporter
+#include <string>
+inline std::string GetEntityType(IfcUtil::IfcBaseInterface* entity)
 {
-public:
-   CIfcBridgeImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
+   return entity->declaration().name();
+}
 
-private:
-   CIfcImporter& m_Importer;
 
-   Ifc4x3_add2::IfcBridge* GetBridge(IfcParse::IfcFile& file);
-   bool IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
-   bool HasValidGirders(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
-   bool HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
-   bool HasValidGirdersByOther(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
+template <typename E>
+E* GetType(Ifc4x3_add2::IfcObject* object)
+{
+   auto types = object->IsTypedBy();
+   for (auto type : *types)
+   {
+      return type->RelatingType()->as<E>();
+   }
 
-   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-};
+   return nullptr;
+}
+
+/// @brief Returns the predefined type of an object.
+/// The predefined type is taken from any associated IfcTypeObject.
+/// If the object is not associated with IfcTypeObject, then its type is from its PredefinedType attribute
+/// @tparam O object class
+/// @tparam T type object class
+/// @tparam E predefined type enumeration
+/// @param object 
+/// @return 
+template <typename O, typename T, typename E>
+boost::optional<typename E> GetPredefinedType(Ifc4x3_add2::IfcObject* object)
+{
+   // first check if the object is typed
+   auto types = object->IsTypedBy();
+   for (auto type : *types)
+   {
+      return type->RelatingType()->as<T>()->PredefinedType();
+   }
+
+   return object->as<O>()->PredefinedType();
+}

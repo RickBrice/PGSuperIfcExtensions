@@ -25,6 +25,7 @@
 #include "Properties.h"
 #include "IfcImporterException.h"
 #include "USBridge_Classifications.h"
+#include "Utilities.h"
 
 #include <MFCTools\Prompts.h>
 #include <boost/range/combine.hpp>
@@ -121,50 +122,17 @@ int GetBeamTypeCount(IfcParse::IfcFile& file)
    return count;
 }
 
-template <typename E>
-E* GetType(Ifc4x3_add2::IfcObject* object)
-{
-   auto types = object->IsTypedBy();
-   for (auto type : *types)
-   {
-      return type->RelatingType()->as<E>();
-   }
-
-   return nullptr;
-}
-
-/// @brief Returns the predefined type of an object.
-/// The predefined type is taken from any associated IfcTypeObject.
-/// If the object is not associated with IfcTypeObject, then its type is from its PredefinedType attribute
-/// @tparam O object class
-/// @tparam T type object class
-/// @tparam E predefined type enumeration
-/// @param object 
-/// @return 
-template <typename O,typename T, typename E>
-boost::optional<typename E> GetPredefinedType(Ifc4x3_add2::IfcObject* object)
-{
-   // first check if the object is typed
-   auto types = object->IsTypedBy();
-   for (auto type : *types)
-   {
-      return type->RelatingType()->as<T>()->PredefinedType();
-   }
-
-   return object->as<O>()->PredefinedType();
-}
-
 
 CIfcBridgeImporter::CIfcBridgeImporter(CIfcImporter& importer) :
    m_Importer(importer)
 {
 }
 
-bool CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 {
    auto bridge = GetBridge(file);
-   if (!bridge)
-      return false;
+   if (bridge == nullptr)
+      return CIfcImporter::ImportResult::NotFound;
 
    auto parts = file.instances_by_type<Ifc4x3_add2::IfcBridgePart>();
    PierIndexType nPiers = 0;
@@ -346,7 +314,7 @@ bool CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
-   return true;
+   return CIfcImporter::ImportResult::Success;
 }
 
 
@@ -437,20 +405,38 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
 
 bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
 {
-#pragma Reminder("WORKING HERE - Need to see if the file has any precast concrete girder bridges")
-
    // must be a girder bridge
    if (bridge->PredefinedType().value_or(Ifc4x3_add2::IfcBridgeTypeEnum::IfcBridgeType_NOTDEFINED) != Ifc4x3_add2::IfcBridgeTypeEnum::IfcBridgeType_GIRDER)
       return false;
 
+   if (!HasValidGirders(file, bridge))
+      return false;
+}
+
+bool CIfcBridgeImporter::HasValidGirders(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+{
+   if (HasValidGirdersByTPF(file, bridge))
+      return true;
+
+   if (HasValidGirdersByOther(file, bridge))
+      return true;
+
+   m_Importer.AddNote(_T("One or more beams in the superstructure could not be identified as precast, prestressed concrete."));
+
+   return false;
+}
+
+bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+{
    auto superstructure = GetBridgePart(file, Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+
    auto beams = file.instances_by_type<Ifc4x3_add2::IfcBeam>();
    bool valid_beams = true;
    for (auto beam : *beams)
    {
       // beam must be contained in the spatial structure of the superstructure
       auto related_elements = beam->ContainedInStructure();
-      if(related_elements)
+      if (related_elements)
       {
          for (auto related_element : *related_elements)
          {
@@ -458,22 +444,86 @@ bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::Ifc
                continue;
          }
       }
+      else
+      {
+         continue; // not in a spatial structure
+      }
 
       // beam must be IfcBeam.BEAM
       auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
       if (predefined_type.value_or(Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
       {
          // beams must be classified as precast girders
-         // This is not a great requirement - TPF has decided that this is the only way to determine if a beam is prestressed concrete
-         // I think we are going to find that many don't use this classification
-         if (!HasClassification<Ifc4x3_add2>(beam, "usBridge_GirderPrestressedConcrete"))
-            valid_beams = false;
+         auto assembly_place = GetPropertyEnum<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "AssemblyPlace");
+         auto casting_method = GetPropertyEnum<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "CastingMethod");
+
+         // level 1 check - if there is an assembly_place and casting_method, use that for the determination
+         // otherwise use the more specific usBridge classification
+         if (assembly_place && casting_method)
+         {
+            bool is_factory_assembled = (std::string(*assembly_place) == std::string("FACTORY"));
+            bool is_precast = (std::string(*casting_method) == std::string("PRECAST"));
+
+            if (!is_factory_assembled || !is_precast)
+            {
+               valid_beams = false;
+               break;
+            }
+         }
+         else
+         {
+            // This is not a great requirement - TPF has decided that this is the only way to determine if a beam is prestressed concrete
+            // I think we are going to find that many don't use this classification
+            if (!HasClassification<Ifc4x3_add2>(beam, "usBridge_GirderPrestressedConcrete"))
+            {
+               valid_beams = false;
+               break;
+            }
+         }
       }
    }
 
-   if (!valid_beams)
+   return valid_beams;
+}
+
+bool CIfcBridgeImporter::HasValidGirdersByOther(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+{
+   // This function attempts to determine if all the beams in the superstructure are precast concrete.
+   // The basic idea is that the beams are IfcElementAssembly and they are factory assembled girders.
+   // A factory assembled girder alone is not enough to claim the girders are precast concrete.
+   //
+   // This function may be a bad idea... keep it for now, but be skeptical
+   auto superstructure = GetBridgePart(file, Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+
+   auto element_assemblies = file.instances_by_type<Ifc4x3_add2::IfcElementAssembly>();
+   bool valid_beams = true;
+   for (auto element_assembly : *element_assemblies)
    {
-      m_Importer.AddNote(_T("One or more beams in the superstructure are not classified as usBridge_GirderPrestressedConcrete."));
+      // beam must be contained in the spatial structure of the superstructure
+      auto related_elements = element_assembly->ContainedInStructure();
+      if (related_elements)
+      {
+         for (auto related_element : *related_elements)
+         {
+            if (related_element->RelatingStructure() != superstructure)
+               continue;
+         }
+      }
+      else
+      {
+         continue; // not in a spatial structure
+      }
+
+      auto assembly_place = element_assembly->AssemblyPlace();
+      bool is_factory_assembled = (assembly_place.value_or(Ifc4x3_add2::IfcAssemblyPlaceEnum::IfcAssemblyPlace_NOTDEFINED) == Ifc4x3_add2::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY);
+
+      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcElementAssembly, Ifc4x3_add2::IfcElementAssemblyType, Ifc4x3_add2::IfcElementAssemblyTypeEnum::Value>(element_assembly);
+      bool is_girder = (predefined_type.value_or(Ifc4x3_add2::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_NOTDEFINED) == Ifc4x3_add2::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
+      if (!is_factory_assembled || !is_girder)
+      {
+         valid_beams = false;
+         break;
+      }
    }
 
    return valid_beams;
@@ -496,21 +546,21 @@ Ifc4x3_add2::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
 
       if (valid_bridges.size() == 0)
       {
-         m_Importer.AddNote(_T("IFC model does not contain bridges that are compatible with this software."));
+         m_Importer.AddNote(_T("IFC model does not contain a bridge that is compatible with this software."));
       }
       else
       {
-         std::ostringstream os;
-         for (auto bridge : valid_bridges)
-         {
-            auto strLabel = (bridge->Name() ? *(bridge->Name()) : bridge->Description() ? *(bridge->Description()) : "Unnamed");
-            os << strLabel << std::endl;
-         }
-
          int result = 0;
          if (1 < valid_bridges.size())
          {
             // only prompt if there is more than one bridge
+            std::ostringstream os;
+            for (auto bridge : valid_bridges)
+            {
+               auto strLabel = (bridge->Name() ? *(bridge->Name()) : bridge->Description() ? *(bridge->Description()) : "Unnamed");
+               os << strLabel << std::endl;
+            }
+
             auto result = AfxChoose(_T("Select Bridge"), _T("Select bridge to import"), A2T(os.str().c_str()), 0, TRUE);
             if (result < 0)
                return nullptr;

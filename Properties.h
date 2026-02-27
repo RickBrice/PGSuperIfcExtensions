@@ -21,17 +21,84 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "Utilities.h"
+
+//#pragma Reminder("TODO - generalize the property enum methods and move to IfcHierarchyHelper")
+// Need to cache the IfcPropertyEnumeration for lookup - it can be used multiple times by reference
+// Need to have a getPropertyEnumeration method
+// Need to generalize the enumValues from strings to IfcValue
+// createPropertyEnumeratedValue needs two forms, a single value and a vector of values
+template <typename Schema>
+typename Schema::IfcPropertyEnumeration* createPropertyEnumeration(const std::string& name, std::vector<std::string>& enumValues, typename Schema::IfcUnit* unit = nullptr)
+{
+   typename aggregate_of<typename Schema::IfcValue>::ptr enum_values(new aggregate_of<typename Schema::IfcValue>());
+   for (const auto& value : enumValues)
+   {
+      enum_values->push(new typename Schema::IfcLabel(value));
+   }
+
+   auto property_enum = new typename Schema::IfcPropertyEnumeration(name, enum_values, unit);
+   return property_enum;
+}
+
+template <typename Schema>
+typename Schema::IfcPropertyEnumeratedValue* createPropertyEnumeratedValue(const std::string& property_name, typename Schema::IfcPropertyEnumeration* enumeration, const std::string& value)
+{
+   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_selected_enum_values(new aggregate_of<typename Schema::IfcValue>());
+   list_of_selected_enum_values->push(new typename Schema::IfcLabel(value));
+   auto property_enum_value = new typename Schema::IfcPropertyEnumeratedValue(property_name, boost::none, list_of_selected_enum_values, enumeration);
+   return property_enum_value;
+}
+
+
+template <typename Schema>
+typename Schema::IfcLabel* getPropertyEnumeratedValue(typename Schema::IfcPropertyEnumeratedValue* enum_value)
+{
+   if (enum_value)
+   {
+      boost::optional<boost::shared_ptr<aggregate_of<typename Schema::IfcValue>>> list_of_selected_enum_values = enum_value->EnumerationValues();
+      if (list_of_selected_enum_values)
+      {
+         boost::shared_ptr<aggregate_of<typename Schema::IfcValue>> ptr = *list_of_selected_enum_values;
+         ASSERT(ptr->size() == 1); // only expecting one, but there could be more. This is a limitation of this function
+         auto value = *(ptr->begin());
+         return value->as<typename Schema::IfcLabel>();
+      }
+   }
+   return nullptr;
+}
 
 template <typename Schema>
 typename Schema::IfcPropertySet* GetPropertySet(typename Schema::IfcObject* object, std::string name)
 {
-   auto rels = object->IsDefinedBy();
-   for (auto rel : *rels)
+   // First check for property sets on the object itself since they override
+   // properties defined on the object type (if used).
+   // See 5.1.3.6 IfcObject
+   auto rel_defines_by_properties = object->IsDefinedBy();
+   for (auto rel : *rel_defines_by_properties)
    {
       auto prop_set = rel->RelatingPropertyDefinition()->as<typename Schema::IfcPropertySet>();
-      if (prop_set->Name() == name)
+      if(prop_set && prop_set->Name() == name)
       {
          return prop_set;
+      }
+   }
+
+   // Now check the object types (if used)
+   auto rel_defines_by_type = object->IsTypedBy();
+   for (auto rel : *rel_defines_by_type)
+   {
+      auto relating_type = rel->RelatingType();
+      auto property_set_definitions = relating_type->HasPropertySets().value_or(nullptr);
+
+      if (property_set_definitions)
+      {
+         for (auto prop_set_definition : *property_set_definitions)
+         {
+            auto prop_set = prop_set_definition->as<typename Schema::IfcPropertySet>();
+            if (prop_set && prop_set->Name() == name)
+               return prop_set;
+         }
       }
    }
 
@@ -50,7 +117,10 @@ typename T* GetProperty(typename Schema::IfcObject* object, std::string pset_nam
          if (property->Name() == property_name)
          {
             auto p = property->as<typename Schema::IfcPropertySingleValue>();
-            return p->NominalValue()->as<T>();
+            if (p)
+               return p->NominalValue()->as<T>();
+            
+            TRACE(GetEntityType(property).c_str());
          }
       }
    }
@@ -78,6 +148,28 @@ std::vector<T*> GetPropertyList(typename Schema::IfcObject* object, std::string 
       }
    }
    return result;
+}
+
+template <typename Schema, typename T>
+typename T* GetPropertyEnum(typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+{
+   auto pset = GetPropertySet<Schema>(object, pset_name);
+   if (pset)
+   {
+      auto properties = pset->HasProperties();
+      for (auto property : *properties)
+      {
+         if (property->Name() == property_name)
+         {
+            auto enum_value = property->as<typename Schema::IfcPropertyEnumeratedValue>();
+            if (enum_value)
+               return getPropertyEnumeratedValue<Schema>(enum_value);
+
+            TRACE(GetEntityType(property).c_str());
+         }
+      }
+   }
+   return nullptr;
 }
 
 
