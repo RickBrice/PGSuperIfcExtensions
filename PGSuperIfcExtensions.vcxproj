@@ -72,8 +72,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <CustomBuildStep>
       <Message>Copy manifest to BridgeLink</Message>
-      <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
-      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
+      <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)
+xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
+      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.pgt</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -125,8 +126,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <CustomBuildStep>
       <Message>Copy manifest to BridgeLink</Message>
-      <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
-      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper</Outputs>
+      <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)
+xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
+      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.pgt</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -179,6 +181,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IfcAlignmentImporter.cpp" />
+    <ClCompile Include="IfcBridgeImporter.cpp" />
     <ClCompile Include="ImportOptions.cpp" />
     <ClCompile Include="ExportOptions.cpp" />
     <ClCompile Include="IfcImporter.cpp" />
@@ -187,6 +190,7 @@
     <ClCompile Include="IfcExporter.cpp" />
     <ClCompile Include="PGSuperDataImporter.cpp" />
     <ClCompile Include="PGSuperDataExporter.cpp" />
+    <ClCompile Include="PGSuperProjectImporter.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -198,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IfcAlignmentImporter.h" />
+    <ClInclude Include="IfcBridgeImporter.h" />
     <ClInclude Include="ImportOptions.h" />
     <ClInclude Include="ConstructionSequence.h" />
     <ClInclude Include="ExportOptions.h" />
@@ -210,6 +215,7 @@
     <ClInclude Include="Materials.h" />
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />
+    <ClInclude Include="PGSuperProjectImporter.h" />
     <ClInclude Include="Properties.h" />
     <ClInclude Include="PsetEnum.h" />
     <ClInclude Include="Rebar.h" />
@@ -221,6 +227,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="IfcExtensions.bmp" />
+    <Image Include="IfcProjectImporter.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="IfcExtensions.rc" />

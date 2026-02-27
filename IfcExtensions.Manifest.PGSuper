@@ -1,18 +1,27 @@
 {
-    "Component": {
-        "Name": "IFC Exporter",
-        "CLSID": "{4E36E0A6-9EAE-452E-B91C-0099D065A764}",
-        "dll": "PGSuperIfcExtensions.dll",
-        "Categories": {
-            "CATID": "{369A62A2-8995-4404-9C16-15AE5A0681E2}"
-        }
-    },
-    "Component": {
-        "Name": "IFC Importer",
-        "CLSID": "{9A717887-EB12-470E-8A4F-C941F65E592B}",
-        "dll": "PGSuperIfcExtensions.dll",
-        "Categories": {
-            "CATID": "{BD3B6F1E-7826-478B-99C0-A946C12C89CF}"
-        }
-    }
+   "Component": {
+      "Name": "IFC Exporter",
+      "CLSID": "{4E36E0A6-9EAE-452E-B91C-0099D065A764}",
+      "dll": "PGSuperIfcExtensions.dll",
+      "Categories": {
+         "CATID": "{369A62A2-8995-4404-9C16-15AE5A0681E2}"
+      }
+   },
+   "Component": {
+      "Name": "IFC Importer",
+      "CLSID": "{9A717887-EB12-470E-8A4F-C941F65E592B}",
+      "dll": "PGSuperIfcExtensions.dll",
+      "Categories": {
+         "CATID": "{BD3B6F1E-7826-478B-99C0-A946C12C89CF}"
+      }
+   },
+   "Component": {
+      "Name": "IFC Project Importer",
+      "CLSID": "{3D1C6EB9-1D8C-4963-8631-87E0F5518E8E}",
+      "dll": "PGSuperIfcExtensions.dll",
+      "Categories": {
+         "CATID": "{289D1CFF-D1A4-4b65-B673-867D7F41C7DB}"
+      }
+   }
+
 }

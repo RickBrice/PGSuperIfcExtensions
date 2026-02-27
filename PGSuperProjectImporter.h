@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////
-// IFC Extension for PGSuper
+// IEPluginExample
 // Copyright © 1999-2025  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
@@ -20,27 +20,28 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-// PGSuperDataImporter.h : Declaration of the CPGSuperDataImporter
+// PGSuperProjectImporter.h : Declaration of the CPGSuperProjectImporter
 
 #pragma once
 
 #include <Plugins\PGSuperIEPlugin.h>
-#include "resource.h"       // main symbols
 #include <EAF\ComponentObject.h>
 
-class CPGSuperDataImporter : public WBFL::EAF::ComponentObject,
-   public PGS::IDataImporter
+// Creates a new PGSuper project from a bridge in an IFC model
+class CPGSuperProjectImporter : public WBFL::EAF::ComponentObject, 
+   public PGS::IProjectImporter
 {
 public:
-   CPGSuperDataImporter();
+   CPGSuperProjectImporter();
 
-   CBitmap m_Bitmap;
-
-   // IDataImporter
+   // IProjectImporter
 public:
-   HRESULT Init(UINT nCmdID) override;
-   CString GetMenuText() const override;
-   HBITMAP GetBitmapHandle() const override;
-   CString GetCommandHintText() const override;
+   CString GetItemText() const override;
+   HICON GetIcon() const override;
    HRESULT Import(std::shared_ptr<WBFL::EAF::Broker> pBroker) override;
+   CLSID GetCLSID() const override;
+   CString GetTemplateFilePath() const override;
+
+private:
+   CBitmap m_Bitmap;
 };

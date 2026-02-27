@@ -31,6 +31,10 @@
     <ClCompile Include="IfcAlignmentImporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PGSuperProjectImporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcBridgeImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IfcImporter.h">
@@ -96,6 +100,10 @@
     <ClInclude Include="IfcAlignmentImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PGSuperProjectImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcBridgeImporter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def">
@@ -121,6 +129,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="IfcExtensions.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="IfcProjectImporter.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

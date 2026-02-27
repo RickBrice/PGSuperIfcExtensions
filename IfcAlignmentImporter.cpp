@@ -266,6 +266,13 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
 
       auto horizontal_alignment_segment = GetHorizontalAlignmentSegment(alignment_segment);
 
+      // don't process the zero length segment at the end
+      if (IsZero(horizontal_alignment_segment->SegmentLength()))
+      {
+         ASSERT(iter == std::prev(end)); // expected zero length as the last segment
+         break;
+      }
+
       auto predefined_type = horizontal_alignment_segment->PredefinedType();
 
       Ifc4x3_add2::IfcAlignmentHorizontalSegment* entrySpiral = nullptr;
@@ -424,6 +431,14 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::If
       {
          auto alignment_segment = (*iter)->as<Ifc4x3_add2::IfcAlignmentSegment>();
          auto vertical_alignment_segment = GetVerticalAlignmentSegment(alignment_segment);
+
+         // don't process the zero length segment at the end
+         if (IsZero(vertical_alignment_segment->HorizontalLength()))
+         {
+            ASSERT(iter == std::prev(end)); // expected zero length as the last segment
+            break;
+         }
+
          auto predefined_type = vertical_alignment_segment->PredefinedType();
 
          if (predefined_type == Ifc4x3_add2::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT)

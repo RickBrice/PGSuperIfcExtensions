@@ -71,12 +71,10 @@ private:
    const WBFL::Units::Angle* m_pAngleUnit;
    std::vector<std::_tstring> m_Notes;
 
+
    bool ImportAlignment(IfcParse::IfcFile& file);
    bool ImportBridge(IfcParse::IfcFile& file);
 
    void InitUnits(IfcParse::IfcFile& file);
-
-   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
 };
 
