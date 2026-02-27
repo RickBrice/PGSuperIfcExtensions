@@ -203,6 +203,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
   <ItemGroup>
     <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="IfcBridgeImporter.h" />
+    <ClInclude Include="Utilities.h" />
     <ClInclude Include="ImportOptions.h" />
     <ClInclude Include="ConstructionSequence.h" />
     <ClInclude Include="ExportOptions.h" />
@@ -217,7 +218,6 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClInclude Include="PGSuperDataExporter.h" />
     <ClInclude Include="PGSuperProjectImporter.h" />
     <ClInclude Include="Properties.h" />
-    <ClInclude Include="PsetEnum.h" />
     <ClInclude Include="Rebar.h" />
     <ClInclude Include="Referents.h" />
     <ClInclude Include="Resource.h" />

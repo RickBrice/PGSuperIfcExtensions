@@ -70,9 +70,6 @@
     <ClInclude Include="IfcAlignmentBuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PsetEnum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Referents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -104,6 +101,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcBridgeImporter.h" />
+    <ClInclude Include="Utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def">

@@ -2619,7 +2619,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          nullptr, // OwnerHistory
          std::string("Precast Girder Type"), // Name
          boost::none, // Description
-         boost::none, // ApplicableOccurrence
+         std::string("IfcBeam/BEAM"), // ApplicableOccurrence 
          property_sets, // HasPropertySets (properties common to all beams of this type)
          boost::none, // RepresentationMaps (representations common to all beams of this type)
          boost::none, // Tag
@@ -2639,7 +2639,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
             nullptr, // OwnerHistory
             std::string(T2A(beam_name.c_str())), // Name
             boost::none, // Description
-            boost::none, // ApplicableOccurrence
+            std::string("IfcBeam/BEAM"), // ApplicableOccurrence 
             property_sets, // HasPropertySets (properties common to all beams of this type)
             boost::none, // RepresentationMaps (representations common to all beams of this type)
             boost::none, // Tag

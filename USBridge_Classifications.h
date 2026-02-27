@@ -27,7 +27,8 @@
 #include <IFace\AnalysisResults.h>
 #include <IFace\Intervals.h>
 #include "Units.h"
-#include "PsetEnum.h"
+#include "IfcExporter.h"
+#include "Properties.h"
 
 template <typename Schema>
 void Add_USBridge_Classification(IfcHierarchyHelper<Schema>& file)

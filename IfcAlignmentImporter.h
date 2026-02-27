@@ -40,7 +40,7 @@ class CIfcAlignmentImporter
 {
 public:
    CIfcAlignmentImporter(CIfcImporter& importer);
-   CIfcImporter::AlignmentImportResult Import(IfcParse::IfcFile& file);
+   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
 
 private:
    CIfcImporter& m_Importer;
@@ -52,7 +52,7 @@ private:
    CComPtr<ICogoEngine> m_CogoEngine;
    CComPtr<IGeomUtil2d> m_GeomUtil;
 
-   CIfcImporter::AlignmentImportResult InitAlignmentParameters(IfcParse::IfcFile& file);
+   CIfcImporter::ImportResult InitAlignmentParameters(IfcParse::IfcFile& file);
    Ifc4x3_add2::IfcAlignment* GetAlignment(IfcParse::IfcFile& file);
    Float64 LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
    void LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment, Float64 stationAdjustment);
