@@ -409,6 +409,9 @@ bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::Ifc
    if (bridge->PredefinedType().value_or(Ifc4x3_add2::IfcBridgeTypeEnum::IfcBridgeType_NOTDEFINED) != Ifc4x3_add2::IfcBridgeTypeEnum::IfcBridgeType_GIRDER)
       return false;
 
+   // This check could be far less strict if we can assume the user provided us a PSG bridge.
+   // If we can go from the girder line geometry and the girder name, mapped to a library entry,
+   // that might be enough to actually do some work
    if (!HasValidGirders(file, bridge))
       return false;
 }
