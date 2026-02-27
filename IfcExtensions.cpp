@@ -36,6 +36,7 @@
 
 #include "PGSuperDataImporter.h"
 #include "PGSuperDataExporter.h"
+#include "PGSuperProjectImporter.h"
 
 #include <IFace\Project.h>
 #include <IFace\VersionInfo.h>
@@ -51,20 +52,13 @@
 #include <EAF/EAFProgress.h>
 #include <Plugins\BeamFamilyCLSID.h>
 
-// Build environment setup
-// Define the environment variable IFCOPENSHELL_DIR with the root location of IfcOpenShell (e.g. F:\IfcOpenShell)
-
-//#if defined _DEBUG
-//#pragma comment(lib,"Debug/IfcParse.lib")
-//#else
-//#pragma comment(lib,"Release/IfcParse.lib")
-//#endif
 
 #include <EAF\ComponentModule.h>
 WBFL::EAF::ComponentModule _Module;
 EAF_BEGIN_OBJECT_MAP(ObjectMap)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcImporter, CPGSuperDataImporter)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcExporter, CPGSuperDataExporter)
+   EAF_OBJECT_ENTRY(CLSID_PGSuperIfcProjectImporter, CPGSuperProjectImporter)
 EAF_END_OBJECT_MAP()
 
 class CIFCExtensionsApp : public CWinApp

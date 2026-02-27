@@ -19,28 +19,25 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
-
-// PGSuperDataImporter.h : Declaration of the CPGSuperDataImporter
-
 #pragma once
 
-#include <Plugins\PGSuperIEPlugin.h>
-#include "resource.h"       // main symbols
-#include <EAF\ComponentObject.h>
+#include "IfcExporter.h"
+#include <IFace\Project.h>
 
-class CPGSuperDataImporter : public WBFL::EAF::ComponentObject,
-   public PGS::IDataImporter
+class CIfcImporter;
+
+class CIfcBridgeImporter
 {
 public:
-   CPGSuperDataImporter();
+   CIfcBridgeImporter(CIfcImporter& importer);
+   bool Import(IfcParse::IfcFile& file);
 
-   CBitmap m_Bitmap;
+private:
+   CIfcImporter& m_Importer;
 
-   // IDataImporter
-public:
-   HRESULT Init(UINT nCmdID) override;
-   CString GetMenuText() const override;
-   HBITMAP GetBitmapHandle() const override;
-   CString GetCommandHintText() const override;
-   HRESULT Import(std::shared_ptr<WBFL::EAF::Broker> pBroker) override;
+   Ifc4x3_add2::IfcBridge* GetBridge(IfcParse::IfcFile& file);
+   bool IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
+
+   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
+   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
 };

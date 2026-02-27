@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////
-// IFC Extension for PGSuper
+// IEPluginExample
 // Copyright © 1999-2025  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
@@ -20,56 +20,57 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 
-// PGSuperDataImporter.cpp : Implementation of CPGSuperDataImporter
+// PGSuperProjectImporter.cpp : Implementation of CPGSuperProjectImporter
 #include "stdafx.h"
 #include "IfcExtensions.h"
+#include "PGSuperProjectImporter.h"
 #include "IfcImporter.h"
-#include "PGSuperDataImporter.h"
-#include <EAF/AutoProgress.h>
-#include <IFace\Project.h>
-#include "ImportOptions.h"
+#include <EAF\EAFApp.h>
 
-/////////////////////////////////////////////////////////////////////////////
-// CPGSuperDataImporter
-CPGSuperDataImporter::CPGSuperDataImporter()
+CPGSuperProjectImporter::CPGSuperProjectImporter()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    VERIFY(m_Bitmap.LoadBitmap(IDB_BSI));
 }
 
-STDMETHODIMP CPGSuperDataImporter::Init(UINT nCmdID)
+CString CPGSuperProjectImporter::GetItemText() const
 {
-   return S_OK;
+   return CString("IFC Model Importer");
 }
 
-CString CPGSuperDataImporter::GetMenuText() const
+CLSID CPGSuperProjectImporter::GetCLSID() const
 {
-   return CString("Alignment from IFC");
+   return CLSID_PGSuperIfcProjectImporter;
 }
 
-HBITMAP CPGSuperDataImporter::GetBitmapHandle() const
-{
-   return m_Bitmap;
-}
-
-CString CPGSuperDataImporter::GetCommandHintText() const
-{
-   return CString("Status line hint text\nTool tip text");
-}
-
-HRESULT CPGSuperDataImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
+HICON CPGSuperProjectImporter::GetIcon() const
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   CFileDialog dlg(TRUE, _T("ifc"),NULL,OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,_T("IFC Files (*.ifc)|*.ifc||"));
+   return AfxGetApp()->LoadIcon(IDI_BSI);
+}
+
+CString CPGSuperProjectImporter::GetTemplateFilePath() const
+{
+   CEAFApp* pApp = EAFGetApp();
+   CString strFileName = pApp->GetAppLocation();
+   strFileName += CString(_T("IfcImportTemplate.pgt"));
+   return strFileName;
+}
+
+#include <EAF\EAFUtilities.h>
+HRESULT CPGSuperProjectImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   HRESULT hr = E_FAIL;
+   CFileDialog dlg(TRUE, _T("ifc"), NULL, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, _T("IFC Files (*.ifc)|*.ifc||"));
    if (dlg.DoModal() == IDOK)
    {
       CString fileName = dlg.GetPathName();
 
       CIfcImportOptions options;
-      options.model_elements = CIfcImportOptions::ModelElements::AlignmentOnly;
+      options.model_elements = CIfcImportOptions::ModelElements::AlignmentAndBridge;
 
-      HRESULT hr = CIfcImporter(pBroker).ImportFromIFC(fileName, options);
+      hr = CIfcImporter(pBroker).ImportFromIFC(fileName, options);
    }
-   return S_OK;
-}
 
+   return hr;
+}

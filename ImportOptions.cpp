@@ -8,6 +8,11 @@
 
 // CImportOptions dialog
 
+#pragma Reminder("WORKING HERE - This import options dialog is currently unused. Keeping it as a placeholder for now.")
+// When the data importer was changed from a project importer to a true data importer the needs for options
+// went away. Now the project importer creates a new project entirely from IFC and the data importer imports data into
+// an existing model (and alignment data is the only option for this right now).
+
 IMPLEMENT_DYNAMIC(CImportOptions, CDialog)
 
 CImportOptions::CImportOptions(CWnd* pParent /*=nullptr*/)
