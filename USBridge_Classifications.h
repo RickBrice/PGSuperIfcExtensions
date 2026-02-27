@@ -451,7 +451,11 @@ void Classify_Prestressing(IfcHierarchyHelper<Schema>& file, typename Schema::If
    //file.addEntity(related_classes);
 }
 
-
+/// @brief Checks if an object has the specified classification
+/// @tparam Schema 
+/// @param object 
+/// @param identifier 
+/// @return 
 template <typename Schema>
 bool HasClassification(typename Schema::IfcObjectDefinition* object, std::string identifier)
 {
@@ -461,9 +465,12 @@ bool HasClassification(typename Schema::IfcObjectDefinition* object, std::string
       for (auto rel : *associations)
       {
          auto rel_associates_classification = rel->as<typename Schema::IfcRelAssociatesClassification>();
-         auto classification_reference = rel_associates_classification->RelatingClassification()->as<typename Schema::IfcClassificationReference>();
-         if (classification_reference && classification_reference->Identification().value_or("") == identifier)
-            return true;
+         if (rel_associates_classification)
+         {
+            auto classification_reference = rel_associates_classification->RelatingClassification()->as<typename Schema::IfcClassificationReference>();
+            if (classification_reference && classification_reference->Identification().value_or("") == identifier)
+               return true;
+         }
       }
    }
 

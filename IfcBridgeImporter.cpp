@@ -133,7 +133,15 @@ E* GetType(Ifc4x3_add2::IfcObject* object)
    return nullptr;
 }
 
-template <typename T, typename E>
+/// @brief Returns the predefined type of an object.
+/// The predefined type is taken from any associated IfcTypeObject.
+/// If the object is not associated with IfcTypeObject, then its type is from its PredefinedType attribute
+/// @tparam O object class
+/// @tparam T type object class
+/// @tparam E predefined type enumeration
+/// @param object 
+/// @return 
+template <typename O,typename T, typename E>
 boost::optional<typename E> GetPredefinedType(Ifc4x3_add2::IfcObject* object)
 {
    // first check if the object is typed
@@ -143,7 +151,7 @@ boost::optional<typename E> GetPredefinedType(Ifc4x3_add2::IfcObject* object)
       return type->RelatingType()->as<T>()->PredefinedType();
    }
 
-   return object->as<T>()->PredefinedType();
+   return object->as<O>()->PredefinedType();
 }
 
 
@@ -351,7 +359,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
    aggregate_of<Ifc4x3_add2::IfcBeam>::ptr prestressed_beams(new aggregate_of<Ifc4x3_add2::IfcBeam>());
    for (auto beam : *beams)
    {
-      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
+      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
       if (predefined_type.value_or(Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM && HasClassification<Ifc4x3_add2>(beam, "usBridge_GirderPrestressedConcrete"))
          prestressed_beams->push(beam);
    }
@@ -452,7 +460,7 @@ bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::Ifc
       }
 
       // beam must be IfcBeam.BEAM
-      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
+      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
       if (predefined_type.value_or(Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
       {
          // beams must be classified as precast girders
@@ -488,7 +496,7 @@ Ifc4x3_add2::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
 
       if (valid_bridges.size() == 0)
       {
-         AfxMessageBox(_T("File does not contain bridges that are compatible with this software."), MB_OK);
+         m_Importer.AddNote(_T("IFC model does not contain bridges that are compatible with this software."));
       }
       else
       {
@@ -511,8 +519,6 @@ Ifc4x3_add2::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
          return valid_bridges[result];
       }
    }
-
-   m_Importer.AddNote(_T("The model does not contain any bridges.")); // PGSuper can't model a lone spiral
 
    return nullptr;
 }

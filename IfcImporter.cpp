@@ -24,6 +24,7 @@
 #include "IfcImporterException.h"
 #include "IfcAlignmentImporter.h"
 #include "IfcBridgeImporter.h"
+#include "Units.h"
 
 #include <EAF/AutoProgress.h>
 
@@ -104,35 +105,10 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 
       if (conversion_based_unit)
       {
+         auto conversion_factor = GetConversionFactor<Ifc4x3_add2>(conversion_based_unit);
+
          auto measure_with_unit = conversion_based_unit->ConversionFactor();
          auto unit_component = measure_with_unit->UnitComponent()->as<Ifc4x3_add2::IfcSIUnit>();
-         Float64 conversion_factor;
-         try
-         {
-            auto value_component = measure_with_unit->ValueComponent();
-            ATLASSERT(value_component); // not dealing with anything but simple conversion factors
-            conversion_factor = (Float64)(*value_component->as<Ifc4x3_add2::IfcReal>());
-            //conversion_factor = (Float64)(value_component->data().get_attribute_value(0));
-         }
-         catch (IfcParse::IfcInvalidTokenException& e)
-         {
-            // Was expecting something like 
-            // #15 = IFCMEASUREWITHUNIT(IFCLENGTHMEASURE(3.28083333333333), #16);
-            // where the expected token is IFCLENGTHMEASURE, but instead found something like
-            // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
-            // we'll just get the value and keep going
-            TRACE(e.what());
-            auto pArgument = measure_with_unit->get("ValueComponent");
-            ATLASSERT(pArgument.type() == IfcUtil::Argument_DOUBLE);
-            conversion_factor = double(pArgument);
-         }
-
-         if (unit_component->Prefix() == Ifc4x3_add2::IfcSIPrefix::IfcSIPrefix_MILLI)
-         {
-            // lengths are in millimeter, so divide the conversion factor by 1000.
-            // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
-            conversion_factor /= 1000.0;
-         }
 
          if (conversion_based_unit->UnitType() == Ifc4x3_add2::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
          {
@@ -145,6 +121,13 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
          }
          else if (conversion_based_unit->UnitType() == Ifc4x3_add2::IfcUnitEnum::IfcUnit_LENGTHUNIT)
          {
+            if (unit_component->Prefix() == Ifc4x3_add2::IfcSIPrefix::IfcSIPrefix_MILLI)
+            {
+               // lengths are in millimeter, so divide the conversion factor by 1000.
+               // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
+               conversion_factor /= 1000.0;
+            }
+
             ATLASSERT(unit_component->Name() == Ifc4x3_add2::IfcSIUnitName::IfcSIUnitName_METRE);
 
             if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()))
@@ -275,14 +258,12 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
           InitUnits(*pFile);
 
-          if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentOnly)
+          if (ImportAlignment(*pFile) == AlignmentImportResult::Fail)
+             hr = E_FAIL;
+
+          if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentAndBridge)
           {
-             if (!ImportAlignment(*pFile))
-                hr = E_FAIL;
-          }
-          else
-          {
-             if (!(ImportAlignment(*pFile) && ImportBridge(*pFile)))
+             if (ImportBridge(*pFile))
                 hr = E_FAIL;
           }
 
@@ -315,7 +296,7 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
    return hr;
 }
 
-bool CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)
+CIfcImporter::AlignmentImportResult CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)
 {
    return CIfcAlignmentImporter(*this).Import(file);
 }
