@@ -34,7 +34,9 @@
     <ClCompile Include="PGSuperProjectImporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IfcBridgeImporter.cpp" />
+    <ClCompile Include="IfcBridgeImporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IfcImporter.h">
@@ -100,8 +102,10 @@
     <ClInclude Include="PGSuperProjectImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IfcBridgeImporter.h" />
     <ClInclude Include="Utilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcBridgeImporter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
