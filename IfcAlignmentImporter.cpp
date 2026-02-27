@@ -133,28 +133,25 @@ CIfcAlignmentImporter::CIfcAlignmentImporter(CIfcImporter& importer) :
    m_LastAlignmentType = Unknown;
 }
 
-bool CIfcAlignmentImporter::Import(IfcParse::IfcFile& file)
+CIfcImporter::AlignmentImportResult CIfcAlignmentImporter::Import(IfcParse::IfcFile& file)
 {
-   if (InitAlignmentParameters(file))
+   auto result = InitAlignmentParameters(file);
+   if (result == CIfcImporter::AlignmentImportResult::Success)
    {
       GET_IFACE2(m_Importer.GetBroker(),IRoadwayData, pRoadwayData);
       pRoadwayData->SetAlignmentData2(m_AlignmentData);
       pRoadwayData->SetProfileData2(m_ProfileData);
       pRoadwayData->SetRoadwaySectionData(m_RoadwaySectionData);
-      return true;
    }
-   else
-   {
-      return false;
-   }
+   return result;
 }
 
 
-bool CIfcAlignmentImporter::InitAlignmentParameters(IfcParse::IfcFile& file)
+CIfcImporter::AlignmentImportResult CIfcAlignmentImporter::InitAlignmentParameters(IfcParse::IfcFile& file)
 {
    auto alignment = GetAlignment(file);
    if (alignment == nullptr)
-      return false;
+      return CIfcImporter::AlignmentImportResult::NotFound;
 
    Float64 alignment_adjustment = LoadAlignment(file, alignment);
 
@@ -172,7 +169,7 @@ bool CIfcAlignmentImporter::InitAlignmentParameters(IfcParse::IfcFile& file)
    m_RoadwaySectionData.ProfileGradePointIdx = 1;
    m_RoadwaySectionData.RoadwaySectionTemplates.push_back(roadway_template);
 
-   return true;
+   return CIfcImporter::AlignmentImportResult::Success;
 }
 
 
@@ -181,6 +178,12 @@ Ifc4x3_add2::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile
    USES_CONVERSION;
 
    auto alignments = file.instances_by_type<Ifc4x3_add2::IfcAlignment>();
+   if (alignments->size() == 0)
+   {
+      m_Importer.AddNote(_T("IFC model does not contain alignments. Assuming a default East-West alignment."));
+      return nullptr;
+   }
+
    std::vector<Ifc4x3_add2::IfcAlignment*> valid_alignments;
 
    for (auto alignment : *alignments)
@@ -191,7 +194,7 @@ Ifc4x3_add2::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile
 
    if (valid_alignments.size() == 0)
    {
-      AfxMessageBox(_T("File does not contain alignments that are compatible with this software."), MB_OK);
+      m_Importer.AddNote(_T("IFC model does not contain alignments that are compatible with this software. Assuming a default East-West alignment."));
    }
    else
    {

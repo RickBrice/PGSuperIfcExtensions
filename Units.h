@@ -38,6 +38,43 @@ typename Schema::IfcConversionBasedUnit* FindUnitByName(IfcHierarchyHelper<Schem
 }
 
 template <typename Schema>
+double GetConversionFactor(typename Schema::IfcConversionBasedUnit* conversion_based_unit)
+{
+   double conversion_factor = 1.0;
+   auto measure_with_unit = conversion_based_unit->ConversionFactor();
+
+   // this way used to work until rocksdb support was added.
+   // get_attribute_value has a lot more parameters that I don't know how to use
+   //conversion_factor = (Float64)(value_component->data().get_attribute_value(0));
+   try
+   {
+      auto value_component = measure_with_unit->ValueComponent();
+      ATLASSERT(value_component); // not dealing with anything but simple conversion factors
+      auto real = value_component->as<typename Schema::IfcReal>();
+      auto ratio = value_component->as<typename Schema::IfcRatioMeasure>();
+      if (real)
+         conversion_factor = *real;
+      else if (ratio)
+         conversion_factor = *ratio;
+      else
+         ASSERT(false);
+   }
+   catch (IfcParse::IfcInvalidTokenException& e)
+   {
+      // Was expecting something like 
+      // #15 = IFCMEASUREWITHUNIT(IFCLENGTHMEASURE(3.28083333333333), #16);
+      // where the expected token is IFCLENGTHMEASURE, but instead found something like
+      // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
+      // we'll just get the value and keep going
+      TRACE(e.what());
+      auto pArgument = measure_with_unit->get("ValueComponent");
+      ATLASSERT(pArgument.type() == IfcUtil::Argument_DOUBLE);
+      conversion_factor = double(pArgument);
+   }
+   return conversion_factor;
+}
+
+template <typename Schema>
 typename Schema::IfcConversionBasedUnit* GetStressUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("ksi");

@@ -44,6 +44,13 @@ public:
 class CIfcImporter
 {
 public:
+   enum class AlignmentImportResult
+   {
+      Success,
+      Fail,
+      NotFound
+   };
+
    CIfcImporter(std::shared_ptr<WBFL::EAF::Broker> pBroker);
    ~CIfcImporter(void);
 
@@ -72,7 +79,7 @@ private:
    std::vector<std::_tstring> m_Notes;
 
 
-   bool ImportAlignment(IfcParse::IfcFile& file);
+   AlignmentImportResult ImportAlignment(IfcParse::IfcFile& file);
    bool ImportBridge(IfcParse::IfcFile& file);
 
    void InitUnits(IfcParse::IfcFile& file);

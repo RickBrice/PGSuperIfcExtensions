@@ -21,16 +21,26 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "IfcExporter.h"
+#include "IfcImporter.h"
 #include <IFace\Project.h>
 
-class CIfcImporter;
-
+/// @brief This class imports IfcAlignment and translates it into the PGSuper alignment data.
+/// It is expected that the alignment model contain both IfcAlignmentHorizontal and IfcAlignmentVertical
+/// layouts.
+/// 
+/// If the file contains more than one valid alignments, the user is prompted to select which alignment
+/// to import. PGSuper can only have one alignment at a time.
+/// 
+/// If a valid alignment is not found, a default East-West alignment is assumed.
+/// 
+/// @todo Refactor this class so that the UI (prompting for alignment) is done outside the class.
+/// The Import function should be Import(IfcParse::IfcFile& file,typename Schema::IfcAlignment* alignment)
+/// 
 class CIfcAlignmentImporter
 {
 public:
    CIfcAlignmentImporter(CIfcImporter& importer);
-   bool Import(IfcParse::IfcFile& file);
+   CIfcImporter::AlignmentImportResult Import(IfcParse::IfcFile& file);
 
 private:
    CIfcImporter& m_Importer;
@@ -42,7 +52,7 @@ private:
    CComPtr<ICogoEngine> m_CogoEngine;
    CComPtr<IGeomUtil2d> m_GeomUtil;
 
-   bool InitAlignmentParameters(IfcParse::IfcFile& file);
+   CIfcImporter::AlignmentImportResult InitAlignmentParameters(IfcParse::IfcFile& file);
    Ifc4x3_add2::IfcAlignment* GetAlignment(IfcParse::IfcFile& file);
    Float64 LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
    void LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment, Float64 stationAdjustment);
