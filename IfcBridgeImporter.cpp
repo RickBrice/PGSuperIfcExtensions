@@ -414,6 +414,8 @@ bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::Ifc
    // that might be enough to actually do some work
    if (!HasValidGirders(file, bridge))
       return false;
+
+   return true;
 }
 
 bool CIfcBridgeImporter::HasValidGirders(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
