@@ -76,7 +76,8 @@ public:
    enum class BeamModel
    {
       SectionedSolidHorizontal,
-      PolygonalFaceSet
+      PolygonalFaceSet,
+      FacetedBrep
    };
 
    Schema schema = Schema::Schema_4x3_add2;
