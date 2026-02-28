@@ -1311,6 +1311,42 @@ void GirderSegment_PolygonalFaceSet(IfcHierarchyHelper<Schema>& file, std::share
 }
 
 template <typename Schema>
+void GirderSegment_FacetedBrep(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, const PoiList& vPoi, std::function<Float64(Float64)>fn_cut_angle, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+{
+   auto [nPointsPerProfile, point_list] = generate_point_list(pBroker, segmentKey, vPoi, fn_cut_angle);
+   auto face_indices_list = build_faces(nPointsPerProfile, point_list);
+
+   typename aggregate_of<typename Schema::IfcFace>::ptr faces(new aggregate_of<typename Schema::IfcFace>());
+   for (auto& face_indices : face_indices_list)
+   {
+      // create IfcPolyLoop with each point being point_list[face_indices[i]-1];
+      typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr polygon(new aggregate_of<typename Schema::IfcCartesianPoint>());
+      for (auto idx : face_indices)
+      {
+         auto& p = point_list[idx - 1];
+         polygon->push(new typename Schema::IfcCartesianPoint({ p[0],p[1],p[2] }));
+      }
+      auto polyloop = new typename Schema::IfcPolyLoop(polygon);
+      auto face_bound = new typename Schema::IfcFaceOuterBound(polyloop, new typename Schema::IfcBoolean(true));
+      typename aggregate_of<typename Schema::IfcFaceBound>::ptr face_bounds(new aggregate_of<typename Schema::IfcFaceBound>());
+      face_bounds->push(face_bound);
+      auto face = new typename Schema::IfcFace(face_bounds);
+      faces->push(face);
+   }
+   auto shell = new typename Schema::IfcClosedShell(faces);
+   auto faceted_brep = new typename Schema::IfcFacetedBrep(shell);
+
+   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   representation_items->push(faceted_brep);
+
+   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("Brep"), representation_items);
+   shape_representation_list->push(shape_representation);
+   auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
+   segment->setRepresentation(product_definition_shape);
+}
+
+template <typename Schema>
 void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
@@ -1398,6 +1434,10 @@ void CreateGirderSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
    case CIfcExportOptions::BeamModel::PolygonalFaceSet:
       GirderSegment_PolygonalFaceSet(file, pBroker, segmentKey, vPoi, fn_cut_angle, segment, options, pGeometricRepresentationSubContext);
       break;
+   case CIfcExportOptions::BeamModel::FacetedBrep:
+      GirderSegment_FacetedBrep(file, pBroker, segmentKey, vPoi, fn_cut_angle, segment, options, pGeometricRepresentationSubContext);
+      break;
+
    default:
       ASSERT(false);
    }

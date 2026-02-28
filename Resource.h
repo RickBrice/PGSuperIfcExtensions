@@ -40,6 +40,7 @@
 #define IDC_LINEAR_PLACEMENT            228
 #define IDC_MODEL_SSH                   229
 #define IDC_MODEL_PFS                   230
+#define IDC_MODEL_BREP                  231
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
 
