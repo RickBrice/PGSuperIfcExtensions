@@ -1171,12 +1171,14 @@ std::pair<IndexType,std::vector<std::vector<double>>> generate_point_list(std::s
    GET_IFACE2(pBroker, IIntervals, pIntervals);
    auto intervalIdx = pIntervals->GetPrestressReleaseInterval(segmentKey);
 
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey);
+
    GET_IFACE2(pBroker, IShapes, pShapes);
    
    for (const pgsPointOfInterest& poi : vPoi)
    {
-#pragma Reminder("WORKING HERE - polygons - need to adjust z for girder slope")
-      auto z = poi.GetDistFromStart(); 
+      auto z = poi.GetDistFromStart() * sqrt(1 + slope * slope);  // adjust distance along plan length to distance along girder
 
       CComPtr<IShape> shape;
       pShapes->GetSegmentShape(intervalIdx, poi, false, pgsTypes::scGirder, &shape);
