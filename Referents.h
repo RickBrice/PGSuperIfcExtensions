@@ -43,7 +43,7 @@ typename Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, 
       }
    }
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr referents(new typename Schema::IfcObjectDefinition::list);
    auto rel_nests = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests referents"), alignment, referents);
    file.addEntity(rel_nests);
    return rel_nests;
@@ -53,7 +53,7 @@ template <typename Schema>
 void AddReferent(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment, typename Schema::IfcReferent* referent)
 {
    typename Schema::IfcRelNests* nest = GetReferentNest<Schema>(file, alignment);
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_objects = nest->RelatedObjects();
+   auto related_objects = nest->RelatedObjects();
    related_objects->push(referent);
    //std::sort(related_objects->begin(), related_objects->end(),
    //   [](typename Schema::IfcObjectDefinition* obj1, typename Schema::IfcObjectDefinition* obj2)
@@ -106,7 +106,7 @@ void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::
    auto start_station_referent = new typename Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, std::string("Start of alignment station"), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
 
    // Define properties for Pset_Stationing
-   typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr pset_station_properties(new typename Schema::IfcProperty::list);
    pset_station_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new typename Schema::IfcLengthMeasure(startStation), nullptr));
 
    // Create Pset and assign properties
@@ -114,7 +114,7 @@ void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::
    file.addEntity(property_set);
 
    // Assign the property set to the referent
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr referents(new Schema::IfcObjectDefinition::list);
    referents->push(start_station_referent);
 
    auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates start station properties to referent"), boost::none, referents, property_set);

@@ -46,7 +46,7 @@ void Add_USBridge_Classification(IfcHierarchyHelper<Schema>& file)
 
    auto project = file.getSingle<typename Schema::IfcProject>();
 
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr projects(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   typename Schema::IfcDefinitionSelect::list::ptr projects(new Schema::IfcDefinitionSelect::list);
    projects->push(project);
 
    auto rel_associates_classification = new typename Schema::IfcRelAssociatesClassification(
@@ -64,12 +64,12 @@ void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
    auto project_type_enum = createPropertyEnumeration<Schema>("PEnum_ProjectType", enum_values);
    auto project_type_property = createPropertyEnumeratedValue<Schema>("ProjectType", project_type_enum, "NEWBUILD");
 
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr list_of_properties(new Schema::IfcProperty::list);
    list_of_properties->push(project_type_property);
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ProjectCommon"), boost::none, list_of_properties);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_projects(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr related_projects(new typename Schema::IfcObjectDefinition::list);
    related_projects->push(project);
 
    auto project_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_projects, property_set);
@@ -106,12 +106,12 @@ void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file, typename Schema:
    auto penum = createPropertyEnumeration<Schema>("PEnum_StructureIndicator", enum_values);
    auto property = createPropertyEnumeratedValue<Schema>("StructureIndicator", penum, "COMPOSITE");
 
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
    list_of_properties->push(property);
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_BridgeCommon"), boost::none, list_of_properties);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_bridges(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr related_bridges(new typename Schema::IfcObjectDefinition::list);
    related_bridges->push(bridge);
 
    auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_bridges, property_set);
@@ -125,13 +125,13 @@ void Create_Pset_usBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, std::sh
    auto nSpans = pBridge->GetSpanCount();
    auto nPiers = pBridge->GetPierCount();
 
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("usBridge_NumberOfSpans"), boost::none, new typename Schema::IfcInteger((int)nSpans), nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("usBridge_NumberOfSupports"), boost::none, new typename Schema::IfcInteger((int)nPiers), nullptr));
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_BridgeCommon"), boost::none, list_of_properties);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_bridges(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr related_bridges(new typename Schema::IfcObjectDefinition::list);
    related_bridges->push(bridge);
 
    auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_bridges, property_set);
@@ -141,12 +141,12 @@ void Create_Pset_usBridge_BridgeCommon(IfcHierarchyHelper<Schema>& file, std::sh
 template <typename Schema>
 void Create_Pset_usBridge_RailingCommon(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*> railings)
 {
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("usBridge_MASHCompliantRailing"), boost::none, new typename Schema::IfcBoolean(true), nullptr));
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_RailingCommon"), boost::none, list_of_properties);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_railings(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr related_railings(new typename Schema::IfcObjectDefinition::list);
    for (auto& railing : railings)
    {
       related_railings->push(railing);
@@ -165,7 +165,7 @@ void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::sh
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    auto releaseIntervalIdx = pIntervals->GetPrestressReleaseInterval(segmentKey);
-   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
 
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
@@ -203,7 +203,7 @@ void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::sh
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_GirderCommon"), boost::none, list_of_properties);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr related_segments(new typename Schema::IfcObjectDefinition::list);
    related_segments->push(segment);
 
    auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, property_set);
@@ -213,7 +213,7 @@ void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::sh
    {
       GET_IFACE2(pBroker, IGirder, pGirder);
 
-      typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
+      typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
 
       Float64 precamber = pGirder->GetPrecamber(segmentKey);
       if (!IsZero(precamber))
@@ -265,7 +265,7 @@ void Create_Pset_usBridge_GirderCommon(IfcHierarchyHelper<Schema>& file, std::sh
       // https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/TPFBridge_MemberCamber
       auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBridge_MemberCamber"), boost::none, list_of_properties);
 
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr related_segments(new typename Schema::IfcObjectDefinition::list);
       related_segments->push(segment);
 
       auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, property_set);
@@ -328,7 +328,7 @@ void Classify_Bridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridg
       boost::none /*Description*/, boost::none /*Sort*/);
    file.addEntity(classification_reference);
 
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_bridges(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   typename Schema::IfcDefinitionSelect::list::ptr related_bridges(new typename Schema::IfcDefinitionSelect::list);
    related_bridges->push(bridge);
 
    auto related_classes = new typename Schema::IfcRelAssociatesClassification(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_bridges, classification_reference);
@@ -359,7 +359,7 @@ void Classify_BridgeParts(IfcHierarchyHelper<Schema>& file, std::vector<typename
       boost::none /*Description*/, boost::none /*Sort*/);
    file.addEntity(classification_reference);
 
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_parts(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   typename Schema::IfcDefinitionSelect::list::ptr related_parts(new typename Schema::IfcDefinitionSelect::list);
    for (auto& part : parts)
    {
       related_parts->push(part);

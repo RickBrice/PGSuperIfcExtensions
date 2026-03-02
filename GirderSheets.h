@@ -65,9 +65,9 @@ std::vector<typename Schema::IfcDocumentReference*> GetGirderSheets()
 
 
 template <typename Schema>
-void AssociateDocuments(IfcHierarchyHelper<Schema>& file, typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr objects)
+void AssociateDocuments(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition::list::ptr objects)
 {
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_objects(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   typename Schema::IfcDefinitionSelect::list::ptr related_objects(new typename Schema::IfcDefinitionSelect::list);
    for (auto& object : *objects)
    {
       related_objects->push(object);

@@ -31,7 +31,7 @@
 template <typename Schema>
 typename Schema::IfcPropertyEnumeration* createPropertyEnumeration(const std::string& name, std::vector<std::string>& enumValues, typename Schema::IfcUnit* unit = nullptr)
 {
-   typename aggregate_of<typename Schema::IfcValue>::ptr enum_values(new aggregate_of<typename Schema::IfcValue>());
+   typename Schema::IfcValue::list::ptr enum_values(new typename Schema::IfcValue::list);
    for (const auto& value : enumValues)
    {
       enum_values->push(new typename Schema::IfcLabel(value));
@@ -44,7 +44,7 @@ typename Schema::IfcPropertyEnumeration* createPropertyEnumeration(const std::st
 template <typename Schema>
 typename Schema::IfcPropertyEnumeratedValue* createPropertyEnumeratedValue(const std::string& property_name, typename Schema::IfcPropertyEnumeration* enumeration, const std::string& value)
 {
-   typename aggregate_of<typename Schema::IfcValue>::ptr list_of_selected_enum_values(new aggregate_of<typename Schema::IfcValue>());
+   typename Schema::IfcValue::list::ptr list_of_selected_enum_values(new typename Schema::IfcValue::list);
    list_of_selected_enum_values->push(new typename Schema::IfcLabel(value));
    auto property_enum_value = new typename Schema::IfcPropertyEnumeratedValue(property_name, boost::none, list_of_selected_enum_values, enumeration);
    return property_enum_value;
@@ -56,10 +56,10 @@ typename Schema::IfcLabel* getPropertyEnumeratedValue(typename Schema::IfcProper
 {
    if (enum_value)
    {
-      boost::optional<boost::shared_ptr<aggregate_of<typename Schema::IfcValue>>> list_of_selected_enum_values = enum_value->EnumerationValues();
+      auto list_of_selected_enum_values = enum_value->EnumerationValues();
       if (list_of_selected_enum_values)
       {
-         boost::shared_ptr<aggregate_of<typename Schema::IfcValue>> ptr = *list_of_selected_enum_values;
+         auto ptr = *list_of_selected_enum_values;
          ASSERT(ptr->size() == 1); // only expecting one, but there could be more. This is a limitation of this function
          auto value = *(ptr->begin());
          return value->as<typename Schema::IfcLabel>();

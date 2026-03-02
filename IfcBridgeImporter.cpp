@@ -324,7 +324,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
    USES_CONVERSION;
 
    auto beams = file.instances_by_type<Ifc4x3_add2::IfcBeam>();
-   aggregate_of<Ifc4x3_add2::IfcBeam>::ptr prestressed_beams(new aggregate_of<Ifc4x3_add2::IfcBeam>());
+   Ifc4x3_add2::IfcBeam::list::ptr prestressed_beams(new Ifc4x3_add2::IfcBeam::list);
    for (auto beam : *beams)
    {
       auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);

@@ -44,19 +44,19 @@ typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(IfcHierar
    auto ssr = new typename Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
    file.addEntity(ssr);
 
-   typename aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>::ptr list_of_surface_styles(new aggregate_of<typename Schema::IfcSurfaceStyleElementSelect>());
+   typename Schema::IfcSurfaceStyleElementSelect::list::ptr list_of_surface_styles(new typename Schema::IfcSurfaceStyleElementSelect::list);
    list_of_surface_styles->push(ssr);
    
    auto ss = new typename Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
    file.addEntity(ss);
 
-   typename aggregate_of<typename Schema::IfcPresentationStyle>::ptr list_of_presentation_styles(new aggregate_of<typename Schema::IfcPresentationStyle>());
+   typename Schema::IfcPresentationStyle::list::ptr list_of_presentation_styles(new typename Schema::IfcPresentationStyle::list);
    list_of_presentation_styles->push(ss);
    
    auto styled_item = new typename Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
    file.addEntity(styled_item);
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr styled_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr styled_items(new typename Schema::IfcRepresentationItem::list);
    styled_items->push(styled_item);
    auto styled_representation = new typename Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
    file.addEntity(styled_representation);
@@ -68,7 +68,7 @@ template <typename Schema>
 void AssignPset_MaterialSteel(IfcHierarchyHelper<Schema>& file, typename Schema::IfcMaterial* material,Float64 fy, Float64 fpu, Float64 eu, const std::string& grade)
 {
    // Pset_MaterialSteel
-   typename aggregate_of<typename Schema::IfcProperty>::ptr material_steel_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr material_steel_properties(new typename Schema::IfcProperty::list);
    //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
    material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new typename Schema::IfcPressureMeasure(fy), nullptr));
    material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new typename Schema::IfcPressureMeasure(fpu), nullptr));
@@ -120,7 +120,7 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
    auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
 
    // assigns the presentation styles to the material
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
    list_of_representations->push(material_representation);
    auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
    file.addEntity(material_defintion_representation);
@@ -171,7 +171,7 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
    auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
 
    // assigns the presentation styles to the material
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
    list_of_representations->push(material_representation);
    auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
    file.addEntity(material_defintion_representation);
@@ -217,7 +217,7 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
    //}
 
    // Pset_MaterialConcrete
-   typename aggregate_of<typename Schema::IfcProperty>::ptr material_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr material_concrete_properties(new typename Schema::IfcProperty::list);
    material_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new typename Schema::IfcPressureMeasure(fc), stress_unit));
    material_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new typename Schema::IfcPositiveLengthMeasure(max_agg_size), displacement_unit));
    auto pset_material_concrete = new typename Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, concrete_material);
@@ -227,7 +227,7 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
    auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
 
    // assigns the presentation styles to the material
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr list_of_representations(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
    list_of_representations->push(material_representation);
    auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, concrete_material);
    file.addEntity(material_defintion_representation);

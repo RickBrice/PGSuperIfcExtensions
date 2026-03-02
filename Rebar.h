@@ -51,7 +51,7 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
 {
    auto placement = file.addPlacement3d();
    auto representation_map = new typename Schema::IfcRepresentationMap(placement, shape_representation);
-   typename aggregate_of<typename Schema::IfcRepresentationMap>::ptr representation_maps(new aggregate_of<typename Schema::IfcRepresentationMap>());
+   typename Schema::IfcRepresentationMap::list::ptr representation_maps(new typename Schema::IfcRepresentationMap::list);
    representation_maps->push(representation_map);
 
    // if we get this far, we need a new IfcReinforcingBarType
@@ -81,7 +81,7 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
    auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
    if (rel_declares_instances->size() == 0)
    {
-      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      typename Schema::IfcDefinitionSelect::list::ptr related_definitions(new typename Schema::IfcDefinitionSelect::list);
       related_definitions->push(rebar_type);
 
       auto rel_declares = new typename Schema::IfcRelDeclares(

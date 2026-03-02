@@ -156,7 +156,7 @@ int GetVertexOrdering(IShape* pShape)
 template <typename Schema>
 typename Schema::IfcCurve* CreatePolyline(IPoint2dCollection* polyPoints)
 {
-   typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+   typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
    IndexType nPoints;
    polyPoints->get_Count(&nPoints);
 
@@ -184,7 +184,7 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcExportOptions
       polyPoints->Reverse();
    }
 
-   typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+   typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
    IndexType nPoints;
    polyPoints->get_Count(&nPoints);
 
@@ -323,7 +323,7 @@ typename Schema::IfcTendonType* GetTendonType(IfcHierarchyHelper<Schema>& file, 
    // add the new definition to the project
    if (rel_declares_instances->size() == 0)
    {
-      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr related_definitions(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      typename Schema::IfcDefinitionSelect::list::ptr related_definitions(new typename Schema::IfcDefinitionSelect::list);
       related_definitions->push(tendon_type);
 
       auto rel_declares = new typename Schema::IfcRelDeclares(
@@ -354,9 +354,9 @@ typename Schema::IfcTendonType* GetTendonType(IfcHierarchyHelper<Schema>& file, 
 }
 
 template <typename Schema> 
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker,const pgsPointOfInterest& poiStart,const pgsPointOfInterest& poiEnd,typename Schema::IfcBeam* beam)
+typename Schema::IfcObjectDefinition::list::ptr CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker,const pgsPointOfInterest& poiStart,const pgsPointOfInterest& poiEnd,typename Schema::IfcBeam* beam)
 {
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr strands(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr strands(new typename Schema::IfcObjectDefinition::list);
 
    const CSegmentKey& segmentKey(poiStart.GetSegmentKey());
 
@@ -411,10 +411,10 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
       }
 
       strand_placement = (strand_placement == nullptr ? file.addLocalPlacement(beam->ObjectPlacement()) : strand_placement);
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr strand_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr strand_representation_items(new typename Schema::IfcRepresentationItem::list);
       for (StrandIndexType strandIdx = 0; strandIdx < nStrands; strandIdx++)
       {
-         typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+         typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
 
          CComPtr<IPoint2d> pntStart;
          strand_points_start->get_Item(strandIdx, &pntStart);
@@ -495,7 +495,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
          ATLASSERT(geometric_representation_context);
          auto strand_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), strand_representation_items);
-         typename aggregate_of<typename Schema::IfcRepresentation>::ptr strand_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+         typename Schema::IfcRepresentation::list::ptr strand_shape_representation_list(new typename Schema::IfcRepresentation::list);
          strand_shape_representation_list->push(strand_shape_representation);
          auto strand_product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, strand_shape_representation_list);
 
@@ -521,7 +521,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          Create_Pset_usBridge_ReinforcementCommon(file, strand, Pjack, bDebonded, db_start); // assumes symmetric debonding since classification can't handle unsymmetric
 
          // 6.3.4.9 Pset_ElementComponentCommon
-         typename aggregate_of<typename Schema::IfcProperty>::ptr element_component_common_properties(new aggregate_of<typename Schema::IfcProperty>());
+         typename Schema::IfcProperty::list::ptr element_component_common_properties(new typename Schema::IfcProperty::list);
 
          if (strandType == pgsTypes::Temporary)
          {
@@ -543,7 +543,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
          file.addEntity(pset_element_component_common);
 
 
-         typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_strands(new aggregate_of<typename Schema::IfcObjectDefinition>());
+         typename Schema::IfcObjectDefinition::list::ptr related_strands(new typename Schema::IfcObjectDefinition::list);
          related_strands->push(strand);
 
          auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_strands, pset_element_component_common);
@@ -557,7 +557,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStrands(I
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcBeam* beam)
+typename Schema::IfcObjectDefinition::list::ptr CreateRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcBeam* beam)
 {
    USES_CONVERSION;
 
@@ -588,7 +588,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
    IndexType nRebars;
    rebar_layout->get_Count(&nRebars);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr rebars(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr rebars(new typename Schema::IfcObjectDefinition::list);
    if (nRebars == 0)
       return rebars;
 
@@ -634,14 +634,14 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             // create a basic representation of the bar based on the bar's length at the centerline of the girder
             // This will be used in mapped representations and the bar length will be scaled to the actual bar length
             // accounting for the actual bar's offset from centerline of beam as well as the effect of girder end face skew
-            typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+            typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
             points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0., 0., 0.}));
             points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{centerline_bar_length, 0., 0.}));
             auto directrix = new typename Schema::IfcPolyline(points);
             auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
-            typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+            typename Schema::IfcRepresentationItem::list::ptr representation_items(new Schema::IfcRepresentationItem::list);
             representation_items->push(swept_disk_solid);
-            typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+            typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
             auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
             std::ostringstream os;
             os << "Girder_Longitudinal_Bar_" << OLE2A(bar_name);
@@ -649,7 +649,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
          }
 
 
-         typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+         typename Schema::IfcRepresentationItem::list::ptr mapped_representation_items(new Schema::IfcRepresentationItem::list);
          IndexType nBars;
          rebar_pattern->get_Count(&nBars);
          for (IndexType barIdx = 0; barIdx < nBars; barIdx++)
@@ -696,7 +696,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
             mapped_representation_items->push(mapped_item);
          }
 
-         typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+         typename Schema::IfcRepresentation::list::ptr shape_representation_list(new Schema::IfcRepresentation::list);
          auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), mapped_representation_items);
          shape_representation_list->push(shape_representation);
          auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -726,7 +726,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateRebars(If
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
+typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
 {
    // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
    // For I-beams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
@@ -735,7 +735,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
    USES_CONVERSION;
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr rebars(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr rebars(new typename Schema::IfcObjectDefinition::list);
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
 
    typename Schema::IfcLocalPlacement* segment_origin = nullptr; // only create if needed
@@ -765,14 +765,14 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
    if (g3_rebar_type == nullptr)
    {
       Float64 db = pRebar->GetNominalDimension();
-      typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+      typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
       points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0., -g3_bar_length / 2, 0.}));
       points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0., g3_bar_length / 2, 0.}));
       auto directrix = new typename Schema::IfcPolyline(points);
       auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
       representation_items->push(swept_disk_solid);
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
 
       g3_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
@@ -797,7 +797,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, hbf - 2 * cover });
       g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, 0.0 });
 
-      typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr g9_segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+      typename Schema::IfcSegmentIndexSelect::list::ptr g9_segments(new typename Schema::IfcSegmentIndexSelect::list);
       g9_segments->push(new typename Schema::IfcLineIndex({ 1,2 }));
       g9_segments->push(new typename Schema::IfcLineIndex({ 2,3 }));
       g9_segments->push(new typename Schema::IfcLineIndex({ 3,4 }));
@@ -806,9 +806,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       auto g9_directrix = new typename Schema::IfcIndexedPolyCurve(new typename Schema::IfcCartesianPointList3D(g9_point_list, boost::none), g9_segments, boost::none);
 
       auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(g9_directrix, db / 2, boost::none, boost::none, boost::none);
-      auto representation_items = aggregate_of<typename Schema::IfcRepresentationItem>::ptr(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      auto representation_items = Schema::IfcRepresentationItem::list::ptr(new typename Schema::IfcRepresentationItem::list);
       representation_items->push(swept_disk_solid);
-      auto shape_representation_list = aggregate_of<typename Schema::IfcRepresentation>::ptr(new aggregate_of<typename Schema::IfcRepresentation>());
+      auto shape_representation_list = typename Schema::IfcRepresentation::list::ptr(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
 
       g9_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
@@ -840,7 +840,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       g10_point_list.push_back({ 0., -(d + r), r });
       g10_point_list.push_back({ 0., -(d + r), h + r });
 
-      typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr g10_segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+      typename Schema::IfcSegmentIndexSelect::list::ptr g10_segments(new typename Schema::IfcSegmentIndexSelect::list);
       g10_segments->push(new typename Schema::IfcLineIndex({ 1,2 }));
       g10_segments->push(new typename Schema::IfcArcIndex({ 2,3,4 }));
       g10_segments->push(new typename Schema::IfcLineIndex({ 4,5 }));
@@ -850,9 +850,9 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       auto g10_directrix = new typename Schema::IfcIndexedPolyCurve(new typename Schema::IfcCartesianPointList3D(g10_point_list, boost::none), g10_segments, boost::none);
 
       auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(g10_directrix, db / 2, boost::none, boost::none, boost::none);
-      auto representation_items = aggregate_of<typename Schema::IfcRepresentationItem>::ptr(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      auto representation_items = typename Schema::IfcRepresentationItem::list::ptr(new typename Schema::IfcRepresentationItem::list);
       representation_items->push(swept_disk_solid);
-      auto shape_representation_list = aggregate_of<typename Schema::IfcRepresentation>::ptr(new aggregate_of<typename Schema::IfcRepresentation>());
+      auto shape_representation_list = typename Schema::IfcRepresentation::list::ptr(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
 
       g10_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
@@ -941,7 +941,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          point_list.push_back({ 0.0,-dx,-(dl - dx) }); // right side of bar at end of bend
          point_list.push_back({ 0.0,-dx,du }); // top right of bar
 
-         typename aggregate_of<typename Schema::IfcSegmentIndexSelect>::ptr segments(new aggregate_of<typename Schema::IfcSegmentIndexSelect>());
+         typename Schema::IfcSegmentIndexSelect::list::ptr segments(new typename Schema::IfcSegmentIndexSelect::list);
          segments->push(new typename Schema::IfcLineIndex({ 1,2 }));
          segments->push(new typename Schema::IfcArcIndex({ 2,3,4 }));
          segments->push(new typename Schema::IfcLineIndex({ 4,5 }));
@@ -952,7 +952,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
          file.addEntity(swept_disk_solid);
 
-         typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr rebar_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+         typename Schema::IfcRepresentationItem::list::ptr rebar_representation_items(new typename Schema::IfcRepresentationItem::list);
          rebar_representation_items->push(swept_disk_solid);
 
          auto rebar_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), rebar_representation_items);
@@ -960,10 +960,10 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          g2_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), true, pRebar, rebar_representation);
       }
 
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g2_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g3_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g9_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr g10_mapped_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr g2_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+      typename Schema::IfcRepresentationItem::list::ptr g3_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+      typename Schema::IfcRepresentationItem::list::ptr g9_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+      typename Schema::IfcRepresentationItem::list::ptr g10_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
 
       Float64 offset = start + (start < Lg/2.0 ? 1.0 : -1.0)*spacing;
       Float64 sign = (offset < Lg / 2.0 ? 1.0 : -1.0);
@@ -1002,7 +1002,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
          g10_mapped_representation_items->push(g10_mapped_item);
       }
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g2_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr g2_shape_representation_list(new typename Schema::IfcRepresentation::list);
       auto g2_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g2_mapped_representation_items);
       g2_shape_representation_list->push(g2_shape_representation);
 
@@ -1028,7 +1028,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       rebars->push(g2_rebar);
 
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g3_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr g3_shape_representation_list(new Schema::IfcRepresentation::list);
       auto g3_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g3_mapped_representation_items);
       g3_shape_representation_list->push(g3_shape_representation);
 
@@ -1052,7 +1052,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
 
       rebars->push(g3_rebar);
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g9_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr g9_shape_representation_list(new Schema::IfcRepresentation::list);
       auto g9_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g9_mapped_representation_items);
       g9_shape_representation_list->push(g9_shape_representation);
 
@@ -1077,7 +1077,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreateStirrups(
       rebars->push(g9_rebar);
 
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr g10_shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr g10_shape_representation_list(new Schema::IfcRepresentation::list);
       auto g10_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g10_mapped_representation_items);
       g10_shape_representation_list->push(g10_shape_representation);
 
@@ -1109,19 +1109,19 @@ void GirderSegment_SectionedSolidHorizontal(IfcHierarchyHelper<Schema>& file, st
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
    Float64 Lg = pBridge->GetSegmentPlanLength(segmentKey);
-   typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+   typename Schema::IfcCartesianPoint::list::ptr girder_line_points(new Schema::IfcCartesianPoint::list);
    girder_line_points->push(new typename Schema::IfcCartesianPoint({ 0,0,0 }));
    girder_line_points->push(new typename Schema::IfcCartesianPoint({ Lg,0,0 })); // due East from origin, length is plan length, not basic segment length
    auto girder_line = new typename Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
 
-   typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
+   typename Schema::IfcProfileDef::list::ptr cross_sections(new typename Schema::IfcProfileDef::list);
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
    GET_IFACE2(pBroker, IShapes, pShapes);
 
-   typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
+   typename Schema::IfcAxis2PlacementLinear::list::ptr cross_section_positions(new typename Schema::IfcAxis2PlacementLinear::list);
 
    GET_IFACE2(pBroker, IIntervals, pIntervals);
    IntervalIndexType intervalIdx = pIntervals->GetErectSegmentInterval(segmentKey);
@@ -1156,7 +1156,7 @@ void GirderSegment_SectionedSolidHorizontal(IfcHierarchyHelper<Schema>& file, st
    file.addEntity(sectioned_solid);
    representation_items->push(sectioned_solid);
 
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
    auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -1293,7 +1293,7 @@ void GirderSegment_PolygonalFaceSet(IfcHierarchyHelper<Schema>& file, std::share
    auto coordinates = new typename Schema::IfcCartesianPointList3D(point_list, boost::none);
    auto face_indices_list = build_faces(nPointsPerProfile, point_list);
 
-   typename aggregate_of<typename Schema::IfcIndexedPolygonalFace>::ptr faces(new aggregate_of<typename Schema::IfcIndexedPolygonalFace>());
+   typename Schema::IfcIndexedPolygonalFace::list::ptr faces(new typename Schema::IfcIndexedPolygonalFace::list());
    for (auto face_indices : face_indices_list)
    {
       auto face = new typename Schema::IfcIndexedPolygonalFace(face_indices);
@@ -1302,10 +1302,10 @@ void GirderSegment_PolygonalFaceSet(IfcHierarchyHelper<Schema>& file, std::share
 
    auto faceset = new typename Schema::IfcPolygonalFaceSet(coordinates,boost::none,faces,boost::none);
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
    representation_items->push(faceset);
 
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
    auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("Tessellation"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -1318,11 +1318,11 @@ void GirderSegment_FacetedBrep(IfcHierarchyHelper<Schema>& file, std::shared_ptr
    auto [nPointsPerProfile, point_list] = generate_point_list(pBroker, segmentKey, vPoi, fn_cut_angle);
    auto face_indices_list = build_faces(nPointsPerProfile, point_list);
 
-   typename aggregate_of<typename Schema::IfcFace>::ptr faces(new aggregate_of<typename Schema::IfcFace>());
+   typename Schema::IfcFace::list::ptr faces(new typename Schema::IfcFace::list);
    for (auto& face_indices : face_indices_list)
    {
       // create IfcPolyLoop with each point being point_list[face_indices[i]-1];
-      typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr polygon(new aggregate_of<typename Schema::IfcCartesianPoint>());
+      typename Schema::IfcCartesianPoint::list::ptr polygon(new typename Schema::IfcCartesianPoint::list);
       for (auto idx : face_indices)
       {
          auto& p = point_list[idx - 1];
@@ -1330,7 +1330,7 @@ void GirderSegment_FacetedBrep(IfcHierarchyHelper<Schema>& file, std::shared_ptr
       }
       auto polyloop = new typename Schema::IfcPolyLoop(polygon);
       auto face_bound = new typename Schema::IfcFaceOuterBound(polyloop, new typename Schema::IfcBoolean(true));
-      typename aggregate_of<typename Schema::IfcFaceBound>::ptr face_bounds(new aggregate_of<typename Schema::IfcFaceBound>());
+      typename Schema::IfcFaceBound::list::ptr face_bounds(new typename Schema::IfcFaceBound::list);
       face_bounds->push(face_bound);
       auto face = new typename Schema::IfcFace(face_bounds);
       faces->push(face);
@@ -1338,10 +1338,10 @@ void GirderSegment_FacetedBrep(IfcHierarchyHelper<Schema>& file, std::shared_ptr
    auto shell = new typename Schema::IfcClosedShell(faces);
    auto faceted_brep = new typename Schema::IfcFacetedBrep(shell);
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
    representation_items->push(faceted_brep);
 
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
    auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("Brep"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -1540,7 +1540,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for each segment but we still need the list
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr segments(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   typename Schema::IfcDefinitionSelect::list::ptr segments(new typename Schema::IfcDefinitionSelect::list);
    segments->push(segment);
 
    // associate the material with the segment (ie segments collection)
@@ -1577,7 +1577,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
    }
 
    // Pset_PrecastConcreteElementGeneral
-   typename aggregate_of<typename Schema::IfcProperty>::ptr precast_concrete_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr precast_concrete_properties(new typename Schema::IfcProperty::list);
    precast_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("FormStrippingStrength"), boost::none, new typename Schema::IfcPressureMeasure(fci), stress_unit));
    precast_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LiftingStrength"), boost::none, new typename Schema::IfcPressureMeasure(fcl), stress_unit));
    precast_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("ReleaseStrength"), boost::none, new typename Schema::IfcPressureMeasure(fci), stress_unit));
@@ -1607,7 +1607,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
    auto pset_precast_concrete_element_general = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_PrecastConcreteElementGeneral"), boost::none, precast_concrete_properties);
    file.addEntity(pset_precast_concrete_element_general);
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr related_segments(new typename Schema::IfcObjectDefinition::list);
    related_segments->push(segment);
 
    auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_precast_concrete_element_general);
@@ -1653,7 +1653,7 @@ void CreateGirderSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_
       //}
 
 
-      typename aggregate_of<typename Schema::IfcPhysicalQuantity>::ptr beam_quantities(new aggregate_of<typename Schema::IfcPhysicalQuantity>());
+      typename Schema::IfcPhysicalQuantity::list::ptr beam_quantities(new typename Schema::IfcPhysicalQuantity::list);
       beam_quantities->push(new typename Schema::IfcQuantityArea(std::string("GrossSurfaceArea"), boost::none, big_area_unit, GSA, boost::none));
       beam_quantities->push(new typename Schema::IfcQuantityVolume(std::string("GrossVolume"), boost::none, volume_unit, GV, boost::none));
 
@@ -1698,7 +1698,7 @@ void CreateStrandRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_pt
       const auto* pStrand = pMaterials->GetStrandMaterial(segmentKey, strandType);
       auto strand_material = GetStrandMaterial(file, pStrand);
 
-      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr strands_for_material(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      typename Schema::IfcDefinitionSelect::list::ptr strands_for_material(new typename Schema::IfcDefinitionSelect::list);
       for (auto& strand : *strands)
       {
          strands_for_material->push(strand);
@@ -1744,7 +1744,7 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std
 
       // need a list of entities that are associated with this material
       // right now we are creating a unique material for each strand but we still need the list
-      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr rebars_for_material(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      typename Schema::IfcDefinitionSelect::list::ptr rebars_for_material(new typename Schema::IfcDefinitionSelect::list);
       for (auto& rebar : *rebars)
       {
          rebars_for_material->push(rebar);
@@ -1793,7 +1793,7 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_p
 
       // need a list of entities that are associated with this material
       // right now we are creating a unique material for each strand but we still need the list
-      typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr rebars_for_material(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+      typename Schema::IfcDefinitionSelect::list::ptr rebars_for_material(new typename Schema::IfcDefinitionSelect::list);
       for (auto& rebar : *rebars)
       {
          rebars_for_material->push(rebar);
@@ -1852,20 +1852,20 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::sha
    Float64 slope = (ez - sz) / Lc;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
-   typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr girder_line_points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+   typename Schema::IfcCartesianPoint::list::ptr girder_line_points(new typename Schema::IfcCartesianPoint::list);
    girder_line_points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0, 0, 0}));
    girder_line_points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{Lc, 0, 0}));
    auto girder_line = new typename Schema::IfcPolyline(girder_line_points);
    file.addEntity(girder_line);
 
-   typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
+   typename Schema::IfcProfileDef::list::ptr cross_sections(new typename Schema::IfcProfileDef::list);
    cross_sections->push(CreateSectionProfile<Schema>(pShapes, poiStart, intervalIdx, options));
    cross_sections->push(CreateSectionProfile<Schema>(pShapes, poiEnd, intervalIdx, options));
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
 
    std::string representation_type;
-   typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
+   typename Schema::IfcAxis2PlacementLinear::list::ptr cross_section_positions(new typename Schema::IfcAxis2PlacementLinear::list);
    auto pde_start = new typename Schema::IfcPointByDistanceExpression(new typename Schema::IfcLengthMeasure(0.0), boost::none, boost::none, boost::none, girder_line);
    auto pde_end = new typename Schema::IfcPointByDistanceExpression(new typename Schema::IfcLengthMeasure(Lc), boost::none, boost::none, boost::none, girder_line);
    auto start_section = new typename Schema::IfcAxis2PlacementLinear(pde_start, nullptr, nullptr);
@@ -1877,7 +1877,7 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::sha
    file.addEntity(sectioned_solid);
    representation_items->push(sectioned_solid);
 
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
    auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -1979,8 +1979,8 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    GET_IFACE2(pBroker, IShapes, pShapes);
    GET_IFACE2(pBroker, IRoadway, pAlignment);
-   typename aggregate_of<typename Schema::IfcProfileDef>::ptr cross_sections(new aggregate_of<typename Schema::IfcProfileDef>());
-   typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
+   typename Schema::IfcProfileDef::list::ptr cross_sections(new typename Schema::IfcProfileDef::list);
+   typename Schema::IfcAxis2PlacementLinear::list::ptr cross_section_positions(new typename Schema::IfcAxis2PlacementLinear::list);
    for (IndexType i = 0; i <= nDeckSections; i++)
    {
       auto station = i * (endBrgStation - startBrgStation) / nDeckSections + startBrgStation;
@@ -2045,7 +2045,7 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       file.addEntity(deck_section_placement);
    }
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
    auto sectioned_solid = new typename Schema::IfcSectionedSolidHorizontal(directrix, cross_sections, cross_section_positions);
    representation_items->push(sectioned_solid);
    file.addEntity(sectioned_solid);
@@ -2053,7 +2053,7 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    auto site = file.getSingle<typename Schema::IfcSite>();
    auto deck_placement = site->ObjectPlacement();
 
-   typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+   typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
    auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list->push(shape_representation);
    auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -2071,14 +2071,14 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    const auto* deck_desc = pIBridgeDesc->GetDeckDescription();
 
-   typename aggregate_of<typename Schema::IfcProperty>::ptr deck_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr deck_properties(new typename Schema::IfcProperty::list);
    deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("GrossDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->GrossDepth), nullptr));
    deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LeftEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stLeft]), nullptr));
    deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RightEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stRight]), nullptr));
 
-   typename aggregate_of<typename Schema::IfcValue>::ptr station_list(new aggregate_of<typename Schema::IfcValue>());
-   typename aggregate_of<typename Schema::IfcValue>::ptr left_list(new aggregate_of<typename Schema::IfcValue>());
-   typename aggregate_of<typename Schema::IfcValue>::ptr right_list(new aggregate_of<typename Schema::IfcValue>());
+   typename Schema::IfcValue::list::ptr station_list(new typename Schema::IfcValue::list);
+   typename Schema::IfcValue::list::ptr left_list(new typename Schema::IfcValue::list);
+   typename Schema::IfcValue::list::ptr right_list(new typename Schema::IfcValue::list);
    for (const auto& deck_point : deck_desc->DeckEdgePoints)
    {
       station_list->push(new typename Schema::IfcLengthMeasure(deck_point.Station));
@@ -2091,7 +2091,7 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    auto pset_deck = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsDeck"), boost::none, deck_properties);
    file.addEntity(pset_deck);
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr decks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr decks(new typename Schema::IfcObjectDefinition::list);
    decks->push(slab);
    auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Defines slab edge offset geometry"), boost::none, decks, pset_deck);
    file.addEntity(rel_defines_by_properties);
@@ -2168,11 +2168,11 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
    Float64 startStation, startElevation, startGrade;
    auto startPoint = GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
 
-   typename aggregate_of<typename Schema::IfcAxis2PlacementLinear>::ptr cross_section_positions(new aggregate_of<typename Schema::IfcAxis2PlacementLinear>());
-   std::vector<typename aggregate_of<typename Schema::IfcProfileDef>::ptr> cross_sections;
+   typename Schema::IfcAxis2PlacementLinear::list::ptr cross_section_positions(new typename Schema::IfcAxis2PlacementLinear::list);
+   std::vector<typename Schema::IfcProfileDef::list::ptr> cross_sections;
    for (int i = 0; i < nShapesPerBarrier; i++)
    {
-      typename aggregate_of<typename Schema::IfcProfileDef>::ptr ptr(new aggregate_of<typename Schema::IfcProfileDef>());
+      typename Schema::IfcProfileDef::list::ptr ptr(new typename Schema::IfcProfileDef::list);
       cross_sections.push_back(ptr);
    }
 
@@ -2232,7 +2232,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
       } // next shape
    } // next section
 
-   typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+   typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
    for (IndexType shapeIdx = 0; shapeIdx < nShapesPerBarrier; shapeIdx++)
    {
       if (0 < cross_sections[shapeIdx]->size())
@@ -2249,7 +2249,7 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
       auto railing_placement = site->ObjectPlacement();
 
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr shape_representation_list(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
       shape_representation_list->push(shape_representation);
       auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
@@ -2261,11 +2261,11 @@ void CreateRailingSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
 }
 
 template <typename Schema>
-typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    USES_CONVERSION;
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_piers(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr list_of_piers(new typename Schema::IfcObjectDefinition::list);
 
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
    auto station_format = pDisplayUnits->GetStationFormat();
@@ -2307,7 +2307,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
          Classify_Foundation<Schema>(file, foundation);
       }
 
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_foundations(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr list_of_foundations(new typename Schema::IfcObjectDefinition::list);
       list_of_foundations->push(foundation);
 
       // IfcBridgePart::PIER <-> IfcRelAggregates <-> IfcBridgePart::FOUNDATION
@@ -2338,13 +2338,13 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       file.addEntity(referent);
 
       // create and assign Pset_Stationing
-      typename aggregate_of<typename Schema::IfcProperty>::ptr pset_station_properties(new aggregate_of<typename Schema::IfcProperty>());
+      typename Schema::IfcProperty::list::ptr pset_station_properties(new typename Schema::IfcProperty::list);
       pset_station_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new typename Schema::IfcLengthMeasure(pierStation), nullptr));
 
       auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
       file.addEntity(property_set);
 
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr referents(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr referents(new typename Schema::IfcObjectDefinition::list);
       referents->push(referent);
 
       auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates pier station properties to referent"), boost::none, referents, property_set);
@@ -2353,7 +2353,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       // IfcReferent <-> IfcRelPositions <-> IfcBridgePart::PIER,FOUNDATION
       // Without providing geometry, this is how the pier and foundation are positions - referent informs on the position of the products it positions
       std::string strPositions("Positions pier and foundation");
-      typename aggregate_of<typename Schema::IfcProduct>::ptr related_products(new aggregate_of<typename Schema::IfcProduct>());
+      typename Schema::IfcProduct::list::ptr related_products(new typename Schema::IfcProduct::list);
       related_products->push(pier);
       related_products->push(foundation);
       if (pierIdx == 0 || pierIdx == nPiers - 1)
@@ -2370,10 +2370,10 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       AddReferent(file, alignment, referent);
 
       // WORKING HERE - experimenting with custom property sets for girder spacing
-      typename aggregate_of<typename Schema::IfcProperty>::ptr spacing_property(new aggregate_of<typename Schema::IfcProperty>());
+      typename Schema::IfcProperty::list::ptr spacing_property(new typename Schema::IfcProperty::list);
       if ( 0 < pierIdx )
       {
-         typename aggregate_of<typename Schema::IfcValue>::ptr list(new aggregate_of<typename Schema::IfcValue>());
+         typename Schema::IfcValue::list::ptr list(new typename Schema::IfcValue::list);
 
          auto spacing = pBridge->GetGirderSpacing(pierIdx, pgsTypes::PierFaceType::Back, pgsTypes::MeasurementLocation::AtCenterlineBearing, pgsTypes::MeasurementType::NormalToItem);
          for (auto s : spacing)
@@ -2385,7 +2385,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
 
       if (pierIdx < nPiers - 1)
       {
-         typename aggregate_of<typename Schema::IfcValue>::ptr list(new aggregate_of<typename Schema::IfcValue>());
+         typename Schema::IfcValue::list::ptr list(new typename Schema::IfcValue::list);
 
          auto spacing = pBridge->GetGirderSpacing(pierIdx, pgsTypes::PierFaceType::Ahead, pgsTypes::MeasurementLocation::AtCenterlineBearing, pgsTypes::MeasurementType::NormalToItem);
          for (auto s : spacing)
@@ -2396,7 +2396,7 @@ typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr CreatePiers(Ifc
       }
       auto pset_spacing = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsSpacing"), boost::none, spacing_property);
       file.addEntity(pset_spacing);
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr piers(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr piers(new typename Schema::IfcObjectDefinition::list);
       piers->push(pier);
       rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates girder spacing property set to pier"), boost::none, piers, pset_spacing);
       file.addEntity(rel_defines_by_properties);
@@ -2443,7 +2443,7 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
    );
 
    // aggregate the rebar assembly with its girder segment
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_aggregate_elements(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr beam_aggregate_elements(new typename Schema::IfcObjectDefinition::list);
    beam_aggregate_elements->push(rebar_assembly);
    auto rel_aggregates = new typename Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Girder_Segment_Aggregates_Rebar_Assembly"), boost::none, beam, beam_aggregate_elements);
    file.addEntity(rel_aggregates);
@@ -2494,7 +2494,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    CreateAssumedConstructionSequence(file, pBroker, options); // must come after IfcBridge is created because this function looks up the bridge
 
    // create a list of bridges in the site
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_bridges_in_the_site(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr list_of_bridges_in_the_site(new typename Schema::IfcObjectDefinition::list);
    list_of_bridges_in_the_site->push(bridge); // add the bridge to the list
 
    // aggregate the bridges with the side
@@ -2537,7 +2537,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       Classify_Deck<Schema>(file, deck);
    }
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_bridge_parts(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr list_of_bridge_parts(new typename Schema::IfcObjectDefinition::list);
    list_of_bridge_parts->push(deck);
    list_of_bridge_parts->push(superstructure);
    list_of_bridge_parts->push(substructure);
@@ -2619,10 +2619,10 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
    // define the common properties of the precast girder type
    // specifically, precast concrete is defined by Pset_ConcreteElementGeneral with AssemblyPlace=FACTORY, CastingMethod=PRECAST
-   typename aggregate_of<typename Schema::IfcPropertySetDefinition>::ptr property_sets(new aggregate_of<typename Schema::IfcPropertySetDefinition>());
+   typename Schema::IfcPropertySetDefinition::list::ptr property_sets(new typename Schema::IfcPropertySetDefinition::list);
 
    // Pset_ConcreteElementGeneral
-   typename aggregate_of<typename Schema::IfcProperty>::ptr concrete_element_general_properties(new aggregate_of<typename Schema::IfcProperty>());
+   typename Schema::IfcProperty::list::ptr concrete_element_general_properties(new typename Schema::IfcProperty::list);
    // PEnum_AssemblyPlace
    std::vector<std::string> assembly_place_enum_values{ "FACTORY","OFFSITE","SITE","OTHER","UNKNOWN","UNSET" };
    auto assembly_place_property_enum_values = createPropertyEnumeration<Schema>("PEnum_AssemblyPlace", assembly_place_enum_values);
@@ -2673,7 +2673,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    }
    else
    {
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr beam_object_definitions(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr beam_object_definitions(new typename Schema::IfcObjectDefinition::list);
       for (auto beam_name : beam_names)
       {
          auto beam_type = new typename Schema::IfcBeamType(
@@ -2697,7 +2697,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
 
    // build the beams
-   typename aggregate_of<typename Schema::IfcObject>::ptr beam_objects(new aggregate_of<typename Schema::IfcObject>());
+   typename Schema::IfcObject::list::ptr beam_objects(new typename Schema::IfcObject::list);
 
 
    std::vector<typename Schema::IfcProduct*> girders;
@@ -2734,7 +2734,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
          if (1 < nSegments)
          {
-            typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_girder_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+            typename Schema::IfcObjectDefinition::list::ptr list_of_girder_segments(new typename Schema::IfcObjectDefinition::list);
             for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
             {
                CSegmentKey segmentKey(grpIdx, gdrIdx, segIdx);
@@ -2787,11 +2787,11 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
 
                   // Should do this in a IfcBeamType 
-                  typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
+                  typename Schema::IfcObjectDefinition::list::ptr related_segments(new typename Schema::IfcObjectDefinition::list);
                   related_segments->push(closure_joint);
 
                   // Pset_ConcreteElementGeneral
-                  typename aggregate_of<typename Schema::IfcProperty>::ptr concrete_element_general_properties(new aggregate_of<typename Schema::IfcProperty>());
+                  typename Schema::IfcProperty::list::ptr concrete_element_general_properties(new typename Schema::IfcProperty::list);
                   // PEnum_AssemblyPlace
                   std::vector<std::string> assembly_place_enum_values{ "FACTORY","OFFSITE","SITE","OTHER","UNKNOWN","UNSET" };
                   auto assembly_place_property_enum_values = createPropertyEnumeration<Schema>("PEnum_AssemblyPlace", assembly_place_enum_values);
@@ -2943,7 +2943,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
     organization->setName(std::string("Richard Brice, PE"));
 
     // this is an optional parameter, but the AASHTO IDS requires it
-    typename aggregate_of<typename Schema::IfcActorRole>::ptr roles(new aggregate_of<typename Schema::IfcActorRole>());
+    typename Schema::IfcActorRole::list::ptr roles(new typename Schema::IfcActorRole::list);
     auto role = new typename Schema::IfcActorRole(Schema::IfcRoleEnum::IfcRole_CIVILENGINEER, boost::none, boost::none);
     file.addEntity(role);
     roles->push(role);
