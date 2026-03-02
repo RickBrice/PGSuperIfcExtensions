@@ -127,7 +127,7 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
 
 
    // Aggregate work schedules with the work plan
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr work_schedules(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr work_schedules(new typename Schema::IfcObjectDefinition::list);
    work_schedules->push(work_schedule);
 
    auto rel_aggregates = new typename Schema::IfcRelAggregates(
@@ -162,7 +162,7 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr tasks(new typename Schema::IfcObjectDefinition::list);
    tasks->push(summary_task);
 
    // Assign the tasks of the construction sequence to the work schedule
@@ -207,7 +207,7 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
       boost::none, // Description 
       nullptr);
 
-   typename aggregate_of<typename Schema::IfcDefinitionSelect>::ptr tasks2(new aggregate_of<typename Schema::IfcDefinitionSelect>());
+   typename Schema::IfcDefinitionSelect::list::ptr tasks2(new typename Schema::IfcDefinitionSelect::list);
    tasks2->push(summary_task);
 
    // associate document with task
@@ -217,8 +217,7 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
    //
    // Define sub-tasks of the summary task
    //
-   
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr sub_tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr sub_tasks(new typename Schema::IfcObjectDefinition::list);
 
    auto sub_task1 = CreateStage1Tasks(file, pBroker, options);
    auto sub_task2 = CreateStage2Tasks(file, pBroker, options);
@@ -289,7 +288,7 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcTask.htm
    // Model the individual steps of girder erection step as sub-tasks of the parent task
    // Each sub-task is IfcRelNests with the parent task.
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr subtasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr subtasks(new typename Schema::IfcObjectDefinition::list);
 
    auto construct_piers = new typename Schema::IfcTask(
       IfcParse::IfcGlobalId(),
@@ -387,7 +386,7 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
 
       subtasks->push(remove_temp_strands_task);
 
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr remove_temp_strands_subtasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr remove_temp_strands_subtasks(new typename Schema::IfcObjectDefinition::list);
 
       auto remove_poly = new typename Schema::IfcTask(
          IfcParse::IfcGlobalId(),
@@ -519,7 +518,7 @@ typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, st
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr subtasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr subtasks(new typename Schema::IfcObjectDefinition::list);
 
    auto install_bracing = new typename Schema::IfcTask(
       IfcParse::IfcGlobalId(),
@@ -693,7 +692,7 @@ typename Schema::IfcTask* GetStage4Task(IfcHierarchyHelper<Schema>& file, std::s
 template <typename Schema>
 void AssignTaskToProduct(typename Schema::IfcTask* task,typename Schema::IfcProduct* product,IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr tasks(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr tasks(new typename Schema::IfcObjectDefinition::list);
    tasks->push(task);
    auto rel_assigns_to_product = new typename Schema::IfcRelAssignsToProduct(
       IfcParse::IfcGlobalId(),

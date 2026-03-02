@@ -163,8 +163,8 @@ CComPtr<IPoint2d> GetAlignmentStartPoint(std::shared_ptr<WBFL::EAF::Broker> pBro
 template <typename Schema>
 void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcAlignmentHorizontal** phorizontal_alignment, typename Schema::IfcRelNests** pnests_horizontal_segments, typename Schema::IfcCompositeCurve** phorizontal_geometry_base_curve)
 {
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
+   typename Schema::IfcObjectDefinition::list::ptr alignment_segments(new typename Schema::IfcObjectDefinition::list);
+   typename Schema::IfcSegment::list::ptr curve_segments(new Schema::IfcSegment::list);
 
    Float64 startStation, startElevation, startGrade;
    auto startPoint = GetAlignmentStartPoint(pBroker,&startStation,&startElevation,&startGrade);
@@ -372,8 +372,8 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr
 template <typename Schema>
 void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcCompositeCurve* horizontal_geometry_base_curve, const CIfcExportOptions& options, typename Schema::IfcAlignmentVertical** pvertical_profile, typename Schema::IfcRelNests** pnests_vertical_segments, typename Schema::IfcGradientCurve** palignment_gradient_curve)
 {
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr profile_segments(new aggregate_of<typename Schema::IfcObjectDefinition>());
-   typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments(new aggregate_of<typename Schema::IfcSegment>());
+   typename Schema::IfcObjectDefinition::list::ptr profile_segments(new Schema::IfcObjectDefinition::list);
+   typename Schema::IfcSegment::list::ptr curve_segments(new Schema::IfcSegment::list);
 
    // Profile is defined by profile segments located at "distance from start" of the alignment and "length".
    // We can't use stations to define the profile.
@@ -652,7 +652,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBF
 // creates representations for each IfcAlignmentSegment per CT 4.1.7.1.1.4
 // https://standards.buildingsmart.org/IFC/RELEASE/IFC4_3/HTML/concepts/Product_Shape/Product_Geometric_Representation/Alignment_Geometry/Alignment_Geometry_-_Segments/content.html
 template <typename Schema>
-void CreateAlignmentSegmentRepresentations(IfcHierarchyHelper<typename Schema>& file, typename Schema::IfcLocalPlacement* global_placement, typename Schema::IfcGeometricRepresentationSubContext* segment_axis_subcontext, typename aggregate_of<typename Schema::IfcSegment>::ptr curve_segments, typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr segments)
+void CreateAlignmentSegmentRepresentations(IfcHierarchyHelper<typename Schema>& file, typename Schema::IfcLocalPlacement* global_placement, typename Schema::IfcGeometricRepresentationSubContext* segment_axis_subcontext, typename Schema::IfcSegment::list::ptr curve_segments, typename Schema::IfcObjectDefinition::list::ptr segments)
 {
    auto cs_iter = curve_segments->begin();
    auto s_iter = segments->begin();
@@ -661,13 +661,13 @@ void CreateAlignmentSegmentRepresentations(IfcHierarchyHelper<typename Schema>& 
       auto curve_segment = *cs_iter;
       auto alignment_segment = (*s_iter)->as<typename Schema::IfcAlignmentSegment>();
 
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr representation_items(new Schema::IfcRepresentationItem::list);
       representation_items->push(curve_segment);
 
       auto axis_representation = new typename Schema::IfcShapeRepresentation(segment_axis_subcontext, std::string("Axis"), std::string("Segment"), representation_items);
       file.addEntity(axis_representation);
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
       representations->push(axis_representation);
 
       auto product = new typename Schema::IfcProductDefinitionShape(std::string("Product Definition of a Segment"), boost::none, representations);
@@ -714,7 +714,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
          file.addEntity(footprint_model_representation_subcontext);
       }
 
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr horizontal_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr horizontal_representation_items(new Schema::IfcRepresentationItem::list);
       horizontal_representation_items->push(composite_curve);
 
       typename Schema::IfcShapeRepresentation* footprint_curve2d_shape_representation = nullptr;
@@ -724,13 +724,13 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
          file.addEntity(footprint_curve2d_shape_representation);
       }
 
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr vertical_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr vertical_representation_items(new typename Schema::IfcRepresentationItem::list);
       vertical_representation_items->push(gradient_curve);
 
       auto curve3d_shape_representation = new typename Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), vertical_representation_items);
       file.addEntity(curve3d_shape_representation);
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
       if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
       {
          representations->push(footprint_curve2d_shape_representation); // 2D alignment geometry (Horizontal + Vertical)
@@ -763,7 +763,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
 
       IndexType nAlignmentPoints = 100;
       Float64 stationInc = (endStation - startStation) / (nAlignmentPoints + 1);
-      typename aggregate_of<typename Schema::IfcCartesianPoint>::ptr points(new aggregate_of<typename Schema::IfcCartesianPoint>());
+      typename Schema::IfcCartesianPoint::list::ptr points(new Schema::IfcCartesianPoint::list);
       for (IndexType i = 0; i <= nAlignmentPoints; i++)
       {
          Float64 offset = 0.0;
@@ -778,13 +778,13 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
       }
       polyline = new typename Schema::IfcPolyline(points);
 
-      typename aggregate_of<typename Schema::IfcRepresentationItem>::ptr alignment_representation_items(new aggregate_of<typename Schema::IfcRepresentationItem>());
+      typename Schema::IfcRepresentationItem::list::ptr alignment_representation_items(new Schema::IfcRepresentationItem::list);
       alignment_representation_items->push(polyline);
 
       auto curve3d_shape_representation = new typename Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), alignment_representation_items);
       file.addEntity(curve3d_shape_representation);
 
-      typename aggregate_of<typename Schema::IfcRepresentation>::ptr representations(new aggregate_of<typename Schema::IfcRepresentation>());
+      typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
       representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
       alignment_representation = new typename Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
       // this alignment_representation will be assigned to the IfcAlignment when it is created a little further down.
@@ -808,7 +808,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    {
       // 4.1.4.4.1 Alignments nest horizontal and vertical layouts
       // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Nesting/Alignment_Layouts/content.html
-      typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr alignment_layout_list(new aggregate_of<typename Schema::IfcObjectDefinition>());
+      typename Schema::IfcObjectDefinition::list::ptr alignment_layout_list(new Schema::IfcObjectDefinition::list);
       alignment_layout_list->push(horizontal_alignment_layout);
       alignment_layout_list->push(vertical_profile_layout);
 
@@ -819,7 +819,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    // IFC 4.1.4.1.1 "Every IfcAlignment must be related to IfcProject using the IfcRelAggregates relationship"
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Aggregation/Alignment_Aggregation_To_Project/content.html
    // IfcProject <-> IfcRelAggregates <-> IfcAlignment
-   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_alignments_in_project(new aggregate_of<typename Schema::IfcObjectDefinition>());
+   typename Schema::IfcObjectDefinition::list::ptr list_of_alignments_in_project(new Schema::IfcObjectDefinition::list);
    list_of_alignments_in_project->push(alignment);
    auto project = file.getSingle<typename Schema::IfcProject>();
    auto aggregate_alignments_with_project = new typename Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Alignments in project"), boost::none, project, list_of_alignments_in_project);
