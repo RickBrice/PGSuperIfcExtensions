@@ -53,33 +53,33 @@ private:
    CComPtr<IGeomUtil2d> m_GeomUtil;
 
    CIfcImporter::ImportResult InitAlignmentParameters(IfcParse::IfcFile& file);
-   Ifc4x3_add2::IfcAlignment* GetAlignment(IfcParse::IfcFile& file);
-   Float64 LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
-   void LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment, Float64 stationAdjustment);
-   bool IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment);
-   void GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
-   Float64 GetStartStation(Ifc4x3_add2::IfcAlignment* pAlignment);
+   IfcSchema::IfcAlignment* GetAlignment(IfcParse::IfcFile& file);
+   Float64 LoadAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment);
+   void LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment, Float64 stationAdjustment);
+   bool IsValidAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment);
+   void GetStations(IfcSchema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
+   Float64 GetStartStation(IfcSchema::IfcAlignment* pAlignment);
 
    enum LastAlignmentType { Unknown, Line, Curve } m_LastAlignmentType;
 
    // adds a line to the alignment. returns the station at the end of the line
-   Float64 OnLine(Float64 startStation, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pLine);
+   Float64 OnLine(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pLine);
    Float64 OnLine(Float64 sx, Float64 sy, Float64 startStation, Float64 startDirection, Float64 length);
 
    // adds a curve to the alignment. returns the station at the end of the curve
-   Float64 OnCurve(Float64 startStation, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pEntrySpiral, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pCurve, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pExitSpiral);
+   Float64 OnCurve(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pEntrySpiral, IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IfcSchema::IfcAlignmentHorizontalSegment* pExitSpiral);
 
    // adds linear segment to the profile
-   void OnLinearSegment(Float64 startStation, Ifc4x3_add2::IfcAlignmentVerticalSegment* pLinearSegment);
+   void OnLinearSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment* pLinearSegment);
 
    // adds a parabolic curve to the profile
-   void OnParabolicSegment(Float64 startStation, Ifc4x3_add2::IfcAlignmentVerticalSegment* pParaCurve);
+   void OnParabolicSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment* pParaCurve);
 
-   void GetCurvePoints(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter);
+   void GetCurvePoints(IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter);
 
-   void GetSpiralPoints(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd);
+   void GetSpiralPoints(IfcSchema::IfcAlignmentHorizontalSegment* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd);
 
-   void CheckSpiralType(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral);
+   void CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSegment* pSpiral);
 
-   void GetPoint(Ifc4x3_add2::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY);
+   void GetPoint(IfcSchema::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY);
 };

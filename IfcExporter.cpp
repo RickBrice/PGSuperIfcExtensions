@@ -2411,7 +2411,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
 template <typename Schema>
 typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType* beam_type,const CIfcExportOptions& options)
 {
-   auto beam = new Ifc4x3_add2::IfcBeam(
+   auto beam = new IfcSchema::IfcBeam(
       IfcParse::IfcGlobalId(),
       nullptr, // OwnerHistory
       name,  // Name
@@ -2753,7 +2753,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
                   std::ostringstream os_closure_name;
                   os_closure_name << "Closure Joint " << LABEL_SEGMENT(segIdx);
                   auto closure_joint_name = os_closure_name.str();
-                  auto closure_joint = new Ifc4x3_add2::IfcBeam(
+                  auto closure_joint = new IfcSchema::IfcBeam(
                      IfcParse::IfcGlobalId(),
                      nullptr, // OwnerHistory
                      closure_joint_name,
@@ -2997,7 +2997,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    bool bResult = false;
    switch (options.schema)
    {
-   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<Ifc4x3_add2>(pBroker, strFilePath, options); break;
+   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, strFilePath, options); break;
    default:
       ATLASSERT(false); // is there a new typename Schema type
    }

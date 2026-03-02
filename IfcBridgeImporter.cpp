@@ -62,9 +62,9 @@ std::pair<GroupIndexType, GirderIndexType> ExtractSpanAndGirder(const std::strin
    return { grpIdx - 1,gdrIdx - 1 };
 }
 
-Ifc4x3_add2::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridgePartTypeEnum part_type)
+IfcSchema::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
 {
-   auto parts = file.instances_by_type<Ifc4x3_add2::IfcBridgePart>();
+   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
    for (auto part : *parts)
    {
       if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
@@ -75,10 +75,10 @@ Ifc4x3_add2::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, Ifc4x3_add2::
    return nullptr;
 }
 
-std::vector<Ifc4x3_add2::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridgePartTypeEnum part_type)
+std::vector<IfcSchema::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
 {
-   std::vector<Ifc4x3_add2::IfcBridgePart*> parts_found;
-   auto parts = file.instances_by_type<Ifc4x3_add2::IfcBridgePart>();
+   std::vector<IfcSchema::IfcBridgePart*> parts_found;
+   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
    for (auto part : *parts)
    {
       if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
@@ -97,7 +97,7 @@ typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* 
    {
       for (auto rel : *associations)
       {
-         auto rel_associates_material = rel->as<Ifc4x3_add2::IfcRelAssociatesMaterial>();
+         auto rel_associates_material = rel->as<IfcSchema::IfcRelAssociatesMaterial>();
          if (rel_associates_material)
          {
             auto material = rel_associates_material->RelatingMaterial();
@@ -112,10 +112,10 @@ typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* 
 int GetBeamTypeCount(IfcParse::IfcFile& file)
 {
    int count = 0;
-   auto beam_types = file.instances_by_type<Ifc4x3_add2::IfcBeamType>();
+   auto beam_types = file.instances_by_type<IfcSchema::IfcBeamType>();
    for (auto beam_type : *beam_types)
    {
-      if (beam_type->PredefinedType() == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
+      if (beam_type->PredefinedType() == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
          count++;
    }
 
@@ -134,7 +134,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    if (bridge == nullptr)
       return CIfcImporter::ImportResult::NotFound;
 
-   auto parts = file.instances_by_type<Ifc4x3_add2::IfcBridgePart>();
+   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
    PierIndexType nPiers = 0;
    for (auto& part : *parts)
    {
@@ -144,7 +144,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 
 
    SpanIndexType nSpans = INVALID_INDEX;
-   auto value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
+   auto value = GetProperty<IfcSchema, IfcSchema::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
    if (value)
    {
       nSpans = (SpanIndexType)(*value);
@@ -158,17 +158,17 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 
    std::vector<GirderIndexType> nGirders;
    nGirders.assign(nSpans, 0);
-   auto superstructure = GetBridgePart(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_SUPERSTRUCTURE);
+   auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_SUPERSTRUCTURE);
    auto rel_contained_elements = superstructure->ContainsElements();
    for (auto contained_element : *rel_contained_elements)
    {
       auto related_elements = contained_element->RelatedElements();
       for (auto related_element : *related_elements)
       {
-         auto beam = related_element->as<Ifc4x3_add2::IfcBeam>();
+         auto beam = related_element->as<IfcSchema::IfcBeam>();
          if (beam)
          {
-            auto value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+            auto value = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
             if (!value)
             {
                IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
@@ -218,8 +218,8 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 
    // Per TPF modeling guide, piers and abutments are different types.
    // Get the abutments and piers and put into a single vector because we need to treat them the same in PGSuper
-   std::vector<Ifc4x3_add2::IfcBridgePart*> abutments = GetBridgeParts(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
-   std::vector<Ifc4x3_add2::IfcBridgePart*> piers = GetBridgeParts(file, Ifc4x3_add2::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
+   std::vector<IfcSchema::IfcBridgePart*> abutments = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
+   std::vector<IfcSchema::IfcBridgePart*> piers = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
    piers.insert(piers.begin(), abutments.front());
    piers.insert(piers.end(), abutments.back());
 
@@ -238,7 +238,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
       }
 
       auto positioning_element = (*rel_positions->begin())->RelatingPositioningElement();
-      auto ref = positioning_element->as<Ifc4x3_add2::IfcReferent>();
+      auto ref = positioning_element->as<IfcSchema::IfcReferent>();
       if (!ref)
       {
          std::_tostringstream os;
@@ -246,7 +246,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
          IFC_THROW(os.str().c_str());
       }
 
-      auto station = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(ref, "Pset_Stationing", "Station");
+      auto station = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(ref, "Pset_Stationing", "Station");
       if (!station)
       {
          std::_tostringstream os;
@@ -266,7 +266,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
       auto pPier = bridge_desc.GetPier(pierIdx);
       if (0 < pierIdx)
       {
-         auto spacing = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(pier, "pgsSpacing", "Back_Spacing");
+         auto spacing = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(pier, "pgsSpacing", "Back_Spacing");
          if (spacing.empty())
          {
             std::_tostringstream os;
@@ -287,7 +287,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 
       if (pierIdx < nPiers - 1)
       {
-         auto spacing = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(pier, "pgsSpacing", "Ahead_Spacing");
+         auto spacing = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(pier, "pgsSpacing", "Ahead_Spacing");
          if (spacing.empty())
          {
             std::_tostringstream os;
@@ -323,12 +323,12 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
 {
    USES_CONVERSION;
 
-   auto beams = file.instances_by_type<Ifc4x3_add2::IfcBeam>();
-   Ifc4x3_add2::IfcBeam::list::ptr prestressed_beams(new Ifc4x3_add2::IfcBeam::list);
+   auto beams = file.instances_by_type<IfcSchema::IfcBeam>();
+   IfcSchema::IfcBeam::list::ptr prestressed_beams(new IfcSchema::IfcBeam::list);
    for (auto beam : *beams)
    {
-      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
-      if (predefined_type.value_or(Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM && HasClassification<Ifc4x3_add2>(beam, "usBridge_GirderPrestressedConcrete"))
+      auto predefined_type = GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam);
+      if (predefined_type.value_or(IfcSchema::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM && HasClassification<IfcSchema>(beam, "usBridge_GirderPrestressedConcrete"))
          prestressed_beams->push(beam);
    }
 
@@ -338,7 +338,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
    GET_IFACE2(m_Importer.GetBroker(),ILibrary, pLibrary);
    if (bridge_desc.UseSameGirderForEntireBridge())
    {
-      auto type = GetType<Ifc4x3_add2::IfcBeamType>(*beams->begin());
+      auto type = GetType<IfcSchema::IfcBeamType>(*beams->begin());
       auto girder_name = type->Name().get_value_or(std::string("Unknown"));
       auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
       if (!girder_library_entry)
@@ -358,22 +358,22 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
 
    for (auto beam : *prestressed_beams)
    {
-      auto value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+      auto value = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
       if (!value)
       {
          IFC_THROW(_T("DesignLocationNumber in Pset_PrecastConcreteElement property set not found"));
       }
 
       auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
-      auto fci = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcPressureMeasure>(beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
+      auto fci = GetProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
       if (!fci)
       {
          IFC_THROW(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
       }
       bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fci = *fci;
 
-      auto material = GetMaterial<Ifc4x3_add2>(beam);
-      auto fc = GetMaterialProperty<Ifc4x3_add2, Ifc4x3_add2::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
+      auto material = GetMaterial<IfcSchema>(beam);
+      auto fc = GetMaterialProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
       if (!fc)
       {
          IFC_THROW(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
@@ -382,7 +382,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
 
       if (!bridge_desc.UseSameGirderForEntireBridge())
       {
-         auto type = GetType<Ifc4x3_add2::IfcBeamType>(beam);
+         auto type = GetType<IfcSchema::IfcBeamType>(beam);
          auto girder_name = type->Name().get_value_or(std::string("Unknown"));
          auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
          if (!girder_library_entry)
@@ -403,10 +403,10 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
    }
 }
 
-bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge)
 {
    // must be a girder bridge
-   if (bridge->PredefinedType().value_or(Ifc4x3_add2::IfcBridgeTypeEnum::IfcBridgeType_NOTDEFINED) != Ifc4x3_add2::IfcBridgeTypeEnum::IfcBridgeType_GIRDER)
+   if (bridge->PredefinedType().value_or(IfcSchema::IfcBridgeTypeEnum::IfcBridgeType_NOTDEFINED) != IfcSchema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER)
       return false;
 
    // This check could be far less strict if we can assume the user provided us a PSG bridge.
@@ -418,7 +418,7 @@ bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::Ifc
    return true;
 }
 
-bool CIfcBridgeImporter::HasValidGirders(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+bool CIfcBridgeImporter::HasValidGirders(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge)
 {
    if (HasValidGirdersByTPF(file, bridge))
       return true;
@@ -431,11 +431,11 @@ bool CIfcBridgeImporter::HasValidGirders(IfcParse::IfcFile& file, Ifc4x3_add2::I
    return false;
 }
 
-bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge)
 {
-   auto superstructure = GetBridgePart(file, Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+   auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
 
-   auto beams = file.instances_by_type<Ifc4x3_add2::IfcBeam>();
+   auto beams = file.instances_by_type<IfcSchema::IfcBeam>();
    bool valid_beams = true;
    for (auto beam : *beams)
    {
@@ -455,12 +455,12 @@ bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_ad
       }
 
       // beam must be IfcBeam.BEAM
-      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcBeam, Ifc4x3_add2::IfcBeamType, Ifc4x3_add2::IfcBeamTypeEnum::Value>(beam);
-      if (predefined_type.value_or(Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == Ifc4x3_add2::IfcBeamTypeEnum::IfcBeamType_BEAM)
+      auto predefined_type = GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam);
+      if (predefined_type.value_or(IfcSchema::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
       {
          // beams must be classified as precast girders
-         auto assembly_place = GetPropertyEnum<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "AssemblyPlace");
-         auto casting_method = GetPropertyEnum<Ifc4x3_add2, Ifc4x3_add2::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "CastingMethod");
+         auto assembly_place = GetPropertyEnum<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "AssemblyPlace");
+         auto casting_method = GetPropertyEnum<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "CastingMethod");
 
          // level 1 check - if there is an assembly_place and casting_method, use that for the determination
          // otherwise use the more specific usBridge classification
@@ -479,7 +479,7 @@ bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_ad
          {
             // This is not a great requirement - TPF has decided that this is the only way to determine if a beam is prestressed concrete
             // I think we are going to find that many don't use this classification
-            if (!HasClassification<Ifc4x3_add2>(beam, "usBridge_GirderPrestressedConcrete"))
+            if (!HasClassification<IfcSchema>(beam, "usBridge_GirderPrestressedConcrete"))
             {
                valid_beams = false;
                break;
@@ -491,16 +491,16 @@ bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_ad
    return valid_beams;
 }
 
-bool CIfcBridgeImporter::HasValidGirdersByOther(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge)
+bool CIfcBridgeImporter::HasValidGirdersByOther(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge)
 {
    // This function attempts to determine if all the beams in the superstructure are precast concrete.
    // The basic idea is that the beams are IfcElementAssembly and they are factory assembled girders.
    // A factory assembled girder alone is not enough to claim the girders are precast concrete.
    //
    // This function may be a bad idea... keep it for now, but be skeptical
-   auto superstructure = GetBridgePart(file, Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+   auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
 
-   auto element_assemblies = file.instances_by_type<Ifc4x3_add2::IfcElementAssembly>();
+   auto element_assemblies = file.instances_by_type<IfcSchema::IfcElementAssembly>();
    bool valid_beams = true;
    for (auto element_assembly : *element_assemblies)
    {
@@ -520,10 +520,10 @@ bool CIfcBridgeImporter::HasValidGirdersByOther(IfcParse::IfcFile& file, Ifc4x3_
       }
 
       auto assembly_place = element_assembly->AssemblyPlace();
-      bool is_factory_assembled = (assembly_place.value_or(Ifc4x3_add2::IfcAssemblyPlaceEnum::IfcAssemblyPlace_NOTDEFINED) == Ifc4x3_add2::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY);
+      bool is_factory_assembled = (assembly_place.value_or(IfcSchema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_NOTDEFINED) == IfcSchema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY);
 
-      auto predefined_type = GetPredefinedType<Ifc4x3_add2::IfcElementAssembly, Ifc4x3_add2::IfcElementAssemblyType, Ifc4x3_add2::IfcElementAssemblyTypeEnum::Value>(element_assembly);
-      bool is_girder = (predefined_type.value_or(Ifc4x3_add2::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_NOTDEFINED) == Ifc4x3_add2::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
+      auto predefined_type = GetPredefinedType<IfcSchema::IfcElementAssembly, IfcSchema::IfcElementAssemblyType, IfcSchema::IfcElementAssemblyTypeEnum::Value>(element_assembly);
+      bool is_girder = (predefined_type.value_or(IfcSchema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_NOTDEFINED) == IfcSchema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_GIRDER);
       if (!is_factory_assembled || !is_girder)
       {
          valid_beams = false;
@@ -534,15 +534,15 @@ bool CIfcBridgeImporter::HasValidGirdersByOther(IfcParse::IfcFile& file, Ifc4x3_
    return valid_beams;
 }
 
-Ifc4x3_add2::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
+IfcSchema::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
 {
    USES_CONVERSION;
 
-   auto bridges = file.instances_by_type<Ifc4x3_add2::IfcBridge>();
+   auto bridges = file.instances_by_type<IfcSchema::IfcBridge>();
 
    if (1 <= bridges->size())
    {
-      std::vector<Ifc4x3_add2::IfcBridge*> valid_bridges;
+      std::vector<IfcSchema::IfcBridge*> valid_bridges;
       for (auto bridge : *bridges)
       {
          if (IsValidBridge(file, bridge))
@@ -580,26 +580,26 @@ Ifc4x3_add2::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
 
 void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc)
 {
-   auto slabs = file.instances_by_type<Ifc4x3_add2::IfcSlab>();
-   auto it = std::find_if(slabs->begin(), slabs->end(), [](const auto& slab) {return slab->PredefinedType() == Ifc4x3_add2::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
+   auto slabs = file.instances_by_type<IfcSchema::IfcSlab>();
+   auto it = std::find_if(slabs->begin(), slabs->end(), [](const auto& slab) {return slab->PredefinedType() == IfcSchema::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
    if (it == slabs->end())
       return; // no slabs
 
    auto slab = *it;
 
-   auto stations = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "Stations");
+   auto stations = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "Stations");
    if (stations.empty())
    {
       IFC_THROW(_T("Stations property in pgsDeck property set not found"));
    }
 
-   auto left_edges = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdges");
+   auto left_edges = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdges");
    if (left_edges.empty())
    {
       IFC_THROW(_T("LeftEdges property in pgsDeck property set not found"));
    }
 
-   auto right_edges = GetPropertyList<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "RightEdges");
+   auto right_edges = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "RightEdges");
    if (right_edges.empty())
    {
       IFC_THROW(_T("RightEdges property in pgsDeck property set not found"));
@@ -612,7 +612,7 @@ void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2
 
    auto* pDeck = bridge_desc.GetDeckDescription();
 
-   auto* gross_depth = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "GrossDepth");
+   auto* gross_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "GrossDepth");
    if (gross_depth)
    {
       pDeck->GrossDepth = *gross_depth;
@@ -622,7 +622,7 @@ void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2
       IFC_THROW(_T("GrossDepth property in pgsDeck property set not found"));
    }
 
-   auto* left_edge_depth = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdgeDepth");
+   auto* left_edge_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdgeDepth");
    if (left_edge_depth)
    {
       pDeck->OverhangEdgeDepth[pgsTypes::stLeft] = *left_edge_depth;
@@ -632,7 +632,7 @@ void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2
       IFC_THROW(_T("LeftEdgeDepth property in pgsDeck property set not found"));
    }
 
-   auto* right_edge_depth = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcLengthMeasure>(slab, "pgsDeck", "RightEdgeDepth");
+   auto* right_edge_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "RightEdgeDepth");
    if (right_edge_depth)
    {
       pDeck->OverhangEdgeDepth[pgsTypes::stRight] = *right_edge_depth;

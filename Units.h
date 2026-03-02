@@ -20,7 +20,7 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 #pragma once
-#include <ifcparse/Ifc4x3_add2.h>
+#include <ifcparse/IfcSchema.h>
 
 #include <EAF\EAFDisplayUnits.h>
 

@@ -36,7 +36,7 @@ typename Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, 
       auto related_objects = nest->RelatedObjects();
       for (auto related_object : *related_objects)
       {
-         if (auto referent = related_object->as<Ifc4x3_add2::IfcReferent>())
+         if (auto referent = related_object->as<IfcSchema::IfcReferent>())
          {
             return nest;
          }

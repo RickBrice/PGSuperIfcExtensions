@@ -29,7 +29,7 @@ inline std::string GetEntityType(IfcUtil::IfcBaseInterface* entity)
 
 
 template <typename E>
-E* GetType(Ifc4x3_add2::IfcObject* object)
+E* GetType(IfcSchema::IfcObject* object)
 {
    auto types = object->IsTypedBy();
    for (auto type : *types)
@@ -49,7 +49,7 @@ E* GetType(Ifc4x3_add2::IfcObject* object)
 /// @param object 
 /// @return 
 template <typename O, typename T, typename E>
-boost::optional<typename E> GetPredefinedType(Ifc4x3_add2::IfcObject* object)
+boost::optional<typename E> GetPredefinedType(IfcSchema::IfcObject* object)
 {
    // first check if the object is typed
    auto types = object->IsTypedBy();

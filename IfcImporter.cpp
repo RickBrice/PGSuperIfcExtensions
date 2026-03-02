@@ -43,7 +43,7 @@ CIfcImporter::~CIfcImporter(void)
 
 void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 {
-   auto geometric_representation_contexts = file.instances_by_type<Ifc4x3_add2::IfcGeometricRepresentationContext>();
+   auto geometric_representation_contexts = file.instances_by_type<IfcSchema::IfcGeometricRepresentationContext>();
    auto geometric_representation_context = (0 < geometric_representation_contexts->size()) ? *(geometric_representation_contexts->begin()) : nullptr;
 #pragma Reminder("WORKING HERE - There could be multiple geometric representation contexts, how do we know if we have the right one?")
    if (geometric_representation_context && geometric_representation_context->Precision() != boost::none)
@@ -52,35 +52,35 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
    }
 
 #pragma Reminder("WORKING HERE - UNITS - THERE ARE MANY CASES THIS DOESN'T DEAL WITH")
-   auto unit_assignment_instances = file.instances_by_type<Ifc4x3_add2::IfcUnitAssignment>();
+   auto unit_assignment_instances = file.instances_by_type<IfcSchema::IfcUnitAssignment>();
    ATLASSERT(unit_assignment_instances->size() == 1);
    auto unit_assignment = *(unit_assignment_instances->begin());
    auto units = unit_assignment->Units();
    for (auto unit : *units)
    {
-      auto derived_unit = unit->as<Ifc4x3_add2::IfcDerivedUnit>();
-      auto monitary_unit = unit->as<Ifc4x3_add2::IfcMonetaryUnit>();
-      auto si_unit = unit->as<Ifc4x3_add2::IfcSIUnit>();
-      auto conversion_based_unit = unit->as<Ifc4x3_add2::IfcConversionBasedUnit>();
-      auto conversion_based_unit_with_offset = unit->as<Ifc4x3_add2::IfcConversionBasedUnitWithOffset>();
+      auto derived_unit = unit->as<IfcSchema::IfcDerivedUnit>();
+      auto monitary_unit = unit->as<IfcSchema::IfcMonetaryUnit>();
+      auto si_unit = unit->as<IfcSchema::IfcSIUnit>();
+      auto conversion_based_unit = unit->as<IfcSchema::IfcConversionBasedUnit>();
+      auto conversion_based_unit_with_offset = unit->as<IfcSchema::IfcConversionBasedUnitWithOffset>();
 
       if (si_unit)
       {
-         if (si_unit->Name() == Ifc4x3_add2::IfcSIUnitName::IfcSIUnitName_METRE)
+         if (si_unit->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE)
          {
             if (si_unit->Prefix() != boost::none)
             {
                switch (*(si_unit->Prefix()))
                {
-               case Ifc4x3_add2::IfcSIPrefix::IfcSIPrefix_KILO:
+               case IfcSchema::IfcSIPrefix::IfcSIPrefix_KILO:
                   m_pLengthUnit = &WBFL::Units::Measure::Kilometer;
                   break;
 
-               case Ifc4x3_add2::IfcSIPrefix::IfcSIPrefix_CENTI:
+               case IfcSchema::IfcSIPrefix::IfcSIPrefix_CENTI:
                   m_pLengthUnit = &WBFL::Units::Measure::Centimeter;
                   break;
 
-               case Ifc4x3_add2::IfcSIPrefix::IfcSIPrefix_MILLI:
+               case IfcSchema::IfcSIPrefix::IfcSIPrefix_MILLI:
                   m_pLengthUnit = &WBFL::Units::Measure::Millimeter;
                   break;
 
@@ -95,7 +95,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
             continue;
          }
 
-         if (si_unit->Name() == Ifc4x3_add2::IfcSIUnitName::IfcSIUnitName_RADIAN)
+         if (si_unit->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN)
          {
             ATLASSERT(si_unit->Prefix() == boost::none); // not expecting anything like Kilo-radians
             m_pAngleUnit = &WBFL::Units::Measure::Radian;
@@ -105,30 +105,30 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 
       if (conversion_based_unit)
       {
-         auto conversion_factor = GetConversionFactor<Ifc4x3_add2>(conversion_based_unit);
+         auto conversion_factor = GetConversionFactor<IfcSchema>(conversion_based_unit);
 
          auto measure_with_unit = conversion_based_unit->ConversionFactor();
-         auto unit_component = measure_with_unit->UnitComponent()->as<Ifc4x3_add2::IfcSIUnit>();
+         auto unit_component = measure_with_unit->UnitComponent()->as<IfcSchema::IfcSIUnit>();
 
-         if (conversion_based_unit->UnitType() == Ifc4x3_add2::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
+         if (conversion_based_unit->UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
          {
-            ATLASSERT(unit_component->Name() == Ifc4x3_add2::IfcSIUnitName::IfcSIUnitName_RADIAN);
+            ATLASSERT(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN);
 
             if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
             {
                m_pAngleUnit = &WBFL::Units::Measure::Degree;
             }
          }
-         else if (conversion_based_unit->UnitType() == Ifc4x3_add2::IfcUnitEnum::IfcUnit_LENGTHUNIT)
+         else if (conversion_based_unit->UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
          {
-            if (unit_component->Prefix() == Ifc4x3_add2::IfcSIPrefix::IfcSIPrefix_MILLI)
+            if (unit_component->Prefix() == IfcSchema::IfcSIPrefix::IfcSIPrefix_MILLI)
             {
                // lengths are in millimeter, so divide the conversion factor by 1000.
                // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
                conversion_factor /= 1000.0;
             }
 
-            ATLASSERT(unit_component->Name() == Ifc4x3_add2::IfcSIUnitName::IfcSIUnitName_METRE);
+            ATLASSERT(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
 
             if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()))
             {
