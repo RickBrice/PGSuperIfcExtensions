@@ -33,6 +33,9 @@
 #define IFOPSH_WITH_ROCKSDB
 #pragma warning(disable:4250)
 #include <ifcparse/IfcHierarchyHelper.h>
-#include <ifcparse/Ifc4x3_add2.h>
+#include <ifcparse/IfcSchema.h>
 
 #include <ifcparse/IfcAlignmentHelper.h>
+
+
+#define IfcSchema Ifc4x3_add2

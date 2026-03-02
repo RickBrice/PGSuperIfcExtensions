@@ -250,7 +250,7 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
       object_definition = *iter;
       auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-      auto rel_sequence = new Ifc4x3_add2::IfcRelSequence(
+      auto rel_sequence = new IfcSchema::IfcRelSequence(
             IfcParse::IfcGlobalId(),
             nullptr,
             boost::none, // Name
@@ -453,7 +453,7 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
          object_definition = *iter;
          auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-         auto rel_sequence = new Ifc4x3_add2::IfcRelSequence(
+         auto rel_sequence = new IfcSchema::IfcRelSequence(
             IfcParse::IfcGlobalId(),
             nullptr,
             boost::none, // Name
@@ -482,7 +482,7 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
       object_definition = *iter;
       auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-      auto rel_sequence = new Ifc4x3_add2::IfcRelSequence(
+      auto rel_sequence = new IfcSchema::IfcRelSequence(
          IfcParse::IfcGlobalId(),
          nullptr,
          boost::none, // Name
@@ -569,7 +569,7 @@ typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, st
       object_definition = *iter;
       auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-      auto rel_sequence = new Ifc4x3_add2::IfcRelSequence(
+      auto rel_sequence = new IfcSchema::IfcRelSequence(
          IfcParse::IfcGlobalId(),
          nullptr,
          boost::none, // Name

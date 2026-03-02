@@ -33,11 +33,11 @@ public:
 private:
    CIfcImporter& m_Importer;
 
-   Ifc4x3_add2::IfcBridge* GetBridge(IfcParse::IfcFile& file);
-   bool IsValidBridge(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
-   bool HasValidGirders(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
-   bool HasValidGirdersByTPF(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
-   bool HasValidGirdersByOther(IfcParse::IfcFile& file, Ifc4x3_add2::IfcBridge* bridge);
+   IfcSchema::IfcBridge* GetBridge(IfcParse::IfcFile& file);
+   bool IsValidBridge(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
+   bool HasValidGirders(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
+   bool HasValidGirdersByTPF(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
+   bool HasValidGirdersByOther(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
 
    void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
    void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);

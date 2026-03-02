@@ -40,31 +40,31 @@ HRESULT SameLocation(IPoint2d* pnt1, IPoint2d* pnt2, Float64 tolerance)
    return IsEqual(x1, x2, tolerance) && IsEqual(y1, y2, tolerance) ? S_OK : S_FALSE;
 }
 
-bool IsTransitionCurve(Ifc4x3_add2::IfcAlignmentHorizontalSegment* horizontal_segment)
+bool IsTransitionCurve(IfcSchema::IfcAlignmentHorizontalSegment* horizontal_segment)
 {
-   static std::set<Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::Value> transition_curve_types
+   static std::set<IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::Value> transition_curve_types
    {
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE,
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID,
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE,
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC,
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE,
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE,
-      Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE,
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID,
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE,
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC,
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE,
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE,
+      IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND
    };
 
    auto found = transition_curve_types.find(horizontal_segment->PredefinedType());
    return (found == transition_curve_types.end() ? false : true);
 }
 
-bool IsCircularCurve(Ifc4x3_add2::IfcAlignmentHorizontalSegment* horizontal_segment)
+bool IsCircularCurve(IfcSchema::IfcAlignmentHorizontalSegment* horizontal_segment)
 {
-   return horizontal_segment->PredefinedType() == Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC ? true : false;
+   return horizontal_segment->PredefinedType() == IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC ? true : false;
 }
 
-Ifc4x3_add2::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_add2::IfcAlignment* pAlignment)
+IfcSchema::IfcAlignmentHorizontal* GetAlignmentHorizontal(IfcSchema::IfcAlignment* pAlignment)
 {
-   Ifc4x3_add2::IfcAlignmentHorizontal* horizontal_alignment = nullptr;
+   IfcSchema::IfcAlignmentHorizontal* horizontal_alignment = nullptr;
    auto nested = pAlignment->IsNestedBy(); // these are the things that are nested by the alignment
    for (auto rel_nests : *nested)
    {
@@ -72,7 +72,7 @@ Ifc4x3_add2::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_add2::IfcAlig
       auto related_objects = rel_nests->RelatedObjects();
       for (auto related_object : *related_objects)
       {
-         horizontal_alignment = related_object->as<Ifc4x3_add2::IfcAlignmentHorizontal>();
+         horizontal_alignment = related_object->as<IfcSchema::IfcAlignmentHorizontal>();
          if (horizontal_alignment) break;
       }
       if (horizontal_alignment) break;
@@ -81,9 +81,9 @@ Ifc4x3_add2::IfcAlignmentHorizontal* GetAlignmentHorizontal(Ifc4x3_add2::IfcAlig
    return horizontal_alignment;
 }
 
-Ifc4x3_add2::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_add2::IfcAlignment* pAlignment)
+IfcSchema::IfcAlignmentVertical* GetAlignmentVertical(IfcSchema::IfcAlignment* pAlignment)
 {
-   Ifc4x3_add2::IfcAlignmentVertical* vertical_alignment = nullptr;
+   IfcSchema::IfcAlignmentVertical* vertical_alignment = nullptr;
    auto nested = pAlignment->IsNestedBy(); // these are the things that are nested by the alignment
    for (auto rel_nests : *nested)
    {
@@ -91,7 +91,7 @@ Ifc4x3_add2::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_add2::IfcAlignmen
       auto related_objects = rel_nests->RelatedObjects();
       for (auto related_object : *related_objects)
       {
-         vertical_alignment = related_object->as<Ifc4x3_add2::IfcAlignmentVertical>();
+         vertical_alignment = related_object->as<IfcSchema::IfcAlignmentVertical>();
          if (vertical_alignment) break;
       }
       if (vertical_alignment) break;
@@ -101,14 +101,14 @@ Ifc4x3_add2::IfcAlignmentVertical* GetAlignmentVertical(Ifc4x3_add2::IfcAlignmen
 }
 
 
-Ifc4x3_add2::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(Ifc4x3_add2::IfcAlignmentSegment* alignment_segment)
+IfcSchema::IfcAlignmentHorizontalSegment* GetHorizontalAlignmentSegment(IfcSchema::IfcAlignmentSegment* alignment_segment)
 {
-   return alignment_segment->DesignParameters()->as<Ifc4x3_add2::IfcAlignmentHorizontalSegment>();
+   return alignment_segment->DesignParameters()->as<IfcSchema::IfcAlignmentHorizontalSegment>();
 }
 
-Ifc4x3_add2::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(Ifc4x3_add2::IfcAlignmentSegment* alignment_segment)
+IfcSchema::IfcAlignmentVerticalSegment* GetVerticalAlignmentSegment(IfcSchema::IfcAlignmentSegment* alignment_segment)
 {
-   return alignment_segment->DesignParameters()->as<Ifc4x3_add2::IfcAlignmentVerticalSegment>();
+   return alignment_segment->DesignParameters()->as<IfcSchema::IfcAlignmentVerticalSegment>();
 }
 
 Float64 SpiralX(Float64 ls, Float64 angle)
@@ -173,15 +173,15 @@ CIfcImporter::ImportResult CIfcAlignmentImporter::InitAlignmentParameters(IfcPar
 }
 
 
-Ifc4x3_add2::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile& file)
+IfcSchema::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile& file)
 {
    USES_CONVERSION;
 
-   auto alignments = file.instances_by_type<Ifc4x3_add2::IfcAlignment>();
+   auto alignments = file.instances_by_type<IfcSchema::IfcAlignment>();
 
    if (1 <= alignments->size())
    {
-      std::vector<Ifc4x3_add2::IfcAlignment*> valid_alignments;
+      std::vector<IfcSchema::IfcAlignment*> valid_alignments;
 
       for (auto alignment : *alignments)
       {
@@ -220,7 +220,7 @@ Ifc4x3_add2::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile
 }
 
 
-Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment)
+Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment)
 {
    USES_CONVERSION;
    m_bAlignmentStarted = false; // the alignment data block has not yet been started
@@ -265,7 +265,7 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
    auto end = related_objects->end();
    for (; iter != end; iter++)
    {
-      auto alignment_segment = (*iter)->as<Ifc4x3_add2::IfcAlignmentSegment>();
+      auto alignment_segment = (*iter)->as<IfcSchema::IfcAlignmentSegment>();
       bool bIsThereANextSegment = ((iter + 1) != end);
 
       auto horizontal_alignment_segment = GetHorizontalAlignmentSegment(alignment_segment);
@@ -279,16 +279,16 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
 
       auto predefined_type = horizontal_alignment_segment->PredefinedType();
 
-      Ifc4x3_add2::IfcAlignmentHorizontalSegment* entrySpiral = nullptr;
-      Ifc4x3_add2::IfcAlignmentHorizontalSegment* exitSpiral = nullptr;
+      IfcSchema::IfcAlignmentHorizontalSegment* entrySpiral = nullptr;
+      IfcSchema::IfcAlignmentHorizontalSegment* exitSpiral = nullptr;
 
       Float64 end_station = current_station;
 
-      if (predefined_type == Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE)
+      if (predefined_type == IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_LINE)
       {
          end_station = OnLine(current_station, horizontal_alignment_segment);
       }
-      else if (predefined_type == Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID)
+      else if (predefined_type == IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID)
       {
          // PGSuper can only handle
          // Spiral-Curve
@@ -303,8 +303,8 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
          {
             // if there is a next segment, check to see if it is a curve
             iter++; // advance to next segment
-            auto curve = GetHorizontalAlignmentSegment((*(iter))->as<Ifc4x3_add2::IfcAlignmentSegment>());
-            if (curve->PredefinedType() != Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
+            auto curve = GetHorizontalAlignmentSegment((*(iter))->as<IfcSchema::IfcAlignmentSegment>());
+            if (curve->PredefinedType() != IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
                curve = nullptr;
 
             if (curve)
@@ -314,8 +314,8 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
                if (bIsThereANextSegment)
                {
                   // if there is a next segment, see if it is a spiral
-                  exitSpiral = GetHorizontalAlignmentSegment((*(iter + 1))->as<Ifc4x3_add2::IfcAlignmentSegment>());
-                  if (exitSpiral->PredefinedType() != Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID)
+                  exitSpiral = GetHorizontalAlignmentSegment((*(iter + 1))->as<IfcSchema::IfcAlignmentSegment>());
+                  if (exitSpiral->PredefinedType() != IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID)
                      exitSpiral = nullptr;
 
                   // if not a spiral, pExitSpiral will be nullptr
@@ -341,14 +341,14 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
             m_Importer.AddNote(_T("Element ignored: The last element in the alignment cannot be a Spiral.")); // PGSuper can't model a lone spiral
          }
       }
-      else if (predefined_type == Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
+      else if (predefined_type == IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
       {
          // looking for Curve-Spiral case
          if (bIsThereANextSegment)
          {
             // check to see if the next element is a spiral
-            exitSpiral = GetHorizontalAlignmentSegment((*(iter + 1))->as<Ifc4x3_add2::IfcAlignmentSegment>());
-            if (exitSpiral->PredefinedType() != Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID)
+            exitSpiral = GetHorizontalAlignmentSegment((*(iter + 1))->as<IfcSchema::IfcAlignmentSegment>());
+            if (exitSpiral->PredefinedType() != IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID)
                exitSpiral = nullptr;
 
             // if not a spiral, pExitSpiral will be nullptr
@@ -363,8 +363,8 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
             // the exit spiral and the curve are touching
             if (bIsThereANextSegment)
             {
-               auto next_curve = GetHorizontalAlignmentSegment((*(iter))->as<Ifc4x3_add2::IfcAlignmentSegment>());
-               if (next_curve->PredefinedType() != Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
+               auto next_curve = GetHorizontalAlignmentSegment((*(iter))->as<IfcSchema::IfcAlignmentSegment>());
+               if (next_curve->PredefinedType() != IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
                   next_curve = nullptr;
 
                if (next_curve && exitSpiral)
@@ -397,7 +397,7 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, Ifc4x3_add
 }
 
 
-void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment, Float64 stationAdjustment)
+void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment, Float64 stationAdjustment)
 {
    m_ProfileState = PROFILE_NOT_STARTED;
    m_ProfileData.Station = 0;
@@ -433,7 +433,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::If
       auto end = related_objects->end();
       for (; iter != end; iter++)
       {
-         auto alignment_segment = (*iter)->as<Ifc4x3_add2::IfcAlignmentSegment>();
+         auto alignment_segment = (*iter)->as<IfcSchema::IfcAlignmentSegment>();
          auto vertical_alignment_segment = GetVerticalAlignmentSegment(alignment_segment);
 
          // don't process the zero length segment at the end
@@ -445,20 +445,20 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::If
 
          auto predefined_type = vertical_alignment_segment->PredefinedType();
 
-         if (predefined_type == Ifc4x3_add2::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT)
+         if (predefined_type == IfcSchema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT)
          {
             OnLinearSegment(start_station, vertical_alignment_segment);
          }
-         else if (predefined_type == Ifc4x3_add2::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC)
+         else if (predefined_type == IfcSchema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC)
          {
             OnParabolicSegment(start_station, vertical_alignment_segment);
          }
-         else if (predefined_type == Ifc4x3_add2::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CIRCULARARC)
+         else if (predefined_type == IfcSchema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CIRCULARARC)
          {
 #pragma Reminder("WORKING HERE - Need to deal with vertical circular arcs") // treat it as a parabola for now
             OnParabolicSegment(start_station, vertical_alignment_segment);
          }
-         else if (predefined_type == Ifc4x3_add2::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CLOTHOID)
+         else if (predefined_type == IfcSchema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CLOTHOID)
          {
 #pragma Reminder("WORKING HERE - Need to deal with vertical clothoid arcs") // treat it as a parabola for now
             OnParabolicSegment(start_station, vertical_alignment_segment);
@@ -497,7 +497,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, Ifc4x3_add2::If
 }
 
 
-bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add2::IfcAlignment* pAlignment)
+bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment)
 {
    auto horizontal_alignment = GetAlignmentHorizontal(pAlignment);
    ATLASSERT(horizontal_alignment); // should have found one
@@ -517,7 +517,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add
    {
       // our model doesn't support isolated transition segments
       // transition curves must be adjacent to circular curves
-      auto alignment_segment = (*(related_objects->begin()))->as<Ifc4x3_add2::IfcAlignmentSegment>();
+      auto alignment_segment = (*(related_objects->begin()))->as<IfcSchema::IfcAlignmentSegment>();
       auto horizontal_segment = GetHorizontalAlignmentSegment(alignment_segment);
       return !IsTransitionCurve(horizontal_segment);
    }
@@ -526,12 +526,12 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add
       // our model doesn't support isolated transition segments
       // transition curves must be adjacent to circular curves
       // can't have two transitions adjacent to each other either
-      auto alignment_segment1 = (*(related_objects->begin()))->as<Ifc4x3_add2::IfcAlignmentSegment>();
+      auto alignment_segment1 = (*(related_objects->begin()))->as<IfcSchema::IfcAlignmentSegment>();
       auto horizontal_segment1 = GetHorizontalAlignmentSegment(alignment_segment1);
       bool bIsTransitionCurve1 = IsTransitionCurve(horizontal_segment1);
 
 
-      auto alignment_segment2 = (*(related_objects->begin() + 1))->as<Ifc4x3_add2::IfcAlignmentSegment>();
+      auto alignment_segment2 = (*(related_objects->begin() + 1))->as<IfcSchema::IfcAlignmentSegment>();
       auto horizontal_segment2 = GetHorizontalAlignmentSegment(alignment_segment2);
       bool bIsTransitionCurve2 = IsTransitionCurve(horizontal_segment1);
 
@@ -548,7 +548,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add
       auto end = related_objects->end();
       for (; iter != end; iter++)
       {
-         auto alignment_segment = (*iter)->as<Ifc4x3_add2::IfcAlignmentSegment>();
+         auto alignment_segment = (*iter)->as<IfcSchema::IfcAlignmentSegment>();
          auto horizontal_segment = GetHorizontalAlignmentSegment(alignment_segment);
          if (IsTransitionCurve(horizontal_segment))
          {
@@ -563,7 +563,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add
             if (iter != begin && !IsZero(start_radius))
             {
                // transition starts with a radius so a circular curve must precede this transition curve
-               auto prev_alignment_segment = (*(iter - 1))->as<Ifc4x3_add2::IfcAlignmentSegment>();
+               auto prev_alignment_segment = (*(iter - 1))->as<IfcSchema::IfcAlignmentSegment>();
                auto prev_horizontal_segment = GetHorizontalAlignmentSegment(prev_alignment_segment);
                if (!IsCircularCurve(prev_horizontal_segment)) return false; // previous is not a circular curve
 
@@ -577,7 +577,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add
             if (iter != end - 1 && !IsZero(end_radius))
             {
                // transition ends with a radius so a circular curve most come after this transition curve
-               auto next_alignment_segment = (*(iter + 1))->as<Ifc4x3_add2::IfcAlignmentSegment>();
+               auto next_alignment_segment = (*(iter + 1))->as<IfcSchema::IfcAlignmentSegment>();
                auto next_horizontal_segment = GetHorizontalAlignmentSegment(next_alignment_segment);
                if (!IsCircularCurve(next_horizontal_segment)) return false; // next is not a circular curve
 
@@ -595,7 +595,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, Ifc4x3_add
 }
 
 
-void CIfcAlignmentImporter::GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations)
+void CIfcAlignmentImporter::GetStations(IfcSchema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations)
 {
    auto nested = pAlignment->IsNestedBy();
    for (auto rel_nests : *nested)
@@ -604,23 +604,23 @@ void CIfcAlignmentImporter::GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, s
       auto related_objects = rel_nests->RelatedObjects();
       for (auto related_object : *related_objects)
       {
-         auto referent = related_object->as<Ifc4x3_add2::IfcReferent>();
-         if (referent && referent->PredefinedType() && *(referent->PredefinedType()) == Ifc4x3_add2::IfcReferentTypeEnum::IfcReferentType_STATION)
+         auto referent = related_object->as<IfcSchema::IfcReferent>();
+         if (referent && referent->PredefinedType() && *(referent->PredefinedType()) == IfcSchema::IfcReferentTypeEnum::IfcReferentType_STATION)
          {
             Float64 distance_along = 0;
             if (referent->ObjectPlacement())
             {
                auto object_placement = referent->ObjectPlacement();
-               auto linear_placement = object_placement->as<Ifc4x3_add2::IfcLinearPlacement>();
+               auto linear_placement = object_placement->as<IfcSchema::IfcLinearPlacement>();
                if (linear_placement)
                {
                   // get the distance along the curve for the placement of the referent
                   auto axis2placementlinear = linear_placement->RelativePlacement();
                   auto location = axis2placementlinear->Location();
-                  auto point_by_distance_expression = location->as<Ifc4x3_add2::IfcPointByDistanceExpression>();
+                  auto point_by_distance_expression = location->as<IfcSchema::IfcPointByDistanceExpression>();
                   if (point_by_distance_expression)
                   {
-                     distance_along = *(point_by_distance_expression->DistanceAlong()->as<Ifc4x3_add2::IfcLengthMeasure>());
+                     distance_along = *(point_by_distance_expression->DistanceAlong()->as<IfcSchema::IfcLengthMeasure>());
                   }
                }
             }
@@ -628,7 +628,7 @@ void CIfcAlignmentImporter::GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, s
             auto rel_defines_by_properties = referent->IsDefinedBy();
             for (auto rel_defines_property : *rel_defines_by_properties)
             {
-               auto property_set = rel_defines_property->RelatingPropertyDefinition()->as<Ifc4x3_add2::IfcPropertySet>();
+               auto property_set = rel_defines_property->RelatingPropertyDefinition()->as<IfcSchema::IfcPropertySet>();
                if (property_set->Name() == std::string("Pset_Stationing"))
                {
                   bool bHasStation = false;
@@ -639,20 +639,20 @@ void CIfcAlignmentImporter::GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, s
                   {
                      if (prop->Name() == "Station")
                      {
-                        auto single_value_property = prop->as<Ifc4x3_add2::IfcPropertySingleValue>();
+                        auto single_value_property = prop->as<IfcSchema::IfcPropertySingleValue>();
                         if (single_value_property->NominalValue())
                         {
                            bHasStation = true;
-                           station = *(single_value_property->NominalValue()->as<Ifc4x3_add2::IfcLengthMeasure>());
+                           station = *(single_value_property->NominalValue()->as<IfcSchema::IfcLengthMeasure>());
                         }
                      }
                      else if (prop->Name() == "IncomingStation")
                      {
-                        auto single_value_property = prop->as<Ifc4x3_add2::IfcPropertySingleValue>();
+                        auto single_value_property = prop->as<IfcSchema::IfcPropertySingleValue>();
                         if (single_value_property->NominalValue())
                         {
                            bHasIncomingStation = true;
-                           incoming_station = *(single_value_property->NominalValue()->as<Ifc4x3_add2::IfcLengthMeasure>());
+                           incoming_station = *(single_value_property->NominalValue()->as<IfcSchema::IfcLengthMeasure>());
                         }
                      }
                   }
@@ -676,9 +676,9 @@ void CIfcAlignmentImporter::GetStations(Ifc4x3_add2::IfcAlignment* pAlignment, s
    }
 }
 
-Float64 CIfcAlignmentImporter::GetStartStation(Ifc4x3_add2::IfcAlignment* pAlignment)
+Float64 CIfcAlignmentImporter::GetStartStation(IfcSchema::IfcAlignment* pAlignment)
 {
-   auto value = GetProperty<Ifc4x3_add2, Ifc4x3_add2::IfcReal>(pAlignment, "Pset_Stationing", "Station");
+   auto value = GetProperty<IfcSchema, IfcSchema::IfcReal>(pAlignment, "Pset_Stationing", "Station");
    if (value)
    {
       return (Float64)(*value);
@@ -689,7 +689,7 @@ Float64 CIfcAlignmentImporter::GetStartStation(Ifc4x3_add2::IfcAlignment* pAlign
    }
 }
 
-Float64 CIfcAlignmentImporter::OnLine(Float64 startStation, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pLine)
+Float64 CIfcAlignmentImporter::OnLine(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pLine)
 {
    Float64 sx, sy;
    GetPoint(pLine->StartPoint(), &sx, &sy);
@@ -740,7 +740,7 @@ Float64 CIfcAlignmentImporter::OnLine(Float64 sx, Float64 sy, Float64 startStati
    return end_station;
 }
 
-Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pEntrySpiral, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pCurve, Ifc4x3_add2::IfcAlignmentHorizontalSegment* pExitSpiral)
+Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pEntrySpiral, IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IfcSchema::IfcAlignmentHorizontalSegment* pExitSpiral)
 {
    ATLASSERT(pCurve != nullptr);
 
@@ -984,7 +984,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, Ifc4x3_add2::IfcAli
    return end_station;
 }
 
-void CIfcAlignmentImporter::GetCurvePoints(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter)
+void CIfcAlignmentImporter::GetCurvePoints(IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter)
 {
    auto pStart = pCurve->StartPoint();
    auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pCurve->StartDirection(), m_Importer.GetAngleUnit());
@@ -1015,7 +1015,7 @@ void CIfcAlignmentImporter::GetCurvePoints(Ifc4x3_add2::IfcAlignmentHorizontalSe
 }
 
 
-void CIfcAlignmentImporter::GetSpiralPoints(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd)
+void CIfcAlignmentImporter::GetSpiralPoints(IfcSchema::IfcAlignmentHorizontalSegment* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd)
 {
    auto pStart = pSpiral->StartPoint();
    auto bkTangentBrg = WBFL::Units::ConvertToSysUnits(pSpiral->StartDirection(), m_Importer.GetAngleUnit());
@@ -1053,7 +1053,7 @@ void CIfcAlignmentImporter::GetSpiralPoints(Ifc4x3_add2::IfcAlignmentHorizontalS
    }
 }
 
-void CIfcAlignmentImporter::OnLinearSegment(Float64 startStation, Ifc4x3_add2::IfcAlignmentVerticalSegment* pLinearSegment)
+void CIfcAlignmentImporter::OnLinearSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment* pLinearSegment)
 {
    Float64 length = WBFL::Units::ConvertToSysUnits(pLinearSegment->HorizontalLength(), m_Importer.GetLengthUnit());
    Float64 start_gradient = pLinearSegment->StartGradient();
@@ -1086,7 +1086,7 @@ void CIfcAlignmentImporter::OnLinearSegment(Float64 startStation, Ifc4x3_add2::I
    }
 }
 
-void CIfcAlignmentImporter::OnParabolicSegment(Float64 startStation, Ifc4x3_add2::IfcAlignmentVerticalSegment* pParaCurve)
+void CIfcAlignmentImporter::OnParabolicSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment* pParaCurve)
 {
    // finish any open profile element
    Float64 start_gradient = pParaCurve->StartGradient();
@@ -1113,20 +1113,20 @@ void CIfcAlignmentImporter::OnParabolicSegment(Float64 startStation, Ifc4x3_add2
    m_ProfileData.VertCurves.push_back(vcData);
 }
 
-void CIfcAlignmentImporter::CheckSpiralType(Ifc4x3_add2::IfcAlignmentHorizontalSegment* pSpiral)
+void CIfcAlignmentImporter::CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSegment* pSpiral)
 {
    switch (pSpiral->PredefinedType())
    {
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE:
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE:
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC:
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE:
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE:
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_BLOSSCURVE:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_COSINECURVE:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CUBIC:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND:
       m_Importer.AddNote(_T("Spiral type not supported. Assuming clothoid."));
       break;
 
-   case Ifc4x3_add2::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID:
+   case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID:
       // this is ok... we were expecting clothoid
       break;
 
@@ -1138,7 +1138,7 @@ void CIfcAlignmentImporter::CheckSpiralType(Ifc4x3_add2::IfcAlignmentHorizontalS
 }
 
 
-void CIfcAlignmentImporter::GetPoint(Ifc4x3_add2::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY)
+void CIfcAlignmentImporter::GetPoint(IfcSchema::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY)
 {
    auto coordinates = pPoint->Coordinates();
    ATLASSERT(2 <= coordinates.size());
