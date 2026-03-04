@@ -2369,37 +2369,38 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
       auto alignment = file.getSingle<typename Schema::IfcAlignment>();
       AddReferent(file, alignment, referent);
 
-      // WORKING HERE - experimenting with custom property sets for girder spacing
-      typename Schema::IfcProperty::list::ptr spacing_property(new typename Schema::IfcProperty::list);
-      if ( 0 < pierIdx )
-      {
-         typename Schema::IfcValue::list::ptr list(new typename Schema::IfcValue::list);
+      // This code creates a custom property set for girder spacing. This is a PGSuper-specific property. 
+      // Girder spacing can be determined from the model geometry, so we don't need to save it in a custom property set
+      //typename Schema::IfcProperty::list::ptr spacing_property(new typename Schema::IfcProperty::list);
+      //if ( 0 < pierIdx )
+      //{
+      //   typename Schema::IfcValue::list::ptr list(new typename Schema::IfcValue::list);
 
-         auto spacing = pBridge->GetGirderSpacing(pierIdx, pgsTypes::PierFaceType::Back, pgsTypes::MeasurementLocation::AtCenterlineBearing, pgsTypes::MeasurementType::NormalToItem);
-         for (auto s : spacing)
-         {
-            list->push(new typename Schema::IfcLengthMeasure(s));
-         }
-         spacing_property->push(new typename Schema::IfcPropertyListValue(std::string("Back_Spacing"), boost::none, list, nullptr));
-      }
+      //   auto spacing = pBridge->GetGirderSpacing(pierIdx, pgsTypes::PierFaceType::Back, pgsTypes::MeasurementLocation::AtCenterlineBearing, pgsTypes::MeasurementType::NormalToItem);
+      //   for (auto s : spacing)
+      //   {
+      //      list->push(new typename Schema::IfcLengthMeasure(s));
+      //   }
+      //   spacing_property->push(new typename Schema::IfcPropertyListValue(std::string("Back_Spacing"), boost::none, list, nullptr));
+      //}
 
-      if (pierIdx < nPiers - 1)
-      {
-         typename Schema::IfcValue::list::ptr list(new typename Schema::IfcValue::list);
+      //if (pierIdx < nPiers - 1)
+      //{
+      //   typename Schema::IfcValue::list::ptr list(new typename Schema::IfcValue::list);
 
-         auto spacing = pBridge->GetGirderSpacing(pierIdx, pgsTypes::PierFaceType::Ahead, pgsTypes::MeasurementLocation::AtCenterlineBearing, pgsTypes::MeasurementType::NormalToItem);
-         for (auto s : spacing)
-         {
-            list->push(new typename Schema::IfcLengthMeasure(s));
-         }
-         spacing_property->push(new typename Schema::IfcPropertyListValue(std::string("Ahead_Spacing"), boost::none, list, nullptr));
-      }
-      auto pset_spacing = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsSpacing"), boost::none, spacing_property);
-      file.addEntity(pset_spacing);
-      typename Schema::IfcObjectDefinition::list::ptr piers(new typename Schema::IfcObjectDefinition::list);
-      piers->push(pier);
-      rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates girder spacing property set to pier"), boost::none, piers, pset_spacing);
-      file.addEntity(rel_defines_by_properties);
+      //   auto spacing = pBridge->GetGirderSpacing(pierIdx, pgsTypes::PierFaceType::Ahead, pgsTypes::MeasurementLocation::AtCenterlineBearing, pgsTypes::MeasurementType::NormalToItem);
+      //   for (auto s : spacing)
+      //   {
+      //      list->push(new typename Schema::IfcLengthMeasure(s));
+      //   }
+      //   spacing_property->push(new typename Schema::IfcPropertyListValue(std::string("Ahead_Spacing"), boost::none, list, nullptr));
+      //}
+      //auto pset_spacing = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsSpacing"), boost::none, spacing_property);
+      //file.addEntity(pset_spacing);
+      //typename Schema::IfcObjectDefinition::list::ptr piers(new typename Schema::IfcObjectDefinition::list);
+      //piers->push(pier);
+      //rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates girder spacing property set to pier"), boost::none, piers, pset_spacing);
+      //file.addEntity(rel_defines_by_properties);
 
 
       list_of_piers->push(pier);
