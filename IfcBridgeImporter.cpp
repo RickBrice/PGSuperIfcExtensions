@@ -27,6 +27,8 @@
 #include "USBridge_Classifications.h"
 #include "Utilities.h"
 
+#include "BeamSpacing.h"
+
 #include <MFCTools\Prompts.h>
 #include <boost/range/combine.hpp>
 #include <psgLib/BridgeDescription2.h>
@@ -138,7 +140,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    PierIndexType nPiers = 0;
    for (auto& part : *parts)
    {
-      if (part->PredefinedType().has_value() && (part->PredefinedType().get() == Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part->PredefinedType().get() == Ifc4x3_add2::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
+      if (part->PredefinedType().has_value() && (part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
          nPiers++;
    }
 
@@ -168,13 +170,12 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
          auto beam = related_element->as<IfcSchema::IfcBeam>();
          if (beam)
          {
-            auto value = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
-            if (!value)
+            auto girder_key = get_girder_key(beam);
+            if (girder_key == CGirderKey())
             {
                IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
             }
-            auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
-            nGirders[spanIdx]++;
+            nGirders[girder_key.groupIndex]++;
          }
       }
    }
@@ -313,6 +314,8 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    ImportSlab(file, bridge_desc);
 
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
+
+   Experiment(file);
 
    return CIfcImporter::ImportResult::Success;
 }
@@ -657,4 +660,9 @@ void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2
       deck_point.RightEdge = *right_edge;
       pDeck->DeckEdgePoints.emplace_back(deck_point);
    }
+}
+
+void CIfcBridgeImporter::Experiment(IfcParse::IfcFile& file)
+{
+   get_beam_spacing(file);
 }

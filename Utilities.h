@@ -22,6 +22,58 @@
 #pragma once
 
 #include <string>
+#include <numbers>
+
+#include "IfcImporterException.h"
+#include "Properties.h"
+
+static CGirderKey girder_key_from_string(const std::string& s)
+{
+   GroupIndexType grpIdx = INVALID_INDEX;
+   GirderIndexType gdrIdx = INVALID_INDEX;
+   std::istringstream iss(s);
+   std::string word;
+
+   while (iss >> word)
+   {
+      if (word == "Span")
+         iss >> grpIdx;
+      else if (word == "Girder")
+         iss >> gdrIdx;
+      else if (word == ",")
+      { // do nothing
+      }
+      else
+      {
+         return CGirderKey(); // values are INVALID_INDEX
+         //USES_CONVERSION;
+         //std::_tostringstream os;
+         //os << _T("Unexpected DesignLocationNumber property in Pset_PrecastConcreteElementGeneral property set (") << A2T(s.c_str()) << _T(")");
+         //IFC_THROW(os.str().c_str());
+      }
+   }
+
+   return { grpIdx - 1,gdrIdx - 1 };
+}
+
+static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
+{
+   CGirderKey girder_key;
+   auto design_location_number = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
+   if (design_location_number)
+      girder_key = girder_key_from_string(*design_location_number);
+   else if (beam->Name())
+      girder_key = girder_key_from_string(*(beam->Name()));
+
+   return girder_key;
+}
+
+template <typename T>
+constexpr T deg2rad(T deg) {
+   return deg * std::numbers::pi_v<T> / 180.;
+}
+
+
 inline std::string GetEntityType(IfcUtil::IfcBaseInterface* entity)
 {
    return entity->declaration().name();
