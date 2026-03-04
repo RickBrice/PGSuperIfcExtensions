@@ -21,7 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Utilities.h"
+//#include "Utilities.h"
 
 //#pragma Reminder("TODO - generalize the property enum methods and move to IfcHierarchyHelper")
 // Need to cache the IfcPropertyEnumeration for lookup - it can be used multiple times by reference
@@ -69,7 +69,7 @@ typename Schema::IfcLabel* getPropertyEnumeratedValue(typename Schema::IfcProper
 }
 
 template <typename Schema>
-typename Schema::IfcPropertySet* GetPropertySet(typename Schema::IfcObject* object, std::string name)
+typename Schema::IfcPropertySet* GetPropertySet(const typename Schema::IfcObject* object, std::string name)
 {
    // First check for property sets on the object itself since they override
    // properties defined on the object type (if used).
@@ -106,7 +106,7 @@ typename Schema::IfcPropertySet* GetPropertySet(typename Schema::IfcObject* obje
 }
 
 template <typename Schema, typename T>
-typename T* GetProperty(typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+typename T* GetProperty(const typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
 {
    auto pset = GetPropertySet<Schema>(object, pset_name);
    if (pset)
@@ -120,7 +120,7 @@ typename T* GetProperty(typename Schema::IfcObject* object, std::string pset_nam
             if (p)
                return p->NominalValue()->as<T>();
             
-            TRACE(GetEntityType(property).c_str());
+            //TRACE(GetEntityType(property).c_str());
          }
       }
    }
@@ -128,7 +128,7 @@ typename T* GetProperty(typename Schema::IfcObject* object, std::string pset_nam
 }
 
 template <typename Schema,typename T>
-std::vector<T*> GetPropertyList(typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+std::vector<T*> GetPropertyList(const typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
 {
    std::vector<T*> result;
    auto pset = GetPropertySet<Schema>(object, pset_name);
@@ -151,7 +151,7 @@ std::vector<T*> GetPropertyList(typename Schema::IfcObject* object, std::string 
 }
 
 template <typename Schema, typename T>
-typename T* GetPropertyEnum(typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+typename T* GetPropertyEnum(const typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
 {
    auto pset = GetPropertySet<Schema>(object, pset_name);
    if (pset)
@@ -174,7 +174,7 @@ typename T* GetPropertyEnum(typename Schema::IfcObject* object, std::string pset
 
 
 template <typename Schema>
-typename Schema::IfcMaterialProperties* GetMaterialPropertySet(typename Schema::IfcMaterialDefinition* matdef, std::string name)
+typename Schema::IfcMaterialProperties* GetMaterialPropertySet(const typename Schema::IfcMaterialDefinition* matdef, std::string name)
 {
    auto has_properties = matdef->HasProperties();
    for (auto material_properties : *has_properties)
@@ -189,7 +189,7 @@ typename Schema::IfcMaterialProperties* GetMaterialPropertySet(typename Schema::
 }
 
 template <typename Schema, typename T>
-typename T* GetMaterialProperty(typename Schema::IfcMaterialDefinition* matdef, std::string pset_name, std::string property_name)
+typename T* GetMaterialProperty(const typename Schema::IfcMaterialDefinition* matdef, std::string pset_name, std::string property_name)
 {
    auto pset = GetMaterialPropertySet<Schema>(matdef, pset_name);
    if (pset)

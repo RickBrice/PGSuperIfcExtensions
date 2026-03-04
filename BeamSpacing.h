@@ -19,28 +19,7 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
+
 #pragma once
 
-#include "IfcImporter.h"
-#include <IFace\Project.h>
-
-class CIfcBridgeImporter
-{
-public:
-   CIfcBridgeImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
-
-private:
-   CIfcImporter& m_Importer;
-
-   IfcSchema::IfcBridge* GetBridge(IfcParse::IfcFile& file);
-   bool IsValidBridge(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirders(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirdersByTPF(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirdersByOther(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-
-   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-
-   void Experiment(IfcParse::IfcFile& file);
-};
+void get_beam_spacing(IfcParse::IfcFile& file);
