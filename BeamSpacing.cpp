@@ -20,6 +20,7 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
+#include "BeamSpacing.h"
 #include "Geometry.h"
 #include "Utilities.h"
 #include <ifcgeom/abstract_mapping.h>
@@ -31,11 +32,33 @@
 // This needs to be updated so we get only the superstructure beams
 std::set<int> get_beam_ids(IfcParse::IfcFile& file)
 {
+   auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+
+   // lambda function to filter beams that are contained in the superstructure
+   auto filter = [&superstructure](auto beam) {
+         auto related_elements = beam->ContainedInStructure();
+         if (related_elements)
+         {
+            for (auto related_element : *related_elements)
+            {
+               if (related_element->RelatingStructure() == superstructure)
+                  return true;
+            }
+            return false;
+         }
+         else
+         {
+            return false; // not in a spatial structure
+         }
+      };
+
+
    auto beams = file.instances_by_type<IfcSchema::IfcBeam>();
 
    std::set<int> beam_ids;
    for (int id : *beams
       //| std::views::filter([&os](auto beam) {return beam->Name() && beam->Name()->starts_with(os.str()); }) // filter all beams that start with "Span n"
+      | std::views::filter(filter)
       | std::views::transform([](auto beam) {return beam->id(); })) // transform the beam to its id
    {
       beam_ids.insert(id);
@@ -45,7 +68,7 @@ std::set<int> get_beam_ids(IfcParse::IfcFile& file)
 }
 
 // this function attempts to get the beam spacing based on the geometry (not using a property from a pset)
-void get_beam_spacing(IfcParse::IfcFile& file)
+std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
 {
    auto beam_ids = get_beam_ids(file);
 
@@ -131,10 +154,10 @@ void get_beam_spacing(IfcParse::IfcFile& file)
       // for beams going NE to SW from the NE quadrant, this would not be true
       if (c2.norm() < c1.norm()) std::swap(c1, c2);
 
-      if (start_points[girder_key.groupIndex].size() < girder_key.girderIndex)
+      if (start_points[girder_key.groupIndex].size() <= girder_key.girderIndex)
          start_points[girder_key.groupIndex].resize(girder_key.girderIndex+1);
 
-      if (end_points[girder_key.groupIndex].size() < girder_key.girderIndex)
+      if (end_points[girder_key.groupIndex].size() <= girder_key.girderIndex)
          end_points[girder_key.groupIndex].resize(girder_key.girderIndex+1);
 
       start_points[girder_key.groupIndex][girder_key.girderIndex] = c1;
@@ -143,7 +166,7 @@ void get_beam_spacing(IfcParse::IfcFile& file)
       //std::cout << c1.transpose() << " -> " << c2.transpose() << "\n";
    } while (iterator.next());
 
-   std::map<GroupIndexType, std::vector<double>> ss;
+   Spacing ss;
    for (auto [grpIdx, points] : start_points)
    {
       std::vector<double> spaces;
@@ -153,7 +176,7 @@ void get_beam_spacing(IfcParse::IfcFile& file)
          [&](size_t i) {return (points[i] - points[i - 1]).norm(); });
    }
 
-   std::map<GroupIndexType, std::vector<double>> es;
+   Spacing es;
    for (auto [grpIdx, points] : end_points)
    {
       std::vector<double> spaces;
@@ -166,4 +189,6 @@ void get_beam_spacing(IfcParse::IfcFile& file)
    //std::cout << "Start Spacing, ";
    //for (auto s : ss) std::cout << s / 0.3048 << ", ";
    //std::cout << std::endl;
+
+   return { ss, es };
 }

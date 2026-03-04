@@ -22,4 +22,6 @@
 
 #pragma once
 
-void get_beam_spacing(IfcParse::IfcFile& file);
+using Spacing = std::map<GroupIndexType, std::vector<double>>;
+
+std::pair<Spacing,Spacing> get_beam_spacing(IfcParse::IfcFile& file);

@@ -112,3 +112,64 @@ boost::optional<typename E> GetPredefinedType(IfcSchema::IfcObject* object)
 
    return object->as<O>()->PredefinedType();
 }
+
+
+static IfcSchema::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
+{
+   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
+   for (auto part : *parts)
+   {
+      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
+      {
+         return part;
+      }
+   }
+   return nullptr;
+}
+
+static std::vector<IfcSchema::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
+{
+   std::vector<IfcSchema::IfcBridgePart*> parts_found;
+   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
+   for (auto part : *parts)
+   {
+      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
+      {
+         parts_found.push_back(part);
+      }
+   }
+   return parts_found;
+}
+
+template <typename Schema>
+typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* objectdef)
+{
+   auto associations = objectdef->HasAssociations();
+   if (associations)
+   {
+      for (auto rel : *associations)
+      {
+         auto rel_associates_material = rel->as<IfcSchema::IfcRelAssociatesMaterial>();
+         if (rel_associates_material)
+         {
+            auto material = rel_associates_material->RelatingMaterial();
+            return material->as<typename Schema::IfcMaterial>();
+         }
+      }
+   }
+
+   return nullptr;
+}
+
+static int GetBeamTypeCount(IfcParse::IfcFile& file)
+{
+   int count = 0;
+   auto beam_types = file.instances_by_type<IfcSchema::IfcBeamType>();
+   for (auto beam_type : *beam_types)
+   {
+      if (beam_type->PredefinedType() == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
+         count++;
+   }
+
+   return count;
+}

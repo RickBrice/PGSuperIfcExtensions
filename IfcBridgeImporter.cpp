@@ -36,94 +36,6 @@
 #include <psgLib/GirderLibraryEntry.h>
 
 
-std::pair<GroupIndexType, GirderIndexType> ExtractSpanAndGirder(const std::string& s)
-{
-   GroupIndexType grpIdx = INVALID_INDEX;
-   GirderIndexType gdrIdx = INVALID_INDEX;
-   std::istringstream iss(s);
-   std::string word;
-
-   while (iss >> word)
-   {
-      if (word == "Span")
-         iss >> grpIdx;
-      else if (word == "Girder")
-         iss >> gdrIdx;
-      else if (word == ",")
-      { // do nothing
-      }
-      else
-      {
-         USES_CONVERSION;
-         std::_tostringstream os;
-         os << _T("Unexpected DesignLocationNumber property in Pset_PrecastConcreteElementGeneral property set (") << A2T(s.c_str()) << _T(")");
-         IFC_THROW(os.str().c_str());
-      }
-   }
-
-   return { grpIdx - 1,gdrIdx - 1 };
-}
-
-IfcSchema::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
-{
-   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   for (auto part : *parts)
-   {
-      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
-      {
-         return part;
-      }
-   }
-   return nullptr;
-}
-
-std::vector<IfcSchema::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
-{
-   std::vector<IfcSchema::IfcBridgePart*> parts_found;
-   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   for (auto part : *parts)
-   {
-      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
-      {
-         parts_found.push_back(part);
-      }
-   }
-   return parts_found;
-}
-
-template <typename Schema>
-typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* objectdef)
-{
-   auto associations = objectdef->HasAssociations();
-   if (associations)
-   {
-      for (auto rel : *associations)
-      {
-         auto rel_associates_material = rel->as<IfcSchema::IfcRelAssociatesMaterial>();
-         if (rel_associates_material)
-         {
-            auto material = rel_associates_material->RelatingMaterial();
-            return material->as<typename Schema::IfcMaterial>();
-         }
-      }
-   }
-
-   return nullptr;
-}
-
-int GetBeamTypeCount(IfcParse::IfcFile& file)
-{
-   int count = 0;
-   auto beam_types = file.instances_by_type<IfcSchema::IfcBeamType>();
-   for (auto beam_type : *beam_types)
-   {
-      if (beam_type->PredefinedType() == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
-         count++;
-   }
-
-   return count;
-}
-
 
 CIfcBridgeImporter::CIfcBridgeImporter(CIfcImporter& importer) :
    m_Importer(importer)
@@ -258,54 +170,80 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
       pPier->SetStation(*station);
    }
 
-   // NOTE: This is not the cleanest way to do this, but it gets the job done for now.
-   // I want to keep girder spacing from a custom property set separate from the pier stationing.
-   bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
-   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
-   {
-      auto pier = piers[pierIdx];
-      auto pPier = bridge_desc.GetPier(pierIdx);
-      if (0 < pierIdx)
-      {
-         auto spacing = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(pier, "pgsSpacing", "Back_Spacing");
-         if (spacing.empty())
-         {
-            std::_tostringstream os;
-            os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Back_Spacing property in pgsSpacing property set not found");
-            IFC_THROW(os.str().c_str());
-         }
+   //// NOTE: This is not the cleanest way to do this, but it gets the job done for now.
+   //// I want to keep girder spacing from a custom property set separate from the pier stationing.
+   //bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
+   //for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
+   //{
+   //   auto pier = piers[pierIdx];
+   //   auto pPier = bridge_desc.GetPier(pierIdx);
+   //   if (0 < pierIdx)
+   //   {
+   //      auto spacing = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(pier, "pgsSpacing", "Back_Spacing");
+   //      if (spacing.empty())
+   //      {
+   //         std::_tostringstream os;
+   //         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Back_Spacing property in pgsSpacing property set not found");
+   //         IFC_THROW(os.str().c_str());
+   //      }
 
-         auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Back);
-         girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
-         girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtCenterlineBearing);
-         girder_spacing->ExpandAll();
-         IndexType idx = 0;
-         for (auto s : spacing)
-         {
-            girder_spacing->SetGirderSpacing(idx++, *s);
-         }
+   //      auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Back);
+   //      girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
+   //      girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtCenterlineBearing);
+   //      girder_spacing->ExpandAll();
+   //      IndexType idx = 0;
+   //      for (auto s : spacing)
+   //      {
+   //         girder_spacing->SetGirderSpacing(idx++, *s);
+   //      }
+   //   }
+
+   //   if (pierIdx < nPiers - 1)
+   //   {
+   //      auto spacing = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(pier, "pgsSpacing", "Ahead_Spacing");
+   //      if (spacing.empty())
+   //      {
+   //         std::_tostringstream os;
+   //         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Ahead_Spacing property in pgsSpacing property set not found");
+   //         IFC_THROW(os.str().c_str());
+   //      }
+
+   //      auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Ahead);
+   //      girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
+   //      girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtCenterlineBearing);
+
+   //      girder_spacing->ExpandAll();
+   //      IndexType idx = 0;
+   //      for (auto s : spacing)
+   //      {
+   //         girder_spacing->SetGirderSpacing(idx++, *s);
+   //      }
+   //   }
+   //}
+
+   bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
+   auto [start_spacing, end_spacing] = get_beam_spacing(file);
+   for( auto spanIdx = 0; spanIdx < nSpans; spanIdx++)
+   {
+      auto pSpan = bridge_desc.GetSpan(spanIdx);
+      auto start_girder_spacing = pSpan->GetPrevPier()->GetGirderSpacing(pgsTypes::Ahead);
+      start_girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::AlongItem);
+      start_girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtPierLine);
+      start_girder_spacing->ExpandAll();
+      IndexType idx = 0;
+      for (auto s : start_spacing[spanIdx])
+      {
+         start_girder_spacing->SetGirderSpacing(idx++, s);
       }
 
-      if (pierIdx < nPiers - 1)
+      auto end_girder_spacing = pSpan->GetNextPier()->GetGirderSpacing(pgsTypes::Back);
+      end_girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::AlongItem);
+      end_girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtPierLine);
+      end_girder_spacing->ExpandAll();
+      idx = 0;
+      for (auto s : end_spacing[spanIdx])
       {
-         auto spacing = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(pier, "pgsSpacing", "Ahead_Spacing");
-         if (spacing.empty())
-         {
-            std::_tostringstream os;
-            os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Ahead_Spacing property in pgsSpacing property set not found");
-            IFC_THROW(os.str().c_str());
-         }
-
-         auto girder_spacing = pPier->GetGirderSpacing(pgsTypes::Ahead);
-         girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem); // this is how the spacing is defined in the exporter
-         girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtCenterlineBearing);
-
-         girder_spacing->ExpandAll();
-         IndexType idx = 0;
-         for (auto s : spacing)
-         {
-            girder_spacing->SetGirderSpacing(idx++, *s);
-         }
+         end_girder_spacing->SetGirderSpacing(idx++, s);
       }
    }
 
@@ -361,19 +299,18 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
 
    for (auto beam : *prestressed_beams)
    {
-      auto value = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
-      if (!value)
+      auto girder_key = get_girder_key(beam);
+      if (girder_key == CGirderKey())
       {
-         IFC_THROW(_T("DesignLocationNumber in Pset_PrecastConcreteElement property set not found"));
+         IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
       }
 
-      auto [spanIdx, gdrIdx] = ExtractSpanAndGirder(*value);
       auto fci = GetProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
       if (!fci)
       {
          IFC_THROW(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
       }
-      bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fci = *fci;
+      bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegment(0)->Material.Concrete.Fci = *fci;
 
       auto material = GetMaterial<IfcSchema>(beam);
       auto fc = GetMaterialProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
@@ -381,7 +318,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
       {
          IFC_THROW(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
       }
-      bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0)->Material.Concrete.Fc = *fc;
+      bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegment(0)->Material.Concrete.Fc = *fc;
 
       if (!bridge_desc.UseSameGirderForEntireBridge())
       {
@@ -394,7 +331,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
             os << "Girder type \"" << girder_name << "\" not found in the library";
             IFC_THROW(A2T(os.str().c_str()));
          }
-         bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->SetGirderLibraryEntry(girder_library_entry);
+         bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->SetGirderLibraryEntry(girder_library_entry);
          bridge_desc.SetGirderFamilyName(girder_library_entry->GetGirderFamilyName().c_str());
 
 #pragma Reminder("WORKING HERE - This is assuming the first supported orientation. The IFC file doesn't have this information.")
@@ -664,5 +601,5 @@ void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2
 
 void CIfcBridgeImporter::Experiment(IfcParse::IfcFile& file)
 {
-   get_beam_spacing(file);
+   //get_beam_spacing(file);
 }
