@@ -70,6 +70,8 @@ std::set<int> get_beam_ids(IfcParse::IfcFile& file)
 // this function attempts to get the beam spacing based on the geometry (not using a property from a pset)
 std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
 {
+   WBFL::System::Logger::Debug(_T("Beam Spacing"));
+
    auto beam_ids = get_beam_ids(file);
 
    ifcopenshell::geometry::Settings settings;
@@ -88,6 +90,9 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> start_points;
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> end_points;
    bool bResult = iterator.initialize();
+   // NOTE: need to deal with (bResult == false)
+
+   // This do loop can be multi-threaded
    do
    {
       auto element = iterator.get();
@@ -163,14 +168,15 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
       start_points[girder_key.groupIndex][girder_key.girderIndex] = c1;
       end_points[girder_key.groupIndex][girder_key.girderIndex] = c2;
 
-      //std::cout << c1.transpose() << " -> " << c2.transpose() << "\n";
+      std::ostringstream os;
+      os << "Group " << girder_key.groupIndex << ", " << "Girder " << girder_key.girderIndex << " " << c1.transpose() << " -> " << c2.transpose();
+      WBFL::System::Logger::Debug(os.str().c_str());
    } while (iterator.next());
 
    Spacing ss;
    for (auto [grpIdx, points] : start_points)
    {
-      std::vector<double> spaces;
-      spaces.reserve(points.size() - 1);
+      ss[grpIdx].reserve(points.size() - 1);
       std::ranges::transform(std::views::iota(size_t{ 1 }, points.size()),
          std::back_inserter(ss[grpIdx]),
          [&](size_t i) {return (points[i] - points[i - 1]).norm(); });
@@ -179,8 +185,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
    Spacing es;
    for (auto [grpIdx, points] : end_points)
    {
-      std::vector<double> spaces;
-      spaces.reserve(points.size() - 1);
+      es[grpIdx].reserve(points.size() - 1);
       std::ranges::transform(std::views::iota(size_t{ 1 }, points.size()),
          std::back_inserter(es[grpIdx]),
          [&](size_t i) {return (points[i] - points[i - 1]).norm(); });

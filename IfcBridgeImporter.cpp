@@ -108,15 +108,15 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
       }
 
       bridge_desc.UseSameGirderForEntireBridge(true);
-
-      if (bSameNumGirdersInAllSpans)
-      {
-         bridge_desc.UseSameNumberOfGirdersInAllGroups(true);
-         bridge_desc.SetGirderCount(nGirders.front());
-      }
    }
 
-   if (!bSameNumGirdersInAllSpans)
+
+   if (bSameNumGirdersInAllSpans)
+   {
+      bridge_desc.UseSameNumberOfGirdersInAllGroups(true);
+      bridge_desc.SetGirderCount(nGirders.front());
+   }
+   else 
    {
       bridge_desc.UseSameNumberOfGirdersInAllGroups(false);
       for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++)
@@ -170,8 +170,11 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
       pPier->SetStation(*station);
    }
 
-   //// NOTE: This is not the cleanest way to do this, but it gets the job done for now.
-   //// I want to keep girder spacing from a custom property set separate from the pier stationing.
+   // This code is commented out, because the property set is no longer used. Spacing
+   // is computed from the bridge model geometry. See below
+   // 
+   //// NOTE: Girder spacing is stored in a property set attached to IfcPier. It is in its own
+   //// property set pgsSpacing so it doesn't interfere with the stationing property.
    //bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
    //for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    //{
@@ -221,13 +224,21 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    //   }
    //}
 
-   bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
+   // obtain beam spacing from the bridge model geometry
    auto [start_spacing, end_spacing] = get_beam_spacing(file);
+
+   // assume general spacing for now, but in the future analyze the spacing
+   // data and see if it is the same for the entire bridge, same for a span, or girder by girder
+   bridge_desc.SetGirderSpacingType(pgsTypes::SupportedBeamSpacing::sbsGeneral);
    for( auto spanIdx = 0; spanIdx < nSpans; spanIdx++)
    {
       auto pSpan = bridge_desc.GetSpan(spanIdx);
       auto start_girder_spacing = pSpan->GetPrevPier()->GetGirderSpacing(pgsTypes::Ahead);
       start_girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::AlongItem);
+      // Right now the beam spacing is based on the girder end points, so AtPierLine is not exactly correct.
+      // As work with extracting key parameters from the model geometry progresses, eventually the pier
+      // line geometry will be found, and then the girder spacing will be measured at the pier line or CL Bearing.
+      // See also below for end of girder spacing.
       start_girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtPierLine);
       start_girder_spacing->ExpandAll();
       IndexType idx = 0;
@@ -284,14 +295,32 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
       auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
       if (!girder_library_entry)
       {
+         // Matching girder type in the library is a bad implementation.
+         // Should be creating a new library entry for this girder type.
+         // Could not match the girder type. So the program doesn't crap out,
+         // get the first I-Beam type and substitue it. Not a great solution,
+         // but the current focus is loading files that don't conform to the
+         // AASHTO/TPF data standards. We want to be able to load any model
+         // with a precast girder beam bridge
+         GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
+         std::vector<std::_tstring> names;
+         pLibNames->EnumGirderNames(_T("I-Beam"), &names); // huge assumption that we are dealing with I beams.
+         auto substitue_girder_name = names.front();
+
+         girder_library_entry = pLibrary->GetGirderEntry(substitue_girder_name.c_str());
+
          std::ostringstream os;
-         os << "Girder type \"" << girder_name << "\" not found in the library";
-         IFC_THROW(A2T(os.str().c_str()));
+         os << "Girder type \"" << girder_name << "\" not found in the library." << std::endl;
+         os << "Girder type \"" << T2A(substitue_girder_name.c_str()) << "\" was substituted.";
+         
+         m_Importer.AddNote(A2T(os.str().c_str()));
       }
       bridge_desc.SetGirderLibraryEntry(girder_library_entry);
       bridge_desc.SetGirderFamilyName(girder_library_entry->GetGirderFamilyName().c_str());
 
 #pragma Reminder("WORKING HERE - This is assuming the first supported orientation. The IFC file doesn't have this information.")
+      // should get the orientation from the girder geometry and then try to match it with the supported orientations
+      // if no match, then log warning and use the default.
       auto factory = girder_library_entry->GetBeamFactory();
       auto orientations = factory->GetSupportedGirderOrientation();
       bridge_desc.SetGirderOrientation(orientations.front());
