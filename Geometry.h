@@ -45,6 +45,7 @@ struct Wire {
    // Total length of the wire - sum the length of each edge in the wire
    // ------------------------------------------------------------
    double length() const;
+   double plan_length() const;
 
    // ------------------------------------------------------------
    // Bounding box center
@@ -86,6 +87,8 @@ struct Mesh {
    // Boundary extraction (outer boundary only)
    // ------------------------------------------------------------
    Wire boundary() const;
+
+   void print(std::ostream& os) const;
 };
 
 Mesh get_top_mesh(const std::vector<Mesh>& meshes);

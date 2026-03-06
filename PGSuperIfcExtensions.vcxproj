@@ -181,6 +181,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BeamSpacing.cpp" />
+    <ClCompile Include="DeckSlab.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="IfcAlignmentImporter.cpp" />
     <ClCompile Include="IfcBridgeImporter.cpp" />
@@ -204,6 +205,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeamSpacing.h" />
+    <ClInclude Include="DeckSlab.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="IfcBridgeImporter.h" />

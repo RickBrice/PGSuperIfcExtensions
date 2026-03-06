@@ -19,30 +19,9 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
+
 #pragma once
 
-#include "IfcImporter.h"
-#include <IFace\Project.h>
+namespace WBFL { namespace EAF { class Broker; }; };
 
-class CIfcBridgeImporter
-{
-public:
-   CIfcBridgeImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
-
-private:
-   CIfcImporter& m_Importer;
-
-   IfcSchema::IfcBridge* GetBridge(IfcParse::IfcFile& file);
-   bool IsValidBridge(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirders(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirdersByTPF(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirdersByOther(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-
-   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-   
-   const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam* beam);
-
-   void Experiment(IfcParse::IfcFile& file);
-};
+std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file);

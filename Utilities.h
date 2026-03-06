@@ -61,9 +61,38 @@ static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
    CGirderKey girder_key;
    auto design_location_number = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
    if (design_location_number)
+   {
       girder_key = girder_key_from_string(*design_location_number);
-   else if (beam->Name())
-      girder_key = girder_key_from_string(*(beam->Name()));
+      if (girder_key == CGirderKey())
+      {
+         WBFL::System::Logger::Debug("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral, or the property was not formatted as expected");
+      }
+   }
+   else
+   {
+      WBFL::System::Logger::Debug("Pset_PrecastConcreteElementGeneral not found.");
+   }
+
+   if (girder_key == CGirderKey())
+   {
+      if (beam->Name())
+      {
+         girder_key = girder_key_from_string(*(beam->Name()));
+         if (girder_key == CGirderKey())
+         {
+            WBFL::System::Logger::Debug("IfcBeam::Name was not formatted as expected");
+         }
+      }
+      else
+      {
+         WBFL::System::Logger::Debug("IfcBeam::Name attribute not found");
+      }
+   }
+
+   if (girder_key == CGirderKey())
+   {
+      WBFL::System::Logger::Debug("Could not determine girder key from IfcBeam");
+   }
 
    return girder_key;
 }
