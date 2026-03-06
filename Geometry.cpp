@@ -141,6 +141,15 @@ double Wire::length() const {
    return L;
 }
 
+double Wire::plan_length() const {
+   double L = 0.0;
+   for (auto& e : edges) {
+      Eigen::Vector2d d = verts[e[1]].block<2, 1>(0,0) - verts[e[0]].block<2, 1>(0, 0);
+      L += d.norm();
+   }
+   return L;
+}
+
 // ------------------------------------------------------------
 // Bounding box center
 // ------------------------------------------------------------
@@ -364,4 +373,24 @@ Mesh get_top_mesh(const std::vector<Mesh>& meshes)
    );
 
    return *top_component_it;
+}
+
+void Mesh::print(std::ostream& os) const
+{
+   os << "verts" << std::endl;
+   int idx = 0;
+   Eigen::IOFormat fmt(4, 0, ", ", ", ", "", "", "", "");
+   for (auto& v : verts)
+   {
+      os << idx << ", " << v.format(fmt) << std::endl;
+      idx++;
+   }
+
+   idx = 0;
+   os << "faces" << std::endl;
+   for (auto& f : faces)
+   {
+      os << idx << ", " << f[0] << ", " << f[1] << ", " << f[2] << std::endl;
+      idx++;
+   }
 }

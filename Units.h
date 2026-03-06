@@ -43,19 +43,29 @@ double GetConversionFactor(typename Schema::IfcConversionBasedUnit* conversion_b
 
    // this way used to work until rocksdb support was added.
    // get_attribute_value has a lot more parameters that I don't know how to use
-   //conversion_factor = (Float64)(value_component->data().get_attribute_value(0));
    try
    {
       auto value_component = measure_with_unit->ValueComponent();
-      ATLASSERT(value_component); // not dealing with anything but simple conversion factors
-      auto real = value_component->as<typename Schema::IfcReal>();
-      auto ratio = value_component->as<typename Schema::IfcRatioMeasure>();
-      if (real)
-         conversion_factor = *real;
-      else if (ratio)
-         conversion_factor = *ratio;
-      else
-         ASSERT(false);
+      // here we know we're using in-memory so 'nullptr, nullptr, 0' is safe
+      conversion_factor = (Float64)(value_component->data().get_attribute_value(nullptr,nullptr,0,0));
+      //ATLASSERT(value_component); // not dealing with anything but simple conversion factors
+      //auto real = value_component->as<typename Schema::IfcReal>();
+      //auto ratio = value_component->as<typename Schema::IfcRatioMeasure>();
+      //auto length = value_component->as<typename Schema::IfcLengthMeasure>();
+      //auto area = value_component->as<typename Schema::IfcAreaMeasure>();
+      //auto volume = value_component->as<typename Schema::IfcVolumeMeasure>();
+      //if (real)
+      //   conversion_factor = *real;
+      //else if (ratio)
+      //   conversion_factor = *ratio;
+      //else if (length)
+      //   conversion_factor = *length;
+      //else if (area)
+      //   conversion_factor = *area;
+      //else if (volume)
+      //   conversion_factor = *volume;
+      //else
+      //   ASSERT(false);
    }
    catch (IfcParse::IfcInvalidTokenException& e)
    {

@@ -22,6 +22,8 @@
 
 #pragma once
 
+namespace WBFL { namespace EAF { class Broker; }; };
+
 using Spacing = std::map<GroupIndexType, std::vector<double>>;
 
-std::pair<Spacing,Spacing> get_beam_spacing(IfcParse::IfcFile& file);
+std::pair<Spacing,Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::IfcFile& file);

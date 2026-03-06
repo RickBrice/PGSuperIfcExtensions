@@ -28,6 +28,10 @@
 #include <ifcgeom/ifcgeomelement.h>
 #include <ifcgeom/kernels/opencascade/OpenCascadeKernel.h>
 
+#include <IFace/Tools.h>
+#include <EAF/EAFProgress.h>
+#include <EAF/AutoProgress.h>
+
 // gets all the IfcBeams
 // This needs to be updated so we get only the superstructure beams
 std::set<int> get_beam_ids(IfcParse::IfcFile& file)
@@ -41,7 +45,7 @@ std::set<int> get_beam_ids(IfcParse::IfcFile& file)
          {
             for (auto related_element : *related_elements)
             {
-               if (related_element->RelatingStructure() == superstructure)
+               if (related_element->RelatingStructure() == superstructure && GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
                   return true;
             }
             return false;
@@ -68,8 +72,13 @@ std::set<int> get_beam_ids(IfcParse::IfcFile& file)
 }
 
 // this function attempts to get the beam spacing based on the geometry (not using a property from a pset)
-std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
+std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::IfcFile& file)
 {
+   USES_CONVERSION;
+   GET_IFACE2(pBroker, IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
+   pProgress->UpdateMessage(_T("Computing beam spacing"));
+
    WBFL::System::Logger::Debug(_T("Beam Spacing"));
 
    auto beam_ids = get_beam_ids(file);
@@ -84,7 +93,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
    std::vector<IfcGeom::filter_t> filters({ filter });
 
    std::unique_ptr<IfcGeom::OpenCascadeKernel> kernel(std::make_unique<IfcGeom::OpenCascadeKernel>(settings));
-   int num_threads = std::thread::hardware_concurrency();
+   int num_threads = 1;// std::thread::hardware_concurrency();
    IfcGeom::Iterator iterator(std::move(kernel), settings, &file, filters, num_threads);
 
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> start_points;
@@ -93,6 +102,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
    // NOTE: need to deal with (bResult == false)
 
    // This do loop can be multi-threaded
+   IndexType girders_processed = 0;
    do
    {
       auto element = iterator.get();
@@ -101,7 +111,9 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
-         continue;
+         WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+         girder_key.groupIndex = 0;
+         girder_key.girderIndex = girders_processed++;
       }
 
       auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
@@ -126,6 +138,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
       // 1. Build mesh
       Mesh m(v, f);
 
+
       // 2. Decompose mesh into smooth components
       std::vector<Mesh> decomposed = m.decompose();
 
@@ -142,12 +155,16 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
       std::sort(segments.begin(), segments.end(),
          [](const Wire& a, const Wire& b)
          {
-            return a.length() < b.length();
+            return a.plan_length() < b.plan_length();
          });
 
       // 7. Take the two shortest segments
       Wire start_seg = segments[0];
       Wire end_seg = segments[1];
+
+      //CString str;
+      //str.Format(_T("%f, %f\n"), start_seg.plan_length(), end_seg.plan_length());
+      //TRACE(str);
 
       // 8. Get center point of edge wire bounding-box
       Eigen::Vector3d c1 = start_seg.bbox_center();
@@ -171,6 +188,8 @@ std::pair<Spacing, Spacing> get_beam_spacing(IfcParse::IfcFile& file)
       std::ostringstream os;
       os << "Group " << girder_key.groupIndex << ", " << "Girder " << girder_key.girderIndex << " " << c1.transpose() << " -> " << c2.transpose();
       WBFL::System::Logger::Debug(os.str().c_str());
+
+      pProgress->UpdateMessage(A2T(os.str().c_str()));
    } while (iterator.next());
 
    Spacing ss;

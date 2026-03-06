@@ -37,5 +37,6 @@
 
 #include <ifcparse/IfcAlignmentHelper.h>
 
-
 #define IfcSchema Ifc4x3_add2
+
+#include <IFace/Tools.h>

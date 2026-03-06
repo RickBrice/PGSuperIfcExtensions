@@ -28,6 +28,12 @@
 
 #include <EAF/AutoProgress.h>
 
+std::string& to_lower(std::string& s)
+{
+   std::transform(s.begin(), s.end(), s.begin(), [](auto c) {return std::tolower(c); });
+   return s;
+}
+
 Float64 CIfcImporter::m_Precision = 0.001;
 
 CIfcImporter::CIfcImporter(std::shared_ptr<WBFL::EAF::Broker> pBroker) :
@@ -130,23 +136,25 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 
             ATLASSERT(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
 
-            if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()))
+            std::string name = conversion_based_unit->Name();
+            to_lower(name);
+            if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()) || name == std::string("foot"))
             {
                m_pLengthUnit = &WBFL::Units::Measure::Feet;
             }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyFoot.GetConvFactor()))
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyFoot.GetConvFactor()) || name == std::string("us survey foot"))
             {
                m_pLengthUnit = &WBFL::Units::Measure::USSurveyFoot;
             }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Inch.GetConvFactor()))
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Inch.GetConvFactor()) || name == std::string("inch"))
             {
                m_pLengthUnit = &WBFL::Units::Measure::Inch;
             }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Mile.GetConvFactor()))
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Mile.GetConvFactor()) || name == std::string("mile"))
             {
                m_pLengthUnit = &WBFL::Units::Measure::Mile;
             }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Yard.GetConvFactor()))
+            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Yard.GetConvFactor()) || name == std::string("yard"))
             {
                m_pLengthUnit = &WBFL::Units::Measure::Yard;
             }
@@ -219,62 +227,62 @@ private:
 
 HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions options)
 {
-    USES_CONVERSION;
+   USES_CONVERSION;
 
-    HRESULT hr = S_OK;
-    try
-    {
-       std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
+   HRESULT hr = S_OK;
+   try
+   {
+      std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
 
-       { // scope the progress window so it closes automatically when we are done with it
-          GET_IFACE(IEAFProgress, pProgress);
-          WBFL::EAF::AutoProgress ap(pProgress);
+      GET_IFACE(IEAFProgress, pProgress);
+      WBFL::EAF::AutoProgress ap(pProgress);
 
-          auto del = [&](std::streambuf* p) {std::cout.rdbuf(p); };
-          std::unique_ptr<std::streambuf, decltype(del)> origBuffer(std::cout.rdbuf(), del);
-          ProgressStream p;
-          p.SetProgress(pProgress);
+      auto del = [&](std::streambuf* p) {std::cout.rdbuf(p); };
+      std::unique_ptr<std::streambuf, decltype(del)> origBuffer(std::cout.rdbuf(), del);
+      ProgressStream p;
+      p.SetProgress(pProgress);
 
-          p.copyfmt(std::cout);
-          std::cout.rdbuf(p.rdbuf());
+      p.copyfmt(std::cout);
+      std::cout.rdbuf(p.rdbuf());
 
-          Logger::SetOutput(&std::cout, &std::cout);
+      Logger::SetOutput(&std::cout, &std::cout);
 
-          pFile = std::make_unique<IfcParse::IfcFile>(T2A(strFilePath.GetBuffer()));
+      pFile = std::make_unique<IfcParse::IfcFile>(T2A(strFilePath.GetBuffer()));
 
-          if (!pFile->good())
-          {
-             IFC_THROW(_T("Unable to parse .ifc file"));
-          }
-       }
+      if (!pFile->good())
+      {
+         IFC_THROW(_T("Unable to parse .ifc file"));
+      }
 
-       m_Notes.clear();
+      m_Notes.clear();
 
-       auto strSchemaName = pFile->schema()->name();
-       if (strSchemaName == std::string("IFC4X3_ADD2"))
-       {
-          GET_IFACE(IEvents, pEvents);
-          pEvents->HoldEvents();
+      auto strSchemaName = pFile->schema()->name();
+      if (strSchemaName == std::string("IFC4X3_ADD2"))
+      {
+         GET_IFACE(IEvents, pEvents);
+         pEvents->HoldEvents();
 
-          InitUnits(*pFile);
+         InitUnits(*pFile);
 
-          if (ImportAlignment(*pFile) == ImportResult::Fail)
-             hr = E_FAIL;
+         if (ImportAlignment(*pFile) == ImportResult::Fail)
+            hr = E_FAIL;
 
-          if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentAndBridge)
-          {
-             auto import_result = ImportBridge(*pFile);
-             if (import_result == ImportResult::Fail || import_result == ImportResult::NotFound)
-                hr = E_FAIL;
-          }
+         pEvents->FirePendingEvents(); // update internal data for correct alignment
 
-          pEvents->FirePendingEvents();
-       }
-       else
-       {
-          IFC_THROW(_T("Schema not supported"));
-       }
-    }
+         if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentAndBridge)
+         {
+            auto import_result = ImportBridge(*pFile);
+            if (import_result == ImportResult::Fail || import_result == ImportResult::NotFound)
+               hr = E_FAIL;
+         }
+
+         pEvents->FirePendingEvents();
+      }
+      else
+      {
+         IFC_THROW(_T("Schema not supported"));
+      }
+   }
     catch (CIfcImporterException& e)
     {
        std::_tostringstream os;

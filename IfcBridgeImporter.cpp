@@ -28,6 +28,7 @@
 #include "Utilities.h"
 
 #include "BeamSpacing.h"
+#include "DeckSlab.h"
 
 #include <MFCTools\Prompts.h>
 #include <boost/range/combine.hpp>
@@ -67,7 +68,9 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    }
    else
    {
-      IFC_THROW(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
+      WBFL::System::Logger::Debug(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
+      nSpans = nPiers - 1; // derive number of spans from nPiers so we don't rely on custom property set
+      //IFC_THROW(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
    }
 
    std::vector<GirderIndexType> nGirders;
@@ -77,15 +80,28 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    for (auto contained_element : *rel_contained_elements)
    {
       auto related_elements = contained_element->RelatedElements();
+
+      // estimate the number of girders per span for cases where
+      // girder key cannot be extracted from girder name
+      IndexType girder_count = 0;
+      for (auto related_element : *related_elements)
+      {
+         if (related_element->as<IfcSchema::IfcBeam>())
+            girder_count++;
+      }
+      IndexType girders_per_span = nSpans / girder_count;
+
       for (auto related_element : *related_elements)
       {
          auto beam = related_element->as<IfcSchema::IfcBeam>();
-         if (beam)
+         if (beam && GetPredefinedType<IfcSchema::IfcBeam,IfcSchema::IfcBeamType,IfcSchema::IfcBeamTypeEnum::Value>(beam) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
          {
             auto girder_key = get_girder_key(beam);
             if (girder_key == CGirderKey())
             {
-               IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
+               WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+               girder_key.groupIndex = 0; // assume girder goes in span 0
+               //IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
             }
             nGirders[girder_key.groupIndex]++;
          }
@@ -143,31 +159,30 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
       auto pPier = bridge_desc.GetPier(pierIdx);
       auto pier = piers[pierIdx];
       auto rel_positions = pier->PositionedRelativeTo();
-      if (rel_positions->size() == 0)
+      IfcSchema::IfcPositioningElement* positioning_element = (rel_positions && 0 < rel_positions->size() ? (*rel_positions->begin())->RelatingPositioningElement() : nullptr);
+      IfcSchema::IfcReferent* referent = (positioning_element ? positioning_element->as<IfcSchema::IfcReferent>() : nullptr);
+      if (referent)
+      {
+         auto station = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(referent, "Pset_Stationing", "Station");
+         if (station)
+         {
+            pPier->SetStation(*station);
+         }
+         else
+         {
+            std::_tostringstream os;
+            os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Station property in Pset_Stationing not found. Assuming station 100*pierIdx");
+            WBFL::System::Logger::Debug(os.str().c_str());
+            pPier->SetStation(WBFL::Units::ConvertToSysUnits(100, WBFL::Units::Measure::Feet)* pierIdx); // assume 100 ft spans
+         }
+      }
+      else
       {
          std::_tostringstream os;
-         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": must be positioned with an IfcReferent");
-         IFC_THROW(os.str().c_str());
+         os << _T("Expected Pier ") << LABEL_PIER(pierIdx) << _T(" to be positioned with an IfcReferent. Assuming station 100*pierIdx");
+         WBFL::System::Logger::Debug(os.str().c_str());
+         pPier->SetStation(WBFL::Units::ConvertToSysUnits(100,WBFL::Units::Measure::Feet) * pierIdx); // assume 100 ft spans
       }
-
-      auto positioning_element = (*rel_positions->begin())->RelatingPositioningElement();
-      auto ref = positioning_element->as<IfcSchema::IfcReferent>();
-      if (!ref)
-      {
-         std::_tostringstream os;
-         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": must be positioned with an IfcReferent");
-         IFC_THROW(os.str().c_str());
-      }
-
-      auto station = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(ref, "Pset_Stationing", "Station");
-      if (!station)
-      {
-         std::_tostringstream os;
-         os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Station property in Pset_Stationing not found");
-         IFC_THROW(os.str().c_str());
-      }
-
-      pPier->SetStation(*station);
    }
 
    // This code is commented out, because the property set is no longer used. Spacing
@@ -225,7 +240,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
    //}
 
    // obtain beam spacing from the bridge model geometry
-   auto [start_spacing, end_spacing] = get_beam_spacing(file);
+   auto [start_spacing, end_spacing] = get_beam_spacing(m_Importer.GetBroker(),file);
 
    // assume general spacing for now, but in the future analyze the spacing
    // data and see if it is the same for the entire bridge, same for a span, or girder by girder
@@ -287,34 +302,9 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
    int beam_type_count = GetBeamTypeCount(file);
 
    bridge_desc.UseSameGirderForEntireBridge(beam_type_count == 1 ? true : false);
-   GET_IFACE2(m_Importer.GetBroker(),ILibrary, pLibrary);
    if (bridge_desc.UseSameGirderForEntireBridge())
    {
-      auto type = GetType<IfcSchema::IfcBeamType>(*beams->begin());
-      auto girder_name = type->Name().get_value_or(std::string("Unknown"));
-      auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
-      if (!girder_library_entry)
-      {
-         // Matching girder type in the library is a bad implementation.
-         // Should be creating a new library entry for this girder type.
-         // Could not match the girder type. So the program doesn't crap out,
-         // get the first I-Beam type and substitue it. Not a great solution,
-         // but the current focus is loading files that don't conform to the
-         // AASHTO/TPF data standards. We want to be able to load any model
-         // with a precast girder beam bridge
-         GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
-         std::vector<std::_tstring> names;
-         pLibNames->EnumGirderNames(_T("I-Beam"), &names); // huge assumption that we are dealing with I beams.
-         auto substitue_girder_name = names.front();
-
-         girder_library_entry = pLibrary->GetGirderEntry(substitue_girder_name.c_str());
-
-         std::ostringstream os;
-         os << "Girder type \"" << girder_name << "\" not found in the library." << std::endl;
-         os << "Girder type \"" << T2A(substitue_girder_name.c_str()) << "\" was substituted.";
-         
-         m_Importer.AddNote(A2T(os.str().c_str()));
-      }
+      auto girder_library_entry = GetGirderLibraryEntry(*beams->begin());
       bridge_desc.SetGirderLibraryEntry(girder_library_entry);
       bridge_desc.SetGirderFamilyName(girder_library_entry->GetGirderFamilyName().c_str());
 
@@ -326,40 +316,51 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
       bridge_desc.SetGirderOrientation(orientations.front());
    }
 
+   IndexType girders_processed = 0;
    for (auto beam : *prestressed_beams)
    {
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
-         IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
+         WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+         girder_key.groupIndex = 0;
+         girder_key.girderIndex = girders_processed++;
       }
 
       auto fci = GetProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
-      if (!fci)
+      if (fci)
       {
-         IFC_THROW(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+         bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegment(0)->Material.Concrete.Fci = *fci;
       }
-      bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegment(0)->Material.Concrete.Fci = *fci;
+      else
+      {
+         WBFL::System::Logger::Debug(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+         //IFC_THROW(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+      }
 
       auto material = GetMaterial<IfcSchema>(beam);
-      auto fc = GetMaterialProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
-      if (!fc)
+      if (material)
       {
-         IFC_THROW(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+         auto fc = GetMaterialProperty<IfcSchema, IfcSchema::IfcPressureMeasure>(material, "Pset_MaterialConcrete", "CompressiveStrength");
+         if (fc)
+         {
+            bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegment(0)->Material.Concrete.Fc = *fc;
+         }
+         else
+         {
+            WBFL::System::Logger::Debug(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+            //IFC_THROW(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+         }
       }
-      bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegment(0)->Material.Concrete.Fc = *fc;
+      else
+      {
+         WBFL::System::Logger::Debug(_T("Materials are not associated with the beam"));
+         //IFC_THROW(_T("Materials are not associated with the beam"));
+      }
 
       if (!bridge_desc.UseSameGirderForEntireBridge())
       {
-         auto type = GetType<IfcSchema::IfcBeamType>(beam);
-         auto girder_name = type->Name().get_value_or(std::string("Unknown"));
-         auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
-         if (!girder_library_entry)
-         {
-            std::ostringstream os;
-            os << "Girder type \"" << girder_name << "\" not found in the library";
-            IFC_THROW(A2T(os.str().c_str()));
-         }
+         auto girder_library_entry = GetGirderLibraryEntry(beam);
          bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->SetGirderLibraryEntry(girder_library_entry);
          bridge_desc.SetGirderFamilyName(girder_library_entry->GetGirderFamilyName().c_str());
 
@@ -381,8 +382,8 @@ bool CIfcBridgeImporter::IsValidBridge(IfcParse::IfcFile& file, IfcSchema::IfcBr
    // This check could be far less strict if we can assume the user provided us a PSG bridge.
    // If we can go from the girder line geometry and the girder name, mapped to a library entry,
    // that might be enough to actually do some work
-   if (!HasValidGirders(file, bridge))
-      return false;
+   //if (!HasValidGirders(file, bridge))
+   //   return false;
 
    return true;
 }
@@ -556,79 +557,137 @@ void CIfcBridgeImporter::ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2
 
    auto slab = *it;
 
-   auto stations = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "Stations");
-   if (stations.empty())
-   {
-      IFC_THROW(_T("Stations property in pgsDeck property set not found"));
-   }
+   auto deck_points = get_deck_slab(m_Importer.GetBroker(), file);
 
-   auto left_edges = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdges");
-   if (left_edges.empty())
-   {
-      IFC_THROW(_T("LeftEdges property in pgsDeck property set not found"));
-   }
+   //auto stations = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "Stations");
+   //if (stations.empty())
+   //{
+   //   IFC_THROW(_T("Stations property in pgsDeck property set not found"));
+   //}
 
-   auto right_edges = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "RightEdges");
-   if (right_edges.empty())
-   {
-      IFC_THROW(_T("RightEdges property in pgsDeck property set not found"));
-   }
+   //auto left_edges = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdges");
+   //if (left_edges.empty())
+   //{
+   //   IFC_THROW(_T("LeftEdges property in pgsDeck property set not found"));
+   //}
 
-   if (stations.size() != left_edges.size() || stations.size() != right_edges.size())
-   {
-      IFC_THROW(_T("Stations, LeftEdges, and RightEdges properties in pgsDeck property set must have the same number of values"));
-   }
+   //auto right_edges = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "RightEdges");
+   //if (right_edges.empty())
+   //{
+   //   IFC_THROW(_T("RightEdges property in pgsDeck property set not found"));
+   //}
+
+   //if (stations.size() != left_edges.size() || stations.size() != right_edges.size())
+   //{
+   //   IFC_THROW(_T("Stations, LeftEdges, and RightEdges properties in pgsDeck property set must have the same number of values"));
+   //}
 
    auto* pDeck = bridge_desc.GetDeckDescription();
 
-   auto* gross_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "GrossDepth");
-   if (gross_depth)
-   {
-      pDeck->GrossDepth = *gross_depth;
-   }
-   else
-   {
-      IFC_THROW(_T("GrossDepth property in pgsDeck property set not found"));
-   }
+   // Use default for now, but ultimately need to cut a cross section through the deck to get these parameters
+   //auto* gross_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "GrossDepth");
+   //if (gross_depth)
+   //{
+   //   pDeck->GrossDepth = *gross_depth;
+   //}
+   //else
+   //{
+   //   IFC_THROW(_T("GrossDepth property in pgsDeck property set not found"));
+   //}
 
-   auto* left_edge_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdgeDepth");
-   if (left_edge_depth)
-   {
-      pDeck->OverhangEdgeDepth[pgsTypes::stLeft] = *left_edge_depth;
-   }
-   else
-   {
-      IFC_THROW(_T("LeftEdgeDepth property in pgsDeck property set not found"));
-   }
+   //auto* left_edge_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "LeftEdgeDepth");
+   //if (left_edge_depth)
+   //{
+   //   pDeck->OverhangEdgeDepth[pgsTypes::stLeft] = *left_edge_depth;
+   //}
+   //else
+   //{
+   //   IFC_THROW(_T("LeftEdgeDepth property in pgsDeck property set not found"));
+   //}
 
-   auto* right_edge_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "RightEdgeDepth");
-   if (right_edge_depth)
-   {
-      pDeck->OverhangEdgeDepth[pgsTypes::stRight] = *right_edge_depth;
-   }
-   else
-   {
-      IFC_THROW(_T("RightEdgeDepth property in pgsDeck property set not found"));
-   }
+   //auto* right_edge_depth = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "RightEdgeDepth");
+   //if (right_edge_depth)
+   //{
+   //   pDeck->OverhangEdgeDepth[pgsTypes::stRight] = *right_edge_depth;
+   //}
+   //else
+   //{
+   //   IFC_THROW(_T("RightEdgeDepth property in pgsDeck property set not found"));
+   //}
+
+   // building deck based on data in custom psets
+   //pDeck->DeckEdgePoints.clear();
+   //for (auto&& [station, left_edge, right_edge] : boost::combine(stations, left_edges, right_edges))
+   //{
+   //   CDeckPoint deck_point;
+
+   //   // dummy, default values
+   //   deck_point.MeasurementType = pgsTypes::OffsetMeasurementType::omtBridge;
+   //   deck_point.LeftTransitionType = stations.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+   //   deck_point.RightTransitionType = stations.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+
+   //   deck_point.Station = *station;
+   //   deck_point.LeftEdge = *left_edge;
+   //   deck_point.RightEdge = *right_edge;
+   //   pDeck->DeckEdgePoints.emplace_back(deck_point);
+   //}
 
    pDeck->DeckEdgePoints.clear();
-   for (auto&& [station, left_edge, right_edge] : boost::combine(stations, left_edges, right_edges))
+   for (auto&& [station, edge] : deck_points)
    {
+      auto [left_edge, right_edge] = edge;
       CDeckPoint deck_point;
 
       // dummy, default values
-      deck_point.MeasurementType = pgsTypes::OffsetMeasurementType::omtBridge;
-      deck_point.LeftTransitionType = stations.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
-      deck_point.RightTransitionType = stations.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+      deck_point.MeasurementType = pgsTypes::OffsetMeasurementType::omtAlignment; // deck geometry from IFC file is computed relative to the alignment
+      deck_point.LeftTransitionType = deck_points.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+      deck_point.RightTransitionType = deck_points.size() == 1 ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
 
-      deck_point.Station = *station;
-      deck_point.LeftEdge = *left_edge;
-      deck_point.RightEdge = *right_edge;
+      deck_point.Station = station;
+      deck_point.LeftEdge = fabs(left_edge);
+      deck_point.RightEdge = fabs(right_edge);
       pDeck->DeckEdgePoints.emplace_back(deck_point);
    }
+}
+
+const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::IfcBeam* beam)
+{
+   USES_CONVERSION;
+
+   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+
+   auto type = GetType<IfcSchema::IfcBeamType>(beam);
+   auto girder_name = type->Name().get_value_or(std::string("Unknown"));
+   auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
+   if (!girder_library_entry)
+   {
+      // Matching girder type in the library is a bad implementation.
+      // Should be creating a new library entry for this girder type.
+      // Could not match the girder type. So the program doesn't crap out,
+      // get the first I-Beam type and substitute it. Not a great solution,
+      // but the current focus is loading files that don't conform to the
+      // AASHTO/TPF data standards. We want to be able to load any model
+      // with a precast girder beam bridge
+      GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
+      std::vector<std::_tstring> names;
+      pLibNames->EnumGirderNames(_T("I-Beam"), &names); // huge assumption that we are dealing with I beams.
+      auto substitue_girder_name = names.front();
+
+      girder_library_entry = pLibrary->GetGirderEntry(substitue_girder_name.c_str());
+
+      std::ostringstream os;
+      os << "Girder type \"" << girder_name << "\" not found in the library." << std::endl;
+      os << "Girder type \"" << T2A(substitue_girder_name.c_str()) << "\" was substituted.";
+
+      WBFL::System::Logger::Debug(os.str().c_str());
+
+      m_Importer.AddNote(A2T(os.str().c_str()));
+   }
+   return girder_library_entry;
 }
 
 void CIfcBridgeImporter::Experiment(IfcParse::IfcFile& file)
 {
    //get_beam_spacing(file);
 }
+
