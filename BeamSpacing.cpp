@@ -28,9 +28,9 @@
 #include <ifcgeom/ifcgeomelement.h>
 #include <ifcgeom/kernels/opencascade/OpenCascadeKernel.h>
 
-#include <IFace/Tools.h>
 #include <EAF/EAFProgress.h>
 #include <EAF/AutoProgress.h>
+#include <psgLib/GirderLabel.h>
 
 // gets all the IfcBeams
 // This needs to be updated so we get only the superstructure beams
@@ -102,19 +102,26 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
    // NOTE: need to deal with (bResult == false)
 
    // This do loop can be multi-threaded
+   SpanIndexType nSpans = get_pier_count(file) + 1; // number of spans is typically one more than the number of piers, but this is not guaranteed 
+   IndexType girder_count = beam_ids.size();
+   IndexType girders_per_span = girder_count / nSpans;
    IndexType girders_processed = 0;
    do
    {
       auto element = iterator.get();
-      //std::cout << element->name() << std::endl;;
       auto beam = element->product()->as<IfcSchema::IfcBeam>();
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
          WBFL::System::Logger::Debug(_T("Using assumed girder key."));
-         girder_key.groupIndex = 0;
-         girder_key.girderIndex = girders_processed++;
+         girder_key.groupIndex = girders_processed / girders_per_span; // assume girders are evenly distributed across spans
+         girder_key.girderIndex = girders_processed - girder_key.groupIndex*girders_per_span;
       }
+      girders_processed++;
+
+      std::_tostringstream os;
+      os << _T("Processing geometry for ") << LABEL_GIRDER(girder_key) << std::endl;
+      pProgress->UpdateMessage(os.str().c_str());
 
       auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
       auto geometry = triangulation->geometry_pointer();
@@ -185,11 +192,10 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
       start_points[girder_key.groupIndex][girder_key.girderIndex] = c1;
       end_points[girder_key.groupIndex][girder_key.girderIndex] = c2;
 
-      std::ostringstream os;
-      os << "Group " << girder_key.groupIndex << ", " << "Girder " << girder_key.girderIndex << " " << c1.transpose() << " -> " << c2.transpose();
-      WBFL::System::Logger::Debug(os.str().c_str());
-
-      pProgress->UpdateMessage(A2T(os.str().c_str()));
+      //std::ostringstream os;
+      //os << "Group " << girder_key.groupIndex << ", " << "Girder " << girder_key.girderIndex << " " << c1.transpose() << " -> " << c2.transpose();
+      //WBFL::System::Logger::Debug(os.str().c_str());
+      //pProgress->UpdateMessage(A2T(os.str().c_str()));
    } while (iterator.next());
 
    Spacing ss;
@@ -209,10 +215,6 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
          std::back_inserter(es[grpIdx]),
          [&](size_t i) {return (points[i] - points[i - 1]).norm(); });
    }
-
-   //std::cout << "Start Spacing, ";
-   //for (auto s : ss) std::cout << s / 0.3048 << ", ";
-   //std::cout << std::endl;
 
    return { ss, es };
 }

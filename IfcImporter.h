@@ -80,7 +80,7 @@ private:
 
 
    ImportResult ImportAlignment(IfcParse::IfcFile& file);
-   ImportResult ImportBridge(IfcParse::IfcFile& file);
+   ImportResult ImportBridge(IfcParse::IfcFile& file, bool bDeriveAlignmentFromDeck);
 
    void InitUnits(IfcParse::IfcFile& file);
 };

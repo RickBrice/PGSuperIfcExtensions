@@ -28,7 +28,7 @@ class CIfcBridgeImporter
 {
 public:
    CIfcBridgeImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
+   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file,bool bDeriveAlignmentFromDeck);
 
 private:
    CIfcImporter& m_Importer;
@@ -43,6 +43,8 @@ private:
    void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
    
    const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam* beam);
+
+   bool DeriveAlignmentFromDeck(IfcParse::IfcFile& file);
 
    void Experiment(IfcParse::IfcFile& file);
 };
