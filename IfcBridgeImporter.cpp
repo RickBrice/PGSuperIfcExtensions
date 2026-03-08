@@ -43,20 +43,23 @@ CIfcBridgeImporter::CIfcBridgeImporter(CIfcImporter& importer) :
 {
 }
 
-CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, bool bDeriveAlignmentFromDeck)
 {
    auto bridge = GetBridge(file);
    if (bridge == nullptr)
       return CIfcImporter::ImportResult::NotFound;
 
-   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   PierIndexType nPiers = 0;
-   for (auto& part : *parts)
+   if (bDeriveAlignmentFromDeck)
    {
-      if (part->PredefinedType().has_value() && (part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
-         nPiers++;
+      if (!DeriveAlignmentFromDeck(file))
+      {
+         WBFL::System::Logger::Debug(_T("Failed to derive alignment from deck slab."));
+         //IFC_THROW(_T("Failed to derive alignment from deck slab."));
+         return CIfcImporter::ImportResult::Fail;
+      }
    }
 
+   auto nPiers = get_pier_count(file);
 
    SpanIndexType nSpans = INVALID_INDEX;
    auto value = GetProperty<IfcSchema, IfcSchema::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
@@ -75,37 +78,22 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file)
 
    std::vector<GirderIndexType> nGirders;
    nGirders.assign(nSpans, 0);
-   auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_SUPERSTRUCTURE);
-   auto rel_contained_elements = superstructure->ContainsElements();
-   for (auto contained_element : *rel_contained_elements)
+   auto beam_ids = get_beam_ids(file);
+   IndexType girder_count = beam_ids.size();
+   IndexType girders_per_span = girder_count / nSpans;
+   IndexType girders_processed = 0;
+   for (auto id : beam_ids)
    {
-      auto related_elements = contained_element->RelatedElements();
-
-      // estimate the number of girders per span for cases where
-      // girder key cannot be extracted from girder name
-      IndexType girder_count = 0;
-      for (auto related_element : *related_elements)
+      auto beam = file.instance_by_id(id)->as<IfcSchema::IfcBeam>();
+      auto girder_key = get_girder_key(beam);
+      if (girder_key == CGirderKey())
       {
-         if (related_element->as<IfcSchema::IfcBeam>())
-            girder_count++;
+         WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+         girder_key.groupIndex = girders_processed / girders_per_span; // assume girders are evenly distributed across spans
+         //IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
       }
-      IndexType girders_per_span = nSpans / girder_count;
-
-      for (auto related_element : *related_elements)
-      {
-         auto beam = related_element->as<IfcSchema::IfcBeam>();
-         if (beam && GetPredefinedType<IfcSchema::IfcBeam,IfcSchema::IfcBeamType,IfcSchema::IfcBeamTypeEnum::Value>(beam) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
-         {
-            auto girder_key = get_girder_key(beam);
-            if (girder_key == CGirderKey())
-            {
-               WBFL::System::Logger::Debug(_T("Using assumed girder key."));
-               girder_key.groupIndex = 0; // assume girder goes in span 0
-               //IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
-            }
-            nGirders[girder_key.groupIndex]++;
-         }
-      }
+      nGirders[girder_key.groupIndex]++;
+      girders_processed++;
    }
 
    bool bSameNumGirdersInAllSpans = std::adjacent_find(nGirders.begin(), nGirders.end(), std::not_equal_to<>()) == nGirders.end() ? true : false;
@@ -684,6 +672,11 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
       m_Importer.AddNote(A2T(os.str().c_str()));
    }
    return girder_library_entry;
+}
+
+bool CIfcBridgeImporter::DeriveAlignmentFromDeck(IfcParse::IfcFile& file)
+{
+   return create_alignment_from_deck(m_Importer.GetBroker(), file);
 }
 
 void CIfcBridgeImporter::Experiment(IfcParse::IfcFile& file)

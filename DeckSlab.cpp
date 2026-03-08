@@ -30,9 +30,13 @@
 #include <ifcgeom/ifcgeomelement.h>
 #include <ifcgeom/kernels/opencascade/OpenCascadeKernel.h>
 
+#include <IFace\Project.h>
 #include <IFace/Alignment.h>
+#include <EAF/EAFProgress.h>
+#include <EAF/AutoProgress.h>
 
-#undef min
+
+#undef min // undef our version of min in MathEx.h so std::min is used correctly in this file
 
 
 // returns the id of the IfcSlab... assumes there is only one
@@ -103,6 +107,10 @@ std::map<double, std::pair<double, double>> condense(const std::multimap<double,
 
 std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file)
 {
+   GET_IFACE2(pBroker, IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
+   pProgress->UpdateMessage(_T("Progressing deck geometry"));
+
    auto slab_id = get_slab_id(file);
    ASSERT(slab_id != 0); // should not be calling into this function if there isn't a deck slab
 
@@ -143,7 +151,13 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
       f.reserve(faces.size() / 3);
       for (auto i = 0; i < faces.size(); i += 3)
       {
+         // This line of code should be correct, however....
          f.emplace_back(std::array<int, 3>({ faces[i],faces[i + 1],faces[i + 2] }));
+
+         // There appears to be a bug in the IfcOpenShell processing of IfcSectionedSolidHorizontal
+         // The vertex indices of the triangular faces are in the wrong direction resulting in an
+         // inward surface normal. Working around this problem by manually reversing the order
+         //f.emplace_back(std::array<int, 3>({ faces[i+2],faces[i + 1],faces[i] }));
       }
 
       // 1. Build mesh
@@ -194,12 +208,106 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
 
    auto results = condense(deck_points);
 
-   for (auto iter = results.begin(); iter != results.end(); iter++)
-   {
-      std::ostringstream os;
-      os << iter->first << ", " << iter->second.first << ", " << iter->second.second;
-      WBFL::System::Logger::Debug(os.str().c_str());
-   }
-
    return results;
+}
+
+bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file)
+{
+   // The bridge has a deck, but the model does not have an alignment.
+   // We can't compute station and offset of the deck edge points without an alignment.
+   // Assume the alignment is straight. Create the alignment using the center point of the deck ends to establish the start point and direction.
+   // This is a best effort approach to get an alignment that is usable for stationing the deck geometry. 
+   // It will not be correct, but it will at least allow the user to see the deck geometry in the correct location and station the deck geometry.
+
+   GET_IFACE2(pBroker, IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
+   pProgress->UpdateMessage(_T("Progressing deck geometry to establish an alignment"));
+
+   auto slab_id = get_slab_id(file);
+   ASSERT(slab_id != 0); // should not be calling into this function if there isn't a deck slab
+
+   ifcopenshell::geometry::Settings settings;
+   settings.set("use-world-coords", true);
+   settings.set("weld-vertices", true);
+   settings.set("disable-opening-subtractions", true);
+
+   // set up filter for the geometry iterator
+   IfcGeom::instance_id_filter filter(true, false, { slab_id });
+   std::vector<IfcGeom::filter_t> filters({ filter });
+
+   std::unique_ptr<IfcGeom::OpenCascadeKernel> kernel(std::make_unique<IfcGeom::OpenCascadeKernel>(settings));
+   IfcGeom::Iterator iterator(std::move(kernel), settings, &file, filters, 1);
+   bool bResult = iterator.initialize();
+   do
+   {
+      auto element = iterator.get();
+
+      auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
+      auto geometry = triangulation->geometry_pointer();
+      const auto& verts = geometry->verts();
+      const auto& faces = geometry->faces();
+
+      std::vector<Eigen::Vector3d> v;
+      v.reserve(verts.size() / 3);
+      for (auto i = 0; i < verts.size(); i += 3)
+      {
+         v.emplace_back(verts[i], verts[i + 1], verts[i + 2]);
+      }
+
+      std::vector<std::array<int, 3>> f;
+      f.reserve(faces.size() / 3);
+      for (auto i = 0; i < faces.size(); i += 3)
+      {
+         // This line of code should be correct, however....
+         f.emplace_back(std::array<int, 3>({ faces[i],faces[i + 1],faces[i + 2] }));
+
+         // There appears to be a bug in the IfcOpenShell processing of IfcSectionedSolidHorizontal
+         // The vertex indices of the triangular faces are in the wrong direction resulting in an
+         // inward surface normal. Working around this problem by manually reversing the order
+         //f.emplace_back(std::array<int, 3>({ faces[i+2],faces[i + 1],faces[i] }));
+      }
+
+      // 1. Build mesh
+      Mesh m(v, f);
+
+      // 2. Decompose mesh into smooth components
+      std::vector<Mesh> decomposed = m.decompose();
+
+      // 3. Select top component (max Z of vertex + avg normal)
+      Mesh top_component = get_top_mesh(decomposed);
+
+      // 4. Extract boundary wire
+      Wire boundary = top_component.boundary();
+
+      // 5. Decompose boundary into smooth segments
+      std::vector<Wire> segments = boundary.decompose();
+
+      // 6. Sort segments by length
+      std::sort(segments.begin(), segments.end(),
+         [](const Wire& a, const Wire& b)
+         {
+            return a.plan_length() < b.plan_length();
+         });
+
+      // 7. Assume two shortest segments are the ends of the slab
+      Wire start_seg = segments[0];
+      Wire end_seg = segments[1];
+
+      // 8. Get center point of edge wire bounding-box
+      Eigen::Vector3d c1 = start_seg.bbox_center();
+      Eigen::Vector3d c2 = end_seg.bbox_center();
+
+      // 9. Create alignment between those two points
+      GET_IFACE2(pBroker, IRoadwayData, pRoadwayData);
+      AlignmentData2 alignmentData = pRoadwayData->GetAlignmentData2();
+      alignmentData.xRefPoint = c1.x();
+      alignmentData.yRefPoint = c1.y();
+      alignmentData.Direction = atan2(c2.y() - c1.y(), c2.x() - c1.x());
+      pRoadwayData->SetAlignmentData2(alignmentData);
+
+      return true;
+
+   } while (iterator.next());
+
+   return false;
 }

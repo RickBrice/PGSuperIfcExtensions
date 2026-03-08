@@ -264,14 +264,15 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
          InitUnits(*pFile);
 
-         if (ImportAlignment(*pFile) == ImportResult::Fail)
+         auto import_alignment_result = ImportAlignment(*pFile);
+         if (import_alignment_result == ImportResult::Fail)
             hr = E_FAIL;
 
          pEvents->FirePendingEvents(); // update internal data for correct alignment
 
          if (options.model_elements == CIfcImportOptions::ModelElements::AlignmentAndBridge)
          {
-            auto import_result = ImportBridge(*pFile);
+            auto import_result = ImportBridge(*pFile,import_alignment_result == ImportResult::NotFound);
             if (import_result == ImportResult::Fail || import_result == ImportResult::NotFound)
                hr = E_FAIL;
          }
@@ -310,9 +311,9 @@ CIfcImporter::ImportResult CIfcImporter::ImportAlignment(IfcParse::IfcFile& file
    return CIfcAlignmentImporter(*this).Import(file);
 }
 
-CIfcImporter::ImportResult CIfcImporter::ImportBridge(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcImporter::ImportBridge(IfcParse::IfcFile& file,bool bDeriveAlignmentFromDeck)
 {
-   return CIfcBridgeImporter(*this).Import(file);
+   return CIfcBridgeImporter(*this).Import(file, bDeriveAlignmentFromDeck);
 }
 
 std::vector<std::_tstring> CIfcImporter::GetNotes()
