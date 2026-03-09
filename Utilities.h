@@ -38,34 +38,82 @@ static PierIndexType get_pier_count(IfcParse::IfcFile& file)
    }
    return nPiers;
 }
+#include <string>
+#include <regex>
+#include <utility>
+#include <cctype>
+#include <stdexcept>
 
-static CGirderKey girder_key_from_string(const std::string& s)
-{
-   GroupIndexType grpIdx = INVALID_INDEX;
-   GirderIndexType gdrIdx = INVALID_INDEX;
-   std::istringstream iss(s);
-   std::string word;
+// Convert letter sequence (A, B, ..., Z, AA, AB, ...) to zero-based index
+static int letterToIndex(const std::string& s) {
+   int value = 0;
+   for (char c : s) {
+      if (!std::isalpha(c))
+         throw std::runtime_error("Invalid letter sequence");
 
-   while (iss >> word)
-   {
-      if (word == "Span")
-         iss >> grpIdx;
-      else if (word == "Girder")
-         iss >> gdrIdx;
-      else if (word == ",")
-      { // do nothing
-      }
-      else
-      {
-         return CGirderKey(); // values are INVALID_INDEX
-         //USES_CONVERSION;
-         //std::_tostringstream os;
-         //os << _T("Unexpected DesignLocationNumber property in Pset_PrecastConcreteElementGeneral property set (") << A2T(s.c_str()) << _T(")");
-         //IFC_THROW(os.str().c_str());
-      }
+      value = value * 26 + (std::toupper(c) - 'A' + 1);
+   }
+   return value - 1; // zero-based
+}
+
+static CGirderKey girder_key_from_string(const std::string& input) {
+   // input string is expected to be in one of these formats:
+   // Span (number) Beam|Girder (number or alpha)
+   // Beam|Girder (number or alpha) Span (number)
+   // Examples
+   // Span 1 Girder 2
+   // Span 3 Beam C
+   // Beam 2 Span 4
+   // Girder AA Span 3
+
+   // Case-insensitive regex
+   std::regex pattern(
+      R"((?:Span\s+(\d+)\s+(?:Beam|Girder)\s+([A-Za-z0-9]+))|(?:Beam|Girder)\s+([A-Za-z0-9]+)\s+Span\s+(\d+))",
+      std::regex_constants::icase
+   );
+
+
+   std::smatch match;
+   if (!std::regex_match(input, match, pattern)) {
+      std::ostringstream os;
+      os << "Beam designation: " << input << " is not valid";
+      WBFL::System::Logger::Debug(os.str().c_str());
+      return CGirderKey();
    }
 
-   return { grpIdx - 1,gdrIdx - 1 };
+   int span;
+   std::string member;
+
+   if (match[1].matched) {
+      span = std::stoi(match[1].str());
+      member = match[2].str();
+   }
+   else {
+      member = match[3].str();
+      span = std::stoi(match[4].str());
+   }
+
+   // Convert span to zero-based index
+   SpanIndexType spanIndex = span - 1;
+
+   // Convert girder/beam designation to zero-based index
+   GirderIndexType girderIndex;
+   if (std::isalpha(member[0])) {
+      try {
+         girderIndex = letterToIndex(member);
+      }
+      catch (...)
+      {
+         WBFL::System::Logger::Debug("Invalid beam designation");
+         spanIndex = INVALID_INDEX;
+         girderIndex = INVALID_INDEX;
+      }
+   }
+   else {
+      girderIndex = std::stoi(member) - 1;
+   }
+
+   return CGirderKey(spanIndex, girderIndex );
 }
 
 static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
