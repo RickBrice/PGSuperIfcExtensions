@@ -23,6 +23,8 @@
 #include "BeamSpacing.h"
 #include "Geometry.h"
 #include "Utilities.h"
+#include "Piers.h"
+
 #include <ifcgeom/abstract_mapping.h>
 #include <ifcgeom/iterator.h>
 #include <ifcgeom/ifcgeomelement.h>

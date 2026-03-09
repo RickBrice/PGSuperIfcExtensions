@@ -194,6 +194,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClCompile Include="PGSuperDataImporter.cpp" />
     <ClCompile Include="PGSuperDataExporter.cpp" />
     <ClCompile Include="PGSuperProjectImporter.cpp" />
+    <ClCompile Include="Piers.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -209,6 +210,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="IfcBridgeImporter.h" />
+    <ClInclude Include="Piers.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="ImportOptions.h" />
     <ClInclude Include="ConstructionSequence.h" />

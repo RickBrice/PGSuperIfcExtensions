@@ -151,13 +151,7 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
       f.reserve(faces.size() / 3);
       for (auto i = 0; i < faces.size(); i += 3)
       {
-         // This line of code should be correct, however....
          f.emplace_back(std::array<int, 3>({ faces[i],faces[i + 1],faces[i + 2] }));
-
-         // There appears to be a bug in the IfcOpenShell processing of IfcSectionedSolidHorizontal
-         // The vertex indices of the triangular faces are in the wrong direction resulting in an
-         // inward surface normal. Working around this problem by manually reversing the order
-         //f.emplace_back(std::array<int, 3>({ faces[i+2],faces[i + 1],faces[i] }));
       }
 
       // 1. Build mesh

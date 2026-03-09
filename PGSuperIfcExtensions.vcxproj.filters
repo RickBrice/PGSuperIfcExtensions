@@ -46,6 +46,9 @@
     <ClCompile Include="DeckSlab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Piers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IfcImporter.h">
@@ -124,6 +127,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeckSlab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Piers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

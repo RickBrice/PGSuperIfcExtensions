@@ -29,6 +29,7 @@
 
 #include "BeamSpacing.h"
 #include "DeckSlab.h"
+#include "Piers.h"
 
 #include <MFCTools\Prompts.h>
 #include <boost/range/combine.hpp>
@@ -133,44 +134,28 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, b
    // Position the abutments and piers
    //
 
-   // Per TPF modeling guide, piers and abutments are different types.
+   // Per TPF modeling guidance, piers and abutments are different types.
    // Get the abutments and piers and put into a single vector because we need to treat them the same in PGSuper
    std::vector<IfcSchema::IfcBridgePart*> abutments = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
    std::vector<IfcSchema::IfcBridgePart*> piers = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
    piers.insert(piers.begin(), abutments.front());
    piers.insert(piers.end(), abutments.back());
 
-   nPiers = bridge_desc.GetPierCount();
+   ASSERT(nPiers == bridge_desc.GetPierCount());
+   std::set<double> stations; // we don't know the order the piers are defined in the model... could be anything. Set will sort stations
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
       // get the pier station from the positioning element and set it on the PGSuper pier
-      auto pPier = bridge_desc.GetPier(pierIdx);
       auto pier = piers[pierIdx];
-      auto rel_positions = pier->PositionedRelativeTo();
-      IfcSchema::IfcPositioningElement* positioning_element = (rel_positions && 0 < rel_positions->size() ? (*rel_positions->begin())->RelatingPositioningElement() : nullptr);
-      IfcSchema::IfcReferent* referent = (positioning_element ? positioning_element->as<IfcSchema::IfcReferent>() : nullptr);
-      if (referent)
-      {
-         auto station = GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(referent, "Pset_Stationing", "Station");
-         if (station)
-         {
-            pPier->SetStation(*station);
-         }
-         else
-         {
-            std::_tostringstream os;
-            os << _T("Pier ") << LABEL_PIER(pierIdx) << _T(": Station property in Pset_Stationing not found. Assuming station 100*pierIdx");
-            WBFL::System::Logger::Debug(os.str().c_str());
-            pPier->SetStation(WBFL::Units::ConvertToSysUnits(100, WBFL::Units::Measure::Feet)* pierIdx); // assume 100 ft spans
-         }
-      }
-      else
-      {
-         std::_tostringstream os;
-         os << _T("Expected Pier ") << LABEL_PIER(pierIdx) << _T(" to be positioned with an IfcReferent. Assuming station 100*pierIdx");
-         WBFL::System::Logger::Debug(os.str().c_str());
-         pPier->SetStation(WBFL::Units::ConvertToSysUnits(100,WBFL::Units::Measure::Feet) * pierIdx); // assume 100 ft spans
-      }
+      double station = get_pier_station(m_Importer.GetBroker(),file, pierIdx, pier);
+      stations.insert(station);
+   }
+
+   PierIndexType pierIdx = 0;
+   for (auto& station : stations)
+   {
+      auto pPier = bridge_desc.GetPier(pierIdx++);
+      pPier->SetStation(station);
    }
 
    // This code is commented out, because the property set is no longer used. Spacing
