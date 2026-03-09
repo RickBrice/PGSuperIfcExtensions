@@ -1300,7 +1300,7 @@ void GirderSegment_PolygonalFaceSet(IfcHierarchyHelper<Schema>& file, std::share
       faces->push(face);
    }
 
-   auto faceset = new typename Schema::IfcPolygonalFaceSet(coordinates,boost::none,faces,boost::none);
+   auto faceset = new typename Schema::IfcPolygonalFaceSet(coordinates,true,faces,boost::none);
 
    typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
    representation_items->push(faceset);
