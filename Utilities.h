@@ -27,18 +27,6 @@
 #include "IfcImporterException.h"
 #include "Properties.h"
 
-static PierIndexType get_pier_count(IfcParse::IfcFile& file)
-{
-   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   PierIndexType nPiers = 0;
-   for (auto& part : *parts)
-   {
-      if (part->PredefinedType().has_value() && (part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
-         nPiers++;
-   }
-   return nPiers;
-}
-#include <string>
 #include <regex>
 #include <utility>
 #include <cctype>
