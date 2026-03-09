@@ -83,7 +83,7 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::Ifc
       std::ostringstream os;
       os << "Expected Pier " << T2A(LABEL_PIER(pierIdx)) << " ";
       pier->toString(os);
-      os << " to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimation station from any IfcBearing in the spatial structure of the IfcBridgePart.PIER";
+      os << " to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER";
       WBFL::System::Logger::Debug(os.str().c_str());
 
       ifcopenshell::geometry::Settings settings;
