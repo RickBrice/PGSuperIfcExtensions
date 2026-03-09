@@ -179,7 +179,7 @@ typename Schema::IfcCurve* CreatePolyline(IShape* shape, const CIfcExportOptions
    CComPtr<IPoint2dCollection> polyPoints;
    shape->get_PolyPoints(&polyPoints);
 
-   if (GetVertexOrdering(shape) == CLOCKWISE)
+   if (GetVertexOrdering(shape) == COUNTERCLOCKWISE)
    {
       polyPoints->Reverse();
    }
