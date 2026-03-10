@@ -57,12 +57,6 @@ public:
    // Converts Ifc data to PGSuper data
    HRESULT ImportFromIFC(CString& strFilePath, CIfcImportOptions options);
 
-   void AddNote(const std::_tstring& str) { m_Notes.push_back(str); }
-   void AddNote(LPCTSTR str) { m_Notes.push_back(str); }
-
-   // Returns a list of notes that were generated during the IFC to PGSuper conversion process
-   std::vector<std::_tstring> GetNotes();
-
    static Float64 GetPrecision() { return m_Precision; }
 
    std::shared_ptr<WBFL::EAF::Broker> GetBroker() { return m_pBroker; }
@@ -76,7 +70,8 @@ private:
    static Float64 m_Precision;
    const WBFL::Units::Length* m_pLengthUnit;
    const WBFL::Units::Angle* m_pAngleUnit;
-   std::vector<std::_tstring> m_Notes;
+   std::ostringstream m_LogStream;
+   std::ostream* m_pOldLogStream = nullptr;
 
 
    ImportResult ImportAlignment(IfcParse::IfcFile& file);

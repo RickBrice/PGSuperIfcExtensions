@@ -84,7 +84,7 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::Ifc
       os << "Expected Pier " << T2A(LABEL_PIER(pierIdx)) << " ";
       pier->toString(os);
       os << " to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER";
-      WBFL::System::Logger::Debug(os.str().c_str());
+      WBFL::System::Logger::Info(os.str().c_str());
 
       ifcopenshell::geometry::Settings settings;
       settings.set("use-world-coords", true);
@@ -95,7 +95,7 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::Ifc
 
       if (bearing_ids.empty())
       {
-         WBFL::System::Logger::Debug("IfcBearing not found in the spatial structure of this pier. Assuming piers to be at stations on 100ft increment.");
+         WBFL::System::Logger::Info("IfcBearing not found in the spatial structure of this pier. Assuming piers to be at stations on 100ft increment.");
          double station = WBFL::Units::ConvertToSysUnits(pierIdx * 100.0, WBFL::Units::Measure::Feet);
          return station;
       }

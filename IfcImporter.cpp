@@ -25,6 +25,7 @@
 #include "IfcAlignmentImporter.h"
 #include "IfcBridgeImporter.h"
 #include "Units.h"
+#include "ImportResults.h"
 
 #include <EAF/AutoProgress.h>
 
@@ -227,11 +228,14 @@ private:
 
 HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions options)
 {
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
    USES_CONVERSION;
 
    HRESULT hr = S_OK;
    try
    {
+      m_pOldLogStream = WBFL::System::Logger::SetOutput(&m_LogStream);
+
       std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
 
       GET_IFACE(IEAFProgress, pProgress);
@@ -253,8 +257,6 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
       {
          IFC_THROW(_T("Unable to parse .ifc file"));
       }
-
-      m_Notes.clear();
 
       auto strSchemaName = pFile->schema()->name();
       if (strSchemaName == std::string("IFC4X3_ADD2"))
@@ -288,20 +290,14 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
     {
        std::_tostringstream os;
        os << _T("IFC import failed:\n") << e.What();
-       AfxMessageBox(os.str().c_str());
-       return E_FAIL;
+       WBFL::System::Logger::Info(os.str().c_str());
+       hr = E_FAIL;
     }
 
-   auto notes = GetNotes();
-   std::_tstring strNotes;
-   for (auto note : notes)
-   {
-      strNotes += note + _T("\n\n");
-   }
-   if (0 < strNotes.size())
-   {
-      AfxMessageBox(strNotes.c_str(), MB_OK);
-   }
+    CImportResults dlg(m_LogStream);
+    dlg.DoModal();
+
+    WBFL::System::Logger::SetOutput(m_pOldLogStream);
 
    return hr;
 }
@@ -315,9 +311,3 @@ CIfcImporter::ImportResult CIfcImporter::ImportBridge(IfcParse::IfcFile& file,bo
 {
    return CIfcBridgeImporter(*this).Import(file, bDeriveAlignmentFromDeck);
 }
-
-std::vector<std::_tstring> CIfcImporter::GetNotes()
-{
-   return m_Notes;
-}
-

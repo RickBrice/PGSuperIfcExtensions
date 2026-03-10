@@ -65,7 +65,7 @@ static CGirderKey girder_key_from_string(const std::string& input) {
    if (!std::regex_match(input, match, pattern)) {
       std::ostringstream os;
       os << "Beam designation: " << input << " is not valid";
-      WBFL::System::Logger::Debug(os.str().c_str());
+      WBFL::System::Logger::Info(os.str().c_str());
       return CGirderKey();
    }
 
@@ -92,7 +92,7 @@ static CGirderKey girder_key_from_string(const std::string& input) {
       }
       catch (...)
       {
-         WBFL::System::Logger::Debug("Invalid beam designation");
+         WBFL::System::Logger::Info("Invalid beam designation");
          spanIndex = INVALID_INDEX;
          girderIndex = INVALID_INDEX;
       }
@@ -113,12 +113,12 @@ static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
       girder_key = girder_key_from_string(*design_location_number);
       if (girder_key == CGirderKey())
       {
-         WBFL::System::Logger::Debug("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral, or the property was not formatted as expected");
+         WBFL::System::Logger::Info("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral, or the property was not formatted as expected");
       }
    }
    else
    {
-      WBFL::System::Logger::Debug("Pset_PrecastConcreteElementGeneral not found.");
+      WBFL::System::Logger::Info("Pset_PrecastConcreteElementGeneral not found.");
    }
 
    if (girder_key == CGirderKey())
@@ -128,18 +128,18 @@ static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
          girder_key = girder_key_from_string(*(beam->Name()));
          if (girder_key == CGirderKey())
          {
-            WBFL::System::Logger::Debug("IfcBeam::Name was not formatted as expected");
+            WBFL::System::Logger::Info("IfcBeam::Name was not formatted as expected");
          }
       }
       else
       {
-         WBFL::System::Logger::Debug("IfcBeam::Name attribute not found");
+         WBFL::System::Logger::Info("IfcBeam::Name attribute not found");
       }
    }
 
    if (girder_key == CGirderKey())
    {
-      WBFL::System::Logger::Debug("Could not determine girder key from IfcBeam");
+      WBFL::System::Logger::Info("Could not determine girder key from IfcBeam");
    }
 
    return girder_key;
