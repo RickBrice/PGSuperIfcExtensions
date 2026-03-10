@@ -26,6 +26,7 @@
 #include "PGSuperProjectImporter.h"
 #include "IfcImporter.h"
 #include <EAF\EAFApp.h>
+#include <EAF\EAFUtilities.h>
 
 CPGSuperProjectImporter::CPGSuperProjectImporter()
 {
@@ -57,7 +58,6 @@ CString CPGSuperProjectImporter::GetTemplateFilePath() const
    return strFileName;
 }
 
-#include <EAF\EAFUtilities.h>
 HRESULT CPGSuperProjectImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    HRESULT hr = E_FAIL;

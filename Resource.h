@@ -17,6 +17,7 @@
 #define IDI_ICON1                       210
 #define IDI_BSI                         210
 #define IDC_SWEEP_POLYLINE              211
+#define IDD_IMPORT_RESULTS              211
 #define IDC_RADIO3                      212
 #define IDC_SWEEP_INDEXPOLYCURVE        212
 #define IDC_ALIGNMENT_ONLY              213
@@ -41,6 +42,8 @@
 #define IDC_MODEL_SSH                   229
 #define IDC_MODEL_PFS                   230
 #define IDC_MODEL_BREP                  231
+#define IDC_EDIT1                       231
+#define IDC_EDIT                        231
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
 
@@ -48,9 +51,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        211
+#define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         231
+#define _APS_NEXT_CONTROL_VALUE         232
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

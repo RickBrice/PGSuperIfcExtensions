@@ -54,7 +54,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, b
    {
       if (!DeriveAlignmentFromDeck(file))
       {
-         WBFL::System::Logger::Debug(_T("Failed to derive alignment from deck slab."));
+         WBFL::System::Logger::Info(_T("Failed to derive alignment from deck slab."));
          //IFC_THROW(_T("Failed to derive alignment from deck slab."));
          return CIfcImporter::ImportResult::Fail;
       }
@@ -72,7 +72,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, b
    }
    else
    {
-      WBFL::System::Logger::Debug(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
+      WBFL::System::Logger::Info(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
       nSpans = nPiers - 1; // derive number of spans from nPiers so we don't rely on custom property set
       //IFC_THROW(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
    }
@@ -89,7 +89,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, b
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
-         WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+         WBFL::System::Logger::Info(_T("Using assumed girder key."));
          girder_key.groupIndex = girders_processed / girders_per_span; // assume girders are evenly distributed across spans
          //IFC_THROW(_T("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral"));
       }
@@ -272,6 +272,16 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
          prestressed_beams->push(beam);
    }
 
+   if (prestressed_beams->size() == 0)
+   {
+      WBFL::System::Logger::Info("Did not find IfcBeam in the superstructure spatial structure classified as usBridge_GirderPrestressedConcrete. Assuming all superstructure IfcBeam.BEAM are prestressed girders.");
+      auto beam_ids = get_beam_ids(file);
+      for (auto id : beam_ids)
+      {
+         prestressed_beams->push(file.instance_by_id(id)->as<IfcSchema::IfcBeam>());
+      }
+   }
+
    int beam_type_count = GetBeamTypeCount(file);
 
    bridge_desc.UseSameGirderForEntireBridge(beam_type_count == 1 ? true : false);
@@ -295,7 +305,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
-         WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+         WBFL::System::Logger::Info(_T("Using assumed girder key."));
          girder_key.groupIndex = 0;
          girder_key.girderIndex = girders_processed++;
       }
@@ -307,7 +317,7 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
       }
       else
       {
-         WBFL::System::Logger::Debug(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+         WBFL::System::Logger::Info(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
          //IFC_THROW(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
       }
 
@@ -321,13 +331,13 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
          }
          else
          {
-            WBFL::System::Logger::Debug(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
+            WBFL::System::Logger::Info(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
             //IFC_THROW(_T("CompressiveStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
          }
       }
       else
       {
-         WBFL::System::Logger::Debug(_T("Materials are not associated with the beam"));
+         WBFL::System::Logger::Info(_T("Materials are not associated with the beam"));
          //IFC_THROW(_T("Materials are not associated with the beam"));
       }
 
@@ -369,7 +379,7 @@ bool CIfcBridgeImporter::HasValidGirders(IfcParse::IfcFile& file, IfcSchema::Ifc
    if (HasValidGirdersByOther(file, bridge))
       return true;
 
-   m_Importer.AddNote(_T("One or more beams in the superstructure could not be identified as precast, prestressed concrete."));
+   WBFL::System::Logger::Info(_T("One or more beams in the superstructure could not be identified as precast, prestressed concrete."));
 
    return false;
 }
@@ -494,7 +504,7 @@ IfcSchema::IfcBridge* CIfcBridgeImporter::GetBridge(IfcParse::IfcFile& file)
 
       if (valid_bridges.size() == 0)
       {
-         m_Importer.AddNote(_T("IFC model does not contain a bridge that is compatible with this software."));
+         WBFL::System::Logger::Info(_T("IFC model does not contain a bridge that is compatible with this software."));
       }
       else
       {
@@ -630,7 +640,7 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
    GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
 
    auto type = GetType<IfcSchema::IfcBeamType>(beam);
-   auto girder_name = type->Name().get_value_or(std::string("Unknown"));
+   auto girder_name = type ? type->Name().get_value_or(std::string("Unknown")) : std::string("Unknown");
    auto girder_library_entry = pLibrary->GetGirderEntry(A2T(girder_name.c_str()));
    if (!girder_library_entry)
    {
@@ -644,17 +654,18 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
       GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
       std::vector<std::_tstring> names;
       pLibNames->EnumGirderNames(_T("I-Beam"), &names); // huge assumption that we are dealing with I beams.
-      auto substitue_girder_name = names.front();
+      auto substitute_girder_name = names.front();
 
-      girder_library_entry = pLibrary->GetGirderEntry(substitue_girder_name.c_str());
+      girder_library_entry = pLibrary->GetGirderEntry(substitute_girder_name.c_str());
 
       std::ostringstream os;
-      os << "Girder type \"" << girder_name << "\" not found in the library." << std::endl;
-      os << "Girder type \"" << T2A(substitue_girder_name.c_str()) << "\" was substituted.";
+      beam->toString(os);
+      os << std::endl;
+      os << "Girder type \"" << girder_name << "\" not found in the library, substituting " << T2A(substitute_girder_name.c_str());
 
-      WBFL::System::Logger::Debug(os.str().c_str());
+      WBFL::System::Logger::Info(os.str().c_str());
 
-      m_Importer.AddNote(A2T(os.str().c_str()));
+      WBFL::System::Logger::Info(A2T(os.str().c_str()));
    }
    return girder_library_entry;
 }

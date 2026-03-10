@@ -192,7 +192,7 @@ IfcSchema::IfcAlignment* CIfcAlignmentImporter::GetAlignment(IfcParse::IfcFile& 
 
       if (valid_alignments.size() == 0)
       {
-         m_Importer.AddNote(_T("IFC model does not contain an alignment that is compatible with this software. Assuming a default East-West alignment."));
+         WBFL::System::Logger::Info(_T("IFC model does not contain an alignment that is compatible with this software. Assuming a default East-West alignment."));
       }
       else
       {
@@ -338,7 +338,7 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, IfcSchema:
          }
          else
          {
-            m_Importer.AddNote(_T("Element ignored: The last element in the alignment cannot be a Spiral.")); // PGSuper can't model a lone spiral
+            WBFL::System::Logger::Info(_T("Element ignored: The last element in the alignment cannot be a Spiral.")); // PGSuper can't model a lone spiral
          }
       }
       else if (predefined_type == IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC)
@@ -421,7 +421,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcA
       if (related_objects->size() == 0)
       {
          // the profile geometry list is empty so assume a flat grade
-         m_Importer.AddNote(_T("A profile was not found or the profile does not contain segments. Assuming a default profile."));
+         WBFL::System::Logger::Info(_T("A profile was not found or the profile does not contain segments. Assuming a default profile."));
          m_ProfileData.Station = start_station;
          m_ProfileData.Elevation = 0.0;
          m_ProfileData.Grade = 0.0;
@@ -482,7 +482,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcA
       {
          // A second element was not provided so the main grade
          // could not be established... use the default value of 0
-         m_Importer.AddNote(_T("More elements are needed to determine the starting grade of the profile. Assuming a grade of 0.0%"));
+         WBFL::System::Logger::Info(_T("More elements are needed to determine the starting grade of the profile. Assuming a grade of 0.0%"));
       }
       else
       {
@@ -491,7 +491,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcA
          // default exit grade of 0.
          //
          // Use the default exit grade of 0.
-         m_Importer.AddNote(_T("More elements are needed to determine the exit grade of the last vertical curve. Assuming a grade of 0.0%"));
+         WBFL::System::Logger::Info(_T("More elements are needed to determine the exit grade of the last vertical curve. Assuming a grade of 0.0%"));
       }
    }
 }
@@ -760,7 +760,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
       if (pntEntryStart == nullptr || pntEntryPI == nullptr || pntEntryEnd == nullptr)
       {
-         m_Importer.AddNote(_T("Entry spiral ignored."));
+         WBFL::System::Logger::Info(_T("Entry spiral ignored."));
          pntEntryStart.Release();
          pntEntryPI.Release();
          pntEntryEnd.Release();
@@ -771,7 +771,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
       {
          if (!IsZero(pEntrySpiral->StartRadiusOfCurvature()))
          {
-            m_Importer.AddNote(_T("Start radius of entry spiral taken to be infinite"));
+            WBFL::System::Logger::Info(_T("Start radius of entry spiral taken to be infinite"));
          }
          CheckSpiralType(pEntrySpiral);
       }
@@ -781,7 +781,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
    if (pntCurveStart == nullptr || pntCurvePI == nullptr || pntCurveEnd == nullptr || pntCurveCenter == nullptr)
    {
-      m_Importer.AddNote(_T("Zero radius curve could not be constructed."));
+      WBFL::System::Logger::Info(_T("Zero radius curve could not be constructed."));
       return startStation;
    }
 
@@ -792,7 +792,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
       if (pntExitStart == nullptr || pntExitPI == nullptr || pntExitEnd == nullptr)
       {
-         m_Importer.AddNote(_T("Exit spiral ignored."));
+         WBFL::System::Logger::Info(_T("Exit spiral ignored."));
          pntExitStart.Release();
          pntExitPI.Release();
          pntExitEnd.Release();
@@ -803,7 +803,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
       {
          if (!IsZero(pExitSpiral->EndRadiusOfCurvature()))
          {
-            m_Importer.AddNote(_T("End radius of exit spiral taken to be infinite"));
+            WBFL::System::Logger::Info(_T("End radius of exit spiral taken to be infinite"));
          }
          CheckSpiralType(pExitSpiral);
       }
@@ -849,12 +849,12 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
       if (!IsEqual(WBFL::Units::ConvertToSysUnits(pEntrySpiral->EndRadiusOfCurvature(), m_Importer.GetLengthUnit()), radius))
       {
-         m_Importer.AddNote(_T("End radius of the entry spiral does not match the radius of the circular curve. The entry spiral end radius will be ignored."));
+         WBFL::System::Logger::Info(_T("End radius of the entry spiral does not match the radius of the circular curve. The entry spiral end radius will be ignored."));
       }
 
       if (SameLocation(pntEntryEnd, pntCurveStart, m_Importer.GetPrecision()) == S_FALSE)
       {
-         m_Importer.AddNote(_T("The end of the entry spiral does not coincide with the start of the circular curve. The end of the entry spiral has been adjusted."));
+         WBFL::System::Logger::Info(_T("The end of the entry spiral does not coincide with the start of the circular curve. The end of the entry spiral has been adjusted."));
       }
    }
    else if (!pEntrySpiral && pExitSpiral)
@@ -871,12 +871,12 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
       if (!IsEqual(WBFL::Units::ConvertToSysUnits(pExitSpiral->StartRadiusOfCurvature(), m_Importer.GetLengthUnit()), radius))
       {
-         m_Importer.AddNote(_T("Start radius of the exit spiral does not match the radius of the circular curve. The exit spiral start radius will be ignored."));
+         WBFL::System::Logger::Info(_T("Start radius of the exit spiral does not match the radius of the circular curve. The exit spiral start radius will be ignored."));
       }
 
       if (SameLocation(pntCurveEnd, pntExitStart, m_Importer.GetPrecision()) == S_FALSE)
       {
-         m_Importer.AddNote(_T("The start of the exit spiral does not coincide with the end of the circular curve. The exit spiral has been adjusted."));
+         WBFL::System::Logger::Info(_T("The start of the exit spiral does not coincide with the end of the circular curve. The exit spiral has been adjusted."));
       }
    }
    else if (pEntrySpiral && pExitSpiral)
@@ -895,22 +895,22 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
       if (!IsEqual(WBFL::Units::ConvertToSysUnits(pEntrySpiral->EndRadiusOfCurvature(), m_Importer.GetLengthUnit()), radius))
       {
-         m_Importer.AddNote(_T("End radius of the entry spiral does not match the radius of the circular curve. The entry spiral end radius will be ignored."));
+         WBFL::System::Logger::Info(_T("End radius of the entry spiral does not match the radius of the circular curve. The entry spiral end radius will be ignored."));
       }
 
       if (!IsEqual(WBFL::Units::ConvertToSysUnits(pExitSpiral->StartRadiusOfCurvature(), m_Importer.GetLengthUnit()), radius))
       {
-         m_Importer.AddNote(_T("Start radius of the exit spiral does not match the radius of the circular curve. The exit spiral start radius will be ignored."));
+         WBFL::System::Logger::Info(_T("Start radius of the exit spiral does not match the radius of the circular curve. The exit spiral start radius will be ignored."));
       }
 
       if (SameLocation(pntEntryEnd, pntCurveStart, m_Importer.GetPrecision()) == S_FALSE)
       {
-         m_Importer.AddNote(_T("The end of the entry spiral does not coincide with the start of the circular curve. The entry spiral has been adjusted."));
+         WBFL::System::Logger::Info(_T("The end of the entry spiral does not coincide with the start of the circular curve. The entry spiral has been adjusted."));
       }
 
       if (SameLocation(pntCurveEnd, pntExitStart, m_Importer.GetPrecision()) == S_FALSE)
       {
-         m_Importer.AddNote(_T("The start of the exit spiral does not coincide with the end of the circular curve. The exit spiral has been adjusted."));
+         WBFL::System::Logger::Info(_T("The start of the exit spiral does not coincide with the end of the circular curve. The exit spiral has been adjusted."));
       }
    }
    else
@@ -1123,7 +1123,7 @@ void CIfcAlignmentImporter::CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSeg
    case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_HELMERTCURVE:
    case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_SINECURVE:
    case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_VIENNESEBEND:
-      m_Importer.AddNote(_T("Spiral type not supported. Assuming clothoid."));
+      WBFL::System::Logger::Info(_T("Spiral type not supported. Assuming clothoid."));
       break;
 
    case IfcSchema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CLOTHOID:
@@ -1132,7 +1132,7 @@ void CIfcAlignmentImporter::CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSeg
 
    default:
       ATLASSERT(false); // is there a new spiral type???
-      m_Importer.AddNote(_T("Spiral type not defined. Assuming clothoid."));
+      WBFL::System::Logger::Info(_T("Spiral type not defined. Assuming clothoid."));
       break;
    }
 }

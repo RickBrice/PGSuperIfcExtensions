@@ -81,7 +81,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Computing beam spacing"));
 
-   WBFL::System::Logger::Debug(_T("Beam Spacing"));
+   WBFL::System::Logger::Info(_T("Beam Spacing"));
 
    auto beam_ids = get_beam_ids(file);
 
@@ -115,7 +115,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
-         WBFL::System::Logger::Debug(_T("Using assumed girder key."));
+         WBFL::System::Logger::Info(_T("Using assumed girder key."));
          girder_key.groupIndex = girders_processed / girders_per_span; // assume girders are evenly distributed across spans
          girder_key.girderIndex = girders_processed - girder_key.groupIndex*girders_per_span;
       }
@@ -196,7 +196,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
 
       //std::ostringstream os;
       //os << "Group " << girder_key.groupIndex << ", " << "Girder " << girder_key.girderIndex << " " << c1.transpose() << " -> " << c2.transpose();
-      //WBFL::System::Logger::Debug(os.str().c_str());
+      //WBFL::System::Logger::Info(os.str().c_str());
       //pProgress->UpdateMessage(A2T(os.str().c_str()));
    } while (iterator.next());
 

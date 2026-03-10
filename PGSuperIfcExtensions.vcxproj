@@ -15,7 +15,8 @@
     <RootNamespace>IFCExporter</RootNamespace>
     <Keyword>AtlProj</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>PGSuperIfcExtensions</ProjectName>
+    <ProjectName>
+    </ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -191,6 +192,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClCompile Include="IfcImporterException.cpp" />
     <ClCompile Include="IfcExtensions.cpp" />
     <ClCompile Include="IfcExporter.cpp" />
+    <ClCompile Include="ImportResults.cpp" />
     <ClCompile Include="PGSuperDataImporter.cpp" />
     <ClCompile Include="PGSuperDataExporter.cpp" />
     <ClCompile Include="PGSuperProjectImporter.cpp" />
@@ -210,6 +212,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="IfcBridgeImporter.h" />
+    <ClInclude Include="ImportResults.h" />
     <ClInclude Include="Piers.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="ImportOptions.h" />
