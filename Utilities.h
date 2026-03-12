@@ -50,55 +50,51 @@ static CGirderKey girder_key_from_string(const std::string& input) {
    // Beam|Girder (number or alpha) Span (number)
    // Examples
    // Span 1 Girder 2
-   // Span 3 Beam C
+   // Span 3, Beam C
    // Beam 2 Span 4
-   // Girder AA Span 3
+   // Girder AA, Span 3
 
    // Case-insensitive regex
-   std::regex pattern(
-      R"((?:Span\s+(\d+)\s+(?:Beam|Girder)\s+([A-Za-z0-9]+))|(?:Beam|Girder)\s+([A-Za-z0-9]+)\s+Span\s+(\d+))",
-      std::regex_constants::icase
+   static const std::regex pattern(
+      R"(^(?:Span\s+(\d+)|(?:Girder|Beam)\s+([A-Z]+|\d+))\s*,?\s*(?:Span\s+(\d+)|(?:Girder|Beam)\s+([A-Z]+|\d+))$)",
+      std::regex::icase
    );
 
 
    std::smatch match;
    if (!std::regex_match(input, match, pattern)) {
       std::ostringstream os;
-      os << "Beam designation: " << input << " is not valid";
+      os << "Beam designation: " << input << " is not expected.";
       WBFL::System::Logger::Info(os.str().c_str());
       return CGirderKey();
    }
 
-   int span;
-   std::string member;
+   // Extract span (group 1 or 3)
+   std::string strSpan = match[1].matched ? match[1].str() : match[3].str();
+   SpanIndexType spanIndex = std::stoi(strSpan) - 1;
 
-   if (match[1].matched) {
-      span = std::stoi(match[1].str());
-      member = match[2].str();
+   // Extract beam/girder (group 2 or 4)
+   std::string strBeam = match[2].matched ? match[2].str() : match[4].str();
+   GirderIndexType girderIndex = INVALID_INDEX;
+   if (std::isdigit(strBeam[0]))
+   {
+      girderIndex = std::stoi(strBeam) - 1;
    }
-   else {
-      member = match[3].str();
-      span = std::stoi(match[4].str());
-   }
-
-   // Convert span to zero-based index
-   SpanIndexType spanIndex = span - 1;
-
-   // Convert girder/beam designation to zero-based index
-   GirderIndexType girderIndex;
-   if (std::isalpha(member[0])) {
-      try {
-         girderIndex = letterToIndex(member);
+   else
+   {
+      // convert A, B, C, AA, BB, AC, etc
+      try
+      {
+         girderIndex = letterToIndex(strBeam);
       }
       catch (...)
       {
-         WBFL::System::Logger::Info("Invalid beam designation");
+         std::ostringstream os;
+         os << "Unexpected beam designation: " << strBeam;
+         WBFL::System::Logger::Info(os.str().c_str());
          spanIndex = INVALID_INDEX;
          girderIndex = INVALID_INDEX;
       }
-   }
-   else {
-      girderIndex = std::stoi(member) - 1;
    }
 
    return CGirderKey(spanIndex, girderIndex );
