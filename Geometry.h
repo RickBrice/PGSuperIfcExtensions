@@ -58,9 +58,11 @@ struct Mesh {
    std::vector<std::array<int, 3>> faces;            // triangle indices
    std::map<std::pair<int, int>, std::vector<int>> edge2faces; // faces sharing an edge
    std::vector<std::vector<int>> face_face;         // face adjacency
-   std::vector<Eigen::Vector3d> face_normals;       // per-face normals
+   std::vector<Eigen::Vector3d> face_normals;       // per-face normals (as computed)
+   double face_normal_scale = 1.0; // a scaling factor applied face normals to compensate for inverted surfaces
+   // this factor is applied to the average face normal in get_top_mesh
 
-   Mesh(const std::vector<Eigen::Vector3d>& v, const std::vector<std::array<int, 3>>& f);
+   Mesh(const std::vector<Eigen::Vector3d>& v, const std::vector<std::array<int, 3>>& f,double face_normal_scale = 1.0);
 
    // ------------------------------------------------------------
    // Build edge to face mapping: edge2face[i] = list of faces sharing an edge

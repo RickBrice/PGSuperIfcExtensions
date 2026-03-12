@@ -172,8 +172,8 @@ Eigen::Vector3d Wire::bbox_center() const {
    return 0.5 * (vmin + vmax);
 }
 
-Mesh::Mesh(const std::vector<Eigen::Vector3d>& v, const std::vector<std::array<int, 3>>& f) :
-   verts(v), faces(f)
+Mesh::Mesh(const std::vector<Eigen::Vector3d>& v, const std::vector<std::array<int, 3>>& f,double face_normal_scale) :
+   verts(v), faces(f), face_normal_scale(face_normal_scale)
 {
    build_edge_map();
    build_adjacency();
@@ -230,6 +230,8 @@ void Mesh::build_adjacency() {
 void Mesh::compute_face_normals() {
    face_normals.resize(faces.size());
 
+   double volume = 0.0;
+
    for (int i = 0; i < faces.size(); ++i) {
       auto [a, b, c] = faces[i];
       const Eigen::Vector3d& v0 = verts[a];
@@ -242,6 +244,37 @@ void Mesh::compute_face_normals() {
          n /= len;
 
       face_normals[i] = n;
+
+      // volume of tetrahedron formed by the face vertices
+      double vol = v0.dot(v1.cross(v2)); // could divide by 6 here, but why since all in the sum need to be divided by 6, do it after the loop
+      volume += vol;
+   }
+
+   // divide 6 here to get the volume
+   // though, this isn't strictly needed because we only care about the sign
+   // and dividing by 6 doesn't change that
+   volume /= 6.0;
+
+   // now determine if the mesh is open or closed. it is closed if all edges are bound by exactly two faces
+   bool closed = true;
+   for (auto& edge : edge2faces)
+   {
+      if (edge.second.size() != 2)
+      {
+         closed = false;
+         break;
+      }
+   }
+
+   if (closed)
+   {
+      // volume > 0, normals point outward
+      // volume < 0, normals point inward
+      // volume approx = 0, mesh is degenerate or not watertight
+      if (volume < 0.0)
+      {
+         face_normal_scale = -1.0;
+      }
    }
 }
 
@@ -290,7 +323,7 @@ std::vector<Mesh> Mesh::decompose(double max_edge_angle_deg) const {
       for (int fi : comp)
          sub_faces.push_back(faces[fi]);
 
-      components.emplace_back(verts, sub_faces); // save the sub-mesh
+      components.emplace_back(verts, sub_faces, face_normal_scale); // save the sub-mesh
    }
 
    return components; // return all sub-meshes
@@ -355,14 +388,14 @@ Mesh get_top_mesh(const std::vector<Mesh>& meshes)
                   avg += n;
 
                avg /= (double)c.face_normals.size();
+               avg *= c.face_normal_scale; // apply adjustment factor for possibly inverted meshes
 
-               // Compute max Z of (vertex + avg_normal)
-               double best = -1e18;
+               // Compute max Z of (vertex + avg_normal), this essentially explodes the mesh so the top is obvious
+               double best = -std::numeric_limits<double>::infinity();
                for (auto& f : c.faces) {
                   for (int vi : f) {
                      double z = (c.verts[vi] + avg).z();
-                     if (z > best)
-                        best = z;
+                     best = std::max(best,z);
                   }
                }
                return best;
@@ -379,7 +412,7 @@ void Mesh::print(std::ostream& os) const
 {
    os << "verts" << std::endl;
    int idx = 0;
-   Eigen::IOFormat fmt(4, 0, ", ", ", ", "", "", "", "");
+   Eigen::IOFormat fmt(8, 0, ", ", ", ", "", "", "", "");
    for (auto& v : verts)
    {
       os << idx << ", " << v.format(fmt) << std::endl;
