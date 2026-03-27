@@ -47,7 +47,7 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
 }
 
 template <typename Schema>
-typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcShapeRepresentation* shape_representation)
+typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcReinforcingBarTypeEnum type, typename Schema::IfcShapeRepresentation* shape_representation)
 {
    auto placement = file.addPlacement3d();
    auto representation_map = new typename Schema::IfcRepresentationMap(placement, shape_representation);
@@ -65,7 +65,7 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
       representation_maps, /*RepresentationMaps*/
       boost::none, /*Tag*/
       boost::none, /*ElementType*/
-      bStirrup ? Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_SHEAR : Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, /*PredefinedType*/
+      type, /*PredefinedType*/
       pRebar->GetNominalDimension(), /*NominalDiameter*/
       pRebar->GetNominalArea(), /*CrossSectionArea*/
       boost::none, /*BarLength*/

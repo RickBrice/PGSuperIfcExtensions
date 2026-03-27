@@ -645,7 +645,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreateRebars(IfcHierarchyHelper<
             auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
             std::ostringstream os;
             os << "Girder_Longitudinal_Bar_" << OLE2A(bar_name);
-            rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
+            rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, shape_representation);
          }
 
 
@@ -775,7 +775,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelpe
       typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
 
-      g3_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
+      g3_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_NOTDEFINED, shape_representation);
    }
 
    // G9 bars
@@ -811,7 +811,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelpe
       auto shape_representation_list = typename Schema::IfcRepresentation::list::ptr(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
 
-      g9_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
+      g9_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, shape_representation);
    }
 
    // G10 bars
@@ -855,7 +855,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelpe
       auto shape_representation_list = typename Schema::IfcRepresentation::list::ptr(new typename Schema::IfcRepresentation::list);
       auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
 
-      g10_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), false, pRebar, shape_representation);
+      g10_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, shape_representation);
    }
 
 
@@ -957,7 +957,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelpe
 
          auto rebar_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), rebar_representation_items);
 
-         g2_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), true, pRebar, rebar_representation);
+         g2_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_SHEAR, rebar_representation);
       }
 
       typename Schema::IfcRepresentationItem::list::ptr g2_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
@@ -2433,7 +2433,7 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
    auto rebar_assembly = new typename Schema::IfcElementAssembly(
       IfcParse::IfcGlobalId(),
       nullptr, // OwnerHistory
-      std::string("Girder Rebar"), // Name
+      std::string("Rebar - ") + name, // Name
       boost::none, // Description
       boost::none, // ObjectType
       nullptr, // ObjectPlacement
