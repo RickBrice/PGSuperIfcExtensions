@@ -150,6 +150,15 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
    {
       auto element = iterator.get();
 
+      // Inside of Mesh, we compute the volume to determine if the slab
+      // is "inside out". IfcOpenShell has a native way to get the volume.
+      // This is example code for getting the volume of a brep
+      // can also get other geometric properties
+      // See IfcGeom::Representation::BRep
+      //auto brep = iterator.get_native();
+      //double vol;
+      //brep->geometry_pointer()->calculate_volume(vol);
+
       auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
       auto geometry = triangulation->geometry_pointer();
       const auto& verts = geometry->verts();
