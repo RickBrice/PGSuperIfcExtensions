@@ -725,6 +725,177 @@ typename Schema::IfcObjectDefinition::list::ptr CreateRebars(IfcHierarchyHelper<
    return rebars;
 }
 
+
+template <typename Schema>
+typename Schema::IfcObjectDefinition::list::ptr CreateRebars_ACI131(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const pgsPointOfInterest& poiStart, const pgsPointOfInterest& poiEnd, typename Schema::IfcBeam* beam)
+{
+   USES_CONVERSION;
+
+   const CSegmentKey& segmentKey(poiStart.GetSegmentKey());
+
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &angle_start_face);
+   Float64 start_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
+
+
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &angle_end_face);
+   Float64 end_face_angle;
+   angle_end_face->get_Value(&end_face_angle);
+
+   Float64 segment_length = pBridge->GetSegmentPlanLength(segmentKey); // length along grade
+   Float64 slope = pBridge->GetSegmentSlope(segmentKey); // need slope to adjust bar start/end distance (which is a plan view measure) to an along the girder distance
+
+   GET_IFACE2(pBroker, ILongitudinalRebar, pLongRebar);
+   const CLongitudinalRebarData* pLRD = pLongRebar->GetSegmentLongitudinalRebarData(segmentKey);
+
+   GET_IFACE2(pBroker, ILongRebarGeometry, pLongRebarGeom);
+   CComPtr<IRebarLayout> rebar_layout;
+   pLongRebarGeom->GetRebarLayout(segmentKey, &rebar_layout);
+
+   IndexType nRebars;
+   rebar_layout->get_Count(&nRebars);
+
+   typename Schema::IfcObjectDefinition::list::ptr rebars(new typename Schema::IfcObjectDefinition::list);
+   if (nRebars == 0)
+      return rebars;
+
+
+   // place rebar relative to the segment origin
+   auto segment_origin = file.addLocalPlacement(beam->ObjectPlacement());
+
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+
+   CComPtr<IEnumRebarLayoutItems> enum_items;
+   rebar_layout->get__EnumRebarLayoutItems(&enum_items);
+
+   IndexType layout_item_idx = 0;
+   CComPtr<IRebarLayoutItem> rebar_layout_item;
+   while (enum_items->Next(1, &rebar_layout_item, nullptr) != S_FALSE)
+   {
+      Float64 start, centerline_bar_length;
+      rebar_layout_item->get_Start(&start);
+      rebar_layout_item->get_Length(&centerline_bar_length); // length of the bar measured along CL Girder
+
+      start *= sqrt(1 + slope * slope);
+      centerline_bar_length *= sqrt(1 + slope * slope);
+
+      CComPtr<IEnumRebarPatterns> enum_patterns;
+      rebar_layout_item->get__EnumRebarPatterns(&enum_patterns);
+      CComPtr<IRebarPattern> rebar_pattern;
+      while (enum_patterns->Next(1, &rebar_pattern, nullptr) != S_FALSE)
+      {
+         typename Schema::IfcReinforcingBarType* rebar_type = nullptr;
+         CComPtr<IRebar> rb;
+         rebar_pattern->get_Rebar(&rb);
+
+         CComBSTR bar_name;
+         rb->get_Name(&bar_name);
+         WBFL::Materials::Rebar::Size bar_size = WBFL::LRFD::RebarPool::GetBarSize(OLE2CT(bar_name));
+         const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(pLRD->BarType, pLRD->BarGrade, bar_size);
+
+         if (rebar_type == nullptr)
+         {
+            Float64 db;
+            rb->get_NominalDiameter(&db);
+
+            // create a basic representation of the bar based on the bar's length at the centerline of the girder
+            // This will be used in mapped representations and the bar length will be scaled to the actual bar length
+            // accounting for the actual bar's offset from centerline of beam as well as the effect of girder end face skew
+            typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
+            points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0., 0., 0.}));
+            points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{centerline_bar_length, 0., 0.}));
+            auto directrix = new typename Schema::IfcPolyline(points);
+            auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
+            typename Schema::IfcRepresentationItem::list::ptr representation_items(new Schema::IfcRepresentationItem::list);
+            representation_items->push(swept_disk_solid);
+            typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
+            auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+            std::ostringstream os;
+            os << "Girder_Longitudinal_Bar_" << OLE2A(bar_name);
+            rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, shape_representation);
+         }
+
+
+         IndexType nBars;
+         rebar_pattern->get_Count(&nBars);
+         for (IndexType barIdx = 0; barIdx < nBars; barIdx++)
+         {
+            CComPtr<IPoint2d> p1, p2;
+            rebar_pattern->get_Location(0.0, barIdx, &p1);
+
+            Float64 X, Y, Z;
+            p1->Location(&Y, &Z);
+            // p1.X = horizontal from CL beam, p1.Y is distance from top of beam
+            // p1.X = -Y in IFC beam coordinates
+            // p1.Y = Z in IFC beam coordinates
+            Y *= -1.0;
+
+            // X is distance along CL beam in IFC beam coordinates
+            X = start;
+
+            Float64 start_offset = 0.0;
+            Float64 end_offset = 0.0;
+
+            if (IsEqual(segment_length, centerline_bar_length))
+            {
+               // Bar runs full length of segment so adjust it's length based on rebar offset from CL of beam and skews
+               // No adjustments are made for partial length bars
+               // TODO: will need to update this and adjust for partial length bars that are tied to the end faces of the beam
+
+               // adjust start position based on girder start face skew
+               start_offset = Y / tan(start_face_angle);
+               X += start_offset;
+
+               // length adjustment based on girder end face skew
+               end_offset = Y / tan(end_face_angle);
+            }
+
+            Float64 actual_bar_length = -start_offset + centerline_bar_length + end_offset;
+            Float64 scaleX = actual_bar_length / centerline_bar_length;
+
+            auto rebar_type_representation_maps = rebar_type->RepresentationMaps();
+            auto mapping_source = *((*rebar_type_representation_maps)->begin());
+
+            // Use a nonUniform transformation so we can scale only the length of the bar (Uniform transformation scales in all directions which would increase the diameter of the bar - we don't want that)
+            auto mapping_target = new typename Schema::IfcCartesianTransformationOperator3DnonUniform(new typename Schema::IfcDirection({ 1.0,0.0,0.0 }), nullptr, new typename Schema::IfcCartesianPoint({ X,Y,Z }), scaleX, nullptr, boost::none, boost::none);
+            auto mapped_item = new typename Schema::IfcMappedItem(mapping_source, mapping_target);
+            typename Schema::IfcRepresentationItem::list::ptr mapped_representation_items(new Schema::IfcRepresentationItem::list);
+            mapped_representation_items->push(mapped_item);
+
+            typename Schema::IfcRepresentation::list::ptr shape_representation_list(new Schema::IfcRepresentation::list);
+            auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), mapped_representation_items);
+            shape_representation_list->push(shape_representation);
+            auto product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, shape_representation_list);
+
+            std::ostringstream os;
+            os << "Row " << (layout_item_idx + 1) << " Bar " << (barIdx + 1) << " " << T2A(WBFL::LRFD::RebarPool::GetBarSize(bar_size).c_str());
+
+            // per ACI 131, Article 7.3 "there is a 1:1 correspondence between a real bar and an IfcReinforcingBar"
+            auto rebar = new typename Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, product_definition_shape, boost::none,
+               boost::none, // steel grade: depreciated
+               boost::none, // nominal diameter: depreciated
+               boost::none, // cross section area: depreciated
+               boost::none, // bar length: depreciated
+               boost::none, // predefined type: depreciated
+               boost::none  // predefined type: depreciated
+            );
+            file.addEntity(rebar);
+
+            file.addRelatedObject<typename Schema::IfcRelDefinesByType>(rebar_type, rebar);
+
+            rebars->push(rebar);
+         } // next bar
+         rebar_pattern.Release();
+      }
+      rebar_layout_item.Release();
+      layout_item_idx++;
+   }
+   return rebars;
+}
+
 template <typename Schema>
 typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
 {
@@ -1100,6 +1271,384 @@ typename Schema::IfcObjectDefinition::list::ptr CreateStirrups(IfcHierarchyHelpe
       file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g10_rebar_type, g10_rebar);
 
       rebars->push(g10_rebar);
+   }
+   return rebars;
+}
+
+template <typename Schema>
+typename Schema::IfcObjectDefinition::list::ptr CreateStirrups_ACI131(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
+{
+   // WORKING HERE - The idea is to check to see if the beam is of the IBeam family, otherwise, don't model stirrups (Already doing this step in the calling function)
+   // For I-beams, start with WSDOT G2 bars, then change to G1 bars (but there are 2 bars, not 1)... then add the G3 bar in the top flange
+   // This is just an experiment for how to model stirrups and a rebar cage.
+   // When this is re-built as an extension agent, bar shape will be an input as part of the girder definition
+
+   USES_CONVERSION;
+
+   typename Schema::IfcObjectDefinition::list::ptr rebars(new typename Schema::IfcObjectDefinition::list);
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+
+   typename Schema::IfcLocalPlacement* segment_origin = nullptr; // only create if needed
+
+   // Assume the beam is constant depth
+   GET_IFACE2(pBroker, IPointOfInterest, pPoi);
+   auto poiStart = pPoi->GetPointOfInterest(segmentKey, 0.0);
+
+   Float64 cover = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   WBFL::Materials::Rebar::Type bar_type;
+   WBFL::Materials::Rebar::Grade bar_grade;
+   pMaterials->GetSegmentTransverseRebarMaterial(segmentKey, &bar_type, &bar_grade);
+
+   GET_IFACE2(pBroker, IGirder, pGirder);
+   Float64 wbf = pGirder->GetBottomFlangeWidth(poiStart, 0);
+   Float64 hbf = pGirder->GetBottomFlangeThickness(poiStart, 0) - WBFL::Units::ConvertToSysUnits(4.5, WBFL::Units::Measure::Inch);
+
+   // Create G3 #5 bar type and representation (this is a dummy bar only for WSDOT girders)
+   const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs5);
+   std::ostringstream os;
+   os << "G3 Top Bars";
+   auto g3_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar);
+   Float64 wtf = pGirder->GetTopFlangeWidth(poiStart);
+   Float64 g3_bar_length = wtf - 2 * cover;
+   if (g3_rebar_type == nullptr)
+   {
+      Float64 db = pRebar->GetNominalDimension();
+      typename Schema::IfcCartesianPoint::list::ptr points(new typename Schema::IfcCartesianPoint::list);
+      points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0., -g3_bar_length / 2, 0.}));
+      points->push(new typename Schema::IfcCartesianPoint(std::vector<double>{0., g3_bar_length / 2, 0.}));
+      auto directrix = new typename Schema::IfcPolyline(points);
+      auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
+      typename Schema::IfcRepresentationItem::list::ptr representation_items(new typename Schema::IfcRepresentationItem::list);
+      representation_items->push(swept_disk_solid);
+      typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
+      auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+
+      g3_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_NOTDEFINED, shape_representation);
+   }
+
+   // G9 bars
+   pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs3);
+   os.str("");
+   os.clear();
+   os << "G9 Bottom Confinement Bars";
+   auto g9_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar);
+
+   if (g9_rebar_type == nullptr)
+   {
+      auto db = pRebar->GetNominalDimension();
+
+      // This is a totally hard coded G9 bar without curves - need to update this later
+      std::vector<std::vector<double>> g9_point_list;
+      g9_point_list.push_back({ 0.0, (wbf - 2 * cover) / 2, 0.0 });
+      g9_point_list.push_back({ 0.0, (wbf - 2 * cover) / 2, hbf - 2 * cover });
+      g9_point_list.push_back({ 0.0, 0.0, WBFL::Units::ConvertToSysUnits(9.125, WBFL::Units::Measure::Inch) }); // no way to get height of bottom bulb, this is WSDOT's G9 bar dimension
+      g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, hbf - 2 * cover });
+      g9_point_list.push_back({ 0.0, -(wbf - 2 * cover) / 2, 0.0 });
+
+      typename Schema::IfcSegmentIndexSelect::list::ptr g9_segments(new typename Schema::IfcSegmentIndexSelect::list);
+      g9_segments->push(new typename Schema::IfcLineIndex({ 1,2 }));
+      g9_segments->push(new typename Schema::IfcLineIndex({ 2,3 }));
+      g9_segments->push(new typename Schema::IfcLineIndex({ 3,4 }));
+      g9_segments->push(new typename Schema::IfcLineIndex({ 4,5 }));
+
+      auto g9_directrix = new typename Schema::IfcIndexedPolyCurve(new typename Schema::IfcCartesianPointList3D(g9_point_list, boost::none), g9_segments, boost::none);
+
+      auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(g9_directrix, db / 2, boost::none, boost::none, boost::none);
+      auto representation_items = Schema::IfcRepresentationItem::list::ptr(new typename Schema::IfcRepresentationItem::list);
+      representation_items->push(swept_disk_solid);
+      auto shape_representation_list = typename Schema::IfcRepresentation::list::ptr(new typename Schema::IfcRepresentation::list);
+      auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+
+      g9_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, shape_representation);
+   }
+
+   // G10 bars
+   os.str("");
+   os.clear();
+   os << "G10 Bottom Confinement Bars";
+   auto g10_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), false, pRebar);
+
+   if (g10_rebar_type == nullptr)
+   {
+      auto db = pRebar->GetNominalDimension();
+
+      auto three_inch = WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch);
+      Float64 r = 4.5 * db;
+      Float64 h = three_inch - 5. * db;
+      Float64 d = 0.5 * (wbf - 2 * cover - db - 2 * r);
+      Float64 delta = PI_OVER_2;
+
+      std::vector<std::vector<double>> g10_point_list;
+      g10_point_list.push_back({ 0., (d + r), h + r });
+      g10_point_list.push_back({ 0., (d + r), r });
+      g10_point_list.push_back({ 0., (d + r * sin(delta / 2)), r * cos(delta / 2) });
+      g10_point_list.push_back({ 0., d, 0.0 });
+      g10_point_list.push_back({ 0., -d, 0.0 });
+      g10_point_list.push_back({ 0., -(d + r * sin(delta / 2)), r * cos(delta / 2) });
+      g10_point_list.push_back({ 0., -(d + r), r });
+      g10_point_list.push_back({ 0., -(d + r), h + r });
+
+      typename Schema::IfcSegmentIndexSelect::list::ptr g10_segments(new typename Schema::IfcSegmentIndexSelect::list);
+      g10_segments->push(new typename Schema::IfcLineIndex({ 1,2 }));
+      g10_segments->push(new typename Schema::IfcArcIndex({ 2,3,4 }));
+      g10_segments->push(new typename Schema::IfcLineIndex({ 4,5 }));
+      g10_segments->push(new typename Schema::IfcArcIndex({ 5,6,7 }));
+      g10_segments->push(new typename Schema::IfcLineIndex({ 7,8 }));
+
+      auto g10_directrix = new typename Schema::IfcIndexedPolyCurve(new typename Schema::IfcCartesianPointList3D(g10_point_list, boost::none), g10_segments, boost::none);
+
+      auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(g10_directrix, db / 2, boost::none, boost::none, boost::none);
+      auto representation_items = typename Schema::IfcRepresentationItem::list::ptr(new typename Schema::IfcRepresentationItem::list);
+      representation_items->push(swept_disk_solid);
+      auto shape_representation_list = typename Schema::IfcRepresentation::list::ptr(new typename Schema::IfcRepresentation::list);
+      auto shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
+
+      g10_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, shape_representation);
+   }
+
+
+   // Get some basic geometry for G2 stirrups
+   Float64 Hg = pGirder->GetHeight(poiStart);
+   Float64 t = pGirder->GetWebThickness(poiStart, 0);
+
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   Float64 Lg = pBridge->GetSegmentPlanLength(segmentKey);
+   Float64 A = pBridge->GetSlabOffset(segmentKey, pgsTypes::metStart);
+   Float64 H1 = Hg + A + WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch); // h1 = Hg + "A" + 3"
+
+
+   CComPtr<IAngle> angle_start_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metStart, &angle_start_face);
+   Float64 start_face_angle;
+   angle_start_face->get_Value(&start_face_angle);
+
+
+   CComPtr<IAngle> angle_end_face;
+   pBridge->GetSegmentAngle(segmentKey, pgsTypes::metEnd, &angle_end_face);
+   Float64 end_face_angle;
+   angle_end_face->get_Value(&end_face_angle);
+
+   // Interpolation function of bar angle relative to CL beam.
+   // This can be any function, but for now, we hard code it to look like
+   // the splay layout on the WSDOT WF Girder 4 of 5 Details sheet
+   // except that the length of Zone 1 is taken to be wtf/tan(angle)/2
+   // and the length of Zone 2 is taken to be 10 ft. These parameters
+   // can be updated in the future based on the stirrup zone layouts
+   auto fn_bar_angle = [start_face_angle,
+      end_face_angle,
+      Lstart = std::max(wtf, wbf) / fabs(tan(start_face_angle)) / 2,
+      Lsplay = WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet),
+      Lend = std::max(wtf, wbf) / fabs(tan(end_face_angle)) / 2,
+      Lg](Float64 x)->Float64 {
+      if (x < Lstart)
+         return start_face_angle;
+      else if (x < Lstart + Lsplay)
+         return std::lerp(start_face_angle, PI_OVER_2, (x - Lstart) / Lsplay);
+      else if (Lg - Lend - Lsplay < x && x < Lg - Lend)
+         return std::lerp(PI_OVER_2, end_face_angle, (x - (Lg - Lsplay - Lend)) / Lsplay);
+      else if (Lg - Lend < x)
+         return end_face_angle;
+      else
+         return PI_OVER_2;
+      };
+
+   GET_IFACE2(pBroker, IStirrupGeometry, pStirrupGeometry);
+   ZoneIndexType nZones = pStirrupGeometry->GetPrimaryZoneCount(segmentKey);
+
+   for (ZoneIndexType zoneIdx = 0; zoneIdx < nZones; zoneIdx++)
+   {
+      Float64 start, end;
+      pStirrupGeometry->GetPrimaryZoneBounds(segmentKey, zoneIdx, &start, &end);
+
+      WBFL::Materials::Rebar::Size bar_size;
+      Float64 nLegs, spacing;
+      pStirrupGeometry->GetPrimaryVertStirrupBarInfo(segmentKey, zoneIdx, &bar_size, &nLegs, &spacing);
+
+      const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, bar_size);
+      Float64 db = pRebar->GetNominalDimension();
+
+
+      std::ostringstream os;
+      os << "G2 bars";
+      auto* g2_rebar_type = GetReinforcingBarType<Schema>(file, os.str(), true, pRebar);
+      if (g2_rebar_type == nullptr)
+      {
+         // Bar type doesn't exist, create it
+         // Create geometry of a "G2" bar
+         Float64 dl = Hg - cover - db / 2; // distance from top of beam to center of hair-pin bend
+         Float64 du = H1 - dl; // distance from top of beam upwards to the end of the bar
+         Float64 dx = t / 2 - cover - db / 2; // horizontal distance from CL Beam to CL bar (this is basically the bend radius)
+
+         std::vector<std::vector<double>> point_list;
+         // X = longitudinal axis of beam (use 0.0 for start face of beam)
+         // Y = horizontal distance relative to start face of beam, positive values to the left
+         // Z = vertical elevation. From PGSuper, elevation is 0.0 at top of beam
+         point_list.push_back({ 0.0,dx,du }); // top left of bar
+         point_list.push_back({ 0.0,dx,-(dl - dx) }); // left side of bar at start of bend
+         point_list.push_back({ 0.0,0.0,-dl }); // low point at center of hair-pin bend
+         point_list.push_back({ 0.0,-dx,-(dl - dx) }); // right side of bar at end of bend
+         point_list.push_back({ 0.0,-dx,du }); // top right of bar
+
+         typename Schema::IfcSegmentIndexSelect::list::ptr segments(new typename Schema::IfcSegmentIndexSelect::list);
+         segments->push(new typename Schema::IfcLineIndex({ 1,2 }));
+         segments->push(new typename Schema::IfcArcIndex({ 2,3,4 }));
+         segments->push(new typename Schema::IfcLineIndex({ 4,5 }));
+
+         auto directrix = new typename Schema::IfcIndexedPolyCurve(new typename Schema::IfcCartesianPointList3D(point_list, boost::none), segments, boost::none);
+         file.addEntity(directrix);
+
+         auto swept_disk_solid = new typename Schema::IfcSweptDiskSolid(directrix, db / 2, boost::none, boost::none, boost::none);
+         file.addEntity(swept_disk_solid);
+
+         typename Schema::IfcRepresentationItem::list::ptr rebar_representation_items(new typename Schema::IfcRepresentationItem::list);
+         rebar_representation_items->push(swept_disk_solid);
+
+         auto rebar_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), rebar_representation_items);
+
+         g2_rebar_type = CreateReinforcingBarType<Schema>(file, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_SHEAR, rebar_representation);
+      }
+
+      Float64 offset = start + (start < Lg / 2.0 ? 1.0 : -1.0) * spacing;
+      Float64 sign = (offset < Lg / 2.0 ? 1.0 : -1.0);
+      IndexType nBars = (IndexType)((end - start) / spacing);
+      for (IndexType barIdx = 0; barIdx < nBars; barIdx++, offset += spacing)
+      {
+         Float64 bar_angle = fn_bar_angle(offset); // angle of bar in plan view, measured from horizontal
+         auto X_direction = new typename Schema::IfcDirection({ sin(bar_angle),-cos(bar_angle),0.0 });
+         auto Y_direction = new typename Schema::IfcDirection({ cos(bar_angle),sin(bar_angle),0.0 });
+         Float64 scaleY = fabs(1 / sin(bar_angle));
+
+         auto g2_mapping_target = new typename Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new typename Schema::IfcCartesianPoint({ offset, 0., -cover }), 1.0, nullptr, scaleY, boost::none);
+         auto g2_rebar_type_representation_maps = g2_rebar_type->RepresentationMaps();
+         auto g2_mapping_source = *((*g2_rebar_type_representation_maps)->begin());
+         auto g2_mapped_item = new typename Schema::IfcMappedItem(g2_mapping_source, g2_mapping_target);
+         typename Schema::IfcRepresentationItem::list::ptr g2_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+         g2_mapped_representation_items->push(g2_mapped_item);
+
+         // G3 and G2 bars can't have the same offset, otherwise they will conflict with each other
+         // Offset the G3 bars 1-db towards the center of the beam (+1 db in left half, and -1 db in right half)
+         auto g3_mapping_target = new typename Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new typename Schema::IfcCartesianPoint({ offset + sign * db, 0., -cover }), 1.0, nullptr, scaleY, boost::none);
+         auto g3_rebar_type_representation_maps = g3_rebar_type->RepresentationMaps();
+         auto g3_mapping_source = *((*g3_rebar_type_representation_maps)->begin());
+         auto g3_mapped_item = new typename Schema::IfcMappedItem(g3_mapping_source, g3_mapping_target);
+         typename Schema::IfcRepresentationItem::list::ptr g3_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+         g3_mapped_representation_items->push(g3_mapped_item);
+
+         auto g9_mapping_target = new typename Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new typename Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg - cover/* - db#3*/) }), 1.0, nullptr, scaleY, boost::none);
+         auto g9_rebar_type_representation_maps = g9_rebar_type->RepresentationMaps();
+         auto g9_mapping_source = *((*g9_rebar_type_representation_maps)->begin());
+         auto g9_mapped_item = new typename Schema::IfcMappedItem(g9_mapping_source, g9_mapping_target);
+         typename Schema::IfcRepresentationItem::list::ptr g9_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+         g9_mapped_representation_items->push(g9_mapped_item);
+
+         auto g10_mapping_target = new typename Schema::IfcCartesianTransformationOperator3DnonUniform(X_direction, Y_direction, new typename Schema::IfcCartesianPoint({ offset + sign * db, 0., -(Hg - cover/* - db#3*/) }), 1.0, nullptr, scaleY, boost::none);
+         auto g10_rebar_type_representation_maps = g10_rebar_type->RepresentationMaps();
+         auto g10_mapping_source = *((*g10_rebar_type_representation_maps)->begin());
+         auto g10_mapped_item = new typename Schema::IfcMappedItem(g10_mapping_source, g10_mapping_target);
+         typename Schema::IfcRepresentationItem::list::ptr g10_mapped_representation_items(new typename Schema::IfcRepresentationItem::list);
+         g10_mapped_representation_items->push(g10_mapped_item);
+
+         typename Schema::IfcRepresentation::list::ptr g2_shape_representation_list(new typename Schema::IfcRepresentation::list);
+         auto g2_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g2_mapped_representation_items);
+         g2_shape_representation_list->push(g2_shape_representation);
+
+         auto g2_product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, g2_shape_representation_list);
+
+         segment_origin = (segment_origin == nullptr ? file.addLocalPlacement(beam->ObjectPlacement()) : segment_origin);
+
+         os.str("");
+         os.clear();
+         os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " Stirrup " << (barIdx + 1);
+         auto g2_rebar = new typename Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g2_product_definition_shape, boost::none,
+            boost::none, // steel grade: depreciated
+            boost::none, // nominal diameter: depreciated
+            boost::none, // cross section area: depreciated
+            boost::none, // bar length: depreciated
+            boost::none, // predefined type: depreciated
+            boost::none  // predefined type: depreciated
+         );
+         file.addEntity(g2_rebar);
+
+         file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g2_rebar_type, g2_rebar);
+
+         rebars->push(g2_rebar);
+
+
+         typename Schema::IfcRepresentation::list::ptr g3_shape_representation_list(new Schema::IfcRepresentation::list);
+         auto g3_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g3_mapped_representation_items);
+         g3_shape_representation_list->push(g3_shape_representation);
+
+         auto g3_product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, g3_shape_representation_list);
+
+         segment_origin = (segment_origin == nullptr ? file.addLocalPlacement(beam->ObjectPlacement()) : segment_origin);
+         os.str("");
+         os.clear();
+         os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " Top Bar " << (barIdx + 1);
+         auto g3_rebar = new typename Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g3_product_definition_shape, boost::none,
+            boost::none, // steel grade: depreciated
+            boost::none, // nominal diameter: depreciated
+            boost::none, // cross section area: depreciated
+            boost::none, // bar length: depreciated
+            boost::none, // predefined type: depreciated
+            boost::none  // predefined type: depreciated
+         );
+         file.addEntity(g3_rebar);
+
+         file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g3_rebar_type, g3_rebar);
+
+         rebars->push(g3_rebar);
+
+         typename Schema::IfcRepresentation::list::ptr g9_shape_representation_list(new Schema::IfcRepresentation::list);
+         auto g9_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g9_mapped_representation_items);
+         g9_shape_representation_list->push(g9_shape_representation);
+
+         auto g9_product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, g9_shape_representation_list);
+
+         segment_origin = (segment_origin == nullptr ? file.addLocalPlacement(beam->ObjectPlacement()) : segment_origin);
+         os.str("");
+         os.clear();
+         os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " G9 Bottom Confinement Bar " << (barIdx + 1);
+         auto g9_rebar = new typename Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g9_product_definition_shape, boost::none,
+            boost::none, // steel grade: depreciated
+            boost::none, // nominal diameter: depreciated
+            boost::none, // cross section area: depreciated
+            boost::none, // bar length: depreciated
+            boost::none, // predefined type: depreciated
+            boost::none  // predefined type: depreciated
+         );
+         file.addEntity(g9_rebar);
+
+         file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g9_rebar_type, g9_rebar);
+
+         rebars->push(g9_rebar);
+
+
+         typename Schema::IfcRepresentation::list::ptr g10_shape_representation_list(new Schema::IfcRepresentation::list);
+         auto g10_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("MappedRepresentation"), g10_mapped_representation_items);
+         g10_shape_representation_list->push(g10_shape_representation);
+
+         auto g10_product_definition_shape = new typename Schema::IfcProductDefinitionShape(boost::none, boost::none, g10_shape_representation_list);
+
+         segment_origin = (segment_origin == nullptr ? file.addLocalPlacement(beam->ObjectPlacement()) : segment_origin);
+         os.str("");
+         os.clear();
+         os << "Zone " << LABEL_STIRRUP_ZONE(zoneIdx) << " G10 Bottom Confinement Bar " << (barIdx + 1);
+         auto g10_rebar = new typename Schema::IfcReinforcingBar(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, segment_origin, g10_product_definition_shape, boost::none,
+            boost::none, // steel grade: depreciated
+            boost::none, // nominal diameter: depreciated
+            boost::none, // cross section area: depreciated
+            boost::none, // bar length: depreciated
+            boost::none, // predefined type: depreciated
+            boost::none  // predefined type: depreciated
+         );
+         file.addEntity(g10_rebar);
+
+         file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g10_rebar_type, g10_rebar);
+
+         rebars->push(g10_rebar);
+      } // next bar
    }
    return rebars;
 }
@@ -1731,7 +2280,7 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std
    const pgsPointOfInterest& poiEnd(vPoi.back());
 
 
-   auto rebars = CreateRebars<Schema>(file, pBroker, poiStart, poiEnd, beam);
+   auto rebars = options.rebar_per_aci131 ? CreateRebars_ACI131<Schema>(file,pBroker,poiStart,poiEnd,beam) : CreateRebars<Schema>(file, pBroker, poiStart, poiEnd, beam);
 
    if (0 < rebars->size())
    {
@@ -1779,7 +2328,7 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_p
       return;
 
 
-   auto rebars = CreateStirrups<Schema>(file, pBroker, segmentKey, beam);
+   auto rebars = options.rebar_per_aci131 ? CreateStirrups_ACI131<Schema>(file,pBroker,segmentKey,beam) : CreateStirrups<Schema>(file, pBroker, segmentKey, beam);
 
    if (0 < rebars->size())
    {

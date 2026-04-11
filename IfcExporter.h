@@ -90,6 +90,7 @@ public:
    Railings railings = Railings::Balustrade;
    bool include_work_plan = true;
    bool include_rebar = true;
+   bool rebar_per_aci131 = true;
    bool include_camber = true;
    bool include_quantities = true;
    BeamPlacement beam_placement = BeamPlacement::Linear;

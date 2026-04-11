@@ -44,6 +44,8 @@
 #define IDC_MODEL_BREP                  231
 #define IDC_EDIT1                       231
 #define IDC_EDIT                        231
+#define IDC_CHECK2                      232
+#define IDC_PER_ACI131                  232
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
 
@@ -53,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         232
+#define _APS_NEXT_CONTROL_VALUE         233
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
