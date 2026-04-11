@@ -132,6 +132,7 @@ BEGIN
     GROUPBOX        "Girders",IDC_STATIC,7,241,231,125
     CONTROL         "Include rebar (pseudo-dummy data)",IDC_INCLUDE_REBAR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,251,131,10
+    CONTROL         "Per ACI 131",IDC_PER_ACI131,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,147,250,55,10
     CONTROL         "Include camber in PSet_PrecastConcreteElementGeneral",IDC_INCLUDE_CAMBER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,265,196,10
     CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,278,99,10
