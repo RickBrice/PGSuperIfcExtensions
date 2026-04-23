@@ -138,6 +138,12 @@
     <ClInclude Include="ImportResults.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PropertySets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QuantitySets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def">

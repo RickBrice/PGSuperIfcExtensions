@@ -69,17 +69,18 @@ std::string getCurrentISO8601Time() {
 }
 
 
-
+// NOTE: usBridge has decided to not include the assumed construction sequence as a modeled entity in favor of a document-based attachment to the model.
+// This function is no longer used, but it is retained for an example. There are some details that are commented out to keep the compiler happy.
 template <typename Schema>
 void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    // only doing the PGSuper assumed construction sequence for now. For time-step method (PGSplice) it is much more complex
    USES_CONVERSION;
 
-   GET_IFACE2_NOCHECK(pBroker, ILossParameters, pLossParams);
-
-   if (!options.include_work_plan || pLossParams->GetLossMethod() == PrestressLossCriteria::LossMethodType::TIME_STEP)
-      return;
+   // commented out to keep the compiler happy. 
+   //GET_IFACE2_NOCHECK(pBroker, ILossParameters, pLossParams);
+   //if (!options.include_work_plan || pLossParams->GetLossMethod() == PrestressLossCriteria::LossMethodType::TIME_STEP)
+   //   return;
 
 
    auto now = getCurrentISO8601Time();

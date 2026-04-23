@@ -819,21 +819,19 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    // IFC 4.1.4.1.1 "Every IfcAlignment must be related to IfcProject using the IfcRelAggregates relationship"
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Aggregation/Alignment_Aggregation_To_Project/content.html
    // IfcProject <-> IfcRelAggregates <-> IfcAlignment
-   typename Schema::IfcObjectDefinition::list::ptr list_of_alignments_in_project(new Schema::IfcObjectDefinition::list);
-   list_of_alignments_in_project->push(alignment);
    auto project = file.getSingle<typename Schema::IfcProject>();
-   auto aggregate_alignments_with_project = new typename Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Alignments in project"), boost::none, project, list_of_alignments_in_project);
-   file.addEntity(aggregate_alignments_with_project);
+   file.addRelatedObject<typename Schema::IfcRelAggregates>(project, alignment);
 
    // IFC 4.1.5.1 alignment is referenced in spatial structure of an IfcSpatialElement. In this case IfcSite is the highest level IfcSpatialElement
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Connectivity/Alignment_Spatial_Reference/content.html
    // IfcSite <-> IfcRelReferencedInSpatialStructure <-> IfcAlignment
    // This means IfcAlignment is not part of the IfcSite (it is not an aggregate component) but instead IfcAlignment is used within
    // the IfcSite by reference. This implies an IfcAlignment can traverse many IfcSite instances within an IfcProject
-   typename Schema::IfcSpatialReferenceSelect::list::ptr list_alignments_referenced_in_site(new typename Schema::IfcSpatialReferenceSelect::list);
-   list_alignments_referenced_in_site->push(alignment);
-   auto rel_referenced_in_spatial_structure = new typename Schema::IfcRelReferencedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, list_alignments_referenced_in_site, site);
-   file.addEntity(rel_referenced_in_spatial_structure);
+   file.addRelatedObject<typename Schema::IfcRelReferencedInSpatialStructure>(site,alignment);
+   //typename Schema::IfcSpatialReferenceSelect::list::ptr list_alignments_referenced_in_site(new typename Schema::IfcSpatialReferenceSelect::list);
+   //list_alignments_referenced_in_site->push(alignment);
+   //auto rel_referenced_in_spatial_structure = new typename Schema::IfcRelReferencedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, list_alignments_referenced_in_site, site);
+   //file.addEntity(rel_referenced_in_spatial_structure);
 
    CreateAlignmentStartStationReferent(file, pBroker, options);
 }
