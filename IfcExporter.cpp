@@ -655,7 +655,10 @@ void CreateLongitudinalRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
 
             if (options.classify)
             {
-               Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, rebar_type, min_cover, min_cover, min_cover, min_cover);
+               Create_usBrPset_ReinforcingCover(file, pBroker, options, rebar_type, min_cover, min_cover, min_cover, min_cover);
+#pragma Reminder("WORKING HERE - Top Longitudinal Bars have Mark G4 and bottom have Mark G8 - we need two different IfcReinforcingBarType")
+               Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, rebar_type, "G8", pRebar);
+               Create_usBrPset_ACIReinforcingBar(file, rebar_type, "BEAM","HORIZONTAL","TOP"); // Again need to have different types for top and bottom.
             }
          }
 
@@ -734,12 +737,11 @@ void CreateLongitudinalRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
                Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, rebar);
                //Create_usBrPset_Common<Schema>(file, rebar);
                //Create_usBrPset_PayItemQuantities(file, rebar);
-               Create_usBrPset_ACI_ReinforcingMaterial(file, rebar);
-               Create_usBrPset_ACI_ReinforcingBarType(file, rebar);
-               Create_usBrPset_ACI_BarShape(file, rebar);
-               Create_usBrPset_ACI_ReinforcingBar(file, rebar);
-               Create_usBrPset_ACI_Reinforcing(file, rebar);
-               //Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, rebar, min_cover, min_cover, min_cover, min_cover); // property set applied to type.
+               //Create_usBrPset_ACIReinforcingBarType(file, rebar);
+               Create_usBrPset_ACIBarShape(file, rebar);
+               //Create_usBrPset_ACIReinforcingBar(file, rebar);
+               Create_usBrPset_Reinforcing(file, rebar);
+               //Create_usBrPset_ACIReinforcingCover(file, pBroker, options, rebar, min_cover, min_cover, min_cover, min_cover); // property set applied to type.
             }
 
          } // next bar
@@ -760,7 +762,8 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
    USES_CONVERSION;
 
-   std::optional<double> min_cover(WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch));
+   Float64 cover = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+   std::optional<double> min_cover(cover);
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
 
@@ -770,7 +773,6 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    auto poiStart = pPoi->GetPointOfInterest(segmentKey, 0.0);
 
-   Float64 cover = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
 
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    WBFL::Materials::Rebar::Type bar_type;
@@ -804,7 +806,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
       g3_rebar_type = CreateReinforcingBarType<Schema>(file, options, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_NOTDEFINED, shape_representation);
       if (options.classify)
       {
-         Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g3_rebar_type, min_cover, min_cover, min_cover, min_cover);
+         Create_usBrPset_ReinforcingCover(file, pBroker, options, g3_rebar_type, min_cover, min_cover, min_cover, min_cover);
+         Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g3_rebar_type, "G3", pRebar);
+         Create_usBrPset_ACIReinforcingBar(file, g3_rebar_type,"BEAM","TRANSVERSE","TOP");
       }
    }
 
@@ -845,7 +849,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
       if (options.classify)
       {
-         Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g9_rebar_type, min_cover, min_cover, min_cover, min_cover);
+         Create_usBrPset_ReinforcingCover(file, pBroker, options, g9_rebar_type, min_cover, min_cover, min_cover, min_cover);
+         Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g9_rebar_type, "G9", pRebar);
+         Create_usBrPset_ACIReinforcingBar(file, g9_rebar_type, "BEAM", "TIE", "BOTTOM");
       }
    }
 
@@ -894,7 +900,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
       if (options.classify)
       {
-         Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g10_rebar_type, min_cover, min_cover, min_cover, min_cover);
+         Create_usBrPset_ReinforcingCover(file, pBroker, options, g10_rebar_type, min_cover, min_cover, min_cover, min_cover);
+         Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g10_rebar_type, "G10", pRebar);
+         Create_usBrPset_ACIReinforcingBar(file, g10_rebar_type, "BEAM", "TIE", "BOTTOM");
       }
    }
 
@@ -1001,7 +1009,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
          if (options.classify)
          {
-            Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g2_rebar_type, std::nullopt, min_cover, min_cover, min_cover);
+            Create_usBrPset_ReinforcingCover(file, pBroker, options, g2_rebar_type, std::nullopt, min_cover, min_cover, min_cover);
+            Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g2_rebar_type, "G2", pRebar);
+            Create_usBrPset_ACIReinforcingBar(file, g2_rebar_type,"BEAM","STIRRUP","CENTER");
          }
       }
 
@@ -1073,12 +1083,11 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g2_rebar);
             //Create_usBrPset_Common<Schema>(file, g2_rebar);
             //Create_usBrPset_PayItemQuantities(file, g2_rebar);
-            Create_usBrPset_ACI_ReinforcingMaterial(file, g2_rebar);
-            Create_usBrPset_ACI_ReinforcingBarType(file, g2_rebar);
-            Create_usBrPset_ACI_BarShape(file, g2_rebar);
-            Create_usBrPset_ACI_ReinforcingBar(file, g2_rebar);
-            Create_usBrPset_ACI_Reinforcing(file, g2_rebar);
-            //Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g2_rebar, std::nullopt, min_cover, min_cover, min_cover);
+            //Create_usBrPset_ACIReinforcingBarType(file, g2_rebar);
+            Create_usBrPset_ACIBarShape(file, g2_rebar);
+            //Create_usBrPset_ACIReinforcingBar(file, g2_rebar);
+            Create_usBrPset_Reinforcing(file, g2_rebar);
+            //Create_usBrPset_ACIReinforcingCover(file, pBroker, options, g2_rebar, std::nullopt, min_cover, min_cover, min_cover);
          }
 
 
@@ -1110,12 +1119,11 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g3_rebar);
             //Create_usBrPset_Common<Schema>(file, g3_rebar);
             //Create_usBrPset_PayItemQuantities(file, g3_rebar);
-            Create_usBrPset_ACI_ReinforcingMaterial(file, g3_rebar);
-            Create_usBrPset_ACI_ReinforcingBarType(file, g3_rebar);
-            Create_usBrPset_ACI_BarShape(file, g3_rebar);
-            Create_usBrPset_ACI_ReinforcingBar(file, g3_rebar);
-            Create_usBrPset_ACI_Reinforcing(file, g3_rebar);
-            //Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g3_rebar, min_cover, min_cover, min_cover, min_cover);
+            //Create_usBrPset_ACIReinforcingBarType(file, g3_rebar);
+            Create_usBrPset_ACIBarShape(file, g3_rebar);
+            //Create_usBrPset_ACIReinforcingBar(file, g3_rebar);
+            Create_usBrPset_Reinforcing(file, g3_rebar);
+            //Create_usBrPset_ACIReinforcingCover(file, pBroker, options, g3_rebar, min_cover, min_cover, min_cover, min_cover);
          }
 
          typename Schema::IfcRepresentation::list::ptr g9_shape_representation_list(new Schema::IfcRepresentation::list);
@@ -1146,12 +1154,11 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g9_rebar);
             //Create_usBrPset_Common<Schema>(file, g9_rebar);
             //Create_usBrPset_PayItemQuantities(file, g9_rebar);
-            Create_usBrPset_ACI_ReinforcingMaterial(file, g9_rebar);
-            Create_usBrPset_ACI_ReinforcingBarType(file, g9_rebar);
-            Create_usBrPset_ACI_BarShape(file, g9_rebar);
-            Create_usBrPset_ACI_ReinforcingBar(file, g9_rebar);
-            Create_usBrPset_ACI_Reinforcing(file, g9_rebar);
-            //Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g9_rebar, min_cover, min_cover, min_cover, min_cover);
+            //Create_usBrPset_ACIReinforcingBarType(file, g9_rebar);
+            Create_usBrPset_ACIBarShape(file, g9_rebar);
+            //Create_usBrPset_ACIReinforcingBar(file, g9_rebar);
+            Create_usBrPset_Reinforcing(file, g9_rebar);
+            //Create_usBrPset_ACIReinforcingCover(file, pBroker, options, g9_rebar, min_cover, min_cover, min_cover, min_cover);
          }
 
 
@@ -1183,12 +1190,11 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g10_rebar);
             //Create_usBrPset_Common<Schema>(file, g10_rebar);
             //Create_usBrPset_PayItemQuantities(file, g10_rebar);
-            Create_usBrPset_ACI_ReinforcingMaterial(file, g10_rebar);
-            Create_usBrPset_ACI_ReinforcingBarType(file, g10_rebar);
-            Create_usBrPset_ACI_BarShape(file, g10_rebar);
-            Create_usBrPset_ACI_ReinforcingBar(file, g10_rebar);
-            Create_usBrPset_ACI_Reinforcing(file, g10_rebar);
-            //Create_usBrPset_ACI_ReinforcingCover(file, pBroker, options, g10_rebar, min_cover, min_cover, min_cover, min_cover);
+            //Create_usBrPset_ACIReinforcingBarType(file, g10_rebar);
+            Create_usBrPset_ACIBarShape(file, g10_rebar);
+            //Create_usBrPset_ACIReinforcingBar(file, g10_rebar);
+            Create_usBrPset_Reinforcing(file, g10_rebar);
+            //Create_usBrPset_ACIReinforcingCover(file, pBroker, options, g10_rebar, min_cover, min_cover, min_cover, min_cover);
          }
       } // next bar
    }
@@ -1425,7 +1431,7 @@ void GirderSegment_FacetedBrep(IfcHierarchyHelper<Schema>& file, std::shared_ptr
 }
 
 template <typename Schema>
-void CreatePrecastSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreatePrecastSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -1593,7 +1599,7 @@ void CreatePrecastSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::s
 }
 
 template <typename Schema>
-void CreatePrecastSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment, const CIfcExportOptions& options)
+void CreatePrecastSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcBeam* segment)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IMaterials, pMaterials);
@@ -1620,7 +1626,7 @@ void CreatePrecastSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared
 }
 
 template <typename Schema>
-void CreatePrecastSegmentStrandRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcExportOptions& options)
+void CreatePrecastSegmentStrandRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
 {
    USES_CONVERSION;
 
@@ -1639,7 +1645,7 @@ void CreatePrecastSegmentStrandRepresentation(IfcHierarchyHelper<Schema>& file, 
       pgsTypes::StrandType strandType = pgsTypes::Straight;
       GET_IFACE2(pBroker, IMaterials, pMaterials);
       const auto* pStrand = pMaterials->GetStrandMaterial(segmentKey, strandType);
-      auto strand_material = GetStrandMaterial(file, pStrand);
+      auto strand_material = GetStrandMaterial(file, pBroker, options,pStrand);
 
       typename Schema::IfcDefinitionSelect::list::ptr strands_for_material(new typename Schema::IfcDefinitionSelect::list);
       for (auto& strand : *strands)
@@ -1654,7 +1660,7 @@ void CreatePrecastSegmentStrandRepresentation(IfcHierarchyHelper<Schema>& file, 
 }
 
 template <typename Schema>
-void CreatePrecastSegmentReinforcing(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const std::string& name, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, const CIfcExportOptions& options)
+void CreatePrecastSegmentReinforcing(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const std::string& name, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam)
 {
    auto rebar_assembly = new typename Schema::IfcElementAssembly(
       IfcParse::IfcGlobalId(),
@@ -1680,12 +1686,12 @@ void CreatePrecastSegmentReinforcing(IfcHierarchyHelper<Schema>& file, std::shar
    // aggregate the rebar assembly with its beam
    file.addRelatedObject<typename Schema::IfcRelAggregates>(beam, rebar_assembly);
 
-   CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
-   CreateStirrupRepresentation<Schema>(file, pBroker, segmentKey, beam, rebar_assembly, options);
+   CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_assembly);
+   CreateStirrupRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_assembly);
 }
 
 template <typename Schema>
-void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam,typename Schema::IfcElementAssembly* rebar_assembly, const CIfcExportOptions& options)
+void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam,typename Schema::IfcElementAssembly* rebar_assembly)
 {
    if (!options.include_rebar)
       return;
@@ -1706,14 +1712,14 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std
    WBFL::Materials::Rebar::Grade rebar_grade;
    pMaterials->GetSegmentLongitudinalRebarMaterial(segmentKey, &rebar_type, &rebar_grade);
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebar_type, rebar_grade, WBFL::Materials::Rebar::Size::bs3);
-   auto rebar_material = GetRebarMaterial(file, pRebar, "Rebar", REBAR_COLOR);
+   auto rebar_material = GetRebarMaterial(file, pBroker, options, pRebar, "Rebar", REBAR_COLOR);
    
    CreateLongitudinalRebars<Schema>(file, pBroker, options, poiStart, poiEnd, rebar_material, rebar_assembly);
 }
 
 
 template <typename Schema>
-void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, typename Schema::IfcElementAssembly* rebar_assembly, const CIfcExportOptions& options)
+void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcBeam* beam, typename Schema::IfcElementAssembly* rebar_assembly)
 {
    if (!options.include_rebar)
       return;
@@ -1735,14 +1741,14 @@ void CreateStirrupRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_p
    WBFL::Materials::Rebar::Grade rebar_grade;
    pMaterials->GetSegmentLongitudinalRebarMaterial(segmentKey, &rebar_type, &rebar_grade);
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebar_type, rebar_grade, WBFL::Materials::Rebar::Size::bs3);
-   auto rebar_material = GetRebarMaterial(file, pRebar, "Stirrup", STIRRUP_COLOR);
+   auto rebar_material = GetRebarMaterial(file, pBroker, options, pRebar, "Stirrup", STIRRUP_COLOR);
 
    CreateStirrups<Schema>(file, pBroker, options, segmentKey, rebar_material, rebar_assembly);
 }
 
 
 template <typename Schema>
-void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CClosureKey& closureKey, typename Schema::IfcBeam* closureJoint, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CClosureKey& closureKey, typename Schema::IfcBeam* closureJoint, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -1864,7 +1870,7 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::sha
 }
 
 template <typename Schema>
-void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridgePart* deck, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart* deck, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
 #pragma Reminder("WORKING HERE - Deck Model - need to re-think this approach")
    // Consider modeling the slab separately from the haunch. The basic slab is the same everywhere.
@@ -2032,7 +2038,7 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
 
 template <typename Schema>
-void CreateBarrierSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcProduct* barrier, const CIfcExportOptions& options, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
+void CreateBarrierSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, pgsTypes::TrafficBarrierOrientation tbOrientation, typename Schema::IfcProduct* barrier, typename Schema::IfcGeometricRepresentationSubContext* pGeometricRepresentationSubContext)
 {
    GET_IFACE2(pBroker, IBarriers, pBarriers);
 
@@ -2341,7 +2347,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
 }
 
 template <typename Schema>
-typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType* beam_type,const CIfcExportOptions& options)
+typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType* beam_type)
 {
    auto beam = new IfcSchema::IfcBeam(
       IfcParse::IfcGlobalId(),
@@ -2359,10 +2365,10 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
 
    auto body_model_representation_subcontext = file.getRepresentationSubContext(std::string("Body"), std::string("Model"));
 
-   CreatePrecastSegmentRepresentation<Schema>(file, pBroker, segmentKey, beam, options, body_model_representation_subcontext);
-   CreatePrecastSegmentMaterials<Schema>(file, pBroker, segmentKey, beam, options);
-   CreatePrecastSegmentStrandRepresentation<Schema>(file, pBroker, segmentKey, beam, options);
-   CreatePrecastSegmentReinforcing<Schema>(file, pBroker, name, segmentKey, beam, options);
+   CreatePrecastSegmentRepresentation<Schema>(file, pBroker, options, segmentKey, beam, body_model_representation_subcontext);
+   CreatePrecastSegmentMaterials<Schema>(file, pBroker, options, segmentKey, beam);
+   CreatePrecastSegmentStrandRepresentation<Schema>(file, pBroker, options, segmentKey, beam);
+   CreatePrecastSegmentReinforcing<Schema>(file, pBroker, options, name, segmentKey, beam);
 
    if (options.include_quantities)
    {
@@ -2458,7 +2464,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
-   CreateSlab(file, pBroker, deck, options, body_model_representation_subcontext);
+   CreateSlab(file, pBroker, options, deck, body_model_representation_subcontext);
    file.addEntity(deck);
    if (options.classify)
    {
@@ -2504,14 +2510,14 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    typename Schema::IfcProduct* left_barrier;
    left_barrier = new typename Schema::IfcWall(IfcParse::IfcGlobalId(), nullptr, std::string("Left Barrier"), boost::none, std::string("BARRIER"), nullptr, nullptr, boost::none, Schema::IfcWallTypeEnum::IfcWallType_USERDEFINED);
 
-   CreateBarrierSystemRepresentation(file, pBroker, pgsTypes::tboLeft, left_barrier, options, body_model_representation_subcontext);
+   CreateBarrierSystemRepresentation(file, pBroker, options, pgsTypes::tboLeft, left_barrier, body_model_representation_subcontext);
    file.addEntity(left_barrier);
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, left_barrier);
 
    typename Schema::IfcProduct* right_barrier;
    right_barrier = new typename Schema::IfcWall(IfcParse::IfcGlobalId(), nullptr, std::string("Right Barrier"), boost::none, std::string("BARRIER"), nullptr, nullptr, boost::none, Schema::IfcWallTypeEnum::IfcWallType_USERDEFINED);
 
-   CreateBarrierSystemRepresentation(file, pBroker, pgsTypes::tboRight, right_barrier, options, body_model_representation_subcontext);
+   CreateBarrierSystemRepresentation(file, pBroker, options, pgsTypes::tboRight, right_barrier, body_model_representation_subcontext);
    file.addEntity(right_barrier);
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, right_barrier);
 
@@ -2647,7 +2653,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
                auto segment_name = os_segment_name.str();
 
                auto beam_type = beam_types[_T("Spliced_Girder_Type")];
-               auto beam = CreatePrecastSegment(file, pBroker, segment_name, segmentKey, beam_type, options);
+               auto beam = CreatePrecastSegment(file, pBroker, options, segment_name, segmentKey, beam_type);
 
                list_of_girder_segments->push(beam); // beams in this girder
                beam_objects->push(beam); // all beams
@@ -2669,7 +2675,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
                      boost::none // PredefinedType (must not be used if defined in IfcBeamType)
                   );
 
-                  CreateClosureJointRepresentation<Schema>(file, pBroker, segmentKey, closure_joint, options, body_model_representation_subcontext);
+                  CreateClosureJointRepresentation<Schema>(file, pBroker, options, segmentKey, closure_joint, body_model_representation_subcontext);
 
                   // need to do this for each bar, stirrup, etc
                   //typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr list_of_closure_joint_parts(new aggregate_of<typename Schema::IfcObjectDefinition>());
@@ -2717,7 +2723,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
             std::string girder_name(T2A(os.str().c_str()));
 
             auto beam_type = beam_types[pIBridgeDesc->GetGirder(segmentKey)->GetGirderName()];
-            auto beam = CreatePrecastSegment(file, pBroker, girder_name, segmentKey, beam_type, options);
+            auto beam = CreatePrecastSegment(file, pBroker, options, girder_name, segmentKey, beam_type);
 
             beam_objects->push(beam); // all beams
             file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, beam);
@@ -2840,7 +2846,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
  }
 
 template <typename Schema>
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath)
 {
    USES_CONVERSION;
 
@@ -2883,12 +2889,12 @@ CIfcExporter::~CIfcExporter(void)
 {
 }
 
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath)
 {
    bool bResult = false;
    switch (options.schema)
    {
-   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, strFilePath, options); break;
+   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, options, strFilePath); break;
    default:
       ATLASSERT(false); // is there a new typename Schema type
    }

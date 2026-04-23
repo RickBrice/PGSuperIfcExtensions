@@ -78,7 +78,7 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       CString file_path = dlg.GetPathName();
 
       CIfcExporter builder;
-      bool bResult = builder.BuildModel(pBroker, file_path, options_dlg.options);
+      bool bResult = builder.BuildModel(pBroker, options_dlg.options, file_path);
       CString strMsg;
       strMsg.Format(_T("Model export %s for %s"), (bResult ? _T("successful") : _T("failed")), file_path);
       AfxMessageBox(strMsg, MB_OK | (bResult ? MB_ICONEXCLAMATION : MB_ICONSTOP));
