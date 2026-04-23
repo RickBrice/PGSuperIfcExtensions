@@ -234,3 +234,33 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    return concrete_material;
 }
+
+template <typename Schema> 
+void AssociateMaterial(IfcHierarchyHelper<Schema>& file, typename Schema::IfcMaterial* material, typename Schema::IfcProduct* product)
+{
+   auto associations = product->HasAssociations();
+   for (auto association : *associations)
+   {
+      auto rel_material = association->as<typename Schema::IfcRelAssociatesMaterial>();
+      if (rel_material)
+      {
+         auto related_objects = rel_material->RelatedObjects();
+         // this product already has a material association, so we will just update it to point to the new material
+         rel_material->setRelatingMaterial(material);
+         return;
+      }
+   }
+
+   // if we get this far, there was not already a material association for this product, so we will create a new one
+   typename Schema::IfcDefinitionSelect::list::ptr related_objects(new typename Schema::IfcDefinitionSelect::list);
+   related_objects->push(product);
+   auto rel_material = new typename Schema::IfcRelAssociatesMaterial(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      boost::none, // Name
+      boost::none, // Description
+      related_objects, // RelatedObjects
+      material // RelatingMaterial
+   );
+   file.addEntity(rel_material);
+}

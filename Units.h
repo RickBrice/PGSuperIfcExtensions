@@ -121,6 +121,25 @@ typename Schema::IfcConversionBasedUnit* GetDisplacementUnit(IfcHierarchyHelper<
 }
 
 template <typename Schema>
+typename Schema::IfcConversionBasedUnit* GetXSectionDimUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   std::string name("inch");
+   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
+   if (unit == nullptr)
+   {
+      GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+      auto cf = pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.GetConvFactor();
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+         Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
+         name,
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+      );
+   }
+   return unit;
+}
+
+template <typename Schema>
 typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("foot");
@@ -208,6 +227,44 @@ typename Schema::IfcConversionBasedUnit* GetMassUnit(IfcHierarchyHelper<Schema>&
          Schema::IfcUnitEnum::IfcUnit_MASSUNIT,
          name,
          new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcMassMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
+      );
+   }
+   return unit;
+}
+
+template <typename Schema>
+typename Schema::IfcConversionBasedUnit* GetForceUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   std::string name("kip");
+   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
+   if (unit == nullptr)
+   {
+      auto cf = WBFL::Units::Measure::Kip.GetConvFactor(); // converts to base force units which is N
+      auto cf2 = WBFL::Units::Measure::Newton.GetConvFactor();
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0),
+         Schema::IfcUnitEnum::IfcUnit_FORCEUNIT,
+         name,
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcForceMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_NEWTON))
+      );
+   }
+   return unit;
+}
+
+template <typename Schema>
+typename Schema::IfcConversionBasedUnit* GetAngleUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   std::string name("degree");
+   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
+   if (unit == nullptr)
+   {
+      auto cf = WBFL::Units::Measure::Degree.GetConvFactor(); // converts to base angle units which is rad
+      auto cf2 = WBFL::Units::Measure::Radian.GetConvFactor();
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(0/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+         Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT,
+         name,
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcPlaneAngleMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN))
       );
    }
    return unit;

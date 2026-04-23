@@ -96,7 +96,7 @@ IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
 // Dialog
 //
 
-IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 245, 393
+IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 245, 375
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Export Options"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -107,8 +107,8 @@ BEGIN
     LTEXT           "Export",IDC_STATIC,16,36,22,8
     CONTROL         "Alignment Only",IDC_ALIGNMENT_ONLY,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,36,64,10
     CONTROL         "Alignment and Bridge",IDC_ALIGNMENT_AND_BRIDGE,"Button",BS_AUTORADIOBUTTON,144,36,83,10
-    CONTROL         "Classify with USBridge Data Dictionary (bSDD)",IDC_BSDD,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,50,163,10
+    CONTROL         "Classify with usBridge Data Dictionary (bSDD)",IDC_BSDD,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,50,161,10
     GROUPBOX        "Alignment",IDC_STATIC,7,68,230,81
     LTEXT           "Alignment Model",IDC_STATIC,16,84,53,8
     CONTROL         "IfcPolyLine",IDC_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,84,51,10
@@ -120,31 +120,27 @@ BEGIN
     CONTROL         "Curve3d",IDC_REPRESENTATION_CURVE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,75,132,43,10
     CONTROL         "Curve3d and FootPrint",IDC_REPRESENTATION_FOOTPRINT,
                     "Button",BS_AUTORADIOBUTTON,144,132,89,10
-    GROUPBOX        "Bridge",IDC_STATIC,7,153,230,85
+    GROUPBOX        "Bridge",IDC_STATIC,7,153,230,42
     LTEXT           "Deck and Beam Section Profile",IDC_STATIC,16,166,97,8
     CONTROL         "IfcPolyline",IDC_SWEEP_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,177,49,10
     CONTROL         "IfcIndexPolyCurve",IDC_SWEEP_INDEXPOLYCURVE,"Button",BS_AUTORADIOBUTTON,140,177,76,10
-    LTEXT           "Railings",IDC_STATIC,16,188,25,8
-    CONTROL         "IfcWall.PARAPET",IDC_WALL,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,195,67,10
-    CONTROL         "IfcRailing.BALUSTRADE",IDC_RAILING,"Button",BS_AUTORADIOBUTTON,140,195,91,10
-    CONTROL         "Include Assumed Construction Sequence per LRFD 2.5.3",IDC_WORK_PLAN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,208,197,10
-    GROUPBOX        "Girders",IDC_STATIC,7,241,231,125
+    GROUPBOX        "Girders",IDC_STATIC,7,202,231,147
     CONTROL         "Include rebar (pseudo-dummy data)",IDC_INCLUDE_REBAR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,251,131,10
-    CONTROL         "Per ACI 131",IDC_PER_ACI131,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,147,250,55,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,212,131,10
     CONTROL         "Include camber in PSet_PrecastConcreteElementGeneral",IDC_INCLUDE_CAMBER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,265,196,10
-    CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,278,99,10
-    DEFPUSHBUTTON   "OK",IDOK,125,372,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,179,372,50,14
-    CONTROL         "IfcLinearPlacement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,304,79,10
-    CONTROL         "IfcLocalPlacement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,98,303,71,10
-    CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,328,103,10
-    CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,340,81,10
-    CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,352,65,10
-    LTEXT           "Placement",IDC_STATIC,16,293,34,8
-    LTEXT           "Representation",IDC_STATIC,16,318,50,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,226,196,10
+    CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,239,99,10
+    CONTROL         "Properties and Quantities per Display Units",IDC_PROPERTY_UNITS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,253,153,10
+    LTEXT           "Placement",IDC_STATIC,16,276,34,8
+    CONTROL         "IfcLinearPlacement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,287,79,10
+    CONTROL         "IfcLocalPlacement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,98,286,71,10
+    LTEXT           "Representation",IDC_STATIC,16,302,50,8
+    CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,312,103,10
+    CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,324,81,10
+    CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,336,65,10
+    DEFPUSHBUTTON   "OK",IDOK,134,354,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,188,354,50,14
 END
 
 IDD_IMPORT_OPTIONS DIALOGEX 0, 0, 309, 176
@@ -183,7 +179,7 @@ BEGIN
         RIGHTMARGIN, 238
         VERTGUIDE, 16
         TOPMARGIN, 7
-        BOTTOMMARGIN, 386
+        BOTTOMMARGIN, 368
     END
 
     IDD_IMPORT_OPTIONS, DIALOG

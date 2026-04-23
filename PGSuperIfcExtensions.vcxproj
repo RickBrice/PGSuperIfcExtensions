@@ -214,6 +214,8 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClInclude Include="IfcBridgeImporter.h" />
     <ClInclude Include="ImportResults.h" />
     <ClInclude Include="Piers.h" />
+    <ClInclude Include="PropertySets.h" />
+    <ClInclude Include="QuantitySets.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="ImportOptions.h" />
     <ClInclude Include="ConstructionSequence.h" />

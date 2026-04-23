@@ -45,8 +45,8 @@ public:
 
    enum class Tangents
    {
-      Polyline, // use IfcPolyline to model tangents
-      Line // use IfcLine to model tangents
+      Polyline, // use IfcPolyline to model alignment tangents
+      Line // use IfcLine to model alignmenttangents
    };
 
    enum class Representations
@@ -59,12 +59,6 @@ public:
    {
       Polyline, // use IfcPolyline for sweep profile
       IndexedPolyCurve // use IfcIndexedPolyCurve for sweep profile
-   };
-
-   enum class Railings
-   {
-      Parapet, // use IfcWall.PARAPET
-      Balustrade // Use IfcRailing.BALUSTRADE
    };
 
    enum class BeamPlacement
@@ -87,20 +81,16 @@ public:
    Tangents tangents = Tangents::Line;
    Representations representations = Representations::Curve3dOnly;
    SweepProfile sweep_profile = SweepProfile::Polyline;
-   Railings railings = Railings::Balustrade;
-   bool include_work_plan = true;
    bool include_rebar = true;
-   bool rebar_per_aci131 = true;
    bool include_camber = true;
    bool include_quantities = true;
+   bool display_units_for_properties = true; // if true, properties will be exported in display units. If false, properties will be exported in internal system units (which are typically metric for PGSuper)
    BeamPlacement beam_placement = BeamPlacement::Linear;
    BeamModel beam_model = BeamModel::SectionedSolidHorizontal;
 
    // Sometimes when girders are installed at a very steep angle, the ends of the girders
    // are battered so that the end faces are vertical when the beam is erected.
-   // This parameter controls batter. It does two things:
-   // 1) It batters the end faces of the girder, BUT DOES NOT ADJUST THE REINFORCEMENT (@todo - update reinforcement for batter)
-   // 2) Puts the batter angle in the Pset_PrecastConcreteElementGeneral
+   // PGSuper doesn't explicitly model batter, but we can export batter geometry.
    bool batter_ends = false; // set to false because PGSuper doesn't support batter
 };
 

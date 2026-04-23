@@ -47,7 +47,7 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
 }
 
 template <typename Schema>
-typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcReinforcingBarTypeEnum type, typename Schema::IfcShapeRepresentation* shape_representation)
+typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const CIfcExportOptions& options, const std::string& name, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcReinforcingBarTypeEnum type, typename Schema::IfcShapeRepresentation* shape_representation)
 {
    auto placement = file.addPlacement3d();
    auto representation_map = new typename Schema::IfcRepresentationMap(placement, shape_representation);
@@ -75,6 +75,11 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
    );
 
    file.addEntity(rebar_type);
+
+   if (options.classify)
+   {
+      Classify_ReinforcingBarType(file, rebar_type);
+   }
 
    // add the new definition to the project
    auto project = file.getSingle<typename Schema::IfcProject>();

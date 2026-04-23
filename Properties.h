@@ -23,6 +23,28 @@
 
 //#include "Utilities.h"
 
+template <typename Schema>
+void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* object, typename Schema::IfcPropertySet* pset)
+{
+   typename Schema::IfcObjectDefinition::list::ptr related_objects(new typename Schema::IfcObjectDefinition::list);
+   related_objects->push(object);
+
+   auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_objects, pset);
+   file.addEntity(related_properties);
+}
+
+template <typename Schema>
+void AddPropertySetToTypeObject(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTypeObject* type, typename Schema::IfcPropertySet* pset)
+{
+   auto has_property_sets = type->HasPropertySets();
+   if (!has_property_sets)
+   {
+      has_property_sets = typename Schema::IfcPropertySetDefinition::list::ptr(new typename Schema::IfcPropertySetDefinition::list);
+   }
+   (*has_property_sets)->push(pset->as<typename Schema::IfcPropertySetDefinition>());
+   type->setHasPropertySets(has_property_sets);
+}
+
 //#pragma Reminder("TODO - generalize the property enum methods and move to IfcHierarchyHelper")
 // Need to cache the IfcPropertyEnumeration for lookup - it can be used multiple times by reference
 // Need to have a getPropertyEnumeration method
