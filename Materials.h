@@ -65,21 +65,7 @@ typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(IfcHierar
 }
 
 template <typename Schema>
-void AssignPset_MaterialSteel(IfcHierarchyHelper<Schema>& file, typename Schema::IfcMaterial* material,Float64 fy, Float64 fpu, Float64 eu, const std::string& grade)
-{
-   // Pset_MaterialSteel
-   typename Schema::IfcProperty::list::ptr material_steel_properties(new typename Schema::IfcProperty::list);
-   //https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/Pset_MaterialSteel.htm
-   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("YieldStress"), boost::none, new typename Schema::IfcPressureMeasure(fy), nullptr));
-   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("UltimateStress"), boost::none, new typename Schema::IfcPressureMeasure(fpu), nullptr));
-   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("UltimateStrain"), boost::none, new typename Schema::IfcPositiveRatioMeasure(eu), nullptr));
-   material_steel_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StructuralGrade"), boost::none, new typename Schema::IfcLabel(grade.c_str()), nullptr));
-   auto pset_material_steel = new typename Schema::IfcMaterialProperties(std::string("Pset_MaterialSteel"), boost::none/*description*/, material_steel_properties, material);
-   file.addEntity(pset_material_steel);
-}
-
-template <typename Schema>
-typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file,const WBFL::Materials::PsStrand* pStrand)
+typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file,std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::PsStrand* pStrand)
 {
    USES_CONVERSION;
 
@@ -98,23 +84,8 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
    auto strand_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
    file.addEntity(strand_material);
 
-   // define strand properties
-   auto fy = pStrand->GetYieldStrength();
-   auto fpu = pStrand->GetUltimateStrength();
-   auto eu = 0.035; // from ASTM A416 spec
-
-   // Need to clean this up
-   // ASTM A416 is for low relaxation strand... PGSuper does low relaxation and stress relieved
-   // ASTM A416 is for Grade 250 and Grade 270... PGSuper does grade 300 as well, but there doesn't seem to be an ASTM
-   // We are assuming same material for all strands, but that is not the case in the PGSuper data model
-   // straight, harped, and temporary can be different - Grade 250, Grade 270, Grade 300
-   // Strand size/diameter is a property on IfcTendon
-   std::ostringstream os;
-   os << "ASTM A416 Grade " << T2A(WBFL::Materials::PsStrand::GetGrade(pStrand->GetGrade(), true/*US units*/).c_str());
-   auto grade = os.str();
-
    // Pset_MaterialSteel
-   AssignPset_MaterialSteel(file, strand_material, fy, fpu, eu, grade);
+   Create_Pset_MaterialSteel_Strand(file, pBroker, options, strand_material, pStrand);
 
    // create the representation style
    auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
@@ -135,7 +106,7 @@ std::string GetRebarMaterialName(const WBFL::Materials::Rebar* pRebar)
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file, const WBFL::Materials::Rebar* pRebar,const std::string& styleName,COLORREF color)
+typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::Rebar* pRebar,const std::string& styleName,COLORREF color)
 {
    USES_CONVERSION;
 
@@ -155,17 +126,11 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
    auto rebar_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
    file.addEntity(rebar_material);
 
-   // define rebar properties
-   auto fy = pRebar->GetYieldStrength();
-   auto fpu = pRebar->GetUltimateStrength();
-   auto eu = pRebar->GetElongation(); // depends on bar size and we are using a dummy #3 bar
-
-   std::ostringstream os;
-   os << T2A(pRebar->GetName().c_str());
-   auto grade = os.str();
 
    // Pset_MaterialSteel
-   AssignPset_MaterialSteel(file, rebar_material, fy, fpu, eu, grade);
+   Create_Pset_MaterialSteel_ReinforcingBar(file, pBroker, options, rebar_material, pRebar);
+   Create_usBrPset_ACIReinforcingMaterial(file, pBroker, options, rebar_material, pRebar);
+
 
    // create the representation style
    auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);

@@ -102,11 +102,11 @@ public:
     CIfcExporter(void);
     ~CIfcExporter(void);
 
-    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath);
 
 private:
     template <typename Schema>
-    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CString& strFilePath, const CIfcExportOptions& options);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath);
 };
 
 
