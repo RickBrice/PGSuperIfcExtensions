@@ -347,27 +347,6 @@ void Create_usBrPset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
    AddPropertySet(file, project, property_set);
 }
 
-// This Pset is not required by usBridge.
-//template <typename Schema>
-//void Create_Pset_BridgeCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridge* bridge)
-//{
-//   // 5.4.8.4 PEnum_StructureIndicator
-//   std::vector<std::string> enum_values{ "COATED","COMPOSITE","HOMOGENEOUS" };
-//   auto penum = createPropertyEnumeration<Schema>("PEnum_StructureIndicator", enum_values);
-//   auto property = createPropertyEnumeratedValue<Schema>("StructureIndicator", penum, "COMPOSITE");
-//
-//   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
-//   list_of_properties->push(property);
-//
-//   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_BridgeCommon"), boost::none, list_of_properties);
-//
-//   typename Schema::IfcObjectDefinition::list::ptr related_bridges(new typename Schema::IfcObjectDefinition::list);
-//   related_bridges->push(bridge);
-//
-//   auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_bridges, property_set);
-//   file.addEntity(related_properties);
-//}
-
 template <typename Schema>
 void Create_usBrPset_Common(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObject* object)
 {
@@ -498,45 +477,58 @@ void Create_usBrPset_MASH(IfcHierarchyHelper<Schema>& file, std::vector<typename
 }
 
 template <typename Schema>
-void Create_Pset_usBridge_ReinforcementCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* tendon, Float64 Pjack, bool bDebonded, Float64 ldb)
+void Create_usBrPset_TendonDebondingAtEnds(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcProduct* tendon,double debond_start,double debond_end)
 {
-   // Was in TPF Bridge, but not in USBridge
-   
-//   typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
-//
-//   list_of_properties->push(new typename Schema::IfcPropertySingleValue(
-//      std::string("tpfBridge_TendonJackingForce"),
-//      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonJackingForce"),
-//      new typename Schema::IfcReal(Pjack),
-//      nullptr));
-//
-//   list_of_properties->push(new typename Schema::IfcPropertySingleValue(
-//      std::string("tpfBridge_TendonBonding"),
-//      std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding"),
-//#pragma Reminder("bSDD - should the applicable values be the string value or the URI reference to the string value?")
-//      // not sure if this should be URI reference or "Debonded" "Bonded" both are strings
-//      new typename Schema::IfcURIReference(bDebonded ? "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingDebonded" : "https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonBonding/value/TendonBondingBonded"),
-//      nullptr));
-//
-//   if (bDebonded)
-//   {
-//      std::ostringstream os;
-//      os << ldb;
-//      list_of_properties->push(new typename Schema::IfcPropertySingleValue(
-//         std::string("tpfBridge_TendonDebondedLength"),
-//         std::string("https://identifier.buildingsmart.org/uri/aashto/tpfBridge/2/prop/tpfBridge_TendonDebondedLength"),
-//#pragma Reminder("bSDD - why is debond length a string?")
-//         new typename Schema::IfcText(os.str()), // this could be IfcIdentifier, IfcLabel, or IfcText none actually represent a value
-//         nullptr));
-//   }
-//
-//   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("TPFBridge_ReinforcementCommon"), boost::none, list_of_properties);
-//
-//   typename aggregate_of<typename Schema::IfcObjectDefinition>::ptr related_tendons(new aggregate_of<typename Schema::IfcObjectDefinition>());
-//   related_tendons->push(tendon);
-//
-//   auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_tendons, property_set);
-//   file.addEntity(related_properties);
+   // Debonding at ends of beam (normal debonding)
+
+   typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
+
+   GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   {
+      length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
+
+      debond_start = WBFL::Units::ConvertFromSysUnits(debond_start, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+      debond_end = WBFL::Units::ConvertFromSysUnits(debond_end, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+   }
+
+   typename Schema::IfcProperty::list::ptr list_of_properties(new Schema::IfcProperty::list);
+
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DebondLengthStart"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DebondLengthStart"), new typename Schema::IfcLengthMeasure(debond_start), length_unit));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DebondLengthEnd"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DebondLengthEnd"), new typename Schema::IfcLengthMeasure(debond_end), length_unit));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_TendonDebonding"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_TendonDebonding"), list_of_properties);
+   file.addEntity(property_set);
+
+   AddPropertySet(file, tendon, property_set);
+}
+
+template <typename Schema>
+void Create_usBrPset_TendonDebondingInCenter(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcProduct* tendon, double debond_start, double debond_end)
+{
+   // Debonding in the middle of the beam (typically for temporary top strands)
+   typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
+
+   GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   {
+      length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
+
+      debond_start = WBFL::Units::ConvertFromSysUnits(debond_start, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+      debond_end = WBFL::Units::ConvertFromSysUnits(debond_end, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+   }
+
+   typename Schema::IfcProperty::list::ptr list_of_properties(new Schema::IfcProperty::list);
+
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DebondLengthMidspanToStart"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DebondLengthMidspanToStart"), new typename Schema::IfcLengthMeasure(debond_start), length_unit));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DebondLengthMidspanToEnd"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DebondLengthMidspanToEnd"), new typename Schema::IfcLengthMeasure(debond_end), length_unit));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_TendonDebonding"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_TendonDebonding"), list_of_properties);
+   file.addEntity(property_set);
+
+   AddPropertySet(file, tendon, property_set);
 }
 
 template <typename Schema>
@@ -590,6 +582,48 @@ inline std::string GetRebarSpecificationEdition(const WBFL::Materials::Rebar* pR
    default: edition = "Unknown"; break;
    }
    return edition;
+}
+
+inline std::string GetStrandSpecification(const WBFL::Materials::PsStrand* pStrand)
+{
+   std::string spec("ASTM A416 (AASHTO M203)");
+   return spec;
+}
+
+inline std::string GetStrandSpecificationEdition(const WBFL::Materials::PsStrand* pStrand)
+{
+   std::string edition("Unknown");
+   return edition;
+}
+
+template <typename Schema>
+void Create_usBrPset_ACITendonMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcMaterial* material, const WBFL::Materials::PsStrand* pStrand)
+{
+   USES_CONVERSION;
+
+   auto spec = GetStrandSpecification(pStrand);
+   auto spec_edition = GetStrandSpecificationEdition(pStrand);
+
+   GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+   typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
+   auto fpu = pStrand->GetUltimateStrength();
+
+   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   {
+      stress_unit = GetStressUnit<Schema>(file, pBroker);
+      fpu = WBFL::Units::ConvertFromSysUnits(fpu, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+   }
+
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Specification"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/Specification"), new typename Schema::IfcLabel(spec.c_str()), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SpecificationVersion"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/SpecificationVersion"), new typename Schema::IfcLabel(spec_edition.c_str()), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TendonGrade"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/TendonGrade"), new typename Schema::IfcPressureMeasure(fpu), stress_unit));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CoatingSpecification"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/CoatingSpecification"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CoatingSpecificationVersion"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/CoatingSpecificationVersion"), nullptr, nullptr));
+
+   auto material_properties = new typename Schema::IfcMaterialProperties(std::string("usBrPset_ACITendonMaterial"), boost::none/*description*/, list_of_properties, material);
+   file.addEntity(material_properties);
 }
 
 template <typename Schema>
@@ -652,8 +686,54 @@ void Create_usBrPset_ACIReinforcingBarType(IfcHierarchyHelper<Schema>& file, std
 }
 
 template <typename Schema>
-void Create_usBrPset_ACIBarShape(IfcHierarchyHelper<Schema>& file, typename Schema::IfcReinforcingBar* rebar)
+void addBarDimension(std::string name,std::string uri,double dim,typename Schema::IfcConversionBasedUnit* unit, typename Schema::IfcProperty::list::ptr list_of_properties)
 {
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(name, uri, new typename Schema::IfcPositiveLengthMeasure(dim), unit));
+}
+
+template <typename Schema,typename Reinforcing>
+void Create_usBrPset_ACIBarShape(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Reinforcing* rebar_type, std::string bend_shape_name,
+   double bend_radius, const std::unordered_map<std::string, double>& dimensions)
+{
+   std::string standard = "ACI 315-99";
+   std::string standard_version = "1999";
+
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StandardName"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/StandardName"), new typename Schema::IfcLabel(standard.c_str()), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StandardVersion"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/StandardVersion"), new typename Schema::IfcLabel(standard_version.c_str()), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BendShapeName"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BendShapeName"), new typename Schema::IfcLabel(bend_shape_name.c_str()), nullptr));
+   
+   GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
+
+   typename Schema::IfcConversionBasedUnit* dimension_unit = nullptr;
+   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   {
+      dimension_unit = GetComponentDimUnit<Schema>(file, pBroker);
+      bend_radius = WBFL::Units::ConvertFromSysUnits(bend_radius, pDisplayUnits->GetComponentDimUnit().UnitOfMeasure);
+   }
+   addBarDimension<Schema>("DefaultInsideBendRadius", "https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DefaultInsideBendRadius", bend_radius, dimension_unit, list_of_properties);
+
+   for (auto & [name, dim] : dimensions)
+   {
+      auto value = dim;
+      if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+      {
+         value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetComponentDimUnit().UnitOfMeasure);
+      }
+      addBarDimension<Schema>(name, "https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/" + name, value, dimension_unit, list_of_properties);
+   }
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ACIBarShape"), boost::none, list_of_properties);
+   file.addEntity(property_set);
+
+   if constexpr (std::is_same_v<Reinforcing, typename Schema::IfcReinforcingBarType>)
+   {
+      AddPropertySetToTypeObject(file, rebar_type, property_set);
+   }
+   else
+   {
+      AddPropertySet(file, rebar_type, property_set);
+   }
 }
 
 template <typename Schema,typename Reinforcing>
@@ -680,6 +760,9 @@ void Create_usBrPset_ACIReinforcingBar(IfcHierarchyHelper<Schema>& file, typenam
 template <typename Schema>
 void Create_usBrPset_Reinforcing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcReinforcingBar* rebar)
 {
+   // placeholder - to be implemented later
+
+   // Unclear what the properties represent
 }
 
 template <typename Schema,typename Reinforcing>
@@ -691,9 +774,10 @@ void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::sha
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    typename Schema::IfcConversionBasedUnit* cover_unit = nullptr;
+   auto length_unit = pDisplayUnits->GetComponentDimUnit();
    if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
-      cover_unit = GetXSectionDimUnit<Schema>(file, pBroker);
+      cover_unit = GetComponentDimUnit<Schema>(file, pBroker);
    }
 
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
@@ -703,7 +787,7 @@ void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::sha
       double value = *top;
       if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
       {
-         value = WBFL::Units::ConvertFromSysUnits(*top, pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure);
+         value = WBFL::Units::ConvertFromSysUnits(*top, length_unit.UnitOfMeasure);
       }
       list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TopFaceCover"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/TopFaceCover"), new typename Schema::IfcPositiveLengthMeasure(value), cover_unit));
    }
@@ -713,7 +797,7 @@ void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::sha
       double value = *side;
       if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
       {
-         value = WBFL::Units::ConvertFromSysUnits(*side, pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure);
+         value = WBFL::Units::ConvertFromSysUnits(*side, length_unit.UnitOfMeasure);
       }
       list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SideFaceCover"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/SideFaceCover"), new typename Schema::IfcPositiveLengthMeasure(value), cover_unit));
    }
@@ -723,7 +807,7 @@ void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::sha
       double value = *end;
       if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
       {
-         value = WBFL::Units::ConvertFromSysUnits(*end, pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure);
+         value = WBFL::Units::ConvertFromSysUnits(*end, length_unit.UnitOfMeasure);
       }
       list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("EndFaceCover"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/EndFaceCover"), new typename Schema::IfcPositiveLengthMeasure(value), cover_unit));
    }
@@ -733,7 +817,7 @@ void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::sha
       double value = *bottom;
       if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
       {
-         value = WBFL::Units::ConvertFromSysUnits(*bottom, pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure);
+         value = WBFL::Units::ConvertFromSysUnits(*bottom, length_unit.UnitOfMeasure);
       }
       list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BottomFaceCover"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BottomFaceCover"), new typename Schema::IfcPositiveLengthMeasure(value), cover_unit));
    }

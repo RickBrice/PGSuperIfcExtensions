@@ -87,6 +87,11 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
    // Pset_MaterialSteel
    Create_Pset_MaterialSteel_Strand(file, pBroker, options, strand_material, pStrand);
 
+   if(options.classify)
+   {
+      Create_usBrPset_ACITendonMaterial(file, pBroker, options, strand_material, pStrand);
+   }
+
    // create the representation style
    auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
 

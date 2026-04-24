@@ -21,6 +21,21 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+inline double getMinBendRadius(const WBFL::Materials::Rebar* pRebar,bool bStirrup)
+{
+   auto radius = 0.0;
+   auto db = pRebar->GetNominalDimension();
+   if (pRebar->GetSize() <= WBFL::Materials::Rebar::Size::bs5 && bStirrup)
+      radius = 4 * db;
+   else if (pRebar->GetSize() <= WBFL::Materials::Rebar::Size::bs8)
+      radius = 6 * db;
+   else if (pRebar->GetSize() <= WBFL::Materials::Rebar::Size::bs11)
+      radius = 8 * db;
+   else
+      radius = 10 * db;
+
+   return radius;
+}
 
 template <typename Schema>
 typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar)
@@ -78,7 +93,7 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
 
    if (options.classify)
    {
-      Classify_ReinforcingBarType(file, rebar_type);
+      Classify_usBridge_ReinforcingBarType(file, rebar_type);
    }
 
    // add the new definition to the project

@@ -46,8 +46,11 @@
 #define IDC_EDIT                        231
 #define IDC_CHECK2                      232
 #define IDC_PER_ACI131                  232
-#define IDC_CHECK3                      233
 #define IDC_PROPERTY_UNITS              233
+#define IDC_GIRDER_ONLY                 234
+#define IDC_SPAN                        235
+#define IDC_COMBO2                      236
+#define IDC_GIRDER                      236
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
 
@@ -57,7 +60,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        213
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         234
+#define _APS_NEXT_CONTROL_VALUE         237
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

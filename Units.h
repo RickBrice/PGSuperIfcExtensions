@@ -140,6 +140,25 @@ typename Schema::IfcConversionBasedUnit* GetXSectionDimUnit(IfcHierarchyHelper<S
 }
 
 template <typename Schema>
+typename Schema::IfcConversionBasedUnit* GetComponentDimUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   std::string name("inch");
+   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
+   if (unit == nullptr)
+   {
+      GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+      auto cf = pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.GetConvFactor();
+      unit = new typename Schema::IfcConversionBasedUnit(
+         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+         Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
+         name,
+         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+      );
+   }
+   return unit;
+}
+
+template <typename Schema>
 typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("foot");
