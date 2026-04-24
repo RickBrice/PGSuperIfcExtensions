@@ -42,7 +42,9 @@ public:
 #endif
 
 protected:
+	virtual BOOL OnInitDialog() override;
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
+	void OnSpanChanged();
 	DECLARE_MESSAGE_MAP()
 };

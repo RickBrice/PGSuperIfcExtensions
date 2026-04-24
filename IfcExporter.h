@@ -34,7 +34,8 @@ public:
    enum class ModelElements
    {
       AlignmentOnly,
-      AlignmentAndBridge
+      AlignmentAndBridge,
+      GirderOnly
    };
 
    enum class AlignmentModel
@@ -76,6 +77,7 @@ public:
 
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
+   CGirderKey girderKey = CGirderKey(0,0); // only valid for model_elements = ModelElements::GirderOnly
    bool classify = true;
    AlignmentModel alignment_model = AlignmentModel::GradientCurve;
    Tangents tangents = Tangents::Line;
