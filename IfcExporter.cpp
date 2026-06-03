@@ -1732,8 +1732,8 @@ void CreatePrecastSegmentReinforcing(IfcHierarchyHelper<Schema>& file, std::shar
    {
       Classify_usBridge_ReinforcementCage<Schema>(file, rebar_assembly);
 
-      //Create_usBrPset_Common<Schema>(file, rebar_assembly);
-      //Create_usBrPset_PayItemQuantities<Schema>(file, rebar_assembly);
+      Create_usBrPset_Common<Schema>(file, rebar_assembly);
+      Create_usBrPset_PayItemQuantities<Schema>(file, rebar_assembly);
    }
 
    // aggregate the rebar assembly with its beam
@@ -2058,33 +2058,34 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Classify_usBridge_Slab(file, slab);
    }
 
-   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
-   const auto* deck_desc = pIBridgeDesc->GetDeckDescription();
+   // these are PGSuper specific properties.
+   //GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   //const auto* deck_desc = pIBridgeDesc->GetDeckDescription();
 
-   typename Schema::IfcProperty::list::ptr deck_properties(new typename Schema::IfcProperty::list);
-   deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("GrossDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->GrossDepth), nullptr));
-   deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LeftEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stLeft]), nullptr));
-   deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RightEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stRight]), nullptr));
+   //typename Schema::IfcProperty::list::ptr deck_properties(new typename Schema::IfcProperty::list);
+   //deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("GrossDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->GrossDepth), nullptr));
+   //deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LeftEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stLeft]), nullptr));
+   //deck_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RightEdgeDepth"), boost::none, new typename Schema::IfcLengthMeasure(deck_desc->OverhangEdgeDepth[pgsTypes::stRight]), nullptr));
 
-   typename Schema::IfcValue::list::ptr station_list(new typename Schema::IfcValue::list);
-   typename Schema::IfcValue::list::ptr left_list(new typename Schema::IfcValue::list);
-   typename Schema::IfcValue::list::ptr right_list(new typename Schema::IfcValue::list);
-   for (const auto& deck_point : deck_desc->DeckEdgePoints)
-   {
-      station_list->push(new typename Schema::IfcLengthMeasure(deck_point.Station));
-      left_list->push(new typename Schema::IfcLengthMeasure(deck_point.LeftEdge));   
-      right_list->push(new typename Schema::IfcLengthMeasure(deck_point.RightEdge));
-   }
-   deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("Stations"), boost::none, station_list, nullptr));
-   deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("LeftEdges"), boost::none, left_list, nullptr));
-   deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("RightEdges"), boost::none, right_list, nullptr));
+   //typename Schema::IfcValue::list::ptr station_list(new typename Schema::IfcValue::list);
+   //typename Schema::IfcValue::list::ptr left_list(new typename Schema::IfcValue::list);
+   //typename Schema::IfcValue::list::ptr right_list(new typename Schema::IfcValue::list);
+   //for (const auto& deck_point : deck_desc->DeckEdgePoints)
+   //{
+   //   station_list->push(new typename Schema::IfcLengthMeasure(deck_point.Station));
+   //   left_list->push(new typename Schema::IfcLengthMeasure(deck_point.LeftEdge));   
+   //   right_list->push(new typename Schema::IfcLengthMeasure(deck_point.RightEdge));
+   //}
+   //deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("Stations"), boost::none, station_list, nullptr));
+   //deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("LeftEdges"), boost::none, left_list, nullptr));
+   //deck_properties->push(new typename Schema::IfcPropertyListValue(std::string("RightEdges"), boost::none, right_list, nullptr));
 
-   auto pset_deck = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsDeck"), boost::none, deck_properties);
-   file.addEntity(pset_deck);
-   typename Schema::IfcObjectDefinition::list::ptr decks(new typename Schema::IfcObjectDefinition::list);
-   decks->push(slab);
-   auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Defines slab edge offset geometry"), boost::none, decks, pset_deck);
-   file.addEntity(rel_defines_by_properties);
+   //auto pset_deck = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("pgsDeck"), boost::none, deck_properties);
+   //file.addEntity(pset_deck);
+   //typename Schema::IfcObjectDefinition::list::ptr decks(new typename Schema::IfcObjectDefinition::list);
+   //decks->push(slab);
+   //auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Defines slab edge offset geometry"), boost::none, decks, pset_deck);
+   //file.addEntity(rel_defines_by_properties);
 
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, slab);
 }
@@ -2272,8 +2273,8 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
    {
       std::string pier_name(T2A(LABEL_PIER_EX(pBridge->IsAbutment(pierIdx), pierIdx)));
       auto pier = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, pier_name, boost::none, boost::none, nullptr, nullptr, boost::none,
-         Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
-         Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
+         Schema::IfcElementCompositionEnum::IfcElementComposition_ELEMENT,
+         Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
          pBridge->IsAbutment(pierIdx) ? Schema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT : Schema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER);
       file.addEntity(pier);
 
@@ -2283,18 +2284,23 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
             Classify_usBridge_Abutment<Schema>(file, pier);
          else
             Classify_usBridge_Pier<Schema>(file, pier);
+
+         Create_usBrPset_Common<Schema>(file, pier);
+         Create_usBrPset_SubstructureCommon<Schema>(file,pBroker,options,pier,pierIdx);
       }
 
       std::ostringstream os;
       os << "Foundation at " << pier_name; // name is not required, but is specified in AASHTO IDS
       auto foundation = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, os.str(), boost::none, boost::none, nullptr, nullptr, boost::none,
          Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
-         Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
+         Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
          Schema::IfcBridgePartTypeEnum::IfcBridgePartType_FOUNDATION);
       file.addEntity(foundation);
       if (options.classify)
       {
          Classify_usBridge_Foundation<Schema>(file, foundation);
+
+         Create_usBrPset_Common<Schema>(file, foundation);
       }
 
       typename Schema::IfcObjectDefinition::list::ptr list_of_foundations(new typename Schema::IfcObjectDefinition::list);
@@ -2433,7 +2439,13 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
       Classify_usBridge_PrecastGirderElement(file, beam);
 
       Create_Pset_BeamCommon(file, pBroker, options, segmentKey, beam); 
-      //Create_Pset_ConcreteElementGeneral(file, "FACTORY", "PRECAST", beam); // this propery is attached to the IfcBeamType, not the IfcBeam, so it is created in CreatePrecastSegmentType
+
+      // this propery is attached to the IfcBeamType, but the StrengthClass property is beam specific
+      // so add an override property here
+      GET_IFACE2(pBroker, IMaterials, pMaterials);
+      Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
+      Create_Pset_ConcreteElementGeneral(file, pBroker, std::nullopt, std::nullopt, fc, beam); 
+
       Create_Pset_PrecastConcreteElementGeneral<Schema>(file, pBroker, options, segmentKey, beam);
       Create_usBrPset_Common(file, beam);
       Create_usBrPset_PayItemQuantities(file, beam);
@@ -2454,7 +2466,7 @@ void CreateGirder(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    auto beam_type_name = pIBridgeDesc->GetGirder(options.girderKey)->GetGirderName();
 
    typename Schema::IfcPropertySetDefinition::list::ptr property_sets(new typename Schema::IfcPropertySetDefinition::list);
-   property_sets->push(Create_Pset_ConcreteElementGeneral(file, "FACTORY", "PRECAST"));
+   property_sets->push(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt, nullptr));
 
    typename Schema::IfcObjectDefinition::list::ptr beam_object_definitions(new typename Schema::IfcObjectDefinition::list);
    auto beam_type = new typename Schema::IfcBeamType(
@@ -2514,8 +2526,11 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    std::string bridge_name(T2A(pProjectProperties->GetBridgeName()));
    if (bridge_name.empty()) bridge_name = "Unnamed Bridge";
 
-   auto bridge = new typename Schema::IfcBridge(IfcParse::IfcGlobalId(), nullptr, bridge_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX, Schema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER);
+   auto bridge = new typename Schema::IfcBridge(IfcParse::IfcGlobalId(), nullptr, bridge_name, boost::none, boost::none, nullptr, nullptr, boost::none, Schema::IfcElementCompositionEnum::IfcElementComposition_ELEMENT, Schema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER);
    file.addEntity(bridge);
+
+   // classification and property sets for the bridge are created at the end of this function
+
 
    // Not to be used per usBridge IDM document.
    // create the assumed construction sequence and related it to the bridge
@@ -2535,27 +2550,36 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
    // Create top level spatial structure of bridge
    auto superstructure = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Superstructure"), boost::none, boost::none, nullptr, nullptr, boost::none,
-      Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
-      Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
+      Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX,
+      Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
    file.addEntity(superstructure);
+   file.addRelatedObject<typename Schema::IfcRelAggregates>(bridge, superstructure);
    if (options.classify)
    {
       Classify_usBridge_Superstructure<Schema>(file, superstructure);
+
+      Create_usBrPset_Common(file, superstructure);
+      Create_usBrPset_BridgePartCommon(file, superstructure);
    }
 
    auto substructure = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Substructure"), boost::none, boost::none, nullptr, nullptr, boost::none,
-      Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
-      Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
+      Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX,
+      Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_SUBSTRUCTURE);
    file.addEntity(substructure);
+   file.addRelatedObject<typename Schema::IfcRelAggregates>(bridge, substructure);
    if (options.classify)
    {
       Classify_usBridge_Substructure<Schema>(file, substructure);
+
+      Create_usBrPset_Common(file, substructure);
+      Create_usBrPset_BridgePartCommon(file, substructure);
+      Create_usBrPset_SubstructureCommon<Schema>(file, pBroker, options, substructure); // seems like this should be used here... substructure is a huge spatial container
    }
 
    auto deck = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Deck"), boost::none, boost::none, nullptr, nullptr, boost::none,
-      Schema::IfcElementCompositionEnum::IfcElementComposition_PARTIAL,
+      Schema::IfcElementCompositionEnum::IfcElementComposition_ELEMENT,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
    CreateSlab(file, pBroker, options, deck, body_model_representation_subcontext);
@@ -2563,23 +2587,20 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    if (options.classify)
    {
       Classify_usBridge_Deck<Schema>(file, deck);
+
+      Create_usBrPset_Common(file, deck);
+      Create_usBrPset_BridgePartCommon(file, deck);
    }
 
-   typename Schema::IfcObjectDefinition::list::ptr list_of_bridge_parts(new typename Schema::IfcObjectDefinition::list);
-   list_of_bridge_parts->push(deck);
-   list_of_bridge_parts->push(superstructure);
-   list_of_bridge_parts->push(substructure);
-
-   // IfcBridge <-> IfcRelAggregates <-> IfcBridgePart::DECK, SUPERSTRUCTURE, SUBSTRUCTURE
-   auto bridge_spatial_elements = new typename Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in bridge spatial structure"), boost::none, bridge, list_of_bridge_parts);
-   file.addEntity(bridge_spatial_elements);
-
+   file.addRelatedObject<typename Schema::IfcRelAggregates>(superstructure, deck);
 
    // Create spatial structure of substructure
    // IfcBridgePart::SUBSTRUCTURE <-> IfcRelAggregates <-> IfcBridgePart::ABUTMENT, PIER
    auto list_of_piers = CreatePiers(file, pBroker, options);
-   auto substructure_spatial_elements = new typename Schema::IfcRelAggregates(IfcParse::IfcGlobalId(), nullptr, std::string("Elements in substructure spatial structure"), boost::none, substructure, list_of_piers);
-   file.addEntity(substructure_spatial_elements);
+   for (auto pier : *list_of_piers)
+   {
+      file.addRelatedObject<typename Schema::IfcRelAggregates>(substructure, pier);
+   }
 
    //if (options.include_work_plan)
    //{
@@ -2637,7 +2658,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    // define the common properties of the precast girder type
    // specifically, precast concrete is defined by Pset_ConcreteElementGeneral with AssemblyPlace=FACTORY, CastingMethod=PRECAST
    typename Schema::IfcPropertySetDefinition::list::ptr property_sets(new typename Schema::IfcPropertySetDefinition::list);
-   property_sets->push(Create_Pset_ConcreteElementGeneral(file, "FACTORY", "PRECAST"));
+   property_sets->push(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt, nullptr));
 
    GET_IFACE2(pBroker, IDocumentType, pDocType);
    bool bIsPGSplice = pDocType->IsPGSpliceDocument();
@@ -2795,7 +2816,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
                   related_segments->push(closure_joint);
 
                   // Pset_ConcreteElementGeneral
-                  auto pset_concrete_element_general = Create_Pset_ConcreteElementGeneral(file, "SITE", "INSITU");
+                  auto pset_concrete_element_general = Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", std::nullopt, nullptr);
                   file.addEntity(new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_concrete_element_general));
 
                   file.addEntity(closure_joint);
@@ -2829,9 +2850,10 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    {
       Classify_usBridge_GirderBridge<Schema>(file, bridge);
 
-      Create_usBrPset_BridgeGeometry<Schema>(file, pBroker, bridge);
+      Create_usBrPset_Common(file, bridge);
+      Create_usBrPset_BridgeGeometry<Schema>(file, pBroker, options, bridge);
       Create_usBrPset_BridgeIdentification<Schema>(file, pBroker, bridge);
-      Create_usBrPset_DesignLoad<Schema>(file, pBroker, bridge);
+      Create_usBrPset_DesignLoading<Schema>(file, pBroker, bridge);
       Create_usBrPset_FeatureIdentification<Schema>(file, pBroker, bridge);
       Create_usBrPset_HydraulicData<Schema>(file, pBroker, bridge);
       Create_usBrPset_NavigableWaterway<Schema>(file, pBroker, bridge);
@@ -2968,7 +2990,9 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
       auto site = file.getSingle<typename Schema::IfcSite>();
       Classify_usBridge_BridgeProject<Schema>(file, project);
       Classify_usBridge_BridgeSite<Schema>(file, site);
+      
       Create_usBrPset_ProjectCommon<Schema>(file);
+      Create_usBrPset_ProjectLocation<Schema>(file);
    }
 
    if (options.model_elements == CIfcExportOptions::ModelElements::GirderOnly)
