@@ -2698,7 +2698,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
       AddPropertySet(file,barriers,Create_usBrPset_MASH(file));
       
-      AddPropertySet(file,barriers,Create_Pset_ConcreteElementGeneral(file, pBroker, std::nullopt, std::nullopt, std::nullopt));
+      AddPropertySet(file,barriers,Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", std::nullopt));
       AddPropertySet(file,barriers,Create_usBrPset_Common(file));
 
       AddPropertySet(file,barriers,Create_usBrPset_PayItemQuantities(file));
