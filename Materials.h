@@ -92,14 +92,20 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
       Create_usBrPset_ACITendonMaterial(file, pBroker, options, strand_material, pStrand);
    }
 
-   // create the representation style
-   auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
+   if (!options.classify)
+   {
+      // Material style representations are not part of AbV so don't include 
+      // if we are exporting with usBridge classification system
 
-   // assigns the presentation styles to the material
-   typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
-   list_of_representations->push(material_representation);
-   auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
-   file.addEntity(material_defintion_representation);
+      // create the representation style
+      auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
+
+      // assigns the presentation styles to the material
+      typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
+      list_of_representations->push(material_representation);
+      auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
+      file.addEntity(material_defintion_representation);
+   }
 
    return strand_material;
 }
@@ -137,20 +143,26 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
    Create_usBrPset_ACIReinforcingMaterial(file, pBroker, options, rebar_material, pRebar);
 
 
-   // create the representation style
-   auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
+   if (!options.classify)
+   {
+      // Material style representations are not part of AbV so don't include 
+      // if we are exporting with usBridge classification system
+       
+      // create the representation style
+      auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
 
-   // assigns the presentation styles to the material
-   typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
-   list_of_representations->push(material_representation);
-   auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
-   file.addEntity(material_defintion_representation);
+      // assigns the presentation styles to the material
+      typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
+      list_of_representations->push(material_representation);
+      auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
+      file.addEntity(material_defintion_representation);
+   }
 
    return rebar_material;
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
+typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
 {
    USES_CONVERSION;
 
@@ -177,14 +189,14 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
    typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
-   //if (pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-   //{
-   //   stress_unit = GetStressUnit<Schema>(file, pBroker);
-   //   displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
+   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   {
+      stress_unit = GetStressUnit<Schema>(file, pBroker);
+      displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
 
-   //   fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-   //   max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
-   //}
+      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
+      max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
+   }
 
    // Pset_MaterialConcrete
    typename Schema::IfcProperty::list::ptr material_concrete_properties(new typename Schema::IfcProperty::list);
@@ -193,14 +205,20 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
    auto pset_material_concrete = new typename Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, concrete_material);
    file.addEntity(pset_material_concrete);
 
-   // create the representation style
-   auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
+   if (!options.classify)
+   {
+      // Material style representations are not part of AbV so don't include 
+      // if we are exporting with usBridge classification system
 
-   // assigns the presentation styles to the material
-   typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
-   list_of_representations->push(material_representation);
-   auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, concrete_material);
-   file.addEntity(material_defintion_representation);
+      // create the representation style
+      auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
+
+      // assigns the presentation styles to the material
+      typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
+      list_of_representations->push(material_representation);
+      auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, concrete_material);
+      file.addEntity(material_defintion_representation);
+   }
 
    return concrete_material;
 }

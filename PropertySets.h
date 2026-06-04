@@ -34,10 +34,8 @@
 
 
 template <typename Schema>
-void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
+typename Schema::IfcPropertySet* Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 {
-   auto project = file.getSingle<typename Schema::IfcProject>();
-
    typename Schema::IfcProperty::list::ptr list_of_properties(new Schema::IfcProperty::list);
 
    // 5.1.8.1 PEnum_ProjectType
@@ -49,8 +47,7 @@ void Create_Pset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ProjectCommon"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   AddPropertySet(file, project, property_set);
+   return property_set;
 }
 
 
@@ -133,7 +130,7 @@ void Create_Pset_MaterialSteel_ReinforcingBar(IfcHierarchyHelper<Schema>& file, 
 }
 
 template <typename Schema>
-typename Schema::IfcPropertySet* Create_Pset_ConcreteElementGeneral(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, std::optional<std::string> assemblyPlace,std::optional<std::string> castingMethod,std::optional<Float64> fc,typename Schema::IfcObject* object)
+typename Schema::IfcPropertySet* Create_Pset_ConcreteElementGeneral(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, std::optional<std::string> assemblyPlace,std::optional<std::string> castingMethod,std::optional<Float64> fc)
 {
    USES_CONVERSION;
 
@@ -172,19 +169,11 @@ typename Schema::IfcPropertySet* Create_Pset_ConcreteElementGeneral(IfcHierarchy
    // create Pset_ConcreteElementGeneral
    auto pset_concrete_element_general = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_ConcreteElementGeneral"), boost::none, concrete_element_general_properties);
    file.addEntity(pset_concrete_element_general);
-   if (object)
-   {
-      AddPropertySet(file, object, pset_concrete_element_general);
-      return nullptr;
-   }
-   else
-   {
-      return pset_concrete_element_general;
-   }
+   return pset_concrete_element_general;
 }
 
 template <typename Schema>
-void Create_Pset_BeamCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+typename Schema::IfcPropertySet* Create_Pset_BeamCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
 
@@ -235,12 +224,11 @@ void Create_Pset_BeamCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WB
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_BeamCommon"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   AddPropertySet(file, segment, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_Pset_PrecastConcreteElementGeneral(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+typename Schema::IfcPropertySet* Create_Pset_PrecastConcreteElementGeneral(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey)
 {
    USES_CONVERSION;
 
@@ -314,18 +302,38 @@ void Create_Pset_PrecastConcreteElementGeneral(IfcHierarchyHelper<Schema>& file,
    GET_IFACE2(pBroker, IBridgeDescription, pBridgeDesc);
    auto family_name = pBridgeDesc->GetBridgeDescription()->GetGirderFamilyName();
 
+   auto hauling_data = pBridgeDesc->GetBridgeDescription()->GetGirderGroup(segmentKey.groupIndex)->GetGirder(segmentKey.girderIndex)->GetSegment(segmentKey.segmentIndex)->HandlingData;
+   auto bunk_point = std::max(hauling_data.LeadingSupportPoint, hauling_data.TrailingSupportPoint);
+
+   typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
+   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
+   {
+      length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
+      bunk_point = WBFL::Units::ConvertFromSysUnits(bunk_point, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);
+   }
+
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TypeDesignation"), boost::none, new typename Schema::IfcLabel(T2A(family_name)), nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CornerChamfer"), boost::none, nullptr, nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("ManufacturingToleranceClass"), boost::none, nullptr, nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("FormStrippingStrength"), boost::none, new typename Schema::IfcPressureMeasure(fci), stress_unit));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LiftingStrength"), boost::none, new typename Schema::IfcPressureMeasure(fci), stress_unit));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("ReleaseStrength"), boost::none, new typename Schema::IfcPressureMeasure(fci), stress_unit));
-   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MinimumAllowableSupportLength"), boost::none, nullptr, nullptr));
+   
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MinimumAllowableSupportLength"), boost::none, new typename Schema::IfcPositiveLengthMeasure(bunk_point), length_unit));
+
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("InitialTension"), boost::none, new typename Schema::IfcPressureMeasure(fpj), stress_unit));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TendonRelaxation"), boost::none, nullptr, nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TransportationStrength"), boost::none, new typename Schema::IfcPressureMeasure(fc), stress_unit));
-   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SupportDuringTransportDescription"), boost::none, nullptr, nullptr));
-   list_of_properties->push(new typename Schema::IfcPropertyReferenceValue(std::string("SupportDuringTransportDocReference"), boost::none, boost::none, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SupportDuringTransportDescription"), 
+      boost::none, new typename Schema::IfcText("Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property"), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertyReferenceValue(std::string("SupportDuringTransportDocReference"), 
+      boost::none, boost::none, 
+      new typename Schema::IfcDocumentReference(
+         std::string("https://www.pci.org/ItemDetail?iProductCode=CB-02-26H&Category=TRANSPORT&WebsiteKey=5a7b2064-98c2-4c8e-9b4b-18c80973da1e"),
+         boost::none,
+         boost::none,
+         std::string("Recommended Practice for Lateral Stabiilty of Precast, Prestressed Concrete Bridge Girders, 2nd Edition (CB-02-26H)"),
+         nullptr)));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("HollowCorePlugging"), boost::none, nullptr, nullptr));
    
    if(options.include_camber)
@@ -349,14 +357,12 @@ void Create_Pset_PrecastConcreteElementGeneral(IfcHierarchyHelper<Schema>& file,
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_PrecastConcreteElementGeneral"), boost::none, list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, segment, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
+typename Schema::IfcPropertySet* Create_usBrPset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
 {
-   auto project = file.getSingle<typename Schema::IfcProject>();
-
    // we don't have these properties, but will set up the property set with blank properties so that it shows up in the file and can be filled in by hand or by a future version of the exporter.
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("ApprovalStatus"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ApprovalStatus"), nullptr, nullptr));
@@ -372,15 +378,12 @@ void Create_usBrPset_ProjectCommon(IfcHierarchyHelper<Schema>& file)
    
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ProjectCommon"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   AddPropertySet(file, project, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_ProjectLocation(IfcHierarchyHelper<Schema>& file)
+typename Schema::IfcPropertySet* Create_usBrPset_ProjectLocation(IfcHierarchyHelper<Schema>& file)
 {
-   auto project = file.getSingle<typename Schema::IfcProject>();
-
    // we don't have these properties, but will set up the property set with blank properties so that it shows up in the file and can be filled in by hand or by a future version of the exporter.
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
 #pragma Reminder("WORKING HERE - need to update the URLs - bSDD is down right now")
@@ -396,11 +399,11 @@ void Create_usBrPset_ProjectLocation(IfcHierarchyHelper<Schema>& file)
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ProjectLocation"), boost::none, list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, project, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_Common(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObject* object)
+typename Schema::IfcPropertySet* Create_usBrPset_Common(IfcHierarchyHelper<Schema>& file)
 {
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
 
@@ -416,12 +419,12 @@ void Create_usBrPset_Common(IfcHierarchyHelper<Schema>& file, typename Schema::I
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("WorkingDrawingApproval"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/WorkingDrawingApproval"), nullptr, nullptr));
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_Common"), boost::none, list_of_properties);
-
-   AddPropertySet(file, object, property_set);
+   file.addEntity(property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_BridgePartCommon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObject* object)
+typename Schema::IfcPropertySet* Create_usBrPset_BridgePartCommon(IfcHierarchyHelper<Schema>& file)
 {
    // this property set is required by the IDS, but none of its properties are required.
 
@@ -436,12 +439,32 @@ void Create_usBrPset_BridgePartCommon(IfcHierarchyHelper<Schema>& file, typename
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StartStationOffset"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/StartStationOffset"), nullptr, nullptr));
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_BridgePartCommon"), boost::none, list_of_properties);
-
-   AddPropertySet(file, object, property_set);
+   file.addEntity(property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_SubstructureCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcObject* object,PierIndexType pierIdx = INVALID_INDEX)
+typename Schema::IfcPropertySet* Create_usBrPset_SlabCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+{
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CoatingNote"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/CoatingNote"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CrossSectionalArea"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/CrossSectionalArea"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CrossSlope"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/CrossSlope"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("EndSkew"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/EndSkew"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("EndStation"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/EndStation"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("EndStationOffset"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/EndStationOffset"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StartSkew"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/StartSkew"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StartStation"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/StartStation"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("StartStationOffset"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/StartStationOffset"), nullptr, nullptr));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_SlabCommon"), boost::none, list_of_properties);
+   file.addEntity(property_set);
+   return property_set;
+}
+
+template <typename Schema>
+typename Schema::IfcPropertySet* Create_usBrPset_SubstructureCommon(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, PierIndexType pierIdx = INVALID_INDEX)
 {
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
 
@@ -486,12 +509,12 @@ void Create_usBrPset_SubstructureCommon(IfcHierarchyHelper<Schema>& file, std::s
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("ScourElevation"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ScourElevation"), nullptr, nullptr));
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_SubstructureCommon"), boost::none, list_of_properties);
-
-   AddPropertySet(file, object, property_set);
+   file.addEntity(property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_PayItemQuantities(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObject* object)
+typename Schema::IfcPropertySet* Create_usBrPset_PayItemQuantities(IfcHierarchyHelper<Schema>& file)
 {
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
 
@@ -501,12 +524,11 @@ void Create_usBrPset_PayItemQuantities(IfcHierarchyHelper<Schema>& file, typenam
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_PayItemQuantities"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   AddPropertySet(file, object, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_BridgeGeometry(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridge* bridge)
+typename Schema::IfcPropertySet* Create_usBrPset_BridgeGeometry(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    GET_IFACE2(pBroker, IBridge, pBridge);
    auto nSpans = pBridge->GetSpanCount();
@@ -560,12 +582,11 @@ void Create_usBrPset_BridgeGeometry(IfcHierarchyHelper<Schema>& file, std::share
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_BridgeGeometry"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   AddPropertySet(file, bridge, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_BridgeIdentification(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
+typename Schema::IfcPropertySet* Create_usBrPset_BridgeIdentification(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SNBIBridgeNumber"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/SNBIBridgeNumber"), nullptr, nullptr));
@@ -576,11 +597,11 @@ void Create_usBrPset_BridgeIdentification(IfcHierarchyHelper<Schema>& file, std:
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_BridgeIdentification"), boost::none, list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, bridge, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_DesignLoading(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
+typename Schema::IfcPropertySet* Create_usBrPset_DesignLoading(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    USES_CONVERSION;
 
@@ -603,11 +624,11 @@ void Create_usBrPset_DesignLoading(IfcHierarchyHelper<Schema>& file, std::shared
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_DesignLoading"), boost::none, list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, bridge, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_FeatureIdentification(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
+typename Schema::IfcPropertySet* Create_usBrPset_FeatureIdentification(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("FeatureType"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/FeatureType"), nullptr, nullptr));
@@ -618,8 +639,7 @@ void Create_usBrPset_FeatureIdentification(IfcHierarchyHelper<Schema>& file, std
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_FeatureIdentification"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   AddPropertySet(file, bridge, property_set);
+   return property_set;
 }
 
 template <typename Schema>
@@ -635,47 +655,62 @@ void Create_usBrPset_NavigableWaterway(IfcHierarchyHelper<Schema>& file, std::sh
 }
 
 template <typename Schema>
-void Create_usBrPset_PayItemQuantities(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
-{
-   // placeholder - to be implemented later
-}
-
-template <typename Schema>
 void Create_usBrPset_Railroad(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
 {
    // placeholder - to be implemented later
 }
 
 template <typename Schema>
-void Create_usBrPset_Roadway(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
+typename Schema::IfcPropertySet* Create_usBrPset_Roadway(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcBridge* bridge)
 {
-   // placeholder - to be implemented later
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("AnnualAverageDailyTraffic"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/AnnualAverageDailyTraffic"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("AnnualAverageDailyTruckTraffic"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/AnnualAverageDailyTruckTraffic"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DesignAnnualAverageDailyTraffic"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DesignAnnualAverageDailyTraffic"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DesignAnnualAverageDailyTruckTraffic"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DesignAnnualAverageDailyTruckTraffic"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("DesignTrafficYear"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/DesignTrafficYear"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MinimumHorizontalClearanceLeft"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/MinimumHorizontalClearanceLeft"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MinimumHorizontalClearanceRight"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/MinimumHorizontalClearanceRight"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RoadwayMinimumVerticalClearance"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/RoadwayMinimumVerticalClearance"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RoadwayName"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/RoadwayName"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("RoadwayType"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/RoadwayType"), nullptr, nullptr));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_Roadway"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_Roadway"), list_of_properties);
+   file.addEntity(property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_MASH(IfcHierarchyHelper<Schema>& file, std::vector<typename Schema::IfcProduct*> barriers)
+typename Schema::IfcPropertySet* Create_usBrPset_RoadwaySlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   // placeholder - to be implemented later
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("FormType"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/FormType"), new typename Schema::IfcLabel("Wood"), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SacrificialWearingSurface"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/SacrificialWearingThickness"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SurfaceArea"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/SurfaceArea"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SurfaceFinish"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/SurfaceFinish"), new typename Schema::IfcLabel("Raked"), nullptr));
 
-   // commented out because we don't have the properties for the updated usBrPset_MASH property set.
-   // MASHComplianBarrier is no longer a property in the usBridge DD
-   //typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("usBridge_MASHCompliantBarrier"), boost::none, new typename Schema::IfcBoolean(true), nullptr));
-
-   //auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_MASH"), boost::none, list_of_properties);
-
-   //typename Schema::IfcObjectDefinition::list::ptr related_barriers(new typename Schema::IfcObjectDefinition::list);
-   //for (auto& barrier : barriers)
-   //{
-   //   related_barriers->push(barrier);
-   //}
-
-   //auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_barriers, property_set);
-   //file.addEntity(related_properties);
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_RoadwaySlab"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_RoadwaySlab"), list_of_properties);
+   file.addEntity(property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_TendonDebondingAtEnds(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcProduct* tendon,double debond_start,double debond_end)
+typename Schema::IfcPropertySet* Create_usBrPset_MASH(IfcHierarchyHelper<Schema>& file)
+{
+#pragma Reminder("WORKING HERE - need to get real barrier properties and names for PGSuper - dummy values used for now")
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MASHTestingLevel"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/MASHTestingLevel"), new typename Schema::IfcLabel("Unknown"), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("GuardrailType"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/GuardrailType"), new typename Schema::IfcLabel("Unknown"), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BarrierType"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BarrierType"), new typename Schema::IfcLabel("Unknown"), nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BarrierHeight"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BarrierHeight"), new typename Schema::IfcPositiveLengthMeasure(0.01), nullptr));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_MASH"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_MASH"), list_of_properties);
+   file.addEntity(property_set);
+   return property_set;
+}
+
+template <typename Schema>
+typename Schema::IfcPropertySet* Create_usBrPset_TendonDebondingAtEnds(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, double debond_start,double debond_end)
 {
    // Debonding at ends of beam (normal debonding)
 
@@ -699,11 +734,11 @@ void Create_usBrPset_TendonDebondingAtEnds(IfcHierarchyHelper<Schema>& file, std
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_TendonDebonding"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_TendonDebonding"), list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, tendon, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_TendonDebondingInCenter(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcProduct* tendon, double debond_start, double debond_end)
+typename Schema::IfcPropertySet* Create_usBrPset_TendonDebondingInCenter(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, double debond_start, double debond_end)
 {
    // Debonding in the middle of the beam (typically for temporary top strands)
    typename Schema::IfcConversionBasedUnit* length_unit = nullptr;
@@ -726,11 +761,11 @@ void Create_usBrPset_TendonDebondingInCenter(IfcHierarchyHelper<Schema>& file, s
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_TendonDebonding"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_TendonDebonding"), list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, tendon, property_set);
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_PrecastConcreteBeam(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+typename Schema::IfcPropertySet* Create_usBrPset_PrecastConcreteBeam(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey)
 {
    USES_CONVERSION;
 
@@ -773,7 +808,7 @@ void Create_usBrPset_PrecastConcreteBeam(IfcHierarchyHelper<Schema>& file, std::
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_PrecastConcreteBeam"), boost::none, list_of_properties);
    file.addEntity(property_set);
 
-   AddPropertySet(file, segment, property_set);
+   return property_set;
 }
 
 
@@ -878,8 +913,8 @@ void Create_usBrPset_ACIReinforcingMaterial(IfcHierarchyHelper<Schema>& file, st
    file.addEntity(material_properties);
 }
 
-template <typename Schema,typename Reinforcing>
-void Create_usBrPset_ACIReinforcingBarType(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Reinforcing* rebar_type, std::string mark, const WBFL::Materials::Rebar* pRebar)
+template <typename Schema>
+typename Schema::IfcPropertySet* Create_usBrPset_ACIReinforcingBarType(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, std::string mark, const WBFL::Materials::Rebar* pRebar)
 {
    USES_CONVERSION;
 
@@ -893,15 +928,7 @@ void Create_usBrPset_ACIReinforcingBarType(IfcHierarchyHelper<Schema>& file, std
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ACIReinforcingBarType"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   if constexpr (std::is_same_v<Reinforcing, typename Schema::IfcReinforcingBarType>)
-   {
-      AddPropertySetToTypeObject(file, rebar_type, property_set);
-   }
-   else
-   {
-      AddPropertySet(file, rebar_type, property_set);
-   }
+   return property_set;
 }
 
 template <typename Schema>
@@ -910,8 +937,8 @@ void addBarDimension(std::string name,std::string uri,double dim,typename Schema
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(name, uri, new typename Schema::IfcPositiveLengthMeasure(dim), unit));
 }
 
-template <typename Schema,typename Reinforcing>
-void Create_usBrPset_ACIBarShape(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Reinforcing* rebar_type, std::string bend_shape_name,
+template <typename Schema>
+typename Schema::IfcPropertySet* Create_usBrPset_ACIBarShape(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, std::string bend_shape_name,
    double bend_radius, const std::unordered_map<std::string, double>& dimensions)
 {
    std::string standard = "ACI 315-99";
@@ -944,51 +971,41 @@ void Create_usBrPset_ACIBarShape(IfcHierarchyHelper<Schema>& file, std::shared_p
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ACIBarShape"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   if constexpr (std::is_same_v<Reinforcing, typename Schema::IfcReinforcingBarType>)
-   {
-      AddPropertySetToTypeObject(file, rebar_type, property_set);
-   }
-   else
-   {
-      AddPropertySet(file, rebar_type, property_set);
-   }
+   return property_set;
 }
 
-template <typename Schema,typename Reinforcing>
-void Create_usBrPset_ACIReinforcingBar(IfcHierarchyHelper<Schema>& file, typename Reinforcing* rebar_type,std::string element,std::string use,std::string position)
+template <typename Schema>
+typename Schema::IfcPropertySet* Create_usBrPset_ACIReinforcingBar(IfcHierarchyHelper<Schema>& file, std::string element,std::string use,std::string position)
 {
    typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BarElement"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BarElement"), new typename Schema::IfcLabel(element.c_str()), nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BarUse"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BarUse"), new typename Schema::IfcLabel(use.c_str()), nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("BarPosition"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/BarPosition"), new typename Schema::IfcLabel(position.c_str()), nullptr));
 
-   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ACIReinforcingBar"), boost::none, list_of_properties);
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ACIReinforcingBar"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_ACIReinforcingBar"), list_of_properties);
    file.addEntity(property_set);
-
-   if constexpr (std::is_same_v<Reinforcing, typename Schema::IfcReinforcingBarType>)
-   {
-      AddPropertySetToTypeObject(file, rebar_type, property_set);
-   }
-   else
-   {
-      AddPropertySet(file, rebar_type, property_set);
-   }
+   return property_set;
 }
 
 template <typename Schema>
-void Create_usBrPset_Reinforcing(IfcHierarchyHelper<Schema>& file, typename Schema::IfcReinforcingBar* rebar)
+typename Schema::IfcPropertySet* Create_usBrPset_Reinforcing(IfcHierarchyHelper<Schema>& file)
 {
-   // placeholder - to be implemented later
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("EmbedmentAtEnd"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/EmbedmentAtEnd"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("EmbedmentAtStart"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/EmbedmentAtStart"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MinimumSpliceLength"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/MinimumSpliceLength"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("PlacementMethod"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/PlacementMethod"), nullptr, nullptr));
 
-   // Unclear what the properties represent
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_Reinforcing"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_Reinforcing"), list_of_properties);
+   file.addEntity(property_set);
+   return property_set;
 }
 
-template <typename Schema,typename Reinforcing>
-void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Reinforcing* rebar_type, std::optional<double> top, std::optional<double> side, std::optional<double> bottom, std::optional<double> end)
+template <typename Schema>
+typename Schema::IfcPropertySet* Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, std::optional<double> top, std::optional<double> side, std::optional<double> bottom, std::optional<double> end)
 {
    if (!top && !side && !end && !bottom)
-      return;
+      return nullptr;
 
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
@@ -1043,14 +1060,5 @@ void Create_usBrPset_ReinforcingCover(IfcHierarchyHelper<Schema>& file, std::sha
 
    auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ACIReinforcingCover"), boost::none, list_of_properties);
    file.addEntity(property_set);
-
-   if constexpr (std::is_same_v<Reinforcing, typename Schema::IfcReinforcingBarType>)
-   {
-      AddPropertySetToTypeObject(file, rebar_type, property_set);
-   }
-   else
-   {
-      AddPropertySet(file, rebar_type, property_set);
-   }
-
+   return property_set;
 }
