@@ -26,16 +26,31 @@
 template <typename Schema>
 void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* object, typename Schema::IfcPropertySet* pset)
 {
+   if (pset == nullptr)
+      return;
+
    typename Schema::IfcObjectDefinition::list::ptr related_objects(new typename Schema::IfcObjectDefinition::list);
    related_objects->push(object);
+
+   AddPropertySet(file, related_objects, pset);
+}
+
+template <typename Schema>
+void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition::list::ptr related_objects, typename Schema::IfcPropertySet* pset)
+{
+   if (pset == nullptr)
+      return;
 
    auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_objects, pset);
    file.addEntity(related_properties);
 }
 
 template <typename Schema>
-void AddPropertySetToTypeObject(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTypeObject* type, typename Schema::IfcPropertySet* pset)
+void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTypeObject* type, typename Schema::IfcPropertySet* pset)
 {
+   if (pset == nullptr)
+      return;
+
    auto has_property_sets = type->HasPropertySets();
    if (!has_property_sets)
    {

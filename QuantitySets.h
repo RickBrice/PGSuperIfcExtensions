@@ -35,6 +35,9 @@
 template <typename Schema>
 void AddQto(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* object,typename Schema::IfcElementQuantity* qto)
 {
+   if (qto == nullptr)
+      return;
+
    typename Schema::IfcObjectDefinition::list::ptr related_objects(new typename Schema::IfcObjectDefinition::list);
    related_objects->push(object);
 
@@ -44,7 +47,7 @@ void AddQto(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefiniti
 
 
 template <typename Schema>
-void Create_Qto_BeamBaseQuantities(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey, typename Schema::IfcElement* segment)
+typename Schema::IfcElementQuantity* Create_Qto_BeamBaseQuantities(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CSegmentKey& segmentKey)
 {
 #pragma Reminder("NOTE: These are a little bit dummy quantities - updated in the future")
    // assuming simple sections (no change in cross section or depth like end blocks are variable depth hammerhead segments)
@@ -108,13 +111,12 @@ void Create_Qto_BeamBaseQuantities(IfcHierarchyHelper<Schema>& file, std::shared
 
    auto qto = new typename Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_BeamBaseQuantities"), boost::none, std::string("BaseQuantities"), quantities);
    file.addEntity(qto);
-
-   AddQto(file,segment, qto);
+   return qto;
 }
 
 
 template <typename Schema>
-void Create_Qto_ReinforcingElementBaseQuantities(IfcHierarchyHelper<Schema>& file, typename Schema::IfcReinforcingBar* rebar)
+typename Schema::IfcElementQuantity* Create_Qto_ReinforcingElementBaseQuantities(IfcHierarchyHelper<Schema>& file)
 {
    //typename Schema::IfcPhysicalQuantity::list::ptr quantities(new typename Schema::IfcPhysicalQuantity::list);
 
@@ -126,4 +128,27 @@ void Create_Qto_ReinforcingElementBaseQuantities(IfcHierarchyHelper<Schema>& fil
    //file.addEntity(qto);
 
    //AddQto(file, segment, qto);
+   return nullptr;
+}
+
+template <typename Schema>
+typename Schema::IfcElementQuantity* Create_Qto_SlabBaseQuantatities(IfcHierarchyHelper<Schema>& file)
+{
+   typename Schema::IfcPhysicalQuantity::list::ptr quantities(new typename Schema::IfcPhysicalQuantity::list);
+
+   quantities->push(new typename Schema::IfcQuantityLength(std::string("Width"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityLength(std::string("Length"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityLength(std::string("Depth"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityLength(std::string("Perimeter"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityArea(std::string("GrossArea"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityArea(std::string("NetArea"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityVolume(std::string("GrossVolume"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityVolume(std::string("NetVolume"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityWeight(std::string("GrossWeight"), boost::none, nullptr, 0.0, boost::none));
+   quantities->push(new typename Schema::IfcQuantityWeight(std::string("NetWeight"), boost::none, nullptr, 0.0, boost::none));
+
+   auto qto = new typename Schema::IfcElementQuantity(IfcParse::IfcGlobalId(), nullptr, std::string("Qto_SlabBaseQuantities"), boost::none, std::string("BaseQuantities"), quantities);
+   file.addEntity(qto);
+
+   return qto;
 }

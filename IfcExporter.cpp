@@ -54,6 +54,8 @@
 //   }
 //}
 
+constexpr Float64 gs_InsideBendRadius = 0.01; // dummy inside bend radius.
+
 constexpr IndexType NUM_DECK_SECTIONS = 10;
 
 #define CLOCKWISE 0
@@ -359,6 +361,22 @@ void CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::
    // place strands relative to the segment origin
    typename Schema::IfcLocalPlacement* strand_placement = nullptr;
 
+   auto tendon_assembly = new typename Schema::IfcElementAssembly(
+      IfcParse::IfcGlobalId(),
+      nullptr, // OwnerHistory
+      std::string("Strands"), // Name
+      boost::none, // Description
+      std::string("TENDON_BUNDLE"), // ObjectType
+      file.addLocalPlacement(beam->ObjectPlacement()), // ObjectPlacement, place tendon assembly relative to the beam
+      nullptr, // Representation
+      boost::none, // Tag
+      Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY, // AssemblyPlace
+      Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED // PredefinedType
+   );
+   file.addEntity(tendon_assembly);
+
+   // aggregate the tendon assembly with its beam
+   file.addRelatedObject<typename Schema::IfcRelAggregates>(beam, tendon_assembly);
 
    PoiList vHP;
    pPoi->GetPointsOfInterest(segmentKey, POI_HARPINGPOINT, &vHP);
@@ -488,10 +506,9 @@ void CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::
             pStrandGeom->GetPjack(segmentKey, strandType),
             pStrandGeom->GetJackingStress(segmentKey, strandType),
             boost::none, boost::none, boost::none);
-
          file.addEntity(strand);
 
-         file.addRelatedObject<typename Schema::IfcRelAggregates>(beam, strand); // aggregate the strand to the beam
+         file.addRelatedObject<typename Schema::IfcRelAggregates>(tendon_assembly, strand); // aggregate the strand to the tendon assembly
          AssociateMaterial(file, strand_material, strand);
 
 
@@ -505,7 +522,10 @@ void CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::
             Float64 db_start, db_end;
             bool bDebonded = pStrandGeom->IsStrandDebonded(segmentKey, strandIdx, strandType, nullptr, &db_start, &db_end);
             if ( bDebonded )
-               Create_usBrPset_TendonDebondingAtEnds(file, pBroker, options, strand, db_start, db_end);
+               AddPropertySet(file,strand,Create_usBrPset_TendonDebondingAtEnds(file, pBroker, options, db_start, db_end));
+
+            AddPropertySet(file, strand, Create_usBrPset_Common(file));
+            AddPropertySet(file, strand, Create_usBrPset_PayItemQuantities(file));
          }
 
          // 6.3.4.9 Pset_ElementComponentCommon
@@ -523,7 +543,7 @@ void CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::
             // assume WSDOT detail - temporary top strands are debonded for all but their end 10 ft.
             double db_start = segment_length / 2 - WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet);
             double db_end = segment_length / 2 - WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet);
-            Create_usBrPset_TendonDebondingInCenter(file, pBroker, options, strand, db_start, db_end);
+            AddPropertySet(file,strand,Create_usBrPset_TendonDebondingInCenter(file, pBroker, options, db_start, db_end));
          }
 
          // 6.3.8.1 PEnum_ElementComponentCorrosionTreatment
@@ -641,12 +661,12 @@ void CreateLongitudinalRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
 
             if (options.classify)
             {
-               Create_usBrPset_ReinforcingCover(file, pBroker, options, rebar_type, min_cover, min_cover, min_cover, min_cover);
+               AddPropertySet(file,rebar_type,Create_usBrPset_ReinforcingCover(file, pBroker, options, min_cover, min_cover, min_cover, min_cover));
 #pragma Reminder("WORKING HERE - Reinforcing - Top Longitudinal Bars have Mark G4 and bottom have Mark G8 - we need two different IfcReinforcingBarType")
-               Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, rebar_type, "G8", pRebar);
-               Create_usBrPset_ACIReinforcingBar(file, rebar_type, "BEAM", "HORIZONTAL", "TOP"); // Again need to have different types for top and bottom.
+               AddPropertySet(file,rebar_type,Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, "G8", pRebar));
+               AddPropertySet(file,rebar_type,Create_usBrPset_ACIReinforcingBar(file, "BEAM", "HORIZONTAL", "TOP")); // Again need to have different types for top and bottom.
                if ( !bSkew )
-                  Create_usBrPset_ACIBarShape(file, pBroker, options, rebar_type, "STRAIGHT", 0.0, {{ "DimensionB", centerline_bar_length - 2*cover }});
+                  AddPropertySet(file,rebar_type,Create_usBrPset_ACIBarShape(file, pBroker, options, "STRAIGHT", gs_InsideBendRadius, {{ "DimensionB", centerline_bar_length - 2*cover }}));
             }
          }
 
@@ -726,10 +746,12 @@ void CreateLongitudinalRebars(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
             if (options.classify)
             {
                Classify_usBridge_ReinforcingBar<Schema>(file, rebar);
-               Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, rebar);
-               Create_usBrPset_Reinforcing(file, rebar);
+               AddQto(file,rebar,Create_Qto_ReinforcingElementBaseQuantities<Schema>(file));
+               AddPropertySet(file, rebar, Create_usBrPset_Common(file));
+               AddPropertySet(file, rebar, Create_usBrPset_PayItemQuantities(file));
+               AddPropertySet(file,rebar,Create_usBrPset_Reinforcing(file));
                if (bSkew)
-                  Create_usBrPset_ACIBarShape(file, pBroker, options, rebar, "STRAIGHT", 0.0, { { "DimensionB", actual_bar_length } });
+                  AddPropertySet(file,rebar,Create_usBrPset_ACIBarShape(file, pBroker, options, "STRAIGHT", gs_InsideBendRadius, { { "DimensionB", actual_bar_length } }));
             }
 
          } // next bar
@@ -810,13 +832,13 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
       g3_rebar_type = CreateReinforcingBarType<Schema>(file, options, os.str(), pRebar, Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_NOTDEFINED, shape_representation);
       if (options.classify)
       {
-         Create_usBrPset_ReinforcingCover(file, pBroker, options, g3_rebar_type, min_cover, min_cover, min_cover, min_cover);
-         Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g3_rebar_type, "G3", pRebar);
-         Create_usBrPset_ACIReinforcingBar(file, g3_rebar_type,"BEAM","TRANSVERSE","TOP");
+         AddPropertySet(file,g3_rebar_type,Create_usBrPset_ReinforcingCover(file, pBroker, options, min_cover, min_cover, min_cover, min_cover));
+         AddPropertySet(file,g3_rebar_type,Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, "G3", pRebar));
+         AddPropertySet(file,g3_rebar_type,Create_usBrPset_ACIReinforcingBar(file,"BEAM","TRANSVERSE","TOP"));
 
          // ACI/CRSI Bend Dimensions
          if ( !bSkew )
-            Create_usBrPset_ACIBarShape(file, pBroker, options, g3_rebar_type, "STRAIGHT", 0.0, { { "DimensionB", g3_bar_length} });
+            AddPropertySet(file,g3_rebar_type,Create_usBrPset_ACIBarShape(file, pBroker, options, "STRAIGHT", gs_InsideBendRadius, { { "DimensionB", g3_bar_length} }));
       }
    }
 
@@ -857,9 +879,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
       if (options.classify)
       {
-         Create_usBrPset_ReinforcingCover(file, pBroker, options, g9_rebar_type, min_cover, min_cover, min_cover, min_cover);
-         Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g9_rebar_type, "G9", pRebar);
-         Create_usBrPset_ACIReinforcingBar(file, g9_rebar_type, "BEAM", "TIE", "BOTTOM");
+         AddPropertySet(file,g9_rebar_type,Create_usBrPset_ReinforcingCover(file, pBroker, options, min_cover, min_cover, min_cover, min_cover));
+         AddPropertySet(file,g9_rebar_type,Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, "G9", pRebar));
+         AddPropertySet(file,g9_rebar_type,Create_usBrPset_ACIReinforcingBar(file, "BEAM", "TIE", "BOTTOM"));
 
          // ACI/CRSI Bend Dimensions
          // Type 14
@@ -874,7 +896,7 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             Float64 B = sqrt(pow(O / 2., 2.) + pow(H, 2.));
             Float64 D = B;
 
-            Create_usBrPset_ACIBarShape(file, pBroker, options, g9_rebar_type, "14", min_bend_radius, { { "DimensionA", A}, {"DimensionB", B}, {"DimensionD", D}, {"DimensionE", E}, {"DimensionH", H}, {"DimensionO", O} });
+            AddPropertySet(file,g9_rebar_type,Create_usBrPset_ACIBarShape(file, pBroker, options, "14", min_bend_radius, { { "DimensionA", A}, {"DimensionB", B}, {"DimensionD", D}, {"DimensionE", E}, {"DimensionH", H}, {"DimensionO", O} }));
          }
       }
    }
@@ -924,9 +946,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
       if (options.classify)
       {
-         Create_usBrPset_ReinforcingCover(file, pBroker, options, g10_rebar_type, min_cover, min_cover, min_cover, min_cover);
-         Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g10_rebar_type, "G10", pRebar);
-         Create_usBrPset_ACIReinforcingBar(file, g10_rebar_type, "BEAM", "TIE", "BOTTOM");
+         AddPropertySet(file,g10_rebar_type,Create_usBrPset_ReinforcingCover(file, pBroker, options, min_cover, min_cover, min_cover, min_cover));
+         AddPropertySet(file,g10_rebar_type,Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, "G10", pRebar));
+         AddPropertySet(file,g10_rebar_type,Create_usBrPset_ACIReinforcingBar(file, "BEAM", "TIE", "BOTTOM"));
 
          if (!bSkew)
          {
@@ -936,7 +958,7 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             Float64 D = B;
             Float64 C = 2 * d + db;
             double min_bend_radius = getMinBendRadius(pRebar, true);
-            Create_usBrPset_ACIBarShape(file, pBroker, options, g10_rebar_type, "17", min_bend_radius, { { "DimensionB", B}, {"DimensionC", C}, {"DimensionD", D} });
+            AddPropertySet(file,g10_rebar_type,Create_usBrPset_ACIBarShape(file, pBroker, options, "17", min_bend_radius, { { "DimensionB", B}, {"DimensionC", C}, {"DimensionD", D} }));
          }
       }
    }
@@ -1034,9 +1056,9 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
          if (options.classify)
          {
-            Create_usBrPset_ReinforcingCover(file, pBroker, options, g2_rebar_type, std::nullopt, min_cover, min_cover, min_cover);
-            Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, g2_rebar_type, "G2", pRebar);
-            Create_usBrPset_ACIReinforcingBar(file, g2_rebar_type,"BEAM","STIRRUP","CENTER");
+            AddPropertySet(file,g2_rebar_type,Create_usBrPset_ReinforcingCover(file, pBroker, options, std::nullopt, min_cover, min_cover, min_cover));
+            AddPropertySet(file,g2_rebar_type,Create_usBrPset_ACIReinforcingBarType(file, pBroker, options, "G2", pRebar));
+            AddPropertySet(file,g2_rebar_type,Create_usBrPset_ACIReinforcingBar(file, "BEAM","STIRRUP","CENTER"));
 
             if (!bSkew)
             {
@@ -1045,7 +1067,7 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
                Float64 H = H1;
                Float64 O = dx + db;
                Float64 B = M_PI * dx + 2 * (dl + du); // total centerline length of bar
-               Create_usBrPset_ACIBarShape(file, pBroker, options, g2_rebar_type, "S11", 0.0, { { "DimensionB", B}, {"DimensionH", H}, {"DimensionO", O} });
+               AddPropertySet(file,g2_rebar_type,Create_usBrPset_ACIBarShape(file, pBroker, options, "S11", gs_InsideBendRadius, { { "DimensionB", B}, {"DimensionH", H}, {"DimensionO", O} }));
             }
          }
       }
@@ -1116,8 +1138,10 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
          {
             Classify_usBridge_ReinforcingBar<Schema>(file, g2_rebar);
 
-            Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g2_rebar);
-            Create_usBrPset_Reinforcing(file, g2_rebar);
+            AddQto(file,g2_rebar,Create_Qto_ReinforcingElementBaseQuantities<Schema>(file));
+            AddPropertySet(file, g2_rebar, Create_usBrPset_Common(file));
+            AddPropertySet(file, g2_rebar, Create_usBrPset_PayItemQuantities(file));
+            AddPropertySet(file,g2_rebar,Create_usBrPset_Reinforcing(file));
 
             if (bSkew)
             {
@@ -1130,7 +1154,7 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
                Float64 H = H1;
                Float64 O = scaleY * (dx + db);
                Float64 B = M_PI * scaleY * dx + 2 * (dl + du); // total centerline length of bar
-               Create_usBrPset_ACIBarShape(file, pBroker, options, g2_rebar, "S11", 0.0, { { "DimensionB", B}, {"DimensionH", H}, {"DimensionO", O} });
+               AddPropertySet(file,g2_rebar,Create_usBrPset_ACIBarShape(file, pBroker, options, "S11", gs_InsideBendRadius, { { "DimensionB", B}, {"DimensionH", H}, {"DimensionO", O} }));
             }
          }
 
@@ -1149,8 +1173,8 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
             boost::none, // nominal diameter: depreciated
             boost::none, // cross section area: depreciated
             boost::none, // bar length: depreciated
-            boost::none, // predefined type: depreciated
-            boost::none  // predefined type: depreciated
+            Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, // predefined type: There really isn't a good predefined type for the G3 bars. This is the main reinforcement to resist transverse bending moment in the top flange
+            boost::none  // bar surface: depreciated
          );
          file.addEntity(g3_rebar);
          file.addRelatedObject<typename Schema::IfcRelDefinesByType>(g3_rebar_type, g3_rebar);
@@ -1161,10 +1185,12 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
          {
             Classify_usBridge_ReinforcingBar<Schema>(file, g3_rebar);
 
-            Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g3_rebar);
-            Create_usBrPset_Reinforcing(file, g3_rebar);
+            AddQto(file,g3_rebar,Create_Qto_ReinforcingElementBaseQuantities<Schema>(file));
+            AddPropertySet(file, g3_rebar, Create_usBrPset_Common(file));
+            AddPropertySet(file, g3_rebar, Create_usBrPset_PayItemQuantities(file));
+            AddPropertySet(file,g3_rebar,Create_usBrPset_Reinforcing(file));
             if (bSkew)
-               Create_usBrPset_ACIBarShape(file, pBroker, options, g3_rebar, "STRAIGHT", 0.0, { { "DimensionB", scaleY*g3_bar_length} });
+               AddPropertySet(file,g3_rebar,Create_usBrPset_ACIBarShape(file, pBroker, options, "STRAIGHT", gs_InsideBendRadius, { { "DimensionB", scaleY*g3_bar_length} }));
          }
 
          typename Schema::IfcRepresentation::list::ptr g9_shape_representation_list(new Schema::IfcRepresentation::list);
@@ -1193,8 +1219,10 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
          {
             Classify_usBridge_ReinforcingBar<Schema>(file, g9_rebar);
 
-            Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g9_rebar);
-            Create_usBrPset_Reinforcing(file, g9_rebar);
+            AddQto(file,g9_rebar,Create_Qto_ReinforcingElementBaseQuantities<Schema>(file));
+            AddPropertySet(file, g9_rebar, Create_usBrPset_Common(file));
+            AddPropertySet(file, g9_rebar, Create_usBrPset_PayItemQuantities(file));
+            AddPropertySet(file,g9_rebar,Create_usBrPset_Reinforcing(file));
 
             if (bSkew)
             {
@@ -1207,7 +1235,7 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
 
                double min_bend_radius = getMinBendRadius(pRebar, true);
 
-               Create_usBrPset_ACIBarShape(file, pBroker, options, g9_rebar, "14", min_bend_radius, { { "DimensionA", A}, {"DimensionB", B}, {"DimensionD", D}, {"DimensionE", E}, {"DimensionH", H}, {"DimensionO", O} });
+               AddPropertySet(file,g9_rebar,Create_usBrPset_ACIBarShape(file, pBroker, options, "14", min_bend_radius, { { "DimensionA", A}, {"DimensionB", B}, {"DimensionD", D}, {"DimensionE", E}, {"DimensionH", H}, {"DimensionO", O} }));
             }
          }
 
@@ -1238,8 +1266,10 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
          {
             Classify_usBridge_ReinforcingBar<Schema>(file, g10_rebar);
 
-            Create_Qto_ReinforcingElementBaseQuantities<Schema>(file, g10_rebar);
-            Create_usBrPset_Reinforcing(file, g10_rebar);
+            AddQto(file,g10_rebar,Create_Qto_ReinforcingElementBaseQuantities<Schema>(file));
+            AddPropertySet(file, g10_rebar, Create_usBrPset_Common(file));
+            AddPropertySet(file, g10_rebar, Create_usBrPset_PayItemQuantities(file));
+            AddPropertySet(file,g10_rebar,Create_usBrPset_Reinforcing(file));
 
             if (bSkew)
             {
@@ -1257,7 +1287,7 @@ void CreateStirrups(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF:
                Float64 D = B;
                Float64 C = scaleY * (2 * d + db);
                double min_bend_radius = getMinBendRadius(pRebar, true);
-               Create_usBrPset_ACIBarShape(file, pBroker, options, g10_rebar, "17", min_bend_radius, { { "DimensionB", B}, {"DimensionC", C}, {"DimensionD", D} });
+               AddPropertySet(file,g10_rebar,Create_usBrPset_ACIBarShape(file, pBroker, options, "17", min_bend_radius, { { "DimensionB", B}, {"DimensionC", C}, {"DimensionD", D} }));
             }
          }
       } // next bar
@@ -1684,7 +1714,7 @@ void CreatePrecastSegmentMaterials(IfcHierarchyHelper<Schema>& file, std::shared
    Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
    Float64 max_agg_size = pMaterials->GetSegmentMaxAggrSize(segmentKey);
 
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, fc, max_agg_size, "Precast Concrete", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Precast Concrete", SEGMENT_BORDER_COLOR);
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for each segment but we still need the list
@@ -1728,16 +1758,16 @@ void CreatePrecastSegmentReinforcing(IfcHierarchyHelper<Schema>& file, std::shar
       Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_REINFORCEMENT_UNIT // PredefinedType
    );
 
+   // aggregate the rebar assembly with its beam
+   file.addRelatedObject<typename Schema::IfcRelAggregates>(beam, rebar_assembly);
+
    if (options.classify)
    {
       Classify_usBridge_ReinforcementCage<Schema>(file, rebar_assembly);
 
-      Create_usBrPset_Common<Schema>(file, rebar_assembly);
-      Create_usBrPset_PayItemQuantities<Schema>(file, rebar_assembly);
+      AddPropertySet(file,rebar_assembly,Create_usBrPset_Common<Schema>(file));
+      AddPropertySet(file,rebar_assembly,Create_usBrPset_PayItemQuantities<Schema>(file));
    }
-
-   // aggregate the rebar assembly with its beam
-   file.addRelatedObject<typename Schema::IfcRelAggregates>(beam, rebar_assembly);
 
    CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_assembly);
    CreateStirrupRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_assembly);
@@ -2056,7 +2086,28 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    if (options.classify)
    {
       Classify_usBridge_Slab(file, slab);
+
+      AddPropertySet(file,slab,Create_Pset_ConcreteElementGeneral<Schema>(file,pBroker,"SITE","INSITU",std::nullopt));
+      AddPropertySet(file,slab,Create_usBrPset_Common<Schema>(file));
+      AddPropertySet(file,slab,Create_usBrPset_PayItemQuantities<Schema>(file));
+      AddPropertySet(file,slab,Create_usBrPset_SlabCommon<Schema>(file,pBroker,options));
+      AddPropertySet(file,slab,Create_usBrPset_RoadwaySlab<Schema>(file,pBroker,options));
+      AddQto(file,slab,Create_Qto_SlabBaseQuantatities<Schema>(file));
    }
+
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   auto fc = pMaterials->GetDeckFc28();
+   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Slab Concrete", SEGMENT_BORDER_COLOR);
+
+   // need a list of entities that are associated with this material
+   // right now we are creating a unique material for the deck slab
+   typename Schema::IfcDefinitionSelect::list::ptr slabs(new typename Schema::IfcDefinitionSelect::list);
+   slabs->push(slab);
+
+   // associate the material with the slab
+   auto rel_associates_materials = new typename Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, slabs, material);
+   file.addEntity(rel_associates_materials);
 
    // these are PGSuper specific properties.
    //GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
@@ -2285,8 +2336,8 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
          else
             Classify_usBridge_Pier<Schema>(file, pier);
 
-         Create_usBrPset_Common<Schema>(file, pier);
-         Create_usBrPset_SubstructureCommon<Schema>(file,pBroker,options,pier,pierIdx);
+         AddPropertySet(file,pier,Create_usBrPset_Common<Schema>(file));
+         AddPropertySet(file,pier,Create_usBrPset_SubstructureCommon<Schema>(file,pBroker,options,pierIdx));
       }
 
       std::ostringstream os;
@@ -2300,7 +2351,7 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
       {
          Classify_usBridge_Foundation<Schema>(file, foundation);
 
-         Create_usBrPset_Common<Schema>(file, foundation);
+         AddPropertySet(file,foundation,Create_usBrPset_Common<Schema>(file));
       }
 
       typename Schema::IfcObjectDefinition::list::ptr list_of_foundations(new typename Schema::IfcObjectDefinition::list);
@@ -2431,25 +2482,26 @@ typename Schema::IfcBeam* CreatePrecastSegment(IfcHierarchyHelper<Schema>& file,
 
    if (options.include_quantities)
    {
-      Create_Qto_BeamBaseQuantities(file, pBroker, options, segmentKey, beam);
+      AddQto(file,beam,Create_Qto_BeamBaseQuantities(file, pBroker, options, segmentKey));
    }
 
    if (options.classify)
    {
       Classify_usBridge_PrecastGirderElement(file, beam);
 
-      Create_Pset_BeamCommon(file, pBroker, options, segmentKey, beam); 
+      AddPropertySet(file,beam,Create_Pset_BeamCommon(file, pBroker, options, segmentKey));
 
       // this propery is attached to the IfcBeamType, but the StrengthClass property is beam specific
       // so add an override property here
       GET_IFACE2(pBroker, IMaterials, pMaterials);
       Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
-      Create_Pset_ConcreteElementGeneral(file, pBroker, std::nullopt, std::nullopt, fc, beam); 
+      
+      AddPropertySet(file,beam,Create_Pset_ConcreteElementGeneral(file, pBroker, std::nullopt, std::nullopt, fc));
+      AddPropertySet(file,beam,Create_Pset_PrecastConcreteElementGeneral<Schema>(file, pBroker, options, segmentKey));
 
-      Create_Pset_PrecastConcreteElementGeneral<Schema>(file, pBroker, options, segmentKey, beam);
-      Create_usBrPset_Common(file, beam);
-      Create_usBrPset_PayItemQuantities(file, beam);
-      Create_usBrPset_PrecastConcreteBeam<Schema>(file, pBroker, options, segmentKey, beam);
+      AddPropertySet(file,beam,Create_usBrPset_Common(file));
+      AddPropertySet(file,beam,Create_usBrPset_PayItemQuantities(file));
+      AddPropertySet(file,beam,Create_usBrPset_PrecastConcreteBeam<Schema>(file, pBroker, options, segmentKey));
    }
 
    return beam;
@@ -2466,7 +2518,7 @@ void CreateGirder(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    auto beam_type_name = pIBridgeDesc->GetGirder(options.girderKey)->GetGirderName();
 
    typename Schema::IfcPropertySetDefinition::list::ptr property_sets(new typename Schema::IfcPropertySetDefinition::list);
-   property_sets->push(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt, nullptr));
+   property_sets->push(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt));
 
    typename Schema::IfcObjectDefinition::list::ptr beam_object_definitions(new typename Schema::IfcObjectDefinition::list);
    auto beam_type = new typename Schema::IfcBeamType(
@@ -2559,8 +2611,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    {
       Classify_usBridge_Superstructure<Schema>(file, superstructure);
 
-      Create_usBrPset_Common(file, superstructure);
-      Create_usBrPset_BridgePartCommon(file, superstructure);
+      AddPropertySet(file,superstructure,Create_usBrPset_Common(file));
+      AddPropertySet(file,superstructure,Create_usBrPset_BridgePartCommon(file));
    }
 
    auto substructure = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Substructure"), boost::none, boost::none, nullptr, nullptr, boost::none,
@@ -2573,9 +2625,9 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    {
       Classify_usBridge_Substructure<Schema>(file, substructure);
 
-      Create_usBrPset_Common(file, substructure);
-      Create_usBrPset_BridgePartCommon(file, substructure);
-      Create_usBrPset_SubstructureCommon<Schema>(file, pBroker, options, substructure); // seems like this should be used here... substructure is a huge spatial container
+      AddPropertySet(file,substructure,Create_usBrPset_Common(file));
+      AddPropertySet(file,substructure,Create_usBrPset_BridgePartCommon(file));
+      AddPropertySet(file,substructure,Create_usBrPset_SubstructureCommon<Schema>(file, pBroker, options)); // seems like this should be used here... substructure is a huge spatial container
    }
 
    auto deck = new typename Schema::IfcBridgePart(IfcParse::IfcGlobalId(), nullptr, std::string("Deck"), boost::none, boost::none, nullptr, nullptr, boost::none,
@@ -2588,8 +2640,8 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    {
       Classify_usBridge_Deck<Schema>(file, deck);
 
-      Create_usBrPset_Common(file, deck);
-      Create_usBrPset_BridgePartCommon(file, deck);
+      AddPropertySet(file,deck,Create_usBrPset_Common(file));
+      AddPropertySet(file,deck,Create_usBrPset_BridgePartCommon(file));
    }
 
    file.addRelatedObject<typename Schema::IfcRelAggregates>(superstructure, deck);
@@ -2636,13 +2688,38 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    file.addEntity(right_barrier);
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, right_barrier);
 
-   std::vector<typename Schema::IfcProduct*> barriers{ left_barrier,right_barrier };
+   typename Schema::IfcObjectDefinition::list::ptr barriers(new typename Schema::IfcObjectDefinition::list);
+   barriers->push(left_barrier);
+   barriers->push(right_barrier);
    if (options.classify)
    {
       Classify_usBridge_Barrier(file, left_barrier);
       Classify_usBridge_Barrier(file, right_barrier);
-      Create_usBrPset_MASH(file, barriers);
+
+      AddPropertySet(file,barriers,Create_usBrPset_MASH(file));
+      
+      AddPropertySet(file,barriers,Create_Pset_ConcreteElementGeneral(file, pBroker, std::nullopt, std::nullopt, std::nullopt));
+      AddPropertySet(file,barriers,Create_usBrPset_Common(file));
+
+      AddPropertySet(file,barriers,Create_usBrPset_PayItemQuantities(file));
    }
+
+   // PGSuper assumes barriers are same material as deck
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   auto fc = pMaterials->GetDeckFc28();
+   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Barrier", SEGMENT_BORDER_COLOR);
+
+   // need a list of entities that are associated with this material
+   // right now we are creating a unique material for the deck slab
+   typename Schema::IfcDefinitionSelect::list::ptr barrier_list(new typename Schema::IfcDefinitionSelect::list);
+   barrier_list->push(left_barrier);
+   barrier_list->push(right_barrier);
+
+   // associate the material with the slab
+   auto rel_associates_materials = new typename Schema::IfcRelAssociatesMaterial(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, barrier_list, material);
+   file.addEntity(rel_associates_materials);
+
 
    //if (options.include_work_plan)
    //{
@@ -2658,7 +2735,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    // define the common properties of the precast girder type
    // specifically, precast concrete is defined by Pset_ConcreteElementGeneral with AssemblyPlace=FACTORY, CastingMethod=PRECAST
    typename Schema::IfcPropertySetDefinition::list::ptr property_sets(new typename Schema::IfcPropertySetDefinition::list);
-   property_sets->push(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt, nullptr));
+   property_sets->push(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt));
 
    GET_IFACE2(pBroker, IDocumentType, pDocType);
    bool bIsPGSplice = pDocType->IsPGSpliceDocument();
@@ -2816,7 +2893,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
                   related_segments->push(closure_joint);
 
                   // Pset_ConcreteElementGeneral
-                  auto pset_concrete_element_general = Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", std::nullopt, nullptr);
+                  auto pset_concrete_element_general = Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", std::nullopt);
                   file.addEntity(new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_segments, pset_concrete_element_general));
 
                   file.addEntity(closure_joint);
@@ -2850,14 +2927,14 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    {
       Classify_usBridge_GirderBridge<Schema>(file, bridge);
 
-      Create_usBrPset_Common(file, bridge);
-      Create_usBrPset_BridgeGeometry<Schema>(file, pBroker, options, bridge);
-      Create_usBrPset_BridgeIdentification<Schema>(file, pBroker, bridge);
-      Create_usBrPset_DesignLoading<Schema>(file, pBroker, bridge);
-      Create_usBrPset_FeatureIdentification<Schema>(file, pBroker, bridge);
+      AddPropertySet(file,bridge,Create_usBrPset_Common(file));
+      AddPropertySet(file,bridge,Create_usBrPset_BridgeGeometry<Schema>(file, pBroker, options));
+      AddPropertySet(file,bridge,Create_usBrPset_BridgeIdentification<Schema>(file, pBroker));
+      AddPropertySet(file,bridge,Create_usBrPset_DesignLoading<Schema>(file, pBroker));
+      AddPropertySet(file,bridge,Create_usBrPset_FeatureIdentification<Schema>(file, pBroker));
       Create_usBrPset_HydraulicData<Schema>(file, pBroker, bridge);
       Create_usBrPset_NavigableWaterway<Schema>(file, pBroker, bridge);
-      Create_usBrPset_PayItemQuantities<Schema>(file, pBroker, bridge);
+      AddPropertySet(file, bridge, Create_usBrPset_PayItemQuantities<Schema>(file));
       Create_usBrPset_Railroad<Schema>(file, pBroker, bridge);
       Create_usBrPset_Roadway<Schema>(file, pBroker, bridge);
    }
@@ -2970,6 +3047,11 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
     organization->setRoles(roles);
 
     owner_history->OwningApplication()->setApplicationDeveloper(organization);
+
+    // IfcPerson, also assign IfcActorRole
+    auto person = file.getSingle<typename Schema::IfcPerson>();
+    person->setRoles(roles);
+    file.addEntity(person);
  }
 
 template <typename Schema>
@@ -2983,16 +3065,18 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
 
    IfcHierarchyHelper<Schema> file;
    InitializeFile<Schema>(file, pBroker, strFilePath); // creates project and site
-   Create_Pset_ProjectCommon<Schema>(file);
+
+   auto project = file.getSingle<typename Schema::IfcProject>();
+   AddPropertySet(file,project,Create_Pset_ProjectCommon<Schema>(file));
+
    if (options.classify)
    {
-      auto project = file.getSingle<typename Schema::IfcProject>();
       auto site = file.getSingle<typename Schema::IfcSite>();
       Classify_usBridge_BridgeProject<Schema>(file, project);
       Classify_usBridge_BridgeSite<Schema>(file, site);
       
-      Create_usBrPset_ProjectCommon<Schema>(file);
-      Create_usBrPset_ProjectLocation<Schema>(file);
+      AddPropertySet(file,project,Create_usBrPset_ProjectCommon<Schema>(file));
+      AddPropertySet(file,project,Create_usBrPset_ProjectLocation<Schema>(file));
    }
 
    if (options.model_elements == CIfcExportOptions::ModelElements::GirderOnly)
