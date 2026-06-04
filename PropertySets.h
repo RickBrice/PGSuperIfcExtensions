@@ -329,11 +329,11 @@ typename Schema::IfcPropertySet* Create_Pset_PrecastConcreteElementGeneral(IfcHi
    list_of_properties->push(new typename Schema::IfcPropertyReferenceValue(std::string("SupportDuringTransportDocReference"), 
       boost::none, boost::none, 
       new typename Schema::IfcDocumentReference(
-         std::string("https://www.pci.org/ItemDetail?iProductCode=CB-02-26H&Category=TRANSPORT&WebsiteKey=5a7b2064-98c2-4c8e-9b4b-18c80973da1e"),
-         boost::none,
-         boost::none,
-         std::string("Recommended Practice for Lateral Stabiilty of Precast, Prestressed Concrete Bridge Girders, 2nd Edition (CB-02-26H)"),
-         nullptr)));
+         std::string("https://www.pci.org/ItemDetail?iProductCode=CB-02-26H&Category=TRANSPORT&WebsiteKey=5a7b2064-98c2-4c8e-9b4b-18c80973da1e"), // Location
+         boost::none, // Identification
+         std::string("Recommended Practice for Lateral Stabiilty of Precast, Prestressed Concrete Bridge Girders, 2nd Edition (CB-02-26H)"), // Name
+         boost::none, // Description
+         nullptr))); // Referenced Document
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("HollowCorePlugging"), boost::none, nullptr, nullptr));
    
    if(options.include_camber)
@@ -388,15 +388,15 @@ typename Schema::IfcPropertySet* Create_usBrPset_ProjectLocation(IfcHierarchyHel
    typename aggregate_of<typename Schema::IfcProperty>::ptr list_of_properties(new aggregate_of<typename Schema::IfcProperty>());
 #pragma Reminder("WORKING HERE - need to update the URLs - bSDD is down right now")
    // County and State are required properties.
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("City"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ApprovalStatus"), nullptr, nullptr));
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("County"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/FileNumber"), nullptr, nullptr));
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("District"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/LettingDate"), nullptr, nullptr));
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("State"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ModelPreparationDate"), nullptr, nullptr));
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Section"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ModelVersion"), nullptr, nullptr));
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Township"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ProjectDirectory"), nullptr, nullptr));
-   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Range"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/ProjectIdentification"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("City"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/City"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("County"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/County"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("District"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/District"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("State"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/State"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Section"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/Section"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Township"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/Township"), nullptr, nullptr));
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Range"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/prop/Range"), nullptr, nullptr));
 
-   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ProjectLocation"), boost::none, list_of_properties);
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("usBrPset_ProjectLocation"), std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBrPset_ProjectLocation"), list_of_properties);
    file.addEntity(property_set);
 
    return property_set;
