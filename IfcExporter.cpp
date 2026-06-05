@@ -361,19 +361,40 @@ void CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::
    // place strands relative to the segment origin
    typename Schema::IfcLocalPlacement* strand_placement = nullptr;
 
+   auto tendon_assembly_type = new Ifc4x3_add2::IfcElementAssemblyType(
+      IfcParse::IfcGlobalId(),
+      nullptr,
+      std::string("Tendon Bundle"), /*Name*/
+      boost::none, /*Description*/
+      boost::none, /*ApplicableOccurrence*/
+      boost::none, /*HasPropertySets*/
+      boost::none, /*RepresentationMaps*/
+      boost::none, /*Tag*/
+      std::string("TENDON_BUNDLE"), /*ElementType*/
+      Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED /*PredefinedType*/);
+   file.addEntity(tendon_assembly_type);
+
+   if (options.classify)
+   {
+      AddPropertySet(file, tendon_assembly_type, Create_usBrPset_Common(file));
+      AddPropertySet(file, tendon_assembly_type, Create_usBrPset_PayItemQuantities(file));
+   }
+
    auto tendon_assembly = new typename Schema::IfcElementAssembly(
       IfcParse::IfcGlobalId(),
       nullptr, // OwnerHistory
       std::string("Strands"), // Name
       boost::none, // Description
-      std::string("TENDON_BUNDLE"), // ObjectType
+      boost::none, // ObjectType
       file.addLocalPlacement(beam->ObjectPlacement()), // ObjectPlacement, place tendon assembly relative to the beam
       nullptr, // Representation
       boost::none, // Tag
       Schema::IfcAssemblyPlaceEnum::IfcAssemblyPlace_FACTORY, // AssemblyPlace
-      Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED // PredefinedType
+      boost::none // PredefinedType
    );
    file.addEntity(tendon_assembly);
+
+   file.addRelatedObject<typename Schema::IfcRelDefinesByType>(tendon_assembly_type, tendon_assembly); // relate the tendon assembly to its type
 
    // aggregate the tendon assembly with its beam
    file.addRelatedObject<typename Schema::IfcRelAggregates>(beam, tendon_assembly);
@@ -2083,22 +2104,23 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Schema::IfcSlabTypeEnum::IfcSlabType_FLOOR); // see Ifc 4x3 6.1.2.19.2 (FLOOR represents a bridge deck), name is option but AASHTO IDS requires it
    file.addEntity(slab);
 
+
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   auto fc = pMaterials->GetDeckFc28();
+   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Slab Concrete", SEGMENT_BORDER_COLOR);
+
    if (options.classify)
    {
       Classify_usBridge_Slab(file, slab);
 
-      AddPropertySet(file,slab,Create_Pset_ConcreteElementGeneral<Schema>(file,pBroker,"SITE","INSITU",std::nullopt));
+      AddPropertySet(file,slab,Create_Pset_ConcreteElementGeneral<Schema>(file,pBroker,"SITE","INSITU",fc));
       AddPropertySet(file,slab,Create_usBrPset_Common<Schema>(file));
       AddPropertySet(file,slab,Create_usBrPset_PayItemQuantities<Schema>(file));
       AddPropertySet(file,slab,Create_usBrPset_SlabCommon<Schema>(file,pBroker,options));
       AddPropertySet(file,slab,Create_usBrPset_RoadwaySlab<Schema>(file,pBroker,options));
       AddQto(file,slab,Create_Qto_SlabBaseQuantatities<Schema>(file));
    }
-
-   GET_IFACE2(pBroker, IMaterials, pMaterials);
-   auto fc = pMaterials->GetDeckFc28();
-   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Slab Concrete", SEGMENT_BORDER_COLOR);
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for the deck slab
@@ -2691,6 +2713,13 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    typename Schema::IfcObjectDefinition::list::ptr barriers(new typename Schema::IfcObjectDefinition::list);
    barriers->push(left_barrier);
    barriers->push(right_barrier);
+
+   // PGSuper assumes barriers are same material as deck
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   auto fc = pMaterials->GetDeckFc28();
+   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Barrier", SEGMENT_BORDER_COLOR);
+
    if (options.classify)
    {
       Classify_usBridge_Barrier(file, left_barrier);
@@ -2698,17 +2727,12 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
       AddPropertySet(file,barriers,Create_usBrPset_MASH(file));
       
-      AddPropertySet(file,barriers,Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", std::nullopt));
+      AddPropertySet(file,barriers,Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", fc));
       AddPropertySet(file,barriers,Create_usBrPset_Common(file));
 
       AddPropertySet(file,barriers,Create_usBrPset_PayItemQuantities(file));
    }
 
-   // PGSuper assumes barriers are same material as deck
-   GET_IFACE2(pBroker, IMaterials, pMaterials);
-   auto fc = pMaterials->GetDeckFc28();
-   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Barrier", SEGMENT_BORDER_COLOR);
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for the deck slab
