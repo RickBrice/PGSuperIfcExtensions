@@ -324,16 +324,26 @@ typename Schema::IfcPropertySet* Create_Pset_PrecastConcreteElementGeneral(IfcHi
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("InitialTension"), boost::none, new typename Schema::IfcPressureMeasure(fpj), stress_unit));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TendonRelaxation"), boost::none, nullptr, nullptr));
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("TransportationStrength"), boost::none, new typename Schema::IfcPressureMeasure(fc), stress_unit));
+   
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SupportDuringTransportDescription"), 
       boost::none, new typename Schema::IfcText("Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property"), nullptr));
+   
+   // this is the proper way to define this property, excpt that IfcPropertyReferenceValue isn't part of the AbV.
    list_of_properties->push(new typename Schema::IfcPropertyReferenceValue(std::string("SupportDuringTransportDocReference"), 
       boost::none, boost::none, 
       new typename Schema::IfcDocumentReference(
          std::string("https://www.pci.org/ItemDetail?iProductCode=CB-02-26H&Category=TRANSPORT&WebsiteKey=5a7b2064-98c2-4c8e-9b4b-18c80973da1e"), // Location
          boost::none, // Identification
-         std::string("Recommended Practice for Lateral Stabiilty of Precast, Prestressed Concrete Bridge Girders, 2nd Edition (CB-02-26H)"), // Name
+         std::string("Recommended Practice for Lateral Stability of Precast, Prestressed Concrete Bridge Girders, 2nd Edition (CB-02-26H)"), // Name
          boost::none, // Description
          nullptr))); // Referenced Document
+
+   // this is how the usBridge DD says to define this property, but it isn't valid IFC and results in validation service errors
+   //list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("SupportDuringTransportDocReference"),
+   //   boost::none, new typename Schema::IfcText(
+   //      std::string("Recommended Practice for Lateral Stability of Precast, Prestressed Concrete Bridge Girders, 2nd Edition (CB-02-26H)")),
+   //      nullptr));
+
    list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("HollowCorePlugging"), boost::none, nullptr, nullptr));
    
    if(options.include_camber)
