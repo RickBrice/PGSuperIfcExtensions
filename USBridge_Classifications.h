@@ -215,6 +215,12 @@ void Classify_usBridge_Tendon(IfcHierarchyHelper<Schema>& file, typename Schema:
 }
 
 template <typename Schema>
+void Classify_usBridge_TendonBundle(IfcHierarchyHelper<Schema>& file, typename Schema::IfcElementAssembly* tendon_bundle)
+{
+   Classify_ObjectDefinition(file, tendon_bundle, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_TendonBundle"), std::string("usBridge_TendonBundle"), std::string("TendonBundle"));
+}
+
+template <typename Schema>
 void Classify_usBridge_ReinforcementCage(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* rebar_assembly)
 {
    Classify_ObjectDefinition(file, rebar_assembly, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_ReinforcementCage"), std::string("usBridge_ReinforcementCage"), std::string("ReinforcementCage"));

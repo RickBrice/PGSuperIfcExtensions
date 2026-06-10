@@ -89,7 +89,7 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
 
    if(options.classify)
    {
-      Create_usBrPset_ACITendonMaterial(file, pBroker, options, strand_material, pStrand);
+      Create_usBrPset_ACI_TendonMaterial(file, pBroker, options, strand_material, pStrand);
    }
 
    if (!options.classify)
@@ -140,7 +140,7 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
 
    // Pset_MaterialSteel
    Create_Pset_MaterialSteel_ReinforcingBar(file, pBroker, options, rebar_material, pRebar);
-   Create_usBrPset_ACIReinforcingMaterial(file, pBroker, options, rebar_material, pRebar);
+   Create_usBrPset_ACI_ReinforcingMaterial(file, pBroker, options, rebar_material, pRebar);
 
 
    if (!options.classify)
