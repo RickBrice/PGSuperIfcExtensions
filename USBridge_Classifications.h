@@ -29,6 +29,7 @@
 #include "Units.h"
 #include "IfcExporter.h"
 #include "Properties.h"
+#include "bSDD.h"
 
 template <typename Schema>
 void Add_usBridge_Classification(IfcHierarchyHelper<Schema>& file)
@@ -40,7 +41,7 @@ void Add_usBridge_Classification(IfcHierarchyHelper<Schema>& file)
       std::string("2026-04-20") /*EditionDate*/,
       std::string("usBridge"),
       boost::none /*Description*/,
-      std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1") /*Specification*/,
+      BSDD_URI /*Specification*/,
       boost::none /*ReferenceTokens*/);
    file.addEntity(classification);
 
@@ -115,12 +116,14 @@ void AssociateClassification(IfcHierarchyHelper<Schema>& file, typename Schema::
 }
 
 template <typename Schema>
-void Classify_ObjectDefinition(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* object, const std::string& uri, const std::string& code, const std::string& name)
+void Classify_ObjectDefinition(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* object, const std::string& name)
 {
    auto classification = file.getSingle<typename Schema::IfcClassification>();
 
+   std::string code("usBridge_");
+   code += name;
    auto classification_reference = new typename Schema::IfcClassificationReference(
-      uri, /*Class identifier (uri) = Location*/
+      BSDD_URI + code, /*Class identifier (uri) = Location*/
       code, /*Class code = Identification*/
       name,/*Class name = name*/
       classification,
@@ -133,103 +136,103 @@ void Classify_ObjectDefinition(IfcHierarchyHelper<Schema>& file, typename Schema
 template <typename Schema>
 void Classify_usBridge_BridgeProject(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProject* project)
 {
-   Classify_ObjectDefinition(file, project, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_BridgeProject"), std::string("usBridge_BridgeProject"), std::string("BridgeProject"));
+   Classify_ObjectDefinition(file, project, std::string("BridgeProject"));
 }
 
 template <typename Schema>
 void Classify_usBridge_BridgeSite(IfcHierarchyHelper<Schema>& file, typename Schema::IfcSite* site)
 {
-   Classify_ObjectDefinition<Schema>(file, site, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_BridgeSite"), std::string("usBridge_BridgeSite"), std::string("BridgeSite"));
+   Classify_ObjectDefinition<Schema>(file, site, std::string("BridgeSite"));
 }
 
 template <typename Schema>
 void Classify_usBridge_GirderBridge(IfcHierarchyHelper<Schema>& file, typename Schema::IfcBridge* bridge)
 {
-   Classify_ObjectDefinition<Schema>(file, bridge, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_GirderBridge"), std::string("usBridge_GirderBridge"), std::string("GirderBridge"));
+   Classify_ObjectDefinition<Schema>(file, bridge, std::string("GirderBridge"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Superstructure(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* superstructure)
 {
-   Classify_ObjectDefinition(file, superstructure, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_BridgeSuperstructure"), std::string("usBridge_BridgeSuperstructure"), std::string("BridgeSuperstructure"));
+   Classify_ObjectDefinition(file, superstructure, std::string("BridgeSuperstructure"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Substructure(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* substructure)
 {
-   Classify_ObjectDefinition(file, substructure, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_BridgeSubstructure"), std::string("usBridge_BridgeSubstructure"), std::string("BridgeSubstructure"));
+   Classify_ObjectDefinition(file, substructure, std::string("BridgeSubstructure"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Deck(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* deck)
 {
-   Classify_ObjectDefinition(file, deck, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Deck"), std::string("usBridge_Deck"), std::string("Deck"));
+   Classify_ObjectDefinition(file, deck, std::string("Deck"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Abutment(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* abutment)
 {
-   Classify_ObjectDefinition(file, abutment, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Abutment"), std::string("usBridge_Abutment"), std::string("Abutment"));
+   Classify_ObjectDefinition(file, abutment, std::string("Abutment"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Pier(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* pier)
 {
-   Classify_ObjectDefinition(file, pier, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Pier"), std::string("usBridge_Pier"), std::string("Pier"));
+   Classify_ObjectDefinition(file, pier, std::string("Pier"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Foundation(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* foundation)
 {
-   Classify_ObjectDefinition(file, foundation, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Foundation"), std::string("usBridge_Foundation"), std::string("Foundation"));
+   Classify_ObjectDefinition(file, foundation, std::string("Foundation"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Slab(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* slab)
 {
-   Classify_ObjectDefinition(file, slab, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_DeckSlab"), std::string("usBridge_DeckSlab"), std::string("DeckSlab"));
+   Classify_ObjectDefinition(file, slab, std::string("DeckSlab"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Barrier(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* barrier)
 {
-   Classify_ObjectDefinition(file, barrier, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Barrier"), std::string("usBridge_Barrier"), std::string("Barrier"));
+   Classify_ObjectDefinition(file, barrier, std::string("Barrier"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Girder(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* girder)
 {
-   Classify_ObjectDefinition(file, girder, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Girder"), std::string("usBridge_Girder"), std::string("Girder"));
+   Classify_ObjectDefinition(file, girder, std::string("Girder"));
 }
 
 template <typename Schema>
 void Classify_usBridge_PrecastGirderElement(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* girder)
 {
-   Classify_ObjectDefinition(file, girder, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_GirderPrecastConcrete"), std::string("usBridge_GirderPrecastConcrete"), std::string("GirderPrecastConcrete"));
+   Classify_ObjectDefinition(file, girder, std::string("GirderPrecastConcrete"));
 }
 
 template <typename Schema>
 void Classify_usBridge_Tendon(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTendon* tendon)
 {
-   Classify_ObjectDefinition(file, tendon, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_Tendon"), std::string("usBridge_Tendon"), std::string("Tendon"));
+   Classify_ObjectDefinition(file, tendon, std::string("Tendon"));
 }
 
 template <typename Schema>
 void Classify_usBridge_TendonBundle(IfcHierarchyHelper<Schema>& file, typename Schema::IfcElementAssembly* tendon_bundle)
 {
-   Classify_ObjectDefinition(file, tendon_bundle, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_TendonBundle"), std::string("usBridge_TendonBundle"), std::string("TendonBundle"));
+   Classify_ObjectDefinition(file, tendon_bundle, std::string("TendonBundle"));
 }
 
 template <typename Schema>
 void Classify_usBridge_ReinforcementCage(IfcHierarchyHelper<Schema>& file, typename Schema::IfcProduct* rebar_assembly)
 {
-   Classify_ObjectDefinition(file, rebar_assembly, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_ReinforcementCage"), std::string("usBridge_ReinforcementCage"), std::string("ReinforcementCage"));
+   Classify_ObjectDefinition(file, rebar_assembly, std::string("ReinforcementCage"));
 }
 
 template <typename Schema>
 void Classify_usBridge_ReinforcingBar(IfcHierarchyHelper<Schema>& file, typename Schema::IfcReinforcingBar* rebar)
 {
-   Classify_ObjectDefinition(file, rebar, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_ReinforcingBar"), std::string("usBridge_ReinforcingBar"), std::string("ReinforcingBar"));
+   Classify_ObjectDefinition(file, rebar, std::string("ReinforcingBar"));
 }
 
 template <typename Schema>
@@ -237,5 +240,5 @@ void Classify_usBridge_ReinforcingBarType(IfcHierarchyHelper<Schema>& file, type
 {
    // usBridge does not define a classification for IfcReinforcingBarType.
    // Classification it is unclear if classification association is inherited from the type to the instance.
-   //Classify_ObjectDefinition(file, rebar_type, std::string("https://identifier.buildingsmart.org/uri/aashto/usBridge/1/class/usBridge_ReinforcingBar"), std::string("usBridge_ReinforcingBar"), std::string("ReinforcingBar"));
+   //Classify_ObjectDefinition(file, rebar_type, std::string("usBridge_ReinforcingBarType"), std::string("ReinforcingBarType"));
 }
