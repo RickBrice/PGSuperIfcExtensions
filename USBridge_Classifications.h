@@ -123,7 +123,7 @@ void Classify_ObjectDefinition(IfcHierarchyHelper<Schema>& file, typename Schema
    std::string code("usBridge_");
    code += name;
    auto classification_reference = new typename Schema::IfcClassificationReference(
-      BSDD_URI + code, /*Class identifier (uri) = Location*/
+      BSDD_URI + std::string("class/") + code, /*Class identifier (uri) = Location*/
       code, /*Class code = Identification*/
       name,/*Class name = name*/
       classification,
