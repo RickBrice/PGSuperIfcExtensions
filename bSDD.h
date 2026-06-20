@@ -22,9 +22,7 @@
 #pragma once
 
 inline const std::string BSDD_URI = "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/"; 
-inline std::string BSDD_CLASS(const std::string& c) {
-   return BSDD_URI + std::string("class/") + c;
-}
+
 inline std::string BSDD_PROPERTY(const std::string& p) {
    return BSDD_URI + std::string("prop/") + p;
 }
