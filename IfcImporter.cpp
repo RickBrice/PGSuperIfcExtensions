@@ -249,7 +249,7 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
       p.copyfmt(std::cout);
       std::cout.rdbuf(p.rdbuf());
 
-      Logger::SetOutput(&std::cout, &std::cout);
+      Logger::Root().SetOutput(&std::cout, &std::cout);
 
       pFile = std::make_unique<IfcParse::IfcFile>(T2A(strFilePath.GetBuffer()));
 
