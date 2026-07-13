@@ -2432,14 +2432,15 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
       {
          auto bridge = file.getSingle<typename Schema::IfcBridge>();
          related_products->push(bridge);
-         strPositions = "Positions ends of bridge";
+         strPositions = pierIdx == 0 ? "Positions start of bridge" : "Positions end of bridge";
       }
 
       auto rel_positions = new typename Schema::IfcRelPositions(IfcParse::IfcGlobalId(), nullptr, strPositions, boost::none, referent, related_products);
       file.addEntity(rel_positions);
 
+      // the alignment positions the referent (otherwise we don't know which alignment the stationing applies to)
       auto alignment = file.getSingle<typename Schema::IfcAlignment>();
-      AddReferent(file, alignment, referent);
+      file.addRelatedObject<typename Schema::IfcRelPositions>(alignment, referent);
 
       // This code creates a custom property set for girder spacing. This is a PGSuper-specific property. 
       // Girder spacing can be determined from the model geometry, so we don't need to save it in a custom property set
