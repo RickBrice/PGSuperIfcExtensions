@@ -2403,44 +2403,22 @@ typename Schema::IfcObjectDefinition::list::ptr CreatePiers(IfcHierarchyHelper<S
       auto relative_placement = new typename Schema::IfcAxis2PlacementLinear(point_on_alignment, nullptr, nullptr);
       auto referent_placement = new typename Schema::IfcLinearPlacement(nullptr, relative_placement, nullptr);
 
-      // create referent
+      // create referent to semantically position the pier and foundation.
       std::ostringstream os2;
       os2 << "Station " << T2A(WBFL::COGO::Station(pierStation).AsString(station_format).c_str()) << " " << T2A(LABEL_PIER_EX(pBridge->IsAbutment(pierIdx), pierIdx));
-      auto referent = new typename Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, os2.str(), boost::none, boost::none, referent_placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_POSITION);
-      file.addEntity(referent);
-
-      // create and assign Pset_Stationing
-      typename Schema::IfcProperty::list::ptr pset_station_properties(new typename Schema::IfcProperty::list);
-      pset_station_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new typename Schema::IfcLengthMeasure(pierStation), nullptr));
-
-      auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
-      file.addEntity(property_set);
-
-      typename Schema::IfcObjectDefinition::list::ptr referents(new typename Schema::IfcObjectDefinition::list);
-      referents->push(referent);
-
-      auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates pier station properties to referent"), boost::none, referents, property_set);
-      file.addEntity(rel_defines_by_properties);
+      auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+      auto referent = CreatePositioningReferent<Schema>(file, alignment, os2.str(), pierStation, referent_placement);
 
       // IfcReferent <-> IfcRelPositions <-> IfcBridgePart::PIER,FOUNDATION
-      // Without providing geometry, this is how the pier and foundation are positions - referent informs on the position of the products it positions
-      std::string strPositions("Positions pier and foundation");
-      typename Schema::IfcProduct::list::ptr related_products(new typename Schema::IfcProduct::list);
-      related_products->push(pier);
-      related_products->push(foundation);
+      // Without providing geometry, this is how the pier and foundation are positioned - referent informs on the position of the products it positions
+      file.addRelatedObject<typename Schema::IfcRelPositions>(referent, pier);
+      file.addRelatedObject<typename Schema::IfcRelPositions>(referent, foundation);
+
       if (pierIdx == 0 || pierIdx == nPiers - 1)
       {
          auto bridge = file.getSingle<typename Schema::IfcBridge>();
-         related_products->push(bridge);
-         strPositions = pierIdx == 0 ? "Positions start of bridge" : "Positions end of bridge";
+         file.addRelatedObject<typename Schema::IfcRelPositions>(referent, bridge);
       }
-
-      auto rel_positions = new typename Schema::IfcRelPositions(IfcParse::IfcGlobalId(), nullptr, strPositions, boost::none, referent, related_products);
-      file.addEntity(rel_positions);
-
-      // the alignment positions the referent (otherwise we don't know which alignment the stationing applies to)
-      auto alignment = file.getSingle<typename Schema::IfcAlignment>();
-      file.addRelatedObject<typename Schema::IfcRelPositions>(alignment, referent);
 
       // This code creates a custom property set for girder spacing. This is a PGSuper-specific property. 
       // Girder spacing can be determined from the model geometry, so we don't need to save it in a custom property set
