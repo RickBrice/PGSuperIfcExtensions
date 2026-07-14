@@ -48,6 +48,35 @@ typename Schema::IfcRelNests* GetReferentNest(IfcHierarchyHelper<Schema>& file, 
    file.addEntity(rel_nests);
    return rel_nests;
 }
+
+// Creates a positioning referent for the given alignment. IfcAlignment <-> IfcRelPositions <-> IfcReferent
+// The alignment positions the referent (otherwise we don't know which alignment the stationing applies to)
+template <typename Schema>
+typename Schema::IfcReferent* CreatePositioningReferent(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment, std::string name, double station, typename Schema::IfcLinearPlacement* placement)
+{
+   auto referent = new typename Schema::IfcReferent(IfcParse::IfcGlobalId(), nullptr, name, boost::none, boost::none, placement, nullptr, Schema::IfcReferentTypeEnum::IfcReferentType_POSITION);
+   file.addEntity(referent);
+
+   // create and assign Pset_Stationing
+   typename Schema::IfcProperty::list::ptr pset_station_properties(new typename Schema::IfcProperty::list);
+   pset_station_properties->push(new typename Schema::IfcPropertySingleValue(std::string("Station"), boost::none, new typename Schema::IfcLengthMeasure(station), nullptr));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_Stationing"), boost::none, pset_station_properties);
+   file.addEntity(property_set);
+
+   typename Schema::IfcObjectDefinition::list::ptr referents(new typename Schema::IfcObjectDefinition::list);
+   referents->push(referent);
+
+   auto rel_defines_by_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, std::string("Relates pier station properties to referent"), boost::none, referents, property_set);
+   file.addEntity(rel_defines_by_properties);
+
+   // IfcAlignment <-> IfcRelPositions <-> IfcReferent
+   // the alignment positions the referent (otherwise we don't know which alignment the stationing applies to)
+   file.addRelatedObject<typename Schema::IfcRelPositions>(alignment, referent);
+
+   return referent;
+}
+
 //
 //template <typename Schema>
 //void AddPositioningReferent(IfcHierarchyHelper<Schema>& file, typename Schema::IfcAlignment* alignment, typename Schema::IfcReferent* referent,typename Schema::IfcProduct* product)
