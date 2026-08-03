@@ -693,17 +693,17 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    file.addEntity(axis_model_representation_subcontext);
 
    typename Schema::IfcAlignmentHorizontal* horizontal_alignment_layout = nullptr;
+   typename Schema::IfcRelNests* nests_horizontal_segments = nullptr;
    typename Schema::IfcAlignmentVertical* vertical_profile_layout = nullptr;
+   typename Schema::IfcRelNests* nests_vertical_segments = nullptr;
    typename Schema::IfcCompositeCurve* composite_curve = nullptr;
    typename Schema::IfcGradientCurve* gradient_curve = nullptr;
    typename Schema::IfcPolyline* polyline = nullptr;
 
    if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
-      typename Schema::IfcRelNests* nests_horizontal_segments;
       CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &nests_horizontal_segments, &composite_curve);
 
-      typename Schema::IfcRelNests* nests_vertical_segments;
       CreateVerticalProfile<Schema>(file, pBroker, composite_curve, options, &vertical_profile_layout, &nests_vertical_segments, &gradient_curve);
 
       // Need FootPrint representation for Horizontal+Vertical composite curve
@@ -814,6 +814,8 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
 
       auto nests_alignment_layouts = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nest horizontal and vertical alignment layouts with the alignment"), boost::none, alignment, alignment_layout_list);
       file.addEntity(nests_alignment_layouts);
+
+      UpdateKeyPointReferents<Schema>(file, pBroker, options, horizontal_alignment_layout, nests_horizontal_segments, vertical_profile_layout, nests_vertical_segments);
    }
 
    // IFC 4.1.4.1.1 "Every IfcAlignment must be related to IfcProject using the IfcRelAggregates relationship"
