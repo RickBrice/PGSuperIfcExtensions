@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -105,6 +105,30 @@ typename Schema::IfcReferent* CreatePositioningReferent(IfcHierarchyHelper<Schem
 //   //   });
 //   nest->setRelatedObjects(related_objects);
 //}
+
+// Assigns Pset_LinearReferencingMethod to the alignment, declaring that stationing (LRMName "station-point")
+// is measured in feet as an absolute distance along the alignment (LRMType PEnum_LRMType.LRM_ABSOLUTE).
+template <typename Schema>
+void DefineLinearReferencingMethod(IfcHierarchyHelper<Schema>& file)
+{
+   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+
+   typename Schema::IfcProperty::list::ptr list_of_properties(new typename Schema::IfcProperty::list);
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LRMName"), boost::none, new typename Schema::IfcLabel(std::string("station-point")), nullptr));
+
+   // PEnum_LRMType
+   std::vector<std::string> enum_values{ "LRM_ABSOLUTE","LRM_INTERPOLATIVE","LRM_RELATIVE","LRM_USERDEFINED" };
+   auto property_enum_values = createPropertyEnumeration<Schema>("PEnum_LRMType", enum_values); // creates an IfcPropertyEnumeration
+   auto lrm_type = createPropertyEnumeratedValue<Schema>("LRMType", property_enum_values, "LRM_ABSOLUTE"); // creates an IfcPropertyEnumeratedValue
+   list_of_properties->push(lrm_type);
+
+   list_of_properties->push(new typename Schema::IfcPropertySingleValue(std::string("LRMUnit"), boost::none, new typename Schema::IfcLabel(std::string("foot")), nullptr));
+
+   auto property_set = new typename Schema::IfcPropertySet(IfcParse::IfcGlobalId(), nullptr, std::string("Pset_LinearReferencingMethod"), boost::none, list_of_properties);
+   file.addEntity(property_set);
+
+   AddPropertySet(file, alignment, property_set);
+}
 
 template <typename Schema>
 void CreateAlignmentStartStationReferent(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
@@ -266,8 +290,8 @@ typename Schema::IfcReferent* CreateKeyPointReferent(IfcHierarchyHelper<Schema>&
 
 // Creates IfcReferent key-point markers for every segment transition in the horizontal alignment and
 // vertical profile (P.O.B., P.O.E., P.C., P.T., P.I., T.S., S.T., S.C., C.S., P.C.C. for horizontal;
-// B.V.C., E.V.C., P.V.I., V.C.C. for vertical) and nests them to the alignment's referent nest
-// (see GetReferentNest), alongside the start-of-alignment and pier referents.
+// B.V.C., E.V.C., P.V.I., V.C.C. for vertical) and nests them with two new IfcRelNests: the horizontal
+// key points to 'horizontal', and the vertical key points to 'vertical'.
 //
 // horizontal/nests_horizontal_segments and vertical/nests_vertical_segments are the layouts and
 // segment nests created by CreateHorizontalAlignment/CreateVerticalProfile. The last entry in each
@@ -285,7 +309,8 @@ void UpdateKeyPointReferents(IfcHierarchyHelper<Schema>& file, std::shared_ptr<W
 
    auto directrix = GetAlignmentDirectrix<Schema>(file, options);
 
-   typename Schema::IfcObjectDefinition::list::ptr new_referents(new typename Schema::IfcObjectDefinition::list);
+   typename Schema::IfcObjectDefinition::list::ptr new_horizontal_referents(new typename Schema::IfcObjectDefinition::list);
+   typename Schema::IfcObjectDefinition::list::ptr new_vertical_referents(new typename Schema::IfcObjectDefinition::list);
 
    // horizontal key points
    {
@@ -300,14 +325,14 @@ void UpdateKeyPointReferents(IfcHierarchyHelper<Schema>& file, std::shared_ptr<W
          auto dp = segment->DesignParameters()->as<typename Schema::IfcAlignmentHorizontalSegment>();
 
          auto label = GetHorizontalKeyPointLabel<Schema>(prev_segment, segment);
-         new_referents->push(CreateKeyPointReferent<Schema>(file, directrix, label, distance_along, startStation + distance_along, station_format));
+         new_horizontal_referents->push(CreateKeyPointReferent<Schema>(file, directrix, label, distance_along, startStation + distance_along, station_format));
 
          distance_along += dp->SegmentLength();
          prev_segment = segment;
       }
 
       auto label = GetHorizontalKeyPointLabel<Schema>(prev_segment, nullptr);
-      new_referents->push(CreateKeyPointReferent<Schema>(file, directrix, label, distance_along, startStation + distance_along, station_format));
+      new_horizontal_referents->push(CreateKeyPointReferent<Schema>(file, directrix, label, distance_along, startStation + distance_along, station_format));
    }
 
    // vertical key points (interior transitions only -- see GetVerticalKeyPointLabel)
@@ -323,18 +348,15 @@ void UpdateKeyPointReferents(IfcHierarchyHelper<Schema>& file, std::shared_ptr<W
          {
             auto dp = segment->DesignParameters()->as<typename Schema::IfcAlignmentVerticalSegment>();
             auto label = GetVerticalKeyPointLabel<Schema>(prev_segment, segment);
-            new_referents->push(CreateKeyPointReferent<Schema>(file, directrix, label, dp->StartDistAlong(), startStation + dp->StartDistAlong(), station_format));
+            new_vertical_referents->push(CreateKeyPointReferent<Schema>(file, directrix, label, dp->StartDistAlong(), startStation + dp->StartDistAlong(), station_format));
          }
          prev_segment = segment;
       }
    }
 
-   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
-   typename Schema::IfcRelNests* nest = GetReferentNest<Schema>(file, alignment);
-   auto related_objects = nest->RelatedObjects();
-   for (auto& referent : *new_referents)
-   {
-      related_objects->push(referent);
-   }
-   nest->setRelatedObjects(related_objects);
+   auto nests_horizontal_referents = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests horizontal key point referents with horizontal alignment"), horizontal, new_horizontal_referents);
+   file.addEntity(nests_horizontal_referents);
+
+   auto nests_vertical_referents = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests vertical key point referents with vertical profile"), vertical, new_vertical_referents);
+   file.addEntity(nests_vertical_referents);
 }

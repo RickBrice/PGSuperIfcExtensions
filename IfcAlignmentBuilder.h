@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -678,12 +678,130 @@ void CreateAlignmentSegmentRepresentations(IfcHierarchyHelper<typename Schema>& 
    }
 }
 
+// creates the alignment's geometric representation using an IfcGradientCurve (horizontal composite curve + vertical gradient curve),
+// nests the horizontal/vertical layouts with the alignment, builds the per-segment representations, and updates the key point referents.
+// assigns the completed representation to the alignment (which must already exist, with a null representation).
+template <typename Schema, typename TRepresentationContext>
+void CreateGradientCurveAlignmentRepresentation(
+   IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options,
+   TRepresentationContext* geometric_representation_context, typename Schema::IfcGeometricRepresentationSubContext* axis_model_representation_subcontext,
+   typename Schema::IfcAlignment* alignment)
+{
+   typename Schema::IfcAlignmentHorizontal* horizontal_alignment_layout = nullptr;
+   typename Schema::IfcRelNests* nests_horizontal_segments = nullptr;
+   typename Schema::IfcAlignmentVertical* vertical_profile_layout = nullptr;
+   typename Schema::IfcRelNests* nests_vertical_segments = nullptr;
+   typename Schema::IfcCompositeCurve* composite_curve = nullptr;
+   typename Schema::IfcGradientCurve* gradient_curve = nullptr;
+
+   CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &nests_horizontal_segments, &composite_curve);
+
+   CreateVerticalProfile<Schema>(file, pBroker, composite_curve, options, &vertical_profile_layout, &nests_vertical_segments, &gradient_curve);
+
+   // Need FootPrint representation for Horizontal+Vertical composite curve
+   typename Schema::IfcGeometricRepresentationSubContext* footprint_model_representation_subcontext = nullptr;
+   if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
+   {
+      footprint_model_representation_subcontext = new typename Schema::IfcGeometricRepresentationSubContext(std::string("FootPrint"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
+      file.addEntity(footprint_model_representation_subcontext);
+   }
+
+   typename Schema::IfcRepresentationItem::list::ptr horizontal_representation_items(new Schema::IfcRepresentationItem::list);
+   horizontal_representation_items->push(composite_curve);
+
+   typename Schema::IfcShapeRepresentation* footprint_curve2d_shape_representation = nullptr;
+   if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
+   {
+      footprint_curve2d_shape_representation = new typename Schema::IfcShapeRepresentation(footprint_model_representation_subcontext, std::string("FootPrint"), std::string("Curve2D"), horizontal_representation_items);
+      file.addEntity(footprint_curve2d_shape_representation);
+   }
+
+   typename Schema::IfcRepresentationItem::list::ptr vertical_representation_items(new typename Schema::IfcRepresentationItem::list);
+   vertical_representation_items->push(gradient_curve);
+
+   auto curve3d_shape_representation = new typename Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), vertical_representation_items);
+   file.addEntity(curve3d_shape_representation);
+
+   typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
+   if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
+   {
+      representations->push(footprint_curve2d_shape_representation); // 2D alignment geometry (Horizontal + Vertical)
+   }
+   representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
+   auto alignment_representation = new typename Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
+   alignment->setRepresentation(alignment_representation);
+
+   // loops over all the individual segments in the horizontal and vertical alignments setting up 'Axis' 'Segment' representations for each individual segment
+   auto global_placement = file.addLocalPlacement();
+   CreateAlignmentSegmentRepresentations(file, global_placement, axis_model_representation_subcontext, composite_curve->Segments(), nests_horizontal_segments->RelatedObjects());
+   if (gradient_curve)
+   {
+      CreateAlignmentSegmentRepresentations(file, global_placement, axis_model_representation_subcontext, gradient_curve->Segments(), nests_vertical_segments->RelatedObjects());
+   }
+
+   // 4.1.4.4.1 Alignments nest horizontal and vertical layouts
+   // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Nesting/Alignment_Layouts/content.html
+   typename Schema::IfcObjectDefinition::list::ptr alignment_layout_list(new Schema::IfcObjectDefinition::list);
+   alignment_layout_list->push(horizontal_alignment_layout);
+   alignment_layout_list->push(vertical_profile_layout);
+
+   auto nests_alignment_layouts = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nest horizontal and vertical alignment layouts with the alignment"), boost::none, alignment, alignment_layout_list);
+   file.addEntity(nests_alignment_layouts);
+
+   UpdateKeyPointReferents<Schema>(file, pBroker, options, horizontal_alignment_layout, nests_horizontal_segments, vertical_profile_layout, nests_vertical_segments);
+}
+
+// creates the alignment's geometric representation using a generalized 3D IfcPolyline (a 3D wire).
+// This isn't as accurate as an IfcGradientCurve, but some viewers may be able to deal with this better.
+// assigns the completed representation to the alignment (which must already exist, with a null representation).
+template <typename Schema>
+void CreatePolylineAlignmentRepresentation(
+   IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcGeometricRepresentationSubContext* axis_model_representation_subcontext,
+   typename Schema::IfcAlignment* alignment)
+{
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+
+   Float64 startStation, startElevation, startGrade;
+   CComPtr<IPoint2d> startPoint;
+   pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
+
+   Float64 endStation, endElevation, endGrade;
+   CComPtr<IPoint2d> endPoint;
+   pAlignment->GetEndPoint(2, &endStation, &endElevation, &endGrade, &endPoint);
+
+   IndexType nAlignmentPoints = 100;
+   Float64 stationInc = (endStation - startStation) / (nAlignmentPoints + 1);
+   typename Schema::IfcCartesianPoint::list::ptr points(new Schema::IfcCartesianPoint::list);
+   for (IndexType i = 0; i <= nAlignmentPoints; i++)
+   {
+      Float64 offset = 0.0;
+      Float64 station = startStation + i * stationInc;
+      CComPtr<IPoint2d> pnt;
+      pAlignment->GetPoint(station, offset, nullptr /*normal offset*/, pgsTypes::pcGlobal, &pnt);
+      Float64 x, y;
+      pnt->Location(&x, &y);
+      Float64 z = pAlignment->GetElevation(station, offset);
+
+      points->push(new typename Schema::IfcCartesianPoint(std::vector<Float64>{x, y, z}));
+   }
+   auto polyline = new typename Schema::IfcPolyline(points);
+
+   typename Schema::IfcRepresentationItem::list::ptr alignment_representation_items(new Schema::IfcRepresentationItem::list);
+   alignment_representation_items->push(polyline);
+
+   auto curve3d_shape_representation = new typename Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), alignment_representation_items);
+   file.addEntity(curve3d_shape_representation);
+
+   typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
+   representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
+   auto alignment_representation = new typename Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
+   alignment->setRepresentation(alignment_representation);
+}
+
 template <typename Schema>
 void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    USES_CONVERSION;
-
-   typename Schema::IfcProductDefinitionShape* alignment_representation = nullptr;
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
    ATLASSERT(geometric_representation_context);
@@ -691,104 +809,6 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    // Need Axis representation for Polyline, Gradient, and Segments
    auto axis_model_representation_subcontext = new typename Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
    file.addEntity(axis_model_representation_subcontext);
-
-   typename Schema::IfcAlignmentHorizontal* horizontal_alignment_layout = nullptr;
-   typename Schema::IfcRelNests* nests_horizontal_segments = nullptr;
-   typename Schema::IfcAlignmentVertical* vertical_profile_layout = nullptr;
-   typename Schema::IfcRelNests* nests_vertical_segments = nullptr;
-   typename Schema::IfcCompositeCurve* composite_curve = nullptr;
-   typename Schema::IfcGradientCurve* gradient_curve = nullptr;
-   typename Schema::IfcPolyline* polyline = nullptr;
-
-   if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
-   {
-      CreateHorizontalAlignment<Schema>(file, pBroker, options, &horizontal_alignment_layout, &nests_horizontal_segments, &composite_curve);
-
-      CreateVerticalProfile<Schema>(file, pBroker, composite_curve, options, &vertical_profile_layout, &nests_vertical_segments, &gradient_curve);
-
-      // Need FootPrint representation for Horizontal+Vertical composite curve
-      typename Schema::IfcGeometricRepresentationSubContext* footprint_model_representation_subcontext = nullptr;
-      if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
-      {
-         footprint_model_representation_subcontext = new typename Schema::IfcGeometricRepresentationSubContext(std::string("FootPrint"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
-         file.addEntity(footprint_model_representation_subcontext);
-      }
-
-      typename Schema::IfcRepresentationItem::list::ptr horizontal_representation_items(new Schema::IfcRepresentationItem::list);
-      horizontal_representation_items->push(composite_curve);
-
-      typename Schema::IfcShapeRepresentation* footprint_curve2d_shape_representation = nullptr;
-      if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
-      {
-         footprint_curve2d_shape_representation = new typename Schema::IfcShapeRepresentation(footprint_model_representation_subcontext, std::string("FootPrint"), std::string("Curve2D"), horizontal_representation_items);
-         file.addEntity(footprint_curve2d_shape_representation);
-      }
-
-      typename Schema::IfcRepresentationItem::list::ptr vertical_representation_items(new typename Schema::IfcRepresentationItem::list);
-      vertical_representation_items->push(gradient_curve);
-
-      auto curve3d_shape_representation = new typename Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), vertical_representation_items);
-      file.addEntity(curve3d_shape_representation);
-
-      typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
-      if (options.representations == CIfcExportOptions::Representations::Curve3dAndFootPrint)
-      {
-         representations->push(footprint_curve2d_shape_representation); // 2D alignment geometry (Horizontal + Vertical)
-      }
-      representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
-      alignment_representation = new typename Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
-      // this alignment_representation will be assigned to the IfcAlignment when it is created a little further down.
-
-      // loops over all the individual segments in the horizontal and vertical alignments setting up 'Axis' 'Segment' representations for each individual segment
-      auto global_placement = file.addLocalPlacement();
-      CreateAlignmentSegmentRepresentations(file, global_placement, axis_model_representation_subcontext, composite_curve->Segments(), nests_horizontal_segments->RelatedObjects());
-      if (gradient_curve)
-      {
-         CreateAlignmentSegmentRepresentations(file, global_placement, axis_model_representation_subcontext, gradient_curve->Segments(), nests_vertical_segments->RelatedObjects());
-      }
-   }
-   else
-   {
-      // Instead of IfcGradientCurve, we are using a generalized 3D polyline geometric representation of the alignment (a 3D wire)
-      // This isn't as accurate, but some viewer may be able to deal with this better
-      GET_IFACE2(pBroker, IRoadway, pAlignment);
-
-      Float64 startStation, startElevation, startGrade;
-      CComPtr<IPoint2d> startPoint;
-      pAlignment->GetStartPoint(2, &startStation, &startElevation, &startGrade, &startPoint);
-
-      Float64 endStation, endElevation, endGrade;
-      CComPtr<IPoint2d> endPoint;
-      pAlignment->GetEndPoint(2, &endStation, &endElevation, &endGrade, &endPoint);
-
-      IndexType nAlignmentPoints = 100;
-      Float64 stationInc = (endStation - startStation) / (nAlignmentPoints + 1);
-      typename Schema::IfcCartesianPoint::list::ptr points(new Schema::IfcCartesianPoint::list);
-      for (IndexType i = 0; i <= nAlignmentPoints; i++)
-      {
-         Float64 offset = 0.0;
-         Float64 station = startStation + i * stationInc;
-         CComPtr<IPoint2d> pnt;
-         pAlignment->GetPoint(station, offset, nullptr /*normal offset*/, pgsTypes::pcGlobal, &pnt);
-         Float64 x, y;
-         pnt->Location(&x, &y);
-         Float64 z = pAlignment->GetElevation(station, offset);
-
-         points->push(new typename Schema::IfcCartesianPoint(std::vector<Float64>{x, y, z}));
-      }
-      polyline = new typename Schema::IfcPolyline(points);
-
-      typename Schema::IfcRepresentationItem::list::ptr alignment_representation_items(new Schema::IfcRepresentationItem::list);
-      alignment_representation_items->push(polyline);
-
-      auto curve3d_shape_representation = new typename Schema::IfcShapeRepresentation(axis_model_representation_subcontext, std::string("Axis"), std::string("Curve3D"), alignment_representation_items);
-      file.addEntity(curve3d_shape_representation);
-
-      typename Schema::IfcRepresentation::list::ptr representations(new Schema::IfcRepresentation::list);
-      representations->push(curve3d_shape_representation); // 3D alignment geometry (Horizontal + Vertical)
-      alignment_representation = new typename Schema::IfcProductDefinitionShape(std::string("Alignment Product Definition Shape"), boost::none, representations);
-      // this alignment_representation will be assigned to the IfcAlignment when it is created a little further down.
-   }
 
    // place the alignment relative to the site
    auto site = file.getSingle<typename Schema::IfcSite>();
@@ -798,24 +818,23 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
       local_placement = file.addLocalPlacement();
    }
 
+   // create the alignment now, with a placement but without a representation. the representation is backfilled
+   // once the horizontal/vertical layouts (or polyline) have been built, below.
    GET_IFACE2(pBroker, IRoadwayData, pRoadwayData);
    std::string strAlignmentName(T2A(pRoadwayData->GetAlignmentData2().Name.c_str()));
    if (strAlignmentName.empty()) strAlignmentName = "Unnamed alignment";
-   auto alignment = new typename Schema::IfcAlignment(IfcParse::IfcGlobalId(), nullptr, strAlignmentName, boost::none, boost::none, local_placement, alignment_representation, boost::none);
+   auto alignment = new typename Schema::IfcAlignment(IfcParse::IfcGlobalId(), nullptr, strAlignmentName, boost::none, boost::none, local_placement, nullptr, boost::none);
    file.addEntity(alignment);
 
    if (options.alignment_model == CIfcExportOptions::AlignmentModel::GradientCurve)
    {
-      // 4.1.4.4.1 Alignments nest horizontal and vertical layouts
-      // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Object_Composition/Nesting/Alignment_Layouts/content.html
-      typename Schema::IfcObjectDefinition::list::ptr alignment_layout_list(new Schema::IfcObjectDefinition::list);
-      alignment_layout_list->push(horizontal_alignment_layout);
-      alignment_layout_list->push(vertical_profile_layout);
-
-      auto nests_alignment_layouts = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, std::string("Nest horizontal and vertical alignment layouts with the alignment"), boost::none, alignment, alignment_layout_list);
-      file.addEntity(nests_alignment_layouts);
-
-      UpdateKeyPointReferents<Schema>(file, pBroker, options, horizontal_alignment_layout, nests_horizontal_segments, vertical_profile_layout, nests_vertical_segments);
+      CreateGradientCurveAlignmentRepresentation<Schema>(file, pBroker, options, geometric_representation_context, axis_model_representation_subcontext, alignment);
+   }
+   else
+   {
+      // Instead of IfcGradientCurve, we are using a generalized 3D polyline geometric representation of the alignment (a 3D wire)
+      // This isn't as accurate, but some viewer may be able to deal with this better
+      CreatePolylineAlignmentRepresentation<Schema>(file, pBroker, axis_model_representation_subcontext, alignment);
    }
 
    // IFC 4.1.4.1.1 "Every IfcAlignment must be related to IfcProject using the IfcRelAggregates relationship"
@@ -830,10 +849,8 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    // This means IfcAlignment is not part of the IfcSite (it is not an aggregate component) but instead IfcAlignment is used within
    // the IfcSite by reference. This implies an IfcAlignment can traverse many IfcSite instances within an IfcProject
    file.addRelatedObject<typename Schema::IfcRelReferencedInSpatialStructure>(site,alignment);
-   //typename Schema::IfcSpatialReferenceSelect::list::ptr list_alignments_referenced_in_site(new typename Schema::IfcSpatialReferenceSelect::list);
-   //list_alignments_referenced_in_site->push(alignment);
-   //auto rel_referenced_in_spatial_structure = new typename Schema::IfcRelReferencedInSpatialStructure(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, list_alignments_referenced_in_site, site);
-   //file.addEntity(rel_referenced_in_spatial_structure);
+
+   DefineLinearReferencingMethod<Schema>(file);
 
    CreateAlignmentStartStationReferent(file, pBroker, options);
 }
