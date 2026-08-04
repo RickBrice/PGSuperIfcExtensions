@@ -167,6 +167,17 @@ BEGIN
     EDITTEXT        IDC_EDIT,7,7,457,248,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
 END
 
+// Extension page injected into PGSuper's Edit Alignment Description dialog
+// (CAlignmentDescriptionDlg) by CIfcExtensionAgent - see GeoReferencingPage.h/.cpp.
+IDD_GEOREFERENCING DIALOGEX 0, 0, 316, 183
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "GeoReferencing"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "EPSG Code:",IDC_STATIC,27,20,50,8
+    EDITTEXT        IDC_EPSG_CODE,27,33,100,14,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -200,6 +211,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 273
     END
+
+    IDD_GEOREFERENCING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 176
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -224,6 +243,11 @@ BEGIN
     0,
     100, 100, 0, 0,
     0, 0, 100, 100
+END
+
+IDD_GEOREFERENCING AFX_DIALOG_LAYOUT
+BEGIN
+    0
 END
 
 

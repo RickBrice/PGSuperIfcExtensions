@@ -53,14 +53,16 @@
 #define IDC_GIRDER                      236
 #define IDC_POLYLINE_TANGENT            237
 #define IDC_LINE_TANGENTS               238
+#define IDD_GEOREFERENCING              239
+#define IDC_EPSG_CODE                   240
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        213
+#define _APS_NEXT_RESOURCE_VALUE        241
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         237
+#define _APS_NEXT_CONTROL_VALUE         241
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

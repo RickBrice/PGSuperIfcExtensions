@@ -34,9 +34,20 @@
 #include <WBFLCogo_i.c>
 #include <WBFLGeometry_i.c>
 
+// IID_IEAFStatusCenter (used by EAF_AGENT_INIT in IfcExtensionAgent.cpp, the first agent
+// this project has ever had) is declared via DEFINE_GUID in EAF\EAFStatusCenter.h, which
+// only actually emits storage under INITGUID. The usual fix - #include <initguid.h> before
+// the header, in some .cpp of the project - doesn't work here: stdafx.h's <PGSuperAll.h>
+// already pulls EAFStatusCenter.h in ahead of the <initguid.h> above, and its #pragma once
+// locks that non-storage form in for every translation unit in this project. So give the
+// symbol real storage directly instead, matching EAFStatusCenter.h's DEFINE_GUID exactly:
+// {77977E9B-B074-401f-8994-73A418FC4FFF}
+const GUID IID_IEAFStatusCenter = { 0x77977e9b, 0xb074, 0x401f, { 0x89, 0x94, 0x73, 0xa4, 0x18, 0xfc, 0x4f, 0xff } };
+
 #include "PGSuperDataImporter.h"
 #include "PGSuperDataExporter.h"
 #include "PGSuperProjectImporter.h"
+#include "IfcExtensionAgent.h"
 
 #include <IFace\Project.h>
 #include <IFace\VersionInfo.h>
@@ -59,6 +70,7 @@ EAF_BEGIN_OBJECT_MAP(ObjectMap)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcImporter, CPGSuperDataImporter)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcExporter, CPGSuperDataExporter)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcProjectImporter, CPGSuperProjectImporter)
+   EAF_OBJECT_ENTRY(CLSID_PGSuperIfcExtensionAgent, CIfcExtensionAgent)
 EAF_END_OBJECT_MAP()
 
 class CIFCExtensionsApp : public CWinApp

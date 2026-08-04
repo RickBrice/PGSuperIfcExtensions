@@ -22,6 +22,14 @@
       "Categories": {
          "CATID": "{289D1CFF-D1A4-4b65-B673-867D7F41C7DB}"
       }
+   },
+   "Component": {
+      "Name": "IFC Extension Agent",
+      "CLSID": "{577F6678-6DD6-4003-ACA2-6406039B690F}",
+      "dll": "PGSuperIfcExtensions.dll",
+      "Categories": {
+         "CATID": "{4B5AD09A-E616-468e-8F84-4F9D68E7B6CA}"
+      }
    }
 
 }
