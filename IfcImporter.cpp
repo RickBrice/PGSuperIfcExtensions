@@ -60,7 +60,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 
 #pragma Reminder("WORKING HERE - UNITS - THERE ARE MANY CASES THIS DOESN'T DEAL WITH")
    auto unit_assignment_instances = file.instances_by_type<IfcSchema::IfcUnitAssignment>();
-   ATLASSERT(unit_assignment_instances->size() == 1);
+   CHECK(unit_assignment_instances->size() == 1);
    auto unit_assignment = *(unit_assignment_instances->begin());
    auto units = unit_assignment->Units();
    for (auto unit : *units)
@@ -92,7 +92,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
                   break;
 
                default:
-                  ATLASSERT(false); // unit prefix isn't supported
+                  CHECK(false); // unit prefix isn't supported
                }
             }
             else
@@ -104,7 +104,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 
          if (si_unit->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN)
          {
-            ATLASSERT(si_unit->Prefix() == boost::none); // not expecting anything like Kilo-radians
+            CHECK(si_unit->Prefix() == boost::none); // not expecting anything like Kilo-radians
             m_pAngleUnit = &WBFL::Units::Measure::Radian;
             continue;
          }
@@ -119,7 +119,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 
          if (conversion_based_unit->UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
          {
-            ATLASSERT(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN);
+            CHECK(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN);
 
             if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
             {
@@ -135,7 +135,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
                conversion_factor /= 1000.0;
             }
 
-            ATLASSERT(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
+            CHECK(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
 
             std::string name = conversion_based_unit->Name();
             to_lower(name);
@@ -165,7 +165,7 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
             }
             else
             {
-               ATLASSERT(false); // we don't have a unit of measure for this
+               CHECK(false); // we don't have a unit of measure for this
             }
          }
          continue;

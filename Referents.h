@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -220,7 +220,7 @@ std::string GetHorizontalKeyPointLabel(typename Schema::IfcAlignmentSegment* pre
       if (type == Schema::IfcAlignmentHorizontalSegmentTypeEnum::IfcAlignmentHorizontalSegmentType_CIRCULARARC) return "S.C.";
    }
 
-   ATLASSERT(false); // unexpected horizontal segment transition
+   CHECK(false); // unexpected horizontal segment transition
    return "";
 }
 
@@ -249,7 +249,7 @@ std::string GetVerticalKeyPointLabel(typename Schema::IfcAlignmentSegment* prev_
       if (type == Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC)     return "V.C.C.";
    }
 
-   ATLASSERT(false); // unexpected vertical segment transition
+   CHECK(false); // unexpected vertical segment transition
    return "";
 }
 
