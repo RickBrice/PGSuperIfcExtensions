@@ -511,7 +511,7 @@ void CreateStrands(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::
          strand_representation_items->push(swept_disk_solid);
 
          auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-         ATLASSERT(geometric_representation_context);
+         CHECK(geometric_representation_context);
          auto strand_shape_representation = new typename Schema::IfcShapeRepresentation(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), strand_representation_items);
          typename Schema::IfcRepresentation::list::ptr strand_shape_representation_list(new typename Schema::IfcRepresentation::list);
          strand_shape_representation_list->push(strand_shape_representation);
@@ -1562,7 +1562,7 @@ void CreatePrecastSegmentRepresentation(IfcHierarchyHelper<Schema>& file, std::s
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPoi;
    pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE | POI_SECTCHANGE, &vPoi, POIFIND_OR);
-   ATLASSERT(2 <= vPoi.size());
+   CHECK(2 <= vPoi.size());
 
    Float64 Ls = pBridge->GetSegmentLength(segmentKey);
 
@@ -1758,7 +1758,7 @@ void CreatePrecastSegmentStrandRepresentation(IfcHierarchyHelper<Schema>& file, 
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPoi;
    pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE | POI_SECTCHANGE, &vPoi, POIFIND_OR);
-   ATLASSERT(2 <= vPoi.size());
+   CHECK(2 <= vPoi.size());
 
    const pgsPointOfInterest& poiStart(vPoi.front());
    const pgsPointOfInterest& poiEnd(vPoi.back());
@@ -1808,7 +1808,7 @@ void CreateLongitudinalRebarRepresentation(IfcHierarchyHelper<Schema>& file, std
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPoi;
    pPoi->GetPointsOfInterest(segmentKey, POI_START_FACE | POI_END_FACE | POI_SECTCHANGE, &vPoi, POIFIND_OR);
-   ATLASSERT(2 <= vPoi.size());
+   CHECK(2 <= vPoi.size());
 
    const pgsPointOfInterest& poiStart(vPoi.front());
    const pgsPointOfInterest& poiEnd(vPoi.back());
@@ -1868,11 +1868,11 @@ void CreateClosureJointRepresentation(IfcHierarchyHelper<Schema>& file, std::sha
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    PoiList vPrevSegmentPoi;
    pPoi->GetPointsOfInterest(prevSegmentKey, POI_END_FACE, &vPrevSegmentPoi);
-   ATLASSERT(vPrevSegmentPoi.size() == 1);
+   CHECK(vPrevSegmentPoi.size() == 1);
 
    PoiList vNextSegmentPoi;
    pPoi->GetPointsOfInterest(nextSegmentKey, POI_START_FACE, &vNextSegmentPoi);
-   ATLASSERT(vNextSegmentPoi.size() == 1);
+   CHECK(vNextSegmentPoi.size() == 1);
 
    const pgsPointOfInterest& poiStart(vPrevSegmentPoi.front());
    const pgsPointOfInterest& poiEnd(vNextSegmentPoi.front());
@@ -2257,7 +2257,7 @@ void CreateBarrierSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
 #if defined _DEBUG
       IndexType _nShapes;
       composite->get_Count(&_nShapes);
-      ATLASSERT(nShapesPerBarrier == _nShapes); // if this fires the actual number of shapes is not the same as the expected number of shapes
+      CHECK(nShapesPerBarrier == _nShapes); // if this fires the actual number of shapes is not the same as the expected number of shapes
 #endif
 
       auto cut_angle = fn_cut_angle(station);
@@ -2564,7 +2564,7 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
+   CHECK(geometric_representation_context);
 
    auto body_model_representation_subcontext = new typename Schema::IfcGeometricRepresentationSubContext(std::string("Body"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
    file.addEntity(body_model_representation_subcontext);
@@ -3121,7 +3121,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    {
    case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, options, strFilePath); break;
    default:
-      ATLASSERT(false); // is there a new typename Schema type
+      CHECK(false); // is there a new typename Schema type
    }
 
    return bResult;

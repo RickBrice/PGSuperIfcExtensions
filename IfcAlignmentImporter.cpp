@@ -68,7 +68,7 @@ IfcSchema::IfcAlignmentHorizontal* GetAlignmentHorizontal(IfcSchema::IfcAlignmen
    auto nested = pAlignment->IsNestedBy(); // these are the things that are nested by the alignment
    for (auto rel_nests : *nested)
    {
-      ATLASSERT(rel_nests->RelatingObject() == pAlignment);
+      CHECK(rel_nests->RelatingObject() == pAlignment);
       auto related_objects = rel_nests->RelatedObjects();
       for (auto related_object : *related_objects)
       {
@@ -87,7 +87,7 @@ IfcSchema::IfcAlignmentVertical* GetAlignmentVertical(IfcSchema::IfcAlignment* p
    auto nested = pAlignment->IsNestedBy(); // these are the things that are nested by the alignment
    for (auto rel_nests : *nested)
    {
-      ATLASSERT(rel_nests->RelatingObject() == pAlignment);
+      CHECK(rel_nests->RelatingObject() == pAlignment);
       auto related_objects = rel_nests->RelatedObjects();
       for (auto related_object : *related_objects)
       {
@@ -252,7 +252,7 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, IfcSchema:
    }
 
    auto horizontal_alignment = GetAlignmentHorizontal(pAlignment);
-   ATLASSERT(horizontal_alignment); // should have found one
+   CHECK(horizontal_alignment); // should have found one
 
    Float64 current_station = GetStartStation(pAlignment);
    current_station += station_adjustment;
@@ -333,7 +333,7 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, IfcSchema:
             else
             {
                IFC_THROW(_T("A curve must follow a spiral")); // because PGSuper can't handle it otherwise
-               ATLASSERT(false); // a curve must follow a spiral
+               CHECK(false); // a curve must follow a spiral
             }
          }
          else
@@ -383,12 +383,12 @@ Float64 CIfcAlignmentImporter::LoadAlignment(IfcParse::IfcFile& file, IfcSchema:
             }
          }
 
-         ATLASSERT(entrySpiral == nullptr); // this must be the case
+         CHECK(entrySpiral == nullptr); // this must be the case
          end_station = OnCurve(current_station, entrySpiral, horizontal_alignment_segment, exitSpiral);
       }
       else
       {
-         ATLASSERT(false);
+         CHECK(false);
       }
       current_station = end_station;
    }
@@ -415,7 +415,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcA
    if (vertical_alignment)
    {
       auto nested = vertical_alignment->IsNestedBy();
-      ATLASSERT((*nested).size() == 1);
+      CHECK((*nested).size() == 1);
       auto related_objects = (*nested->begin())->RelatedObjects();
 
       if (related_objects->size() == 0)
@@ -465,7 +465,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcA
          }
          else
          {
-            ATLASSERT(false); // is there a new type ???
+            CHECK(false); // is there a new type ???
             // TODO: provide a better exception
             IFC_THROW(_T("An unknown profile element was encountered"));
          }
@@ -500,7 +500,7 @@ void CIfcAlignmentImporter::LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcA
 bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment)
 {
    auto horizontal_alignment = GetAlignmentHorizontal(pAlignment);
-   ATLASSERT(horizontal_alignment); // should have found one
+   CHECK(horizontal_alignment); // should have found one
    if (!horizontal_alignment)
       return false;
 
@@ -568,7 +568,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, IfcSchema:
                if (!IsCircularCurve(prev_horizontal_segment)) return false; // previous is not a circular curve
 
                Float64 circular_curve_radius = prev_horizontal_segment->StartRadiusOfCurvature();
-               ATLASSERT(IsEqual(circular_curve_radius, prev_horizontal_segment->EndRadiusOfCurvature()));
+               CHECK(IsEqual(circular_curve_radius, prev_horizontal_segment->EndRadiusOfCurvature()));
                if (!IsEqual(circular_curve_radius, start_radius)) return false; // common radii must be equal
 
                if (::BinarySign(start_radius) != ::BinarySign(circular_curve_radius)) return false; // curves must be same direction
@@ -582,7 +582,7 @@ bool CIfcAlignmentImporter::IsValidAlignment(IfcParse::IfcFile& file, IfcSchema:
                if (!IsCircularCurve(next_horizontal_segment)) return false; // next is not a circular curve
 
                Float64 circular_curve_radius = next_horizontal_segment->StartRadiusOfCurvature();
-               ATLASSERT(IsEqual(circular_curve_radius, next_horizontal_segment->EndRadiusOfCurvature()));
+               CHECK(IsEqual(circular_curve_radius, next_horizontal_segment->EndRadiusOfCurvature()));
                if (!IsEqual(circular_curve_radius, end_radius)) return false; // common radii must be equal
 
                if (::BinarySign(end_radius) != ::BinarySign(circular_curve_radius)) return false; // curves must be same direction
@@ -600,7 +600,7 @@ void CIfcAlignmentImporter::GetStations(IfcSchema::IfcAlignment* pAlignment, std
    auto nested = pAlignment->IsNestedBy();
    for (auto rel_nests : *nested)
    {
-      ATLASSERT(rel_nests->RelatingObject() == pAlignment);
+      CHECK(rel_nests->RelatingObject() == pAlignment);
       auto related_objects = rel_nests->RelatedObjects();
       for (auto related_object : *related_objects)
       {
@@ -667,7 +667,7 @@ void CIfcAlignmentImporter::GetStations(IfcSchema::IfcAlignment* pAlignment, std
                   }
                   else
                   {
-                     ATLASSERT(false); // not expecting incoming station without station
+                     CHECK(false); // not expecting incoming station without station
                   }
                }
             }
@@ -742,7 +742,7 @@ Float64 CIfcAlignmentImporter::OnLine(Float64 sx, Float64 sy, Float64 startStati
 
 Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pEntrySpiral, IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IfcSchema::IfcAlignmentHorizontalSegment* pExitSpiral)
 {
-   ATLASSERT(pCurve != nullptr);
+   CHECK(pCurve != nullptr);
 
    Float64 radius = WBFL::Units::ConvertToSysUnits(pCurve->StartRadiusOfCurvature(), m_Importer.GetLengthUnit());
 
@@ -830,7 +830,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
 
    Float64 dx = sx - cx;
    Float64 dy = sy - cy;
-   ATLASSERT(IsEqual(fabs(radius), sqrt(dx * dx + dy * dy)));
+   CHECK(IsEqual(fabs(radius), sqrt(dx * dx + dy * dy)));
 #endif // _DEBUG
 
    // Determine the control points
@@ -888,7 +888,7 @@ Float64 CIfcAlignmentImporter::OnCurve(Float64 startStation, IfcSchema::IfcAlign
       m_CogoEngine->get_Intersect(&intersect);
       intersect->LinesByPoints(pntEntryStart, pntEntryPI, 0.0, pntExitPI, pntExitEnd, 0.0, &pntPI);
 
-      ATLASSERT(pntPI->SameLocation(pntCurvePI));
+      CHECK(pntPI->SameLocation(pntCurvePI));
 
       pntEnd = pntExitEnd;
 
@@ -1131,7 +1131,7 @@ void CIfcAlignmentImporter::CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSeg
       break;
 
    default:
-      ATLASSERT(false); // is there a new spiral type???
+      CHECK(false); // is there a new spiral type???
       WBFL::System::Logger::Info(_T("Spiral type not defined. Assuming clothoid."));
       break;
    }
@@ -1141,7 +1141,7 @@ void CIfcAlignmentImporter::CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSeg
 void CIfcAlignmentImporter::GetPoint(IfcSchema::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY)
 {
    auto coordinates = pPoint->Coordinates();
-   ATLASSERT(2 <= coordinates.size());
+   CHECK(2 <= coordinates.size());
    auto pLengthUnit = m_Importer.GetLengthUnit();
    *pX = WBFL::Units::ConvertToSysUnits(coordinates[0], pLengthUnit);
    *pY = WBFL::Units::ConvertToSysUnits(coordinates[1], pLengthUnit);

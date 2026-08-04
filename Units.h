@@ -48,7 +48,7 @@ double GetConversionFactor(typename Schema::IfcConversionBasedUnit* conversion_b
       auto value_component = measure_with_unit->ValueComponent();
       // here we know we're using in-memory so 'nullptr, nullptr, 0' is safe
       conversion_factor = (Float64)(value_component->data().get_attribute_value(nullptr,nullptr,0,0));
-      //ATLASSERT(value_component); // not dealing with anything but simple conversion factors
+      //CHECK(value_component); // not dealing with anything but simple conversion factors
       //auto real = value_component->as<typename Schema::IfcReal>();
       //auto ratio = value_component->as<typename Schema::IfcRatioMeasure>();
       //auto length = value_component->as<typename Schema::IfcLengthMeasure>();
@@ -76,7 +76,7 @@ double GetConversionFactor(typename Schema::IfcConversionBasedUnit* conversion_b
       // we'll just get the value and keep going
       TRACE(e.what());
       auto pArgument = measure_with_unit->get("ValueComponent");
-      ATLASSERT(pArgument.type() == IfcUtil::Argument_DOUBLE);
+      CHECK(pArgument.type() == IfcUtil::Argument_DOUBLE);
       conversion_factor = double(pArgument);
    }
    return conversion_factor;

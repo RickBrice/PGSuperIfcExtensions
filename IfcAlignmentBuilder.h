@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -217,7 +217,7 @@ void CreateHorizontalAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr
       Float64 R;
       curve->get_Radius(&R);
 
-      ATLASSERT(0 < R); // need to deal with zero radius curves, which gives us an angle point in the alignment
+      CHECK(0 < R); // need to deal with zero radius curves, which gives us an angle point in the alignment
 
       CurveDirectionType curve_direction;
       curve->get_Direction(&curve_direction);
@@ -515,7 +515,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBF
    if (!IsEqual(prev_end_dist_along, endStation))
    {
       // create a linear segment between the last profile element and the end of the alignment
-      ATLASSERT(IsEqual(prev_end_gradient, endGrade));
+      CHECK(IsEqual(prev_end_gradient, endGrade));
       Float64 length = endStation - startStation - prev_end_dist_along;
       auto vertical_point = new typename Schema::IfcCartesianPoint(std::vector<double>{prev_end_dist_along, prev_end_height});
       auto [geometry_segment, business_segment] = create_gradient<Schema>(vertical_point, prev_end_gradient, length, options);
@@ -528,7 +528,7 @@ void CreateVerticalProfile(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBF
       }
 
       // check elevation
-      ATLASSERT(IsEqual(endElevation, prev_end_height + length * prev_end_gradient));
+      CHECK(IsEqual(endElevation, prev_end_height + length * prev_end_gradient));
 
       // parameters at end of segment
       prev_end_dist_along += length;
@@ -804,7 +804,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    USES_CONVERSION;
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   ATLASSERT(geometric_representation_context);
+   CHECK(geometric_representation_context);
 
    // Need Axis representation for Polyline, Gradient, and Segments
    auto axis_model_representation_subcontext = new typename Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
