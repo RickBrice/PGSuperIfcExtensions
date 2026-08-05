@@ -73,7 +73,7 @@ public:
 // IGeoreferencing
 public:
    void SetGeoreferencingData(const GeoreferencingData& data) override;
-   GeoreferencingData GetGeoreferencingData() override;
+   const GeoreferencingData& GetGeoreferencingData() const override;
 
 // IEditAlignmentCallback
 public:

@@ -55,14 +55,24 @@
 #define IDC_LINE_TANGENTS               238
 #define IDD_GEOREFERENCING              239
 #define IDC_EPSG_CODE                   240
+#define IDC_DESCRIPTION                 241
+#define IDC_GEODETIC_DATUM              242
+#define IDC_VERTICAL_DATUM              243
+#define IDC_MAP_PROJECTION              244
+#define IDC_EASTINGS                    245
+#define IDC_NORTHINGS                   246
+#define IDC_ORTHOGONAL_HEIGHT           247
+#define IDC_XAXIS_ABSCISSA              248
+#define IDC_YAXIS_ORDINATE              249
+#define IDC_SCALE                       250
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        241
+#define _APS_NEXT_RESOURCE_VALUE        251
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         241
+#define _APS_NEXT_CONTROL_VALUE         251
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

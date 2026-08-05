@@ -24,11 +24,11 @@
 struct GeoreferencingData
 {
    // For IfcProjectedCRS
-   std::string Name = "2927"; // horizontal datum EPSG code, e.g. "EPSG:4326"
-   std::string Description= "Washington South (ftUS)";
-   std::string GeodeticDatum = "NAD83(HARN)";
-   std::string VerticalDatum = "5703";
-   std::string MapProjection = "Lambert Conformal Conic 2SP";
+   CString Name = _T("2927"); // horizontal datum EPSG code, e.g. "EPSG:4326"
+   CString Description= _T("Washington South (ftUS)");
+   CString GeodeticDatum = _T("NAD83(HARN)");
+   CString VerticalDatum = _T("5703");
+   CString MapProjection = _T("Lambert Conformal Conic 2SP");
 
    // For IfcMapConversion
    Float64 Eastings = 50000.;
@@ -36,7 +36,7 @@ struct GeoreferencingData
    Float64 OrthogonalHeight = 0.;
    Float64 XAxisAbscissa = 1.;
    Float64 YAxisOrdinate = 0.;
-   Float64 Scale = 0.999998000004; // us survey foot to meter conversion factor
+   Float64 Scale = 1200. / 3937.; // us survey foot to meter conversion factor
 };
 
 // {03917488-9929-41F1-AB85-8FED05E73009}
@@ -46,5 +46,5 @@ class IGeoreferencing
 {
 public:
    virtual void SetGeoreferencingData(const GeoreferencingData& data) = 0;
-   virtual GeoreferencingData GetGeoreferencingData() = 0;
+   virtual const GeoreferencingData& GetGeoreferencingData() const = 0;
 };

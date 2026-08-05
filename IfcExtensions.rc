@@ -70,7 +70,7 @@ BEGIN
             VALUE "FileDescription", "PGSuperIfcExtensions Module"
             VALUE "FileVersion", "9.0.3.1"
             VALUE "InternalName", "PGSuperIfcExtensions"
-            VALUE "LegalCopyright", "Copyright © 1999-2026, Washington State Department of Transportation, All Rights Reserved"
+            VALUE "LegalCopyright", "Copyright ï¿½ 1999-2026, Washington State Department of Transportation, All Rights Reserved"
             VALUE "OriginalFilename", "PGSuperIfcExtensions.DLL"
             VALUE "ProductName", "PGSuperIfcExtensions Module"
             VALUE "ProductVersion", "9.0.3.1"
@@ -169,13 +169,39 @@ END
 
 // Extension page injected into PGSuper's Edit Alignment Description dialog
 // (CAlignmentDescriptionDlg) by CIfcExtensionAgent - see GeoReferencingPage.h/.cpp.
-IDD_GEOREFERENCING DIALOGEX 0, 0, 316, 183
+IDD_GEOREFERENCING DIALOGEX 0, 0, 316, 235
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "GeoReferencing"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "EPSG Code:",IDC_STATIC,27,20,50,8
-    EDITTEXT        IDC_EPSG_CODE,27,33,100,14,ES_AUTOHSCROLL
+    GROUPBOX        "Coordinate Reference System",IDC_STATIC,7,7,302,120
+    LTEXT           "EPSG Code:",IDC_STATIC,17,20,50,8
+    EDITTEXT        IDC_EPSG_CODE,17,32,85,14,ES_AUTOHSCROLL
+    LTEXT           "Description:",IDC_STATIC,112,20,50,8
+    EDITTEXT        IDC_DESCRIPTION,112,32,180,14,ES_AUTOHSCROLL
+
+    LTEXT           "Geodetic Datum:",IDC_STATIC,17,52,60,8
+    EDITTEXT        IDC_GEODETIC_DATUM,17,64,85,14,ES_AUTOHSCROLL
+    LTEXT           "Vertical Datum (EPSG Code):",IDC_STATIC,112,52,100,8
+    EDITTEXT        IDC_VERTICAL_DATUM,112,64,85,14,ES_AUTOHSCROLL
+
+    LTEXT           "Map Projection:",IDC_STATIC,17,84,60,8
+    EDITTEXT        IDC_MAP_PROJECTION,17,96,275,14,ES_AUTOHSCROLL
+
+    GROUPBOX        "Map Conversion",IDC_STATIC,7,135,302,90
+    LTEXT           "Eastings:",IDC_STATIC,17,148,50,8
+    EDITTEXT        IDC_EASTINGS,17,160,80,14,ES_AUTOHSCROLL
+    LTEXT           "Northings:",IDC_STATIC,112,148,50,8
+    EDITTEXT        IDC_NORTHINGS,112,160,80,14,ES_AUTOHSCROLL
+    LTEXT           "Orthogonal Height:",IDC_STATIC,207,148,70,8
+    EDITTEXT        IDC_ORTHOGONAL_HEIGHT,207,160,80,14,ES_AUTOHSCROLL
+
+    LTEXT           "X Axis Abscissa:",IDC_STATIC,17,180,60,8
+    EDITTEXT        IDC_XAXIS_ABSCISSA,17,192,80,14,ES_AUTOHSCROLL
+    LTEXT           "Y Axis Ordinate:",IDC_STATIC,112,180,60,8
+    EDITTEXT        IDC_YAXIS_ORDINATE,112,192,80,14,ES_AUTOHSCROLL
+    LTEXT           "Scale:",IDC_STATIC,207,180,50,8
+    EDITTEXT        IDC_SCALE,207,192,80,14,ES_AUTOHSCROLL
 END
 
 
@@ -217,7 +243,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 309
         TOPMARGIN, 7
-        BOTTOMMARGIN, 176
+        BOTTOMMARGIN, 228
     END
 END
 #endif    // APSTUDIO_INVOKED

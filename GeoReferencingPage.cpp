@@ -49,9 +49,18 @@ void CGeoReferencingPage::DoDataExchange(CDataExchange* pDX)
 
 	CPropertyPage::DoDataExchange(pDX);
 
-   CString strEPSGCode(m_GeoRefData.Name.c_str());
-   DDX_Text(pDX, IDC_EPSG_CODE, strEPSGCode);
-   m_GeoRefData.Name = T2A(strEPSGCode.GetString());
+   DDX_Text(pDX, IDC_EPSG_CODE, m_GeoRefData.Name);
+   DDX_Text(pDX, IDC_DESCRIPTION, m_GeoRefData.Description);
+   DDX_Text(pDX, IDC_GEODETIC_DATUM, m_GeoRefData.GeodeticDatum);
+   DDX_Text(pDX, IDC_VERTICAL_DATUM, m_GeoRefData.VerticalDatum);
+   DDX_Text(pDX, IDC_MAP_PROJECTION, m_GeoRefData.MapProjection);
+
+   DDX_Text(pDX, IDC_EASTINGS, m_GeoRefData.Eastings);
+   DDX_Text(pDX, IDC_NORTHINGS, m_GeoRefData.Northings);
+   DDX_Text(pDX, IDC_ORTHOGONAL_HEIGHT, m_GeoRefData.OrthogonalHeight);
+   DDX_Text(pDX, IDC_XAXIS_ABSCISSA, m_GeoRefData.XAxisAbscissa);
+   DDX_Text(pDX, IDC_YAXIS_ORDINATE, m_GeoRefData.YAxisOrdinate);
+   DDX_Text(pDX, IDC_SCALE, m_GeoRefData.Scale);
 }
 
 BEGIN_MESSAGE_MAP(CGeoReferencingPage, CPropertyPage)

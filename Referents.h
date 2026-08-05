@@ -354,9 +354,11 @@ void UpdateKeyPointReferents(IfcHierarchyHelper<Schema>& file, std::shared_ptr<W
       }
    }
 
-   auto nests_horizontal_referents = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests horizontal key point referents with horizontal alignment"), horizontal, new_horizontal_referents);
+   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+
+   auto nests_horizontal_referents = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests horizontal key point referents with alignment"), alignment, new_horizontal_referents);
    file.addEntity(nests_horizontal_referents);
 
-   auto nests_vertical_referents = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests vertical key point referents with vertical profile"), vertical, new_vertical_referents);
+   auto nests_vertical_referents = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, std::string("Nests vertical key point referents with alignment"), alignment, new_vertical_referents);
    file.addEntity(nests_vertical_referents);
 }

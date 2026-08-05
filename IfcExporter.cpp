@@ -3080,11 +3080,11 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    const auto& georef = pGeoRef->GetGeoreferencingData();
 
    auto projected_crs = new typename Schema::IfcProjectedCRS(
-      std::string("EPSG:").append(georef.Name),
-      georef.Description,
-      georef.GeodeticDatum,
-      std::string("EPSG:").append(georef.VerticalDatum),
-      georef.MapProjection,
+      std::string("EPSG:").append((LPCSTR)T2A(georef.Name)),
+      std::string(T2A(georef.Description)),
+      std::string(T2A(georef.GeodeticDatum)),
+      std::string("EPSG:").append(T2A(georef.VerticalDatum)),
+      std::string(T2A(georef.MapProjection)),
       boost::none, nullptr);
    file.addEntity(projected_crs);
 

@@ -29,15 +29,16 @@
 // CGeoReferencingPage dialog
 //
 // The property page CIfcExtensionAgent injects as the first tab of PGSuper's Edit
-// Alignment Description dialog (CAlignmentDescriptionDlg). Holds a single EPSG code
-// value. Follows the same seed/harvest pattern as PGSuper\ExtensionAgentExample's
-// CEditPierPage: the agent constructs this page, assigns m_EPSGCode directly
+// Alignment Description dialog (CAlignmentDescriptionDlg). Holds the full
+// GeoreferencingData set (IfcProjectedCRS and IfcMapConversion fields). Follows the
+// same seed/harvest pattern as PGSuper\ExtensionAgentExample's CEditPierPage: the
+// agent constructs this page, assigns m_GeoRefData directly
 // (CIfcExtensionAgent::CreatePropertyPage), then reads it back after the user clicks
 // OK (CIfcExtensionAgent::OnOK). There's no constructor parameter for this, because -
 // unlike CEditPierPage, which is handed a live IEditPierData* to query per-instance
 // pier data (girder counts, etc.) - IEditAlignmentData is a dummy interface with
-// nothing to query; the EPSG code is the agent's own persisted state, not something
-// that comes from the alignment dialog itself.
+// nothing to query; the georeferencing data is the agent's own persisted state, not
+// something that comes from the alignment dialog itself.
 //
 // The tab also carries the bSI logo (IDI_BSI), the same icon used on this plugin's
 // "Export IFC Model" command, via PSP_USEICONID/m_psp.pszIcon - see the constructor.

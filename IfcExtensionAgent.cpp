@@ -136,7 +136,7 @@ void CIfcExtensionAgent::SetGeoreferencingData(const GeoreferencingData& data)
    m_GeoreferencingData = data;
 }
 
-GeoreferencingData CIfcExtensionAgent::GetGeoreferencingData()
+const GeoreferencingData& CIfcExtensionAgent::GetGeoreferencingData() const
 {
    return m_GeoreferencingData;
 }
