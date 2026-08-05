@@ -68,34 +68,27 @@ CLSID CIfcExtensionAgent::GetCLSID() const
 ////////////////////////////////////////////////////////////////////
 // IAgentPersist
 
-WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(IStructuredLoad* pStrLoad)
+WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructuredLoad* pStrLoad)
 {
-   USES_CONVERSION;
-   CComVariant var;
-   var.vt = VT_BSTR;
-
-   HRESULT hr = pStrLoad->BeginUnit(_T("IfcExtensionAgent"));
-   if ( FAILED(hr) )
+   if ( !pStrLoad->BeginUnit(_T("IfcExtensionAgent")) )
       return WBFL::EAF::Broker::LoadResult::Error;
 
-   var.vt = VT_BSTR;
-   hr = pStrLoad->get_Property(_T("EPSGCode"),&var);
-   if ( FAILED(hr) )
+   std::_tstring epsgCode;
+   if ( !pStrLoad->Property(_T("EPSGCode"),&epsgCode) )
       return WBFL::EAF::Broker::LoadResult::Error;
 
-   m_EPSGCode = OLE2T(var.bstrVal);
+   m_EPSGCode = epsgCode.c_str();
 
-   hr = pStrLoad->EndUnit();
-   if ( FAILED(hr) )
+   if ( !pStrLoad->EndUnit() )
       return WBFL::EAF::Broker::LoadResult::Error;
 
    return WBFL::EAF::Broker::LoadResult::Success;
 }
 
-bool CIfcExtensionAgent::Save(IStructuredSave* pStrSave)
+bool CIfcExtensionAgent::Save(WBFL::System::IStructuredSave* pStrSave)
 {
    pStrSave->BeginUnit(_T("IfcExtensionAgent"),1.0);
-   pStrSave->put_Property(_T("EPSGCode"),CComVariant(m_EPSGCode));
+   pStrSave->Property(_T("EPSGCode"),m_EPSGCode);
    pStrSave->EndUnit();
    return true;
 }
