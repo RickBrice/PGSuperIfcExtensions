@@ -25,6 +25,7 @@
 #include <iomanip>
 #include <chrono>
 #include <ctime>
+#include <stdexcept>
 
 // Per AASHTO LRFD 2.5.3, "When the designer has assumed a particular sequence of construction in order to induce
 // certain stresses under dead load, that sequence shall be defined in the contract documents."
@@ -59,8 +60,13 @@ std::string getCurrentISO8601Time() {
    auto now = std::chrono::system_clock::now();
    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
 
-   // Convert to tm structure
-   std::tm tm = *std::gmtime(&now_time);
+   // Convert to tm structure (gmtime_s is thread-safe, unlike gmtime which returns a pointer
+   // to shared static storage, and it reports failure instead of returning a null pointer)
+   std::tm tm{};
+   if (gmtime_s(&tm, &now_time) != 0)
+   {
+      throw std::runtime_error("getCurrentISO8601Time: gmtime_s failed to convert current time");
+   }
 
    // Format the time to ISO 8601
    std::ostringstream oss;
