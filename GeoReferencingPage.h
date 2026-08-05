@@ -24,6 +24,8 @@
 
 #include "resource.h"
 
+#include "Georeferencing.h"
+
 // CGeoReferencingPage dialog
 //
 // The property page CIfcExtensionAgent injects as the first tab of PGSuper's Edit
@@ -48,7 +50,7 @@ public:
 	CGeoReferencingPage();
 	virtual ~CGeoReferencingPage();
 
-   CString m_EPSGCode; // bound to IDC_EPSG_CODE via DDX_Text
+	GeoreferencingData m_GeoRefData;
 
 // Dialog Data
 	enum { IDD = IDD_GEOREFERENCING };

@@ -38,11 +38,13 @@
 #include <EAF\EAFUIIntegration.h>
 #include <IFace\ExtendUI.h>
 #include "GeoReferencingPage.h"
+#include "GeoReferencing.h"
 
 class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheritance, see Warning C4407
    public WBFL::EAF::Agent,
    public WBFL::EAF::IAgentPersist,
    public WBFL::EAF::IAgentUIIntegration,
+   public IGeoreferencing,
    public IEditAlignmentCallback
 {
 public:
@@ -68,6 +70,11 @@ public:
 public:
    bool IntegrateWithUI(bool bIntegrate) override;
 
+// IGeoreferencing
+public:
+   void SetGeoreferencingData(const GeoreferencingData& data) override;
+   GeoreferencingData GetGeoreferencingData() override;
+
 // IEditAlignmentCallback
 public:
    CPropertyPage* CreatePropertyPage(IEditAlignmentData* pAlignmentData) override;
@@ -86,5 +93,5 @@ private:
    void UnregisterUIExtensions();
    IDType m_EditAlignmentCallbackID;
 
-   CString m_EPSGCode; // EPSG code for the alignment's geographic coordinate reference system
+   GeoreferencingData m_GeoreferencingData;
 };

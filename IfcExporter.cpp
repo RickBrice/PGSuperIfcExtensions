@@ -37,6 +37,8 @@
 #include <IFace\DocumentType.h>
 #include <IFace\PrestressForce.h>
 
+#include "Georeferencing.h"
+
 
 #include <EAF/AutoProgress.h>
 #include <PsgLib\PrecastSegmentData.h>
@@ -3074,15 +3076,27 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    auto project = file.getSingle<typename Schema::IfcProject>();
    AddPropertySet(file,project,Create_Pset_ProjectCommon<Schema>(file));
 
-   if (options.classify)
-   {
-      auto site = file.getSingle<typename Schema::IfcSite>();
-      Classify_usBridge_BridgeProject<Schema>(file, project);
-      Classify_usBridge_BridgeSite<Schema>(file, site);
-      
-      AddPropertySet(file,project,Create_usBrPset_ProjectCommon<Schema>(file));
-      AddPropertySet(file,project,Create_usBrPset_ProjectLocation<Schema>(file));
-   }
+   GET_IFACE2(pBroker, IGeoreferencing, pGeoRef);
+   const auto& georef = pGeoRef->GetGeoreferencingData();
+
+   auto projected_crs = new typename Schema::IfcProjectedCRS(
+      std::string("EPSG:").append(georef.Name),
+      georef.Description,
+      georef.GeodeticDatum,
+      std::string("EPSG:").append(georef.VerticalDatum),
+      georef.MapProjection,
+      boost::none, nullptr);
+   file.addEntity(projected_crs);
+
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   auto map_conversion = new typename Schema::IfcMapConversion(
+      geometric_representation_context,
+      projected_crs,
+      georef.Eastings, georef.Northings, georef.OrthogonalHeight,
+      georef.XAxisAbscissa,
+      georef.YAxisOrdinate,
+      georef.Scale);
+   file.addEntity(map_conversion);
 
    if (options.model_elements == CIfcExportOptions::ModelElements::GirderOnly)
    {
@@ -3090,6 +3104,16 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    }
    else
    {
+      if (options.classify)
+      {
+         auto site = file.getSingle<typename Schema::IfcSite>();
+         Classify_usBridge_BridgeProject<Schema>(file, project);
+         Classify_usBridge_BridgeSite<Schema>(file, site);
+
+         AddPropertySet(file, project, Create_usBrPset_ProjectCommon<Schema>(file));
+         AddPropertySet(file, project, Create_usBrPset_ProjectLocation<Schema>(file));
+      }
+
       CreateAlignment<Schema>(file, pBroker, options); // creates alignment and aggregates with project, references into site spatial structure
 
       if (options.model_elements == CIfcExportOptions::ModelElements::AlignmentAndBridge)

@@ -38,6 +38,8 @@ END_MESSAGE_MAP()
 bool CIfcExtensionAgent::RegisterInterfaces()
 {
    EAF_AGENT_REGISTER_INTERFACES;
+   REGISTER_INTERFACE(IGeoreferencing);
+
    return true;
 }
 
@@ -73,11 +75,11 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
    if ( !pStrLoad->BeginUnit(_T("IfcExtensionAgent")) )
       return WBFL::EAF::Broker::LoadResult::Error;
 
-   std::_tstring epsgCode;
-   if ( !pStrLoad->Property(_T("EPSGCode"),&epsgCode) )
-      return WBFL::EAF::Broker::LoadResult::Error;
+   //std::_tstring epsgCode;
+   //if ( !pStrLoad->Property(_T("EPSGCode"),&epsgCode) )
+   //   return WBFL::EAF::Broker::LoadResult::Error;
 
-   m_EPSGCode = epsgCode.c_str();
+   //m_EPSGCode = epsgCode.c_str();
 
    if ( !pStrLoad->EndUnit() )
       return WBFL::EAF::Broker::LoadResult::Error;
@@ -88,7 +90,7 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
 bool CIfcExtensionAgent::Save(WBFL::System::IStructuredSave* pStrSave)
 {
    pStrSave->BeginUnit(_T("IfcExtensionAgent"),1.0);
-   pStrSave->Property(_T("EPSGCode"),m_EPSGCode);
+   //pStrSave->Property(_T("EPSGCode"),m_EPSGCode);
    pStrSave->EndUnit();
    return true;
 }
@@ -128,19 +130,33 @@ void CIfcExtensionAgent::UnregisterUIExtensions()
 }
 
 ////////////////////////////////////////////////////////////////////
+// IGeoreferencing
+void CIfcExtensionAgent::SetGeoreferencingData(const GeoreferencingData& data)
+{
+   m_GeoreferencingData = data;
+}
+
+GeoreferencingData CIfcExtensionAgent::GetGeoreferencingData()
+{
+   return m_GeoreferencingData;
+}
+
+
+////////////////////////////////////////////////////////////////////
 // IEditAlignmentCallback
 
 CPropertyPage* CIfcExtensionAgent::CreatePropertyPage(IEditAlignmentData* pAlignmentData)
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    CGeoReferencingPage* pPage = new CGeoReferencingPage();
-   pPage->m_EPSGCode = m_EPSGCode;
+   pPage->m_GeoRefData = m_GeoreferencingData;
    return pPage;
 }
 
 std::unique_ptr<WBFL::EAF::Transaction> CIfcExtensionAgent::OnOK(CPropertyPage* pPage,IEditAlignmentData* pAlignmentData)
 {
    CGeoReferencingPage* pMyPage = (CGeoReferencingPage*)pPage;
-   m_EPSGCode = pMyPage->m_EPSGCode;
+   m_GeoreferencingData = pMyPage->m_GeoRefData;
+#pragma Reminder("TODO: Implement a transaction to save the georeferencing data to the alignment data")
    return nullptr;
 }

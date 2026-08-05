@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright Â© 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -19,40 +19,32 @@
 // P.O. Box  47340, Olympia, WA 98503, USA or e-mail
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
+#pragma once
 
-// GeoReferencingPage.cpp : implementation file
-
-#include "stdafx.h"
-#include "IfcExtensions.h"
-#include "GeoReferencingPage.h"
-
-#include <MfcTools/MfcTools.h>
-
-// CGeoReferencingPage dialog
-
-IMPLEMENT_DYNAMIC(CGeoReferencingPage, CPropertyPage)
-
-CGeoReferencingPage::CGeoReferencingPage()
-	: CPropertyPage(CGeoReferencingPage::IDD)
+struct GeoreferencingData
 {
-   m_psp.dwFlags |= PSP_HASHELP | PSP_USEICONID;
-   m_psp.pszIcon = MAKEINTRESOURCE(IDI_BSI); // same bSI logo used on the Export IFC Model command
-}
+   // For IfcProjectedCRS
+   std::string Name = "2927"; // horizontal datum EPSG code, e.g. "EPSG:4326"
+   std::string Description= "Washington South (ftUS)";
+   std::string GeodeticDatum = "NAD83(HARN)";
+   std::string VerticalDatum = "5703";
+   std::string MapProjection = "Lambert Conformal Conic 2SP";
 
-CGeoReferencingPage::~CGeoReferencingPage()
+   // For IfcMapConversion
+   Float64 Eastings = 50000.;
+   Float64 Northings = 50000.;
+   Float64 OrthogonalHeight = 0.;
+   Float64 XAxisAbscissa = 1.;
+   Float64 YAxisOrdinate = 0.;
+   Float64 Scale = 0.999998000004; // us survey foot to meter conversion factor
+};
+
+// {03917488-9929-41F1-AB85-8FED05E73009}
+DEFINE_GUID(IID_IGeoreferencing,
+   0x3917488, 0x9929, 0x41f1, 0xab, 0x85, 0x8f, 0xed, 0x5, 0xe7, 0x30, 0x9);
+class IGeoreferencing
 {
-}
-
-void CGeoReferencingPage::DoDataExchange(CDataExchange* pDX)
-{
-   USES_CONVERSION;
-
-	CPropertyPage::DoDataExchange(pDX);
-
-   CString strEPSGCode(m_GeoRefData.Name.c_str());
-   DDX_Text(pDX, IDC_EPSG_CODE, strEPSGCode);
-   m_GeoRefData.Name = T2A(strEPSGCode.GetString());
-}
-
-BEGIN_MESSAGE_MAP(CGeoReferencingPage, CPropertyPage)
-END_MESSAGE_MAP()
+public:
+   virtual void SetGeoreferencingData(const GeoreferencingData& data) = 0;
+   virtual GeoreferencingData GetGeoreferencingData() = 0;
+};

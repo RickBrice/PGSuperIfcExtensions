@@ -159,6 +159,9 @@
     <ClInclude Include="bSDD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Georeferencing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def">
