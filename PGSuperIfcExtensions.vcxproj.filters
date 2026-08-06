@@ -16,6 +16,9 @@
     <ClCompile Include="GeoReferencingPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Georeferencing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

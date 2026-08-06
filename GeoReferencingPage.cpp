@@ -59,7 +59,7 @@ void CGeoReferencingPage::DoDataExchange(CDataExchange* pDX)
    DDX_Text(pDX, IDC_NORTHINGS, m_GeoRefData.Northings);
    DDX_Text(pDX, IDC_ORTHOGONAL_HEIGHT, m_GeoRefData.OrthogonalHeight);
    DDX_Text(pDX, IDC_XAXIS_ABSCISSA, m_GeoRefData.XAxisAbscissa);
-   DDX_Text(pDX, IDC_YAXIS_ORDINATE, m_GeoRefData.YAxisOrdinate);
+   DDX_Text(pDX, IDC_XAXIS_ORDINATE, m_GeoRefData.XAxisOrdinate);
    DDX_Text(pDX, IDC_SCALE, m_GeoRefData.Scale);
 }
 

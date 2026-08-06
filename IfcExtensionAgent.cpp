@@ -75,11 +75,7 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
    if ( !pStrLoad->BeginUnit(_T("IfcExtensionAgent")) )
       return WBFL::EAF::Broker::LoadResult::Error;
 
-   //std::_tstring epsgCode;
-   //if ( !pStrLoad->Property(_T("EPSGCode"),&epsgCode) )
-   //   return WBFL::EAF::Broker::LoadResult::Error;
-
-   //m_EPSGCode = epsgCode.c_str();
+   m_GeoreferencingData.Load(pStrLoad);
 
    if ( !pStrLoad->EndUnit() )
       return WBFL::EAF::Broker::LoadResult::Error;
@@ -90,7 +86,7 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
 bool CIfcExtensionAgent::Save(WBFL::System::IStructuredSave* pStrSave)
 {
    pStrSave->BeginUnit(_T("IfcExtensionAgent"),1.0);
-   //pStrSave->Property(_T("EPSGCode"),m_EPSGCode);
+   m_GeoreferencingData.Save(pStrSave);
    pStrSave->EndUnit();
    return true;
 }

@@ -191,6 +191,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClCompile Include="IfcExtensions.cpp" />
     <ClCompile Include="IfcExtensionAgent.cpp" />
     <ClCompile Include="GeoReferencingPage.cpp" />
+    <ClCompile Include="Georeferencing.cpp" />
     <ClCompile Include="IfcExporter.cpp" />
     <ClCompile Include="ImportResults.cpp" />
     <ClCompile Include="PGSuperDataImporter.cpp" />

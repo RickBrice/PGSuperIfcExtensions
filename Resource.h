@@ -63,7 +63,7 @@
 #define IDC_NORTHINGS                   246
 #define IDC_ORTHOGONAL_HEIGHT           247
 #define IDC_XAXIS_ABSCISSA              248
-#define IDC_YAXIS_ORDINATE              249
+#define IDC_XAXIS_ORDINATE              249
 #define IDC_SCALE                       250
 
 // Next default values for new objects

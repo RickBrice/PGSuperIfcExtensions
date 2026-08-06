@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,15 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+namespace WBFL
+{
+   namespace System
+   {
+      class IStructuredSave;
+      class IStructuredLoad;
+   };
+};
+
 struct GeoreferencingData
 {
    // For IfcProjectedCRS
@@ -31,12 +40,15 @@ struct GeoreferencingData
    CString MapProjection = _T("Lambert Conformal Conic 2SP");
 
    // For IfcMapConversion
-   Float64 Eastings = 50000.;
-   Float64 Northings = 50000.;
+   Float64 Eastings = 1041929.;
+   Float64 Northings = 630714.;
    Float64 OrthogonalHeight = 0.;
    Float64 XAxisAbscissa = 1.;
-   Float64 YAxisOrdinate = 0.;
-   Float64 Scale = 1200. / 3937.; // us survey foot to meter conversion factor
+   Float64 XAxisOrdinate = 0.;
+   Float64 Scale = 3937. / 1200.; // us survey foot to meter conversion factor
+
+   void Save(WBFL::System::IStructuredSave* pSave) const;
+   void Load(WBFL::System::IStructuredLoad* pLoad);
 };
 
 // {03917488-9929-41F1-AB85-8FED05E73009}

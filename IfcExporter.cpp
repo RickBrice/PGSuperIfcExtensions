@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -2096,8 +2096,8 @@ void CreateSlab(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    representation_items->push(sectioned_solid);
    file.addEntity(sectioned_solid);
 
-   auto site = file.getSingle<typename Schema::IfcSite>();
-   auto deck_placement = site->ObjectPlacement();
+   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+   auto deck_placement = alignment->ObjectPlacement();
 
    typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
    auto shape_representation = new typename Schema::IfcShapeRepresentation(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
@@ -2314,8 +2314,8 @@ void CreateBarrierSystemRepresentation(IfcHierarchyHelper<Schema>& file, std::sh
 
    if (0 < representation_items->size())
    {
-      auto site = file.getSingle<typename Schema::IfcSite>();
-      auto barrier_placement = site->ObjectPlacement();
+      auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+      auto barrier_placement = alignment->ObjectPlacement();
 
 
       typename Schema::IfcRepresentation::list::ptr shape_representation_list(new typename Schema::IfcRepresentation::list);
@@ -3027,8 +3027,6 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
     auto site = file.addSite(project);
 
-    auto site_local_placement = file.getSingle<typename Schema::IfcLocalPlacement>(); // addSite creates a local placement so get it here
-
     std::string bridge_name(T2A(pProjectProperties->GetBridgeName()));
     if (bridge_name.empty()) bridge_name = "Unnamed Bridge";
 
@@ -3062,6 +3060,69 @@ void CreateBridge(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::B
  }
 
 template <typename Schema>
+void CreateSiteLocalPlacement(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   GET_IFACE2(pBroker, IBridge, pBridge);
+
+   // get the alignment intersection point of the first and last piers
+   auto nPiers = pBridge->GetPierCount();
+
+   CComPtr<IPoint2d> pntFirstLeft, pntFirstAlignment, pntFirstBridge, pntFirstRight;
+   pBridge->GetPierPoints(0, pgsTypes::pcGlobal, &pntFirstLeft, &pntFirstAlignment, &pntFirstBridge, &pntFirstRight);
+
+   CComPtr<IPoint2d> pntLastLeft, pntLastAlignment, pntLastBridge, pntLastRight;
+   pBridge->GetPierPoints(nPiers - 1, pgsTypes::pcGlobal, &pntLastLeft, &pntLastAlignment, &pntLastBridge, &pntLastRight);
+
+   Float64 x1, y1, x2, y2;
+   pntFirstAlignment->Location(&x1, &y1);
+   pntLastAlignment->Location(&x2, &y2);
+
+   // bounding box of the two pier/alignment intersection points
+   Float64 minX = Min(x1, x2);
+   Float64 maxY = Max(y1, y2);
+
+   // site local placement is the top left corner of the bounding box
+   auto site = file.getSingle<typename Schema::IfcSite>();
+   auto site_placement = file.addLocalPlacement(nullptr, minX, maxY, 0.0);
+   site->setObjectPlacement(site_placement);
+}
+
+template <typename Schema>
+void CreateGeoreferencing(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+{
+   USES_CONVERSION;
+
+   GET_IFACE2(pBroker, IGeoreferencing, pGeoRef);
+   const auto& georef = pGeoRef->GetGeoreferencingData();
+
+   auto dims = new typename Schema::IfcDimensionalExponents(1, 0, 0, 0, 0, 0, 0); // length dimension
+   auto si_meter = new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
+   auto factor_value = new typename Schema::IfcLengthMeasure(1200. / 3937.);
+   auto measure_with_unit = new typename Schema::IfcMeasureWithUnit(factor_value, si_meter);
+   auto us_survey_foot = new typename Schema::IfcConversionBasedUnit(dims, Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::string("US survey foot"), measure_with_unit);
+   file.addEntity(us_survey_foot);
+
+   auto projected_crs = new typename Schema::IfcProjectedCRS(
+      std::string("EPSG:").append((LPCSTR)T2A(georef.Name)),
+      std::string(T2A(georef.Description)),
+      std::string(T2A(georef.GeodeticDatum)),
+      std::string("EPSG:").append(T2A(georef.VerticalDatum)),
+      std::string(T2A(georef.MapProjection)),
+      boost::none, us_survey_foot);
+   file.addEntity(projected_crs);
+
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   auto map_conversion = new typename Schema::IfcMapConversion(
+      geometric_representation_context,
+      projected_crs,
+      georef.Eastings, georef.Northings, georef.OrthogonalHeight,
+      georef.XAxisAbscissa,
+      georef.XAxisOrdinate,
+      georef.Scale);
+   file.addEntity(map_conversion);
+}
+
+template <typename Schema>
 bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath)
 {
    USES_CONVERSION;
@@ -3076,27 +3137,8 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    auto project = file.getSingle<typename Schema::IfcProject>();
    AddPropertySet(file,project,Create_Pset_ProjectCommon<Schema>(file));
 
-   GET_IFACE2(pBroker, IGeoreferencing, pGeoRef);
-   const auto& georef = pGeoRef->GetGeoreferencingData();
-
-   auto projected_crs = new typename Schema::IfcProjectedCRS(
-      std::string("EPSG:").append((LPCSTR)T2A(georef.Name)),
-      std::string(T2A(georef.Description)),
-      std::string(T2A(georef.GeodeticDatum)),
-      std::string("EPSG:").append(T2A(georef.VerticalDatum)),
-      std::string(T2A(georef.MapProjection)),
-      boost::none, nullptr);
-   file.addEntity(projected_crs);
-
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   auto map_conversion = new typename Schema::IfcMapConversion(
-      geometric_representation_context,
-      projected_crs,
-      georef.Eastings, georef.Northings, georef.OrthogonalHeight,
-      georef.XAxisAbscissa,
-      georef.YAxisOrdinate,
-      georef.Scale);
-   file.addEntity(map_conversion);
+   CreateSiteLocalPlacement<Schema>(file, pBroker);
+   CreateGeoreferencing<Schema>(file, pBroker);
 
    if (options.model_elements == CIfcExportOptions::ModelElements::GirderOnly)
    {

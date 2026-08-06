@@ -810,13 +810,8 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    auto axis_model_representation_subcontext = new typename Schema::IfcGeometricRepresentationSubContext(std::string("Axis"), std::string("Model"), geometric_representation_context, boost::none, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, boost::none);
    file.addEntity(axis_model_representation_subcontext);
 
-   // place the alignment relative to the site
-   auto site = file.getSingle<typename Schema::IfcSite>();
-   auto local_placement = site->ObjectPlacement();
-   if (!local_placement)
-   {
-      local_placement = file.addLocalPlacement();
-   }
+   // place alignment relative to (0,0) since all of its geometry is defined in absolute coordinates.
+   auto local_placement = file.addLocalPlacement();
 
    // create the alignment now, with a placement but without a representation. the representation is backfilled
    // once the horizontal/vertical layouts (or polyline) have been built, below.
@@ -848,6 +843,7 @@ void CreateAlignment(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF
    // IfcSite <-> IfcRelReferencedInSpatialStructure <-> IfcAlignment
    // This means IfcAlignment is not part of the IfcSite (it is not an aggregate component) but instead IfcAlignment is used within
    // the IfcSite by reference. This implies an IfcAlignment can traverse many IfcSite instances within an IfcProject
+   auto site = file.getSingle<typename Schema::IfcSite>();
    file.addRelatedObject<typename Schema::IfcRelReferencedInSpatialStructure>(site,alignment);
 
    DefineLinearReferencingMethod<Schema>(file);
