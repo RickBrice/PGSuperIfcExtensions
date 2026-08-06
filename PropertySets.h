@@ -232,7 +232,7 @@ typename Schema::IfcPropertySet* Create_Pset_PrecastConcreteElementGeneral(IfcHi
 {
    USES_CONVERSION;
 
-   GET_IFACE2(pBroker, IBridge, pBridge);
+   GET_IFACE2_NOCHECK(pBroker, IBridge, pBridge);
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);
    GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);

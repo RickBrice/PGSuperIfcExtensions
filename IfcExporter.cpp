@@ -32,6 +32,8 @@
 #include "Materials.h"
 #include "ConstructionSequence.h"
 
+#include "proj.h"
+
 #include <IFace/Tools.h>
 #include <IFace\VersionInfo.h>
 #include <IFace\DocumentType.h>
@@ -3085,6 +3087,9 @@ void CreateSiteLocalPlacement(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
    auto site = file.getSingle<typename Schema::IfcSite>();
    auto site_placement = file.addLocalPlacement(nullptr, minX, maxY, 0.0);
    site->setObjectPlacement(site_placement);
+
+   PJ_CONTEXT* C = proj_context_create();
+   proj_context_destroy(C);
 }
 
 template <typename Schema>

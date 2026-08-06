@@ -244,3 +244,6 @@ ModelManifest.xml
 # Custom
 *.bak
 
+CMakeUserPresets.json
+build/
+vcpkg_installed/
