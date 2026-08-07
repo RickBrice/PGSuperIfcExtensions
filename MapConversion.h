@@ -6,6 +6,9 @@
 #include "Georeferencing.h"
 #include <IFace/Project.h>
 
+CString GetProjDbPath(); // path to proj.db, deployed alongside this plugin's exe
+PJ_CONTEXT* CreatePjContext(); // proj_context_create() with the proj.db path already configured
+
 double get_map_unit_to_meters(PJ_CONTEXT* C, const char* projected_epsg);
 std::string get_projected_epsg(std::shared_ptr<WBFL::EAF::Broker> pBroker);
 std::pair<double, double> map_to_lonlat(std::shared_ptr<WBFL::EAF::Broker> pBroker,double easting, double norting);

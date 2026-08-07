@@ -2,11 +2,25 @@
 #include "MapConversion.h"
 #include <EAF\EAFApp.h>
 
+CString GetProjDbPath()
+{
+   CString strApp = EAFGetApp()->GetAppLocation();
+   return strApp + _T("proj\\proj.db");
+}
+
+PJ_CONTEXT* CreatePjContext()
+{
+   USES_CONVERSION;
+   PJ_CONTEXT* C = proj_context_create();
+   std::string db_path = T2A(GetProjDbPath());
+   proj_context_set_database_path(C, db_path.c_str(), nullptr, nullptr);
+   return C;
+}
+
 double get_map_unit_to_meters(PJ_CONTEXT* C, const char* projected_epsg)
 {
    USES_CONVERSION;
-   CString strApp = EAFGetApp()->GetAppLocation();
-   std::string db_path = T2A(strApp + _T("proj\\proj.db"));
+   std::string db_path = T2A(GetProjDbPath());
    proj_context_set_database_path(C, db_path.c_str(), nullptr, nullptr);
 
    PJ* crs = proj_create(C, projected_epsg);

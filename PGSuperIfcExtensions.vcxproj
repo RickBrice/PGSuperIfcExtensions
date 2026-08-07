@@ -200,6 +200,8 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClCompile Include="IfcAlignmentImporter.cpp" />
     <ClCompile Include="IfcBridgeImporter.cpp" />
     <ClCompile Include="IfcGeoreferencingImporter.cpp" />
+    <ClCompile Include="EpsgCatalog.cpp" />
+    <ClCompile Include="EpsgPickerDlg.cpp" />
     <ClCompile Include="ImportOptions.cpp" />
     <ClCompile Include="ExportOptions.cpp" />
     <ClCompile Include="IfcImporter.cpp" />
@@ -233,6 +235,8 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="IfcBridgeImporter.h" />
     <ClInclude Include="IfcGeoreferencingImporter.h" />
+    <ClInclude Include="EpsgCatalog.h" />
+    <ClInclude Include="EpsgPickerDlg.h" />
     <ClInclude Include="ImportResults.h" />
     <ClInclude Include="MapConversion.h" />
     <ClInclude Include="Piers.h" />

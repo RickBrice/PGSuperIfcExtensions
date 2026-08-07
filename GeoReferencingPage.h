@@ -59,6 +59,9 @@ public:
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
 	virtual BOOL OnInitDialog() override;
+	virtual BOOL OnSetActive() override;
 
+	afx_msg void OnBrowseEpsgCode();
+	afx_msg void OnBrowseVerticalDatum();
 	DECLARE_MESSAGE_MAP()
 };
