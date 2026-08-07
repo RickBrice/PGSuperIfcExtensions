@@ -65,14 +65,22 @@
 #define IDC_XAXIS_ABSCISSA              248
 #define IDC_XAXIS_ORDINATE              249
 #define IDC_SCALE                       250
+#define IDC_CRS_GROUPBOX                251
+#define IDC_MAP_CONVERSION_GROUPBOX     252
+#define IDC_EASTINGS_LABEL              253
+#define IDC_NORTHINGS_LABEL             254
+#define IDC_ORTHOGONAL_HEIGHT_LABEL     255
+#define IDC_XAXIS_ABSCISSA_LABEL        256
+#define IDC_XAXIS_ORDINATE_LABEL        257
+#define IDC_SCALE_LABEL                 258
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        251
+#define _APS_NEXT_RESOURCE_VALUE        259
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         251
+#define _APS_NEXT_CONTROL_VALUE         259
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

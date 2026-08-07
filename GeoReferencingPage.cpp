@@ -63,5 +63,43 @@ void CGeoReferencingPage::DoDataExchange(CDataExchange* pDX)
    DDX_Text(pDX, IDC_SCALE, m_GeoRefData.Scale);
 }
 
+BOOL CGeoReferencingPage::OnInitDialog()
+{
+   CPropertyPage::OnInitDialog();
+
+   if (m_GeoRefData.IsCRSValid)
+   {
+      static const int crsControlIds[] = { IDC_EPSG_CODE, IDC_DESCRIPTION, IDC_GEODETIC_DATUM, IDC_VERTICAL_DATUM, IDC_MAP_PROJECTION };
+      for (int id : crsControlIds)
+      {
+         GetDlgItem(id)->EnableWindow(FALSE);
+      }
+   }
+
+   static const int mapConversionControlIds[] = { IDC_EASTINGS, IDC_NORTHINGS, IDC_ORTHOGONAL_HEIGHT, IDC_XAXIS_ABSCISSA, IDC_XAXIS_ORDINATE, IDC_SCALE };
+   static const int mapConversionLabelIds[] = { IDC_EASTINGS_LABEL, IDC_NORTHINGS_LABEL, IDC_ORTHOGONAL_HEIGHT_LABEL, IDC_XAXIS_ABSCISSA_LABEL, IDC_XAXIS_ORDINATE_LABEL, IDC_SCALE_LABEL };
+   if (m_GeoRefData.IsMapConversionValid)
+   {
+      for (int id : mapConversionControlIds)
+      {
+         GetDlgItem(id)->EnableWindow(FALSE);
+      }
+   }
+   else
+   {
+      GetDlgItem(IDC_MAP_CONVERSION_GROUPBOX)->ShowWindow(SW_HIDE);
+      for (int id : mapConversionControlIds)
+      {
+         GetDlgItem(id)->ShowWindow(SW_HIDE);
+      }
+      for (int id : mapConversionLabelIds)
+      {
+         GetDlgItem(id)->ShowWindow(SW_HIDE);
+      }
+   }
+
+   return TRUE;
+}
+
 BEGIN_MESSAGE_MAP(CGeoReferencingPage, CPropertyPage)
 END_MESSAGE_MAP()

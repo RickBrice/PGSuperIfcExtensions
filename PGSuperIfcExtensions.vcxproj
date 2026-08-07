@@ -124,6 +124,12 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
+    <PostBuildEvent>
+      <Command>xcopy /Y /I "$(ProjectDir)vcpkg_installed\x64-windows\x64-windows\share\proj" "$(OutDir)proj\"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying proj.db along side EXE</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <CustomBuildStep>
@@ -180,6 +186,12 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <Manifest>
       <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
     </Manifest>
+    <PostBuildEvent>
+      <Command>xcopy /Y /I "$(ProjectDir)vcpkg_installed\x64-windows\x64-windows\share\proj" "$(OutDir)proj\"</Command>
+    </PostBuildEvent>
+    <PostBuildEvent>
+      <Message>Copying proj.db along side EXE</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BeamSpacing.cpp" />
@@ -187,6 +199,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="IfcAlignmentImporter.cpp" />
     <ClCompile Include="IfcBridgeImporter.cpp" />
+    <ClCompile Include="IfcGeoreferencingImporter.cpp" />
     <ClCompile Include="ImportOptions.cpp" />
     <ClCompile Include="ExportOptions.cpp" />
     <ClCompile Include="IfcImporter.cpp" />
@@ -197,6 +210,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClCompile Include="Georeferencing.cpp" />
     <ClCompile Include="IfcExporter.cpp" />
     <ClCompile Include="ImportResults.cpp" />
+    <ClCompile Include="MapConversion.cpp" />
     <ClCompile Include="PGSuperDataImporter.cpp" />
     <ClCompile Include="PGSuperDataExporter.cpp" />
     <ClCompile Include="PGSuperProjectImporter.cpp" />
@@ -218,7 +232,9 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <ClInclude Include="Georeferencing.h" />
     <ClInclude Include="IfcAlignmentImporter.h" />
     <ClInclude Include="IfcBridgeImporter.h" />
+    <ClInclude Include="IfcGeoreferencingImporter.h" />
     <ClInclude Include="ImportResults.h" />
+    <ClInclude Include="MapConversion.h" />
     <ClInclude Include="Piers.h" />
     <ClInclude Include="PropertySets.h" />
     <ClInclude Include="QuantitySets.h" />

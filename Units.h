@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 #include <EAF\EAFDisplayUnits.h>
+#include <CoordGeom\Angle.h>
 
 template <typename Schema>
 typename Schema::IfcConversionBasedUnit* FindUnitByName(IfcHierarchyHelper<Schema>& file, const std::string& name)
@@ -287,4 +288,12 @@ typename Schema::IfcConversionBasedUnit* GetAngleUnit(IfcHierarchyHelper<Schema>
       );
    }
    return unit;
+}
+
+template <typename Schema>
+std::vector<int> GetCompoundPlaneAngleMeasure(Float64 angle_deg)
+{
+   WBFL::COGO::Angle angle(WBFL::Units::Convert(angle_deg,WBFL::Units::Measure::Degree,WBFL::Units::Measure::Radian));
+   auto [d, m, s] = angle.GetDMS();
+   return { d, m, static_cast<int>(s) };
 }

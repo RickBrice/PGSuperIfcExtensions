@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "IfcImporter.h"
 #include "IfcImporterException.h"
+#include "IfcGeoreferencingImporter.h"
 #include "IfcAlignmentImporter.h"
 #include "IfcBridgeImporter.h"
 #include "Units.h"
@@ -270,6 +271,10 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
          InitUnits(*pFile);
 
+         auto import_georef_result = ImportGeoreferencing(*pFile);
+         if (import_georef_result == ImportResult::Fail)
+            hr = E_FAIL;
+
          auto import_alignment_result = ImportAlignment(*pFile);
          if (import_alignment_result == ImportResult::Fail)
             hr = E_FAIL;
@@ -306,6 +311,11 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
     WBFL::System::Logger::SetOutput(m_pOldLogStream);
 
    return hr;
+}
+
+CIfcImporter::ImportResult CIfcImporter::ImportGeoreferencing(IfcParse::IfcFile& file)
+{
+   return CIfcGeoreferencingImporter(*this).Import(file);
 }
 
 CIfcImporter::ImportResult CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)

@@ -29,33 +29,41 @@ static LPCTSTR MapConversionUnitName = _T("MapConversion");
 
 void GeoreferencingData::Save(WBFL::System::IStructuredSave* pSave) const
 {
-   pSave->BeginUnit(UnitName, 1.0);
+   pSave->BeginUnit(UnitName, 2.0);
 
-   pSave->BeginUnit(ProjectedCRSUnitName, 1.0);
+   pSave->BeginUnit(ProjectedCRSUnitName, 2.0);
    pSave->Property(_T("Name"), Name);
    pSave->Property(_T("Description"), Description);
    pSave->Property(_T("GeodeticDatum"), GeodeticDatum);
    pSave->Property(_T("VerticalDatum"), VerticalDatum);
    pSave->Property(_T("MapProjection"), MapProjection);
-   pSave->EndUnit();
+   pSave->Property(_T("IsCRSValid"), IsCRSValid);
+   pSave->Property(_T("MapZone"), MapZone);
+   pSave->Property(_T("IsMapUnitSI"), IsMapUnitSI);
+   pSave->Property(_T("MapUnitName"), MapUnitName);
+   pSave->Property(_T("MapUnitToMeters"), MapUnitToMeters);
+   pSave->EndUnit(); // ProjectedCRS
 
    pSave->BeginUnit(MapConversionUnitName, 1.0);
+   pSave->Property(_T("IsMapConversionValid"), IsMapConversionValid);
    pSave->Property(_T("Eastings"), Eastings);
    pSave->Property(_T("Northings"), Northings);
    pSave->Property(_T("OrthogonalHeight"), OrthogonalHeight);
    pSave->Property(_T("XAxisAbscissa"), XAxisAbscissa);
    pSave->Property(_T("XAxisOrdinate"), XAxisOrdinate);
    pSave->Property(_T("Scale"), Scale);
-   pSave->EndUnit();
+   pSave->EndUnit(); // MapConversion
 
-   pSave->EndUnit();
+   pSave->EndUnit(); // Georeferencing
 }
 
 void GeoreferencingData::Load(WBFL::System::IStructuredLoad* pLoad)
 {
    if (!pLoad->BeginUnit(UnitName)) THROW_LOAD(InvalidFileFormat, pLoad);
+   Float64 georef_version = pLoad->GetVersion();
 
    if (!pLoad->BeginUnit(ProjectedCRSUnitName)) THROW_LOAD(InvalidFileFormat, pLoad);
+   Float64 crs_version = pLoad->GetVersion();
    std::_tstring value;
    if (!pLoad->Property(_T("Name"), &value)) THROW_LOAD(InvalidFileFormat, pLoad);
    Name = value.c_str();
@@ -67,16 +75,38 @@ void GeoreferencingData::Load(WBFL::System::IStructuredLoad* pLoad)
    VerticalDatum = value.c_str();
    if (!pLoad->Property(_T("MapProjection"), &value)) THROW_LOAD(InvalidFileFormat, pLoad);
    MapProjection = value.c_str();
-   if (!pLoad->EndUnit()) THROW_LOAD(InvalidFileFormat, pLoad);
 
-   if (!pLoad->BeginUnit(MapConversionUnitName)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->Property(_T("Eastings"), &Eastings)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->Property(_T("Northings"), &Northings)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->Property(_T("OrthogonalHeight"), &OrthogonalHeight)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->Property(_T("XAxisAbscissa"), &XAxisAbscissa)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->Property(_T("XAxisOrdinate"), &XAxisOrdinate)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->Property(_T("Scale"), &Scale)) THROW_LOAD(InvalidFileFormat, pLoad);
-   if (!pLoad->EndUnit()) THROW_LOAD(InvalidFileFormat, pLoad);
+   if (2.0 <= crs_version)
+   {
+      bool bValue;
+      if (!pLoad->Property(_T("IsCRSValid"), &bValue)) THROW_LOAD(InvalidFileFormat, pLoad);
+      IsCRSValid = bValue;
+      if (!pLoad->Property(_T("MapZone"), &value)) THROW_LOAD(InvalidFileFormat, pLoad);
+      MapZone = value.c_str();
+      if (!pLoad->Property(_T("IsMapUnitSI"), &bValue)) THROW_LOAD(InvalidFileFormat, pLoad);
+      IsMapUnitSI = bValue;
+      if (!pLoad->Property(_T("MapUnitName"), &value)) THROW_LOAD(InvalidFileFormat, pLoad);
+      MapUnitName = value.c_str();
+      if (!pLoad->Property(_T("MapUnitToMeters"), &MapUnitToMeters)) THROW_LOAD(InvalidFileFormat, pLoad);
+   }
+   // else: older file format predates these properties - leave the in-class default values in place
+   if (!pLoad->EndUnit()) THROW_LOAD(InvalidFileFormat, pLoad); // ProjectedCRS
 
-   if (!pLoad->EndUnit()) THROW_LOAD(InvalidFileFormat, pLoad);
+   if (2.0 <= georef_version)
+   {
+      if (!pLoad->BeginUnit(MapConversionUnitName)) THROW_LOAD(InvalidFileFormat, pLoad);
+      bool bValue;
+      if (!pLoad->Property(_T("IsMapConversionValid"), &bValue)) THROW_LOAD(InvalidFileFormat, pLoad);
+      IsMapConversionValid = bValue;
+      if (!pLoad->Property(_T("Eastings"), &Eastings)) THROW_LOAD(InvalidFileFormat, pLoad);
+      if (!pLoad->Property(_T("Northings"), &Northings)) THROW_LOAD(InvalidFileFormat, pLoad);
+      if (!pLoad->Property(_T("OrthogonalHeight"), &OrthogonalHeight)) THROW_LOAD(InvalidFileFormat, pLoad);
+      if (!pLoad->Property(_T("XAxisAbscissa"), &XAxisAbscissa)) THROW_LOAD(InvalidFileFormat, pLoad);
+      if (!pLoad->Property(_T("XAxisOrdinate"), &XAxisOrdinate)) THROW_LOAD(InvalidFileFormat, pLoad);
+      if (!pLoad->Property(_T("Scale"), &Scale)) THROW_LOAD(InvalidFileFormat, pLoad);
+      if (!pLoad->EndUnit()) THROW_LOAD(InvalidFileFormat, pLoad); // MapConversion
+   }
+   // else: older file format never wrote the MapConversion unit - leave the in-class default values in place
+
+   if (!pLoad->EndUnit()) THROW_LOAD(InvalidFileFormat, pLoad); // Georeferencing
 }

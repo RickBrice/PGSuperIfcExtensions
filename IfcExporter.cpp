@@ -32,14 +32,13 @@
 #include "Materials.h"
 #include "ConstructionSequence.h"
 
-#include "proj.h"
-
 #include <IFace/Tools.h>
 #include <IFace\VersionInfo.h>
 #include <IFace\DocumentType.h>
 #include <IFace\PrestressForce.h>
 
 #include "Georeferencing.h"
+#include "MapConversion.h"
 
 
 #include <EAF/AutoProgress.h>
@@ -49,14 +48,6 @@
 #include <PsgLib\BridgeDescription2.h>
 #include <Plugins\BeamFamilyCLSID.h>
 #include <GeomModel/GeomModel.h>
-
-//namespace std
-//{
-//   double lerp(double a, double b, double t)
-//   {
-//      return a + t * (b - a);
-//   }
-//}
 
 constexpr Float64 gs_InsideBendRadius = 0.01; // dummy inside bend radius.
 
@@ -3087,9 +3078,12 @@ void CreateSiteLocalPlacement(IfcHierarchyHelper<Schema>& file, std::shared_ptr<
    auto site = file.getSingle<typename Schema::IfcSite>();
    auto site_placement = file.addLocalPlacement(nullptr, minX, maxY, 0.0);
    site->setObjectPlacement(site_placement);
+   
+   auto anchor = map_to_lonlat(pBroker, minX, maxY);
+   site->setRefLongitude(GetCompoundPlaneAngleMeasure<Schema>(anchor.first));
+   site->setRefLatitude(GetCompoundPlaneAngleMeasure<Schema>(anchor.second));
+   site->setRefElevation(0.0);
 
-   PJ_CONTEXT* C = proj_context_create();
-   proj_context_destroy(C);
 }
 
 template <typename Schema>
@@ -3100,12 +3094,8 @@ void CreateGeoreferencing(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL
    GET_IFACE2(pBroker, IGeoreferencing, pGeoRef);
    const auto& georef = pGeoRef->GetGeoreferencingData();
 
-   auto dims = new typename Schema::IfcDimensionalExponents(1, 0, 0, 0, 0, 0, 0); // length dimension
-   auto si_meter = new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
-   auto factor_value = new typename Schema::IfcLengthMeasure(1200. / 3937.);
-   auto measure_with_unit = new typename Schema::IfcMeasureWithUnit(factor_value, si_meter);
-   auto us_survey_foot = new typename Schema::IfcConversionBasedUnit(dims, Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::string("US survey foot"), measure_with_unit);
-   file.addEntity(us_survey_foot);
+   auto map_unit = CreateMapUnit<Schema>(georef);
+   file.addEntity(map_unit);
 
    auto projected_crs = new typename Schema::IfcProjectedCRS(
       std::string("EPSG:").append((LPCSTR)T2A(georef.Name)),
@@ -3113,17 +3103,24 @@ void CreateGeoreferencing(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL
       std::string(T2A(georef.GeodeticDatum)),
       std::string("EPSG:").append(T2A(georef.VerticalDatum)),
       std::string(T2A(georef.MapProjection)),
-      boost::none, us_survey_foot);
+      georef.MapZone.IsEmpty() ? boost::none : boost::optional<std::string>(std::string(T2A(georef.MapZone))),
+      map_unit);
    file.addEntity(projected_crs);
 
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   auto map_conversion = new typename Schema::IfcMapConversion(
-      geometric_representation_context,
-      projected_crs,
-      georef.Eastings, georef.Northings, georef.OrthogonalHeight,
-      georef.XAxisAbscissa,
-      georef.XAxisOrdinate,
-      georef.Scale);
+   typename Schema::IfcMapConversion* map_conversion = nullptr;
+   if (georef.IsMapConversionValid)
+   {
+      // echo back exactly what was imported - do not recompute
+      auto geometric_representation_context = file.getRepresentationContext(std::string("Model"));
+      map_conversion = new typename Schema::IfcMapConversion(
+         geometric_representation_context, projected_crs,
+         georef.Eastings, georef.Northings, georef.OrthogonalHeight,
+         georef.XAxisAbscissa, georef.XAxisOrdinate, georef.Scale);
+   }
+   else
+   {
+      map_conversion = create_map_conversion<Schema>(file, pBroker, projected_crs);
+   }
    file.addEntity(map_conversion);
 }
 

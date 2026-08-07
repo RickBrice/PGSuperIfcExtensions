@@ -73,7 +73,7 @@ private:
    std::ostringstream m_LogStream;
    std::ostream* m_pOldLogStream = nullptr;
 
-
+   ImportResult ImportGeoreferencing(IfcParse::IfcFile& file);
    ImportResult ImportAlignment(IfcParse::IfcFile& file);
    ImportResult ImportBridge(IfcParse::IfcFile& file, bool bDeriveAlignmentFromDeck);
 
