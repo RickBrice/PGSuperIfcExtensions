@@ -81,8 +81,6 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Computing beam spacing"));
 
-   WBFL::System::Logger::Info(_T("Beam Spacing"));
-
    auto beam_ids = get_beam_ids(file);
 
    ifcopenshell::geometry::Settings settings;

@@ -46,6 +46,7 @@ CIfcBridgeImporter::CIfcBridgeImporter(CIfcImporter& importer) :
 
 CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, bool bDeriveAlignmentFromDeck)
 {
+   WBFL::System::Logger::Info(_T("Importing from bridge IFC file."));
    auto bridge = GetBridge(file);
    if (bridge == nullptr)
       return CIfcImporter::ImportResult::NotFound;
@@ -63,18 +64,18 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(IfcParse::IfcFile& file, b
    auto nPiers = get_pier_count(file);
 
    SpanIndexType nSpans = INVALID_INDEX;
-   auto value = GetProperty<IfcSchema, IfcSchema::IfcInteger>(bridge, "usBridge_BridgeCommon", "usBridge_NumberOfSpans");
+   auto value = GetProperty<IfcSchema, IfcSchema::IfcInteger>(bridge, "usBrPset_BridgeGeometry", "NumberOfSpans");
    if (value)
    {
       nSpans = (SpanIndexType)(*value);
       if (nSpans != nPiers - 1)
-         IFC_THROW(_T("Number of spans modeled does not match number of spans in usBridge_BridgeCommon property set"));
+         IFC_THROW(_T("Number of spans modeled does not match number of spans in usBrPset_BridgeGeometry property set"));
    }
    else
    {
-      WBFL::System::Logger::Info(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
+      WBFL::System::Logger::Info(_T("NumberOfSpans property not found in usBrPset_BridgeGeometry property set"));
       nSpans = nPiers - 1; // derive number of spans from nPiers so we don't rely on custom property set
-      //IFC_THROW(_T("usBridge_NumberOfSpans property not found in usBridge_BridgeCommon property set"));
+      //IFC_THROW(_T("usBridge_NumberOfSpans property not found in usBrPset_BridgeGeometry property set"));
    }
 
    std::vector<GirderIndexType> nGirders;
@@ -268,13 +269,13 @@ void CIfcBridgeImporter::SetGirderProperties(IfcParse::IfcFile& file, CBridgeDes
    for (auto beam : *beams)
    {
       auto predefined_type = GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam);
-      if (predefined_type.value_or(IfcSchema::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM && HasClassification<IfcSchema>(beam, "usBridge_GirderPrestressedConcrete"))
+      if (predefined_type.value_or(IfcSchema::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM && HasClassification<IfcSchema>(beam, "usBridge_GirderPrecastConcrete"))
          prestressed_beams->push(beam);
    }
 
    if (prestressed_beams->size() == 0)
    {
-      WBFL::System::Logger::Info("Did not find IfcBeam in the superstructure spatial structure classified as usBridge_GirderPrestressedConcrete. Assuming all superstructure IfcBeam.BEAM are prestressed girders.");
+      WBFL::System::Logger::Info("Did not find IfcBeam in the superstructure spatial structure classified as usBridge_GirderPrecastConcrete. Assuming all superstructure IfcBeam.BEAM are prestressed girders.");
       auto beam_ids = get_beam_ids(file);
       for (auto id : beam_ids)
       {
@@ -432,7 +433,7 @@ bool CIfcBridgeImporter::HasValidGirdersByTPF(IfcParse::IfcFile& file, IfcSchema
          {
             // This is not a great requirement - TPF has decided that this is the only way to determine if a beam is prestressed concrete
             // I think we are going to find that many don't use this classification
-            if (!HasClassification<IfcSchema>(beam, "usBridge_GirderPrestressedConcrete"))
+            if (!HasClassification<IfcSchema>(beam, "GirderPrestressedConcrete"))
             {
                valid_beams = false;
                break;

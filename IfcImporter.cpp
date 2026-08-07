@@ -50,6 +50,7 @@ CIfcImporter::~CIfcImporter(void)
 
 void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
 {
+   WBFL::System::Logger::Info(_T("Initializing units and precision from IFC file."));
    auto geometric_representation_contexts = file.instances_by_type<IfcSchema::IfcGeometricRepresentationContext>();
    auto geometric_representation_context = (0 < geometric_representation_contexts->size()) ? *(geometric_representation_contexts->begin()) : nullptr;
 #pragma Reminder("WORKING HERE - There could be multiple geometric representation contexts, how do we know if we have the right one?")
@@ -231,10 +232,13 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    USES_CONVERSION;
 
+
    HRESULT hr = S_OK;
    try
    {
       m_pOldLogStream = WBFL::System::Logger::SetOutput(&m_LogStream);
+
+      WBFL::System::Logger::Info(_T("Starting IFC import from file"));
 
       std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
 
@@ -296,6 +300,8 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
     CImportResults dlg(m_LogStream);
     dlg.DoModal();
+
+    WBFL::System::Logger::Info(_T("Done IFC import from file"));
 
     WBFL::System::Logger::SetOutput(m_pOldLogStream);
 

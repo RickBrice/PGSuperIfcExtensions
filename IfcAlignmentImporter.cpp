@@ -135,6 +135,7 @@ CIfcAlignmentImporter::CIfcAlignmentImporter(CIfcImporter& importer) :
 
 CIfcImporter::ImportResult CIfcAlignmentImporter::Import(IfcParse::IfcFile& file)
 {
+   WBFL::System::Logger::Info(_T("Importing alignment data from IFC file..."));
    auto result = InitAlignmentParameters(file);
    if (result == CIfcImporter::ImportResult::Success)
    {
