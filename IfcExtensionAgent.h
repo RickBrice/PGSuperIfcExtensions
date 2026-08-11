@@ -84,6 +84,10 @@ public:
    // IEditAlignmentCallback where its page belongs (see CExtensionPageManager).
    ExtensionPagePosition GetPropertyPagePosition() override { return ExtensionPagePosition::AtStart(); }
 
+   // Names this page "Georeferencing" instead of the framework's auto-generated "ExtensionN",
+   // so a future menu command could look it up by a fixed name instead of computing it.
+   std::_tstring GetPropertyPageName() override { return _T("Georeferencing"); }
+
    DECLARE_MESSAGE_MAP()
 
 private:
