@@ -79,6 +79,7 @@
 #define IDC_EPSG_SEARCH                 262
 #define IDC_EPSG_LIST                   263
 #define IDC_EPSG_LEGEND                 264
+#define ID_EDIT_GEOREFERENCING          32771
 
 // Next default values for new objects
 //

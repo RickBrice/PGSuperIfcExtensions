@@ -45,7 +45,8 @@ class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheri
    public WBFL::EAF::IAgentPersist,
    public WBFL::EAF::IAgentUIIntegration,
    public IGeoreferencing,
-   public IEditAlignmentCallback
+   public IEditAlignmentCallback,
+   public WBFL::EAF::ICommandCallback
 {
 public:
    CIfcExtensionAgent()
@@ -85,8 +86,16 @@ public:
    ExtensionPagePosition GetPropertyPagePosition() override { return ExtensionPagePosition::AtStart(); }
 
    // Names this page "Georeferencing" instead of the framework's auto-generated "ExtensionN",
-   // so a future menu command could look it up by a fixed name instead of computing it.
+   // so OnEditGeoreferencing() can look it up by a fixed name it doesn't have to compute.
    std::_tstring GetPropertyPageName() override { return _T("Georeferencing"); }
+
+// ICommandCallback
+public:
+   BOOL OnCommandMessage(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo) override;
+   BOOL GetStatusBarMessageString(UINT nID, CString& rMessage) const override;
+   BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
+
+   afx_msg void OnEditGeoreferencing();
 
    DECLARE_MESSAGE_MAP()
 
@@ -96,6 +105,11 @@ private:
    void RegisterUIExtensions();
    void UnregisterUIExtensions();
    IDType m_EditAlignmentCallbackID;
+
+   std::shared_ptr<WBFL::EAF::Menu> m_pEditMenu;
+   CBitmap m_bmpMenu;
+   void CreateMenus();
+   void RemoveMenus();
 
    GeoreferencingData m_GeoreferencingData;
 };

@@ -49,6 +49,7 @@ const GUID IID_IEAFStatusCenter = { 0x77977e9b, 0xb074, 0x401f, { 0x89, 0x94, 0x
 #include "PGSuperProjectImporter.h"
 #include "IfcExtensionAgent.h"
 
+#include <IFace\EditByUI.h>
 #include <IFace\Project.h>
 #include <IFace\VersionInfo.h>
 #include <IFace\Alignment.h>

@@ -27,9 +27,12 @@
 #include "IfcExtensionAgent.h"
 
 #include <IFace\Tools.h>
+#include <IFace\EditByUI.h>
 #include <EAF\Transaction.h>
+#include "EditGeoreferencing.h"
 
 BEGIN_MESSAGE_MAP(CIfcExtensionAgent,CCmdTarget)
+   ON_COMMAND(ID_EDIT_GEOREFERENCING,&CIfcExtensionAgent::OnEditGeoreferencing)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////
@@ -47,12 +50,17 @@ bool CIfcExtensionAgent::Init()
 {
    EAF_AGENT_INIT;
    CREATE_LOGFILE(_T("IfcExtensionAgent"));
+
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   VERIFY(m_bmpMenu.LoadBitmap(IDB_BSI));
+
    return true;
 }
 
 bool CIfcExtensionAgent::Reset()
 {
    EAF_AGENT_RESET;
+   m_bmpMenu.DeleteObject();
    return true;
 }
 
@@ -99,13 +107,93 @@ bool CIfcExtensionAgent::IntegrateWithUI(bool bIntegrate)
    if ( bIntegrate )
    {
       RegisterUIExtensions();
+      CreateMenus();
    }
    else
    {
+      RemoveMenus();
       UnregisterUIExtensions();
    }
 
    return true;
+}
+
+void CIfcExtensionAgent::CreateMenus()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   GET_IFACE(IEAFMainMenu,pMainMenu);
+   auto pMenu = pMainMenu->GetMainMenu();
+
+   UINT editPos = pMenu->FindMenuItem(_T("Edit"));
+   m_pEditMenu = pMenu->GetSubMenu(editPos);
+
+   UINT alignmentPos = m_pEditMenu->FindMenuItem(_T("Alignment..."));
+
+   auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+   m_pEditMenu->InsertMenu(alignmentPos, ID_EDIT_GEOREFERENCING, _T("&Georeferencing..."), callback);
+   m_pEditMenu->SetMenuItemBitmaps(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
+}
+
+void CIfcExtensionAgent::RemoveMenus()
+{
+   if ( m_pEditMenu )
+   {
+      auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+      m_pEditMenu->RemoveMenu(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, callback);
+      m_pEditMenu.reset();
+   }
+}
+
+////////////////////////////////////////////////////////////////////
+// ICommandCallback
+
+BOOL CIfcExtensionAgent::OnCommandMessage(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+{
+   return OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+}
+
+BOOL CIfcExtensionAgent::GetStatusBarMessageString(UINT nID, CString& rMessage) const
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   if (rMessage.LoadString(nID))
+   {
+      // first newline terminates actual string
+      rMessage.Replace('\n', '\0');
+   }
+   else
+   {
+      TRACE1("Warning (CIfcExtensionAgent): no message line prompt for ID 0x%04X.\n", nID);
+   }
+
+   return TRUE;
+}
+
+BOOL CIfcExtensionAgent::GetToolTipMessageString(UINT nID, CString& rMessage) const
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CString string;
+   if (string.LoadString(nID))
+   {
+      // tip is after first newline
+      int pos = string.Find('\n');
+      if (0 < pos)
+         rMessage = string.Mid(pos + 1);
+   }
+   else
+   {
+      TRACE1("Warning (CIfcExtensionAgent): no tool tip for ID 0x%04X.\n", nID);
+   }
+
+   return TRUE;
+}
+
+void CIfcExtensionAgent::OnEditGeoreferencing()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   GET_IFACE(IEditByUI,pEditByUI);
+   pEditByUI->EditAlignmentDescription(_T("Georeferencing"));
 }
 
 void CIfcExtensionAgent::RegisterUIExtensions()
@@ -152,7 +240,7 @@ CPropertyPage* CIfcExtensionAgent::CreatePropertyPage(IEditAlignmentData* pAlign
 std::unique_ptr<WBFL::EAF::Transaction> CIfcExtensionAgent::OnOK(CPropertyPage* pPage,IEditAlignmentData* pAlignmentData)
 {
    CGeoReferencingPage* pMyPage = (CGeoReferencingPage*)pPage;
+   auto pTxn = std::make_unique<txnEditGeoreferencing>(m_GeoreferencingData, pMyPage->m_GeoRefData);
    m_GeoreferencingData = pMyPage->m_GeoRefData;
-#pragma Reminder("TODO: Implement a transaction to save the georeferencing data to the alignment data")
-   return nullptr;
+   return pTxn;
 }

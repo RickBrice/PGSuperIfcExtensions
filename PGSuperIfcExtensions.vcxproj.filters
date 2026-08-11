@@ -19,6 +19,9 @@
     <ClCompile Include="Georeferencing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EditGeoreferencing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,6 +79,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GeoReferencingPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditGeoreferencing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PGSuperDataExporter.h">
