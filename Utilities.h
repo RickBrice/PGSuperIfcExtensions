@@ -22,6 +22,7 @@
 #pragma once
 
 #include <string>
+
 #include <numbers>
 
 #include "IfcImporterException.h"
@@ -100,7 +101,7 @@ static CGirderKey girder_key_from_string(const std::string& input) {
    return CGirderKey(spanIndex, girderIndex );
 }
 
-static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
+static CGirderKey get_girder_key(IfcSchema::IfcBeam beam)
 {
    CGirderKey girder_key;
    auto design_location_number = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
@@ -119,9 +120,9 @@ static CGirderKey get_girder_key(const IfcSchema::IfcBeam* beam)
 
    if (girder_key == CGirderKey())
    {
-      if (beam->Name())
+      if (beam.Name())
       {
-         girder_key = girder_key_from_string(*(beam->Name()));
+         girder_key = girder_key_from_string(*(beam.Name()));
          if (girder_key == CGirderKey())
          {
             WBFL::System::Logger::Info("IfcBeam::Name was not formatted as expected");
@@ -147,22 +148,22 @@ constexpr T deg2rad(T deg) {
 }
 
 
-inline std::string GetEntityType(IfcUtil::IfcBaseInterface* entity)
+inline std::string GetEntityType(express::base& entity)
 {
-   return entity->declaration().name();
+   return entity.declaration().name();
 }
 
 
 template <typename E>
-E* GetType(IfcSchema::IfcObject* object)
+E GetType(IfcSchema::IfcObject object)
 {
-   auto types = object->IsTypedBy();
-   for (auto type : *types)
+   auto types = object.IsTypedBy();
+   for (auto& type : types)
    {
-      return type->RelatingType()->as<E>();
+      return type.RelatingType().template as<E>();
    }
 
-   return nullptr;
+   return {};
 }
 
 /// @brief Returns the predefined type of an object.
@@ -174,39 +175,39 @@ E* GetType(IfcSchema::IfcObject* object)
 /// @param object 
 /// @return 
 template <typename O, typename T, typename E>
-boost::optional<typename E> GetPredefinedType(IfcSchema::IfcObject* object)
+std::optional<typename E> GetPredefinedType(IfcSchema::IfcObject object)
 {
    // first check if the object is typed
-   auto types = object->IsTypedBy();
-   for (auto type : *types)
+   auto types = object.IsTypedBy();
+   for (auto& type : types)
    {
-      return type->RelatingType()->as<T>()->PredefinedType();
+      return type.RelatingType().template as<T>().PredefinedType();
    }
 
-   return object->as<O>()->PredefinedType();
+   return object.template as<O>().PredefinedType();
 }
 
 
-static IfcSchema::IfcBridgePart* GetBridgePart(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
+static IfcSchema::IfcBridgePart GetBridgePart(ifcopenshell::file& file, IfcSchema::IfcBridgePartTypeEnum::Value part_type)
 {
    auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   for (auto part : *parts)
+   for (auto part : parts)
    {
-      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
+      if (part.PredefinedType().has_value() && part.PredefinedType() == part_type)
       {
          return part;
       }
    }
-   return nullptr;
+   return {};
 }
 
-static std::vector<IfcSchema::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& file, IfcSchema::IfcBridgePartTypeEnum part_type)
+static std::vector<IfcSchema::IfcBridgePart> GetBridgeParts(ifcopenshell::file& file, IfcSchema::IfcBridgePartTypeEnum::Value part_type)
 {
-   std::vector<IfcSchema::IfcBridgePart*> parts_found;
+   std::vector<IfcSchema::IfcBridgePart> parts_found;
    auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   for (auto part : *parts)
+   for (auto part : parts)
    {
-      if (part->PredefinedType().has_value() && part->PredefinedType().get() == part_type)
+      if (part.PredefinedType().has_value() && part.PredefinedType() == part_type)
       {
          parts_found.push_back(part);
       }
@@ -215,32 +216,29 @@ static std::vector<IfcSchema::IfcBridgePart*> GetBridgeParts(IfcParse::IfcFile& 
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetMaterial(typename Schema::IfcObjectDefinition* objectdef)
+typename Schema::IfcMaterial GetMaterial(typename Schema::IfcObjectDefinition objectdef)
 {
-   auto associations = objectdef->HasAssociations();
-   if (associations)
+   auto associations = objectdef.HasAssociations();
+   for (auto& rel : associations)
    {
-      for (auto rel : *associations)
+      auto rel_associates_material = rel.template as<typename Schema::IfcRelAssociatesMaterial>();
+      if (rel_associates_material)
       {
-         auto rel_associates_material = rel->as<IfcSchema::IfcRelAssociatesMaterial>();
-         if (rel_associates_material)
-         {
-            auto material = rel_associates_material->RelatingMaterial();
-            return material->as<typename Schema::IfcMaterial>();
-         }
+         auto material = rel_associates_material.RelatingMaterial();
+         return material.template as<typename Schema::IfcMaterial>();
       }
    }
 
-   return nullptr;
+   return {};
 }
 
-static int GetBeamTypeCount(IfcParse::IfcFile& file)
+static int GetBeamTypeCount(ifcopenshell::file& file)
 {
    int count = 0;
    auto beam_types = file.instances_by_type<IfcSchema::IfcBeamType>();
-   for (auto beam_type : *beam_types)
+   for (auto beam_type : beam_types)
    {
-      if (beam_type->PredefinedType() == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
+      if (beam_type.PredefinedType() == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
          count++;
    }
 

@@ -70,7 +70,7 @@ BEGIN
             VALUE "FileDescription", "PGSuperIfcExtensions Module"
             VALUE "FileVersion", "9.0.3.1"
             VALUE "InternalName", "PGSuperIfcExtensions"
-            VALUE "LegalCopyright", "Copyright ï¿½ 1999-2026, Washington State Department of Transportation, All Rights Reserved"
+            VALUE "LegalCopyright", "Copyright © 1999-2026, Washington State Department of Transportation, All Rights Reserved"
             VALUE "OriginalFilename", "PGSuperIfcExtensions.DLL"
             VALUE "ProductName", "PGSuperIfcExtensions Module"
             VALUE "ProductVersion", "9.0.3.1"

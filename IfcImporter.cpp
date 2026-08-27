@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -49,37 +49,37 @@ CIfcImporter::~CIfcImporter(void)
 {
 }
 
-void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
+void CIfcImporter::InitUnits(ifcopenshell::file& file)
 {
    WBFL::System::Logger::Info(_T("Initializing units and precision from IFC file."));
    auto geometric_representation_contexts = file.instances_by_type<IfcSchema::IfcGeometricRepresentationContext>();
-   auto geometric_representation_context = (0 < geometric_representation_contexts->size()) ? *(geometric_representation_contexts->begin()) : nullptr;
+   auto geometric_representation_context = (0 < geometric_representation_contexts.size()) ? geometric_representation_contexts.front() : IfcSchema::IfcGeometricRepresentationContext{};
 #pragma Reminder("WORKING HERE - There could be multiple geometric representation contexts, how do we know if we have the right one?")
-   if (geometric_representation_context && geometric_representation_context->Precision() != boost::none)
+   if (geometric_representation_context && geometric_representation_context.Precision() != std::nullopt)
    {
-      m_Precision = *(geometric_representation_context->Precision());
+      m_Precision = *(geometric_representation_context.Precision());
    }
 
 #pragma Reminder("WORKING HERE - UNITS - THERE ARE MANY CASES THIS DOESN'T DEAL WITH")
    auto unit_assignment_instances = file.instances_by_type<IfcSchema::IfcUnitAssignment>();
-   CHECK(unit_assignment_instances->size() == 1);
-   auto unit_assignment = *(unit_assignment_instances->begin());
-   auto units = unit_assignment->Units();
-   for (auto unit : *units)
+   CHECK(unit_assignment_instances.size() == 1);
+   auto unit_assignment = unit_assignment_instances.front();
+   auto units = unit_assignment.Units();
+   for (auto& unit : units)
    {
-      auto derived_unit = unit->as<IfcSchema::IfcDerivedUnit>();
-      auto monitary_unit = unit->as<IfcSchema::IfcMonetaryUnit>();
-      auto si_unit = unit->as<IfcSchema::IfcSIUnit>();
-      auto conversion_based_unit = unit->as<IfcSchema::IfcConversionBasedUnit>();
-      auto conversion_based_unit_with_offset = unit->as<IfcSchema::IfcConversionBasedUnitWithOffset>();
+      auto derived_unit = unit.as<IfcSchema::IfcDerivedUnit>();
+      auto monitary_unit = unit.as<IfcSchema::IfcMonetaryUnit>();
+      auto si_unit = unit.as<IfcSchema::IfcSIUnit>();
+      auto conversion_based_unit = unit.as<IfcSchema::IfcConversionBasedUnit>();
+      auto conversion_based_unit_with_offset = unit.as<IfcSchema::IfcConversionBasedUnitWithOffset>();
 
       if (si_unit)
       {
-         if (si_unit->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE)
+         if (si_unit.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE)
          {
-            if (si_unit->Prefix() != boost::none)
+            if (si_unit.Prefix() != std::nullopt)
             {
-               switch (*(si_unit->Prefix()))
+               switch (*(si_unit.Prefix()))
                {
                case IfcSchema::IfcSIPrefix::IfcSIPrefix_KILO:
                   m_pLengthUnit = &WBFL::Units::Measure::Kilometer;
@@ -104,9 +104,9 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
             continue;
          }
 
-         if (si_unit->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN)
+         if (si_unit.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN)
          {
-            CHECK(si_unit->Prefix() == boost::none); // not expecting anything like Kilo-radians
+            CHECK(si_unit.Prefix() == std::nullopt); // not expecting anything like Kilo-radians
             m_pAngleUnit = &WBFL::Units::Measure::Radian;
             continue;
          }
@@ -116,30 +116,30 @@ void CIfcImporter::InitUnits(IfcParse::IfcFile& file)
       {
          auto conversion_factor = GetConversionFactor<IfcSchema>(conversion_based_unit);
 
-         auto measure_with_unit = conversion_based_unit->ConversionFactor();
-         auto unit_component = measure_with_unit->UnitComponent()->as<IfcSchema::IfcSIUnit>();
+         auto measure_with_unit = conversion_based_unit.ConversionFactor();
+         auto unit_component = measure_with_unit.UnitComponent().as<IfcSchema::IfcSIUnit>();
 
-         if (conversion_based_unit->UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
+         if (conversion_based_unit.UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
          {
-            CHECK(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN);
+            CHECK(unit_component.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN);
 
             if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
             {
                m_pAngleUnit = &WBFL::Units::Measure::Degree;
             }
          }
-         else if (conversion_based_unit->UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
+         else if (conversion_based_unit.UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
          {
-            if (unit_component->Prefix() == IfcSchema::IfcSIPrefix::IfcSIPrefix_MILLI)
+            if (unit_component.Prefix() == IfcSchema::IfcSIPrefix::IfcSIPrefix_MILLI)
             {
                // lengths are in millimeter, so divide the conversion factor by 1000.
                // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
                conversion_factor /= 1000.0;
             }
 
-            CHECK(unit_component->Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
+            CHECK(unit_component.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
 
-            std::string name = conversion_based_unit->Name();
+            std::string name = conversion_based_unit.Name();
             to_lower(name);
             if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()) || name == std::string("foot"))
             {
@@ -241,7 +241,7 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
       WBFL::System::Logger::Info(_T("Starting IFC import from file"));
 
-      std::unique_ptr<IfcParse::IfcFile> pFile = nullptr;
+      std::unique_ptr<ifcopenshell::file> pFile = nullptr;
 
       GET_IFACE(IEAFProgress, pProgress);
       WBFL::EAF::AutoProgress ap(pProgress);
@@ -254,9 +254,9 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
       p.copyfmt(std::cout);
       std::cout.rdbuf(p.rdbuf());
 
-      Logger::Root().SetOutput(&std::cout, &std::cout);
+      ifcopenshell::logger::root().set_output(&std::cout, &std::cout);
 
-      pFile = std::make_unique<IfcParse::IfcFile>(T2A(strFilePath.GetBuffer()));
+      pFile = std::make_unique<ifcopenshell::file>(T2A(strFilePath.GetBuffer()));
 
       if (!pFile->good())
       {
@@ -313,17 +313,17 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
    return hr;
 }
 
-CIfcImporter::ImportResult CIfcImporter::ImportGeoreferencing(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcImporter::ImportGeoreferencing(ifcopenshell::file& file)
 {
    return CIfcGeoreferencingImporter(*this).Import(file);
 }
 
-CIfcImporter::ImportResult CIfcImporter::ImportAlignment(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcImporter::ImportAlignment(ifcopenshell::file& file)
 {
    return CIfcAlignmentImporter(*this).Import(file);
 }
 
-CIfcImporter::ImportResult CIfcImporter::ImportBridge(IfcParse::IfcFile& file,bool bDeriveAlignmentFromDeck)
+CIfcImporter::ImportResult CIfcImporter::ImportBridge(ifcopenshell::file& file,bool bDeriveAlignmentFromDeck)
 {
    return CIfcBridgeImporter(*this).Import(file, bDeriveAlignmentFromDeck);
 }

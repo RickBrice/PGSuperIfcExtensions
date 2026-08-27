@@ -30,7 +30,7 @@ std::string GetStrandMaterialName(const WBFL::Materials::PsStrand* pStrand)
 }
 
 template <typename Schema>
-typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(IfcHierarchyHelper<Schema>& file, std::string name, COLORREF clr)
+typename Schema::IfcStyledRepresentation CreateMaterialRepresentation(hierarchy_helper<Schema>& file, std::string name, COLORREF clr)
 {
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
 
@@ -38,34 +38,34 @@ typename Schema::IfcStyledRepresentation* CreateMaterialRepresentation(IfcHierar
    double g = (double)GetGValue(clr) / 255.;
    double b = (double)GetBValue(clr) / 255.;
 
-   auto color = new typename Schema::IfcColourRgb(name, r, g, b);
-   file.addEntity(color);
+   auto color = file.create<typename Schema::IfcColourRgb>().initialize(name, r, g, b);
 
-   auto ssr = new typename Schema::IfcSurfaceStyleRendering(color, boost::none, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
-   file.addEntity(ssr);
 
-   typename Schema::IfcSurfaceStyleElementSelect::list::ptr list_of_surface_styles(new typename Schema::IfcSurfaceStyleElementSelect::list);
-   list_of_surface_styles->push(ssr);
+   auto ssr = file.create<typename Schema::IfcSurfaceStyleRendering>().initialize(color, std::nullopt, {}, {}, {}, {}, {}, {}, Schema::IfcReflectanceMethodEnum::IfcReflectanceMethod_NOTDEFINED);
+
+
+   std::vector<typename Schema::IfcSurfaceStyleElementSelect> list_of_surface_styles;
+   list_of_surface_styles.push_back(ssr);
    
-   auto ss = new typename Schema::IfcSurfaceStyle(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
-   file.addEntity(ss);
+   auto ss = file.create<typename Schema::IfcSurfaceStyle>().initialize(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
 
-   typename Schema::IfcPresentationStyle::list::ptr list_of_presentation_styles(new typename Schema::IfcPresentationStyle::list);
-   list_of_presentation_styles->push(ss);
+
+   std::vector<typename Schema::IfcPresentationStyle> list_of_presentation_styles;
+   list_of_presentation_styles.push_back(ss);
    
-   auto styled_item = new typename Schema::IfcStyledItem(nullptr, list_of_presentation_styles, boost::none);
-   file.addEntity(styled_item);
+   auto styled_item = file.create<typename Schema::IfcStyledItem>().initialize({}, list_of_presentation_styles, std::nullopt);
 
-   typename Schema::IfcRepresentationItem::list::ptr styled_items(new typename Schema::IfcRepresentationItem::list);
-   styled_items->push(styled_item);
-   auto styled_representation = new typename Schema::IfcStyledRepresentation(geometric_representation_context, boost::none, boost::none, styled_items);
-   file.addEntity(styled_representation);
+
+   std::vector<typename Schema::IfcRepresentationItem> styled_items;
+   styled_items.push_back(styled_item);
+   auto styled_representation = file.create<typename Schema::IfcStyledRepresentation>().initialize(geometric_representation_context, std::nullopt, std::nullopt, styled_items);
+
 
    return styled_representation;
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file,std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::PsStrand* pStrand)
+typename Schema::IfcMaterial GetStrandMaterial(hierarchy_helper<Schema>& file,std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::PsStrand* pStrand)
 {
    USES_CONVERSION;
 
@@ -73,16 +73,16 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
 
    // search to see if an IfcMaterial for this kind of strand has already been created
    auto materials = file.instances_by_type<typename Schema::IfcMaterial>();
-   for (auto material : *materials)
+   for (auto& material : materials)
    {
-      if (material->Name() == name)
+      if (material.Name() == name)
          return material;
    }
 
    // if we got this far, the material was not previously created
    // create it now
-   auto strand_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
-   file.addEntity(strand_material);
+   auto strand_material = file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("steel")/*category*/);
+
 
    // Pset_MaterialSteel
    Create_Pset_MaterialSteel_Strand(file, pBroker, options, strand_material, pStrand);
@@ -101,10 +101,10 @@ typename Schema::IfcMaterial* GetStrandMaterial(IfcHierarchyHelper<Schema>& file
       auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
 
       // assigns the presentation styles to the material
-      typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
-      list_of_representations->push(material_representation);
-      auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, strand_material);
-      file.addEntity(material_defintion_representation);
+      std::vector<typename Schema::IfcRepresentation> list_of_representations;
+      list_of_representations.push_back(material_representation);
+      auto material_defintion_representation = file.create<typename Schema::IfcMaterialDefinitionRepresentation>().initialize(std::nullopt, std::nullopt, list_of_representations, strand_material);
+
    }
 
    return strand_material;
@@ -117,7 +117,7 @@ std::string GetRebarMaterialName(const WBFL::Materials::Rebar* pRebar)
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::Rebar* pRebar,const std::string& styleName,COLORREF color)
+typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::Rebar* pRebar,const std::string& styleName,COLORREF color)
 {
    USES_CONVERSION;
 
@@ -125,17 +125,17 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
 
    // search to see if an IfcMaterial for this kind of strand has already been created
    auto materials = file.instances_by_type<typename Schema::IfcMaterial>();
-   for (auto material : *materials)
+   for (auto& material : materials)
    {
-      if (material->Name() == name)
+      if (material.Name() == name)
          return material;
    }
 
 
    // if we got this far, the material was not previously created
    // create it now
-   auto rebar_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("steel")/*category*/);
-   file.addEntity(rebar_material);
+   auto rebar_material = file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("steel")/*category*/);
+
 
 
    // Pset_MaterialSteel
@@ -152,17 +152,17 @@ typename Schema::IfcMaterial* GetRebarMaterial(IfcHierarchyHelper<Schema>& file,
       auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
 
       // assigns the presentation styles to the material
-      typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
-      list_of_representations->push(material_representation);
-      auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, rebar_material);
-      file.addEntity(material_defintion_representation);
+      std::vector<typename Schema::IfcRepresentation> list_of_representations;
+      list_of_representations.push_back(material_representation);
+      auto material_defintion_representation = file.create<typename Schema::IfcMaterialDefinitionRepresentation>().initialize(std::nullopt, std::nullopt, list_of_representations, rebar_material);
+
    }
 
    return rebar_material;
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
+typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
 {
    USES_CONVERSION;
 
@@ -175,20 +175,20 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
 
    // search to see if an IfcMaterial for this kind of strand has already been created
    auto materials = file.instances_by_type<typename Schema::IfcMaterial>();
-   for (auto material : *materials)
+   for (auto& material : materials)
    {
-      if (material->Name() == name)
+      if (material.Name() == name)
          return material;
    }
 
 
    // if we got this far, the material was not previously created
    // create it now
-   auto concrete_material = new typename Schema::IfcMaterial(name, boost::none/*description*/, std::string("concrete")/*category*/);
-   file.addEntity(concrete_material);
+   auto concrete_material = file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("concrete")/*category*/);
 
-   typename Schema::IfcConversionBasedUnit* stress_unit = nullptr;
-   typename Schema::IfcConversionBasedUnit* displacement_unit = nullptr;
+
+   typename Schema::IfcConversionBasedUnit stress_unit;
+   typename Schema::IfcConversionBasedUnit displacement_unit;
    if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
       stress_unit = GetStressUnit<Schema>(file, pBroker);
@@ -199,11 +199,11 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
    }
 
    // Pset_MaterialConcrete
-   typename Schema::IfcProperty::list::ptr material_concrete_properties(new typename Schema::IfcProperty::list);
-   material_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("CompressiveStrength"), boost::none, new typename Schema::IfcPressureMeasure(fc), stress_unit));
-   material_concrete_properties->push(new typename Schema::IfcPropertySingleValue(std::string("MaxAggregateSize"), boost::none, new typename Schema::IfcPositiveLengthMeasure(max_agg_size), displacement_unit));
-   auto pset_material_concrete = new typename Schema::IfcMaterialProperties(std::string("Pset_MaterialConcrete"), boost::none/*description*/, material_concrete_properties, concrete_material);
-   file.addEntity(pset_material_concrete);
+   std::vector<typename Schema::IfcProperty> material_concrete_properties;
+   material_concrete_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("CompressiveStrength"), std::nullopt, file.create<typename Schema::IfcPressureMeasure>().initialize(fc), stress_unit));
+   material_concrete_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("MaxAggregateSize"), std::nullopt, file.create<typename Schema::IfcPositiveLengthMeasure>().initialize(max_agg_size), displacement_unit));
+   auto pset_material_concrete = file.create<typename Schema::IfcMaterialProperties>().initialize(std::string("Pset_MaterialConcrete"), std::nullopt/*description*/, material_concrete_properties, concrete_material);
+
 
    if (!options.classify)
    {
@@ -214,41 +214,41 @@ typename Schema::IfcMaterial* GetConcreteMaterial(IfcHierarchyHelper<Schema>& fi
       auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
 
       // assigns the presentation styles to the material
-      typename Schema::IfcRepresentation::list::ptr list_of_representations(new typename Schema::IfcRepresentation::list);
-      list_of_representations->push(material_representation);
-      auto material_defintion_representation = new typename Schema::IfcMaterialDefinitionRepresentation(boost::none, boost::none, list_of_representations, concrete_material);
-      file.addEntity(material_defintion_representation);
+      std::vector<typename Schema::IfcRepresentation> list_of_representations;
+      list_of_representations.push_back(material_representation);
+      auto material_defintion_representation = file.create<typename Schema::IfcMaterialDefinitionRepresentation>().initialize(std::nullopt, std::nullopt, list_of_representations, concrete_material);
+
    }
 
    return concrete_material;
 }
 
 template <typename Schema> 
-void AssociateMaterial(IfcHierarchyHelper<Schema>& file, typename Schema::IfcMaterial* material, typename Schema::IfcProduct* product)
+void AssociateMaterial(hierarchy_helper<Schema>& file, typename Schema::IfcMaterial material, typename Schema::IfcProduct product)
 {
-   auto associations = product->HasAssociations();
-   for (auto association : *associations)
+   auto associations = product.HasAssociations();
+   for (auto& association : associations)
    {
-      auto rel_material = association->as<typename Schema::IfcRelAssociatesMaterial>();
+      auto rel_material = association.template as<typename Schema::IfcRelAssociatesMaterial>();
       if (rel_material)
       {
-         auto related_objects = rel_material->RelatedObjects();
+         auto related_objects = rel_material.RelatedObjects();
          // this product already has a material association, so we will just update it to point to the new material
-         rel_material->setRelatingMaterial(material);
+         rel_material.setRelatingMaterial(material);
          return;
       }
    }
 
    // if we get this far, there was not already a material association for this product, so we will create a new one
-   typename Schema::IfcDefinitionSelect::list::ptr related_objects(new typename Schema::IfcDefinitionSelect::list);
-   related_objects->push(product);
-   auto rel_material = new typename Schema::IfcRelAssociatesMaterial(
-      IfcParse::IfcGlobalId(),
-      nullptr,
-      boost::none, // Name
-      boost::none, // Description
+   std::vector<typename Schema::IfcDefinitionSelect> related_objects;
+   related_objects.push_back(product);
+   auto rel_material = file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(
+      ifcopenshell::global_id(),
+      {},
+      std::nullopt, // Name
+      std::nullopt, // Description
       related_objects, // RelatedObjects
       material // RelatingMaterial
    );
-   file.addEntity(rel_material);
+
 }

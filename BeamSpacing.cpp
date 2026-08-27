@@ -27,8 +27,8 @@
 
 #include <ifcgeom/abstract_mapping.h>
 #include <ifcgeom/iterator.h>
-#include <ifcgeom/ifcgeomelement.h>
-#include <ifcgeom/kernels/opencascade/OpenCascadeKernel.h>
+#include <ifcgeom/element.h>
+#include <ifcgeom/kernels/opencascade/opencascade_kernel.h>
 
 #include <EAF/EAFProgress.h>
 #include <EAF/AutoProgress.h>
@@ -36,45 +36,48 @@
 
 // gets all the IfcBeams
 // This needs to be updated so we get only the superstructure beams
-std::set<int> get_beam_ids(IfcParse::IfcFile& file)
+std::set<int> get_beam_ids(ifcopenshell::file& file)
 {
    auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
 
    // lambda function to filter beams that are contained in the superstructure
    auto filter = [&superstructure](auto beam) {
-         auto related_elements = beam->ContainedInStructure();
-         if (related_elements)
+         auto related_elements = beam.ContainedInStructure();
+         for (auto& related_element : related_elements)
          {
-            for (auto related_element : *related_elements)
-            {
-               if (related_element->RelatingStructure() == superstructure && GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
-                  return true;
-            }
-            return false;
+            if (related_element.RelatingStructure() == superstructure && GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
+               return true;
          }
-         else
-         {
-            return false; // not in a spatial structure
-         }
+         return false; // not in the superstructure's spatial structure
       };
 
 
    auto beams = file.instances_by_type<IfcSchema::IfcBeam>();
 
    std::set<int> beam_ids;
-   for (int id : *beams
+#if _HAS_CXX20
+   for (int id : beams
       //| std::views::filter([&os](auto beam) {return beam->Name() && beam->Name()->starts_with(os.str()); }) // filter all beams that start with "Span n"
       | std::views::filter(filter)
-      | std::views::transform([](auto beam) {return beam->id(); })) // transform the beam to its id
+      | std::views::transform([](auto beam) {return beam.id(); })) // transform the beam to its id
    {
       beam_ids.insert(id);
    }
+#else
+   for (auto beam : beams)
+   {
+      if (filter(beam))
+      {
+         beam_ids.insert(beam.id());
+      }
+   }
+#endif
 
    return beam_ids;
 }
 
 // this function attempts to get the beam spacing based on the geometry (not using a property from a pset)
-std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::IfcFile& file)
+std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell::file& file)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
@@ -83,18 +86,18 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
 
    auto beam_ids = get_beam_ids(file);
 
-   ifcopenshell::geometry::Settings settings;
+   ifcopenshell::geom::settings settings;
    settings.set("use-world-coords", true);
    settings.set("weld-vertices", true);
    settings.set("disable-opening-subtractions", true);
 
    // set up filter for the geometry iterator
-   IfcGeom::instance_id_filter filter(true, false, beam_ids);
-   std::vector<IfcGeom::filter_t> filters({ filter });
+   ifcopenshell::geom::instance_id_filter filter(true, false, beam_ids);
+   std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
 
-   std::unique_ptr<IfcGeom::OpenCascadeKernel> kernel(std::make_unique<IfcGeom::OpenCascadeKernel>(settings));
+   std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
    int num_threads = 1;// std::thread::hardware_concurrency();
-   IfcGeom::Iterator iterator(std::move(kernel), settings, &file, filters, num_threads);
+   ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, num_threads);
 
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> start_points;
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> end_points;
@@ -109,7 +112,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
    do
    {
       auto element = iterator.get();
-      auto beam = element->product()->as<IfcSchema::IfcBeam>();
+      auto beam = element->product().as<IfcSchema::IfcBeam>();
       auto girder_key = get_girder_key(beam);
       if (girder_key == CGirderKey())
       {
@@ -123,7 +126,7 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
       os << _T("Processing geometry for ") << LABEL_GIRDER(girder_key) << std::endl;
       pProgress->UpdateMessage(os.str().c_str());
 
-      auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
+      auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
       auto geometry = triangulation->geometry_pointer();
       const auto& verts = geometry->verts();
       const auto& faces = geometry->faces();

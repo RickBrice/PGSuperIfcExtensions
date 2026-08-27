@@ -28,23 +28,23 @@ class CIfcBridgeImporter
 {
 public:
    CIfcBridgeImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file,bool bDeriveAlignmentFromDeck);
+   CIfcImporter::ImportResult Import(ifcopenshell::file& file,bool bDeriveAlignmentFromDeck);
 
 private:
    CIfcImporter& m_Importer;
 
-   IfcSchema::IfcBridge* GetBridge(IfcParse::IfcFile& file);
-   bool IsValidBridge(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirders(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirdersByTPF(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
-   bool HasValidGirdersByOther(IfcParse::IfcFile& file, IfcSchema::IfcBridge* bridge);
+   IfcSchema::IfcBridge GetBridge(ifcopenshell::file& file);
+   bool IsValidBridge(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
+   bool HasValidGirders(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
+   bool HasValidGirdersByTPF(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
+   bool HasValidGirdersByOther(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
 
-   void SetGirderProperties(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
-   void ImportSlab(IfcParse::IfcFile& file, CBridgeDescription2& bridge_desc);
+   void SetGirderProperties(ifcopenshell::file& file, CBridgeDescription2& bridge_desc);
+   void ImportSlab(ifcopenshell::file& file, CBridgeDescription2& bridge_desc);
    
-   const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam* beam);
+   const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam beam);
 
-   bool DeriveAlignmentFromDeck(IfcParse::IfcFile& file);
+   bool DeriveAlignmentFromDeck(ifcopenshell::file& file);
 
-   void Experiment(IfcParse::IfcFile& file);
+   void Experiment(ifcopenshell::file& file);
 };

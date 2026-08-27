@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -67,19 +67,19 @@ struct GeoreferencingData
 // Reads the IfcProjectedCRS.MapUnit attribute (an IfcNamedUnit*) into the pragmatic fields above.
 // Leaves georefdata's MapUnit fields untouched if map_unit is null or an unrecognized unit type.
 template <typename Schema>
-void ImportMapUnit(typename Schema::IfcNamedUnit* map_unit, GeoreferencingData& georefdata)
+void ImportMapUnit(typename Schema::IfcNamedUnit map_unit, GeoreferencingData& georefdata)
 {
    if (!map_unit)
       return;
 
-   if (auto si_unit = map_unit->template as<typename Schema::IfcSIUnit>())
+   if (auto si_unit = map_unit.template as<typename Schema::IfcSIUnit>())
    {
-      if (si_unit->UnitType() == Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
+      if (si_unit.UnitType() == Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
       {
          georefdata.IsMapUnitSI = true;
          georefdata.MapUnitName = _T("metre");
          Float64 factor = 1.0;
-         auto prefix = si_unit->Prefix();
+         auto prefix = si_unit.Prefix();
          if (prefix)
          {
             switch (*prefix)
@@ -95,10 +95,10 @@ void ImportMapUnit(typename Schema::IfcNamedUnit* map_unit, GeoreferencingData& 
       }
    }
 
-   if (auto conversion_based_unit = map_unit->template as<typename Schema::IfcConversionBasedUnit>())
+   if (auto conversion_based_unit = map_unit.template as<typename Schema::IfcConversionBasedUnit>())
    {
       georefdata.IsMapUnitSI = false;
-      georefdata.MapUnitName = CString(conversion_based_unit->Name().c_str());
+      georefdata.MapUnitName = CString(conversion_based_unit.Name().c_str());
       georefdata.MapUnitToMeters = GetConversionFactor<Schema>(conversion_based_unit);
       return;
    }
@@ -109,20 +109,20 @@ void ImportMapUnit(typename Schema::IfcNamedUnit* map_unit, GeoreferencingData& 
 // Builds an IfcNamedUnit for IfcProjectedCRS.MapUnit from the pragmatic fields above. Mirrors, in
 // reverse, ImportMapUnit's simplifications (SI branch is always plain metre, no prefix reconstruction).
 template <typename Schema>
-typename Schema::IfcNamedUnit* CreateMapUnit(const GeoreferencingData& georefdata)
+typename Schema::IfcNamedUnit CreateMapUnit(hierarchy_helper<Schema>& file, const GeoreferencingData& georefdata)
 {
    USES_CONVERSION;
 
    if (georefdata.IsMapUnitSI)
    {
-      return new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
+      return file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
    }
 
-   auto dims = new typename Schema::IfcDimensionalExponents(1, 0, 0, 0, 0, 0, 0); // length dimension
-   auto si_meter = new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
-   auto factor_value = new typename Schema::IfcLengthMeasure(georefdata.MapUnitToMeters);
-   auto measure_with_unit = new typename Schema::IfcMeasureWithUnit(factor_value, si_meter);
-   return new typename Schema::IfcConversionBasedUnit(dims, Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::string(T2A(georefdata.MapUnitName)), measure_with_unit);
+   auto dims = file.create<typename Schema::IfcDimensionalExponents>().initialize(1, 0, 0, 0, 0, 0, 0); // length dimension
+   auto si_meter = file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE);
+   auto factor_value = file.create<typename Schema::IfcLengthMeasure>().initialize(georefdata.MapUnitToMeters);
+   auto measure_with_unit = file.create<typename Schema::IfcMeasureWithUnit>().initialize(factor_value, si_meter);
+   return file.create<typename Schema::IfcConversionBasedUnit>().initialize(dims, Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::string(T2A(georefdata.MapUnitName)), measure_with_unit);
 }
 
 // {03917488-9929-41F1-AB85-8FED05E73009}

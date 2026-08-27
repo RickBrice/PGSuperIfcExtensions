@@ -38,19 +38,19 @@ inline double getMinBendRadius(const WBFL::Materials::Rebar* pRebar,bool bStirru
 }
 
 template <typename Schema>
-typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar)
+typename Schema::IfcReinforcingBarType GetReinforcingBarType(hierarchy_helper<Schema>& file, const std::string& name, bool bStirrup, const WBFL::Materials::Rebar* pRebar)
 {
    // search to see if an IfcReinforcingBarType has already been created
    auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
-   for (auto& rel_declares : *rel_declares_instances)
+   for (auto& rel_declares : rel_declares_instances)
    {
-      if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
+      if (rel_declares.RelatingContext().template as<typename Schema::IfcProject>())
       {
-         auto related_definitions = rel_declares->RelatedDefinitions();
-         for (auto& reldef : *related_definitions)
+         auto related_definitions = rel_declares.RelatedDefinitions();
+         for (auto& reldef : related_definitions)
          {
-            auto rebar_type = reldef->as<typename Schema::IfcReinforcingBarType>();
-            if (rebar_type && rebar_type->Name() == name)
+            auto rebar_type = reldef.template as<typename Schema::IfcReinforcingBarType>();
+            if (rebar_type && rebar_type.Name() == name)
             {
                return rebar_type;
             }
@@ -58,38 +58,38 @@ typename Schema::IfcReinforcingBarType* GetReinforcingBarType(IfcHierarchyHelper
       }
    }
 
-   return nullptr;
+   return {};
 }
 
 template <typename Schema>
-typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHelper<Schema>& file, const CIfcExportOptions& options, const std::string& name, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcReinforcingBarTypeEnum type, typename Schema::IfcShapeRepresentation* shape_representation)
+typename Schema::IfcReinforcingBarType CreateReinforcingBarType(hierarchy_helper<Schema>& file, const CIfcExportOptions& options, const std::string& name, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcReinforcingBarTypeEnum::Value type, typename Schema::IfcShapeRepresentation shape_representation)
 {
    auto placement = file.addPlacement3d();
-   auto representation_map = new typename Schema::IfcRepresentationMap(placement, shape_representation);
-   typename Schema::IfcRepresentationMap::list::ptr representation_maps(new typename Schema::IfcRepresentationMap::list);
-   representation_maps->push(representation_map);
+   auto representation_map = file.create<typename Schema::IfcRepresentationMap>().initialize(placement, shape_representation);
+   std::vector<typename Schema::IfcRepresentationMap> representation_maps;
+   representation_maps.push_back(representation_map);
 
    // if we get this far, we need a new IfcReinforcingBarType
-   auto rebar_type = new typename Schema::IfcReinforcingBarType(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto rebar_type = file.create<typename Schema::IfcReinforcingBarType>().initialize(
+      ifcopenshell::global_id(),
+      {},
       name, /*Name*/
-      boost::none, /*Description*/
-      boost::none, /*ApplicableOccurrence*/
-      boost::none, /*HasPropertySets*/
+      std::nullopt, /*Description*/
+      std::nullopt, /*ApplicableOccurrence*/
+      std::nullopt, /*HasPropertySets*/
       representation_maps, /*RepresentationMaps*/
-      boost::none, /*Tag*/
-      boost::none, /*ElementType*/
+      std::nullopt, /*Tag*/
+      std::nullopt, /*ElementType*/
       type, /*PredefinedType*/
       pRebar->GetNominalDimension(), /*NominalDiameter*/
       pRebar->GetNominalArea(), /*CrossSectionArea*/
-      boost::none, /*BarLength*/
-      boost::none, /*BarSurface*/
-      boost::none, /*BendingShapeCode*/
-      boost::none /*BendingParameters*/
+      std::nullopt, /*BarLength*/
+      std::nullopt, /*BarSurface*/
+      std::nullopt, /*BendingShapeCode*/
+      std::nullopt /*BendingParameters*/
    );
 
-   file.addEntity(rebar_type);
+
 
    if (options.classify)
    {
@@ -99,30 +99,30 @@ typename Schema::IfcReinforcingBarType* CreateReinforcingBarType(IfcHierarchyHel
    // add the new definition to the project
    auto project = file.getSingle<typename Schema::IfcProject>();
    auto rel_declares_instances = file.instances_by_type<typename Schema::IfcRelDeclares>();
-   if (rel_declares_instances->size() == 0)
+   if (rel_declares_instances.size() == 0)
    {
-      typename Schema::IfcDefinitionSelect::list::ptr related_definitions(new typename Schema::IfcDefinitionSelect::list);
-      related_definitions->push(rebar_type);
+      std::vector<typename Schema::IfcDefinitionSelect> related_definitions;
+      related_definitions.push_back(rebar_type);
 
-      auto rel_declares = new typename Schema::IfcRelDeclares(
-         IfcParse::IfcGlobalId(),
-         nullptr,
-         boost::none,
-         boost::none,
+      auto rel_declares = file.create<typename Schema::IfcRelDeclares>().initialize(
+         ifcopenshell::global_id(),
+         {},
+         std::nullopt,
+         std::nullopt,
          project,
          related_definitions);
 
-      file.addEntity(rel_declares);
+
    }
    else
    {
-      for (auto& rel_declares : *rel_declares_instances)
+      for (auto& rel_declares : rel_declares_instances)
       {
-         if (rel_declares->RelatingContext()->as<typename Schema::IfcProject>())
+         if (rel_declares.RelatingContext().template as<typename Schema::IfcProject>())
          {
-            auto related_definitions = rel_declares->RelatedDefinitions();
-            related_definitions->push(rebar_type);
-            rel_declares->setRelatedDefinitions(related_definitions);
+            auto related_definitions = rel_declares.RelatedDefinitions();
+            related_definitions.push_back(rebar_type);
+            rel_declares.setRelatedDefinitions(related_definitions);
             break;
          }
       }

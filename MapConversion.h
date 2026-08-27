@@ -20,7 +20,7 @@ std::pair<double, double> lonlat_to_map(PJ_CONTEXT* C, const char* projected_crs
 double get_grid_scale_factor(PJ_CONTEXT* C, const char* projected_epsg, double lon_deg, double lat_deg);
 
 template<typename Schema>
-typename Schema::IfcMapConversion* create_map_conversion(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcProjectedCRS* projected_crs)
+typename Schema::IfcMapConversion create_map_conversion(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcProjectedCRS projected_crs)
 {
    auto projected_epsg = get_projected_epsg(pBroker);
 
@@ -41,7 +41,7 @@ typename Schema::IfcMapConversion* create_map_conversion(IfcHierarchyHelper<Sche
    proj_context_destroy(C);
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-   auto map_conversion = new typename Schema::IfcMapConversion(
+   auto map_conversion = file.create<typename Schema::IfcMapConversion>().initialize(
       geometric_representation_context,
       projected_crs,
       0.0, 0.0, 0.0, // Eastings, Northings, OrthogonalHeight,

@@ -24,6 +24,6 @@
 
 namespace WBFL { namespace EAF { class Broker; }; };
 
-std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file);
+std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
 
-bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file);
+bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);

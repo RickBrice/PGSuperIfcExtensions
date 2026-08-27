@@ -113,11 +113,11 @@ private:
 
 
 template <typename Schema>
-typename Schema::IfcCartesianPoint* ConvertPoint(IPoint2d* pPoint, bool bMirror = false)
+typename Schema::IfcCartesianPoint ConvertPoint(hierarchy_helper<Schema>& file, IPoint2d* pPoint, bool bMirror = false)
 {
    Float64 x, y;
    pPoint->Location(&x, &y);
    x = IsZero(x) ? 0.0 : x;
    y = IsZero(y) ? 0.0 : y;
-   return new typename Schema::IfcCartesianPoint(std::vector<double>{bMirror ? -x : x, y});
+   return file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{bMirror ? -x : x, y});
 }

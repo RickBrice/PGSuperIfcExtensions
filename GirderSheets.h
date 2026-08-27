@@ -22,62 +22,62 @@
 #pragma once
 
 template <typename Schema>
-std::vector<typename Schema::IfcDocumentReference*> GetGirderSheets()
+std::vector<typename Schema::IfcDocumentReference> GetGirderSheets(hierarchy_helper<Schema>& file)
 {
-   auto sheet1 = new typename Schema::IfcDocumentReference(
+   auto sheet1 = file.create<typename Schema::IfcDocumentReference>().initialize(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_1.PDF"), 
-      boost::none, 
+      std::nullopt, 
       std::string("WF Girder Details 1 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
-      nullptr);
+      {});
 
-   auto sheet2 = new typename Schema::IfcDocumentReference(
+   auto sheet2 = file.create<typename Schema::IfcDocumentReference>().initialize(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_2.PDF"),
-      boost::none,
+      std::nullopt,
       std::string("WF Girder Details 2 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
-      nullptr);
+      {});
 
-   auto sheet3 = new typename Schema::IfcDocumentReference(
+   auto sheet3 = file.create<typename Schema::IfcDocumentReference>().initialize(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_3.PDF"),
-      boost::none,
+      std::nullopt,
       std::string("WF Girder Details 3 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
-      nullptr);
+      {});
 
-   auto sheet4 = new typename Schema::IfcDocumentReference(
+   auto sheet4 = file.create<typename Schema::IfcDocumentReference>().initialize(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_4.PDF"),
-      boost::none,
+      std::nullopt,
       std::string("WF Girder Details 4 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
-      nullptr);
+      {});
 
-   auto sheet5 = new typename Schema::IfcDocumentReference(
+   auto sheet5 = file.create<typename Schema::IfcDocumentReference>().initialize(
       std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A4_5.PDF"),
-      boost::none,
+      std::nullopt,
       std::string("WF Girder Details 5 of 5"),
       std::string("Standard Prestressed Concrete Girders"),
-      nullptr);
+      {});
 
-   std::vector<typename Schema::IfcDocumentReference*> sheets({ sheet1,sheet2,sheet3,sheet4,sheet5 });
+   std::vector<typename Schema::IfcDocumentReference> sheets({ sheet1,sheet2,sheet3,sheet4,sheet5 });
    return sheets;
 }
 
 
 template <typename Schema>
-void AssociateDocuments(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition::list::ptr objects)
+void AssociateDocuments(hierarchy_helper<Schema>& file, std::vector<typename Schema::IfcObjectDefinition> objects)
 {
-   typename Schema::IfcDefinitionSelect::list::ptr related_objects(new typename Schema::IfcDefinitionSelect::list);
-   for (auto& object : *objects)
+   std::vector<typename Schema::IfcDefinitionSelect> related_objects;
+   for (auto& object : objects)
    {
-      related_objects->push(object);
+      related_objects.push_back(object);
    }
 
-   auto sheets = GetGirderSheets<Schema>();
+   auto sheets = GetGirderSheets<Schema>(file);
 
    for (auto& sheet : sheets)
    {
-      auto rel_associates_document = new typename Schema::IfcRelAssociatesDocument(IfcParse::IfcGlobalId(), nullptr, std::string("Standard Girder Plans"), boost::none, related_objects, sheet);
-      file.addEntity(rel_associates_document);
+      auto rel_associates_document = file.create<typename Schema::IfcRelAssociatesDocument>().initialize(ifcopenshell::global_id(), {}, std::string("Standard Girder Plans"), std::nullopt, related_objects, sheet);
+
    }
 }

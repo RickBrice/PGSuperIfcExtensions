@@ -34,13 +34,13 @@
 /// If a valid alignment is not found, a default East-West alignment is assumed.
 /// 
 /// @todo Refactor this class so that the UI (prompting for alignment) is done outside the class.
-/// The Import function should be Import(IfcParse::IfcFile& file,typename Schema::IfcAlignment* alignment)
+/// The Import function should be Import(ifcopenshell::file& file,typename Schema::IfcAlignment alignment)
 /// 
 class CIfcAlignmentImporter
 {
 public:
    CIfcAlignmentImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
+   CIfcImporter::ImportResult Import(ifcopenshell::file& file);
 
 private:
    CIfcImporter& m_Importer;
@@ -52,34 +52,34 @@ private:
    CComPtr<ICogoEngine> m_CogoEngine;
    CComPtr<IGeomUtil2d> m_GeomUtil;
 
-   CIfcImporter::ImportResult InitAlignmentParameters(IfcParse::IfcFile& file);
-   IfcSchema::IfcAlignment* GetAlignment(IfcParse::IfcFile& file);
-   Float64 LoadAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment);
-   void LoadProfile(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment, Float64 stationAdjustment);
-   bool IsValidAlignment(IfcParse::IfcFile& file, IfcSchema::IfcAlignment* pAlignment);
-   void GetStations(IfcSchema::IfcAlignment* pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
-   Float64 GetStartStation(IfcSchema::IfcAlignment* pAlignment);
+   CIfcImporter::ImportResult InitAlignmentParameters(ifcopenshell::file& file);
+   IfcSchema::IfcAlignment GetAlignment(ifcopenshell::file& file);
+   Float64 LoadAlignment(ifcopenshell::file& file, IfcSchema::IfcAlignment pAlignment);
+   void LoadProfile(ifcopenshell::file& file, IfcSchema::IfcAlignment pAlignment, Float64 stationAdjustment);
+   bool IsValidAlignment(ifcopenshell::file& file, IfcSchema::IfcAlignment pAlignment);
+   void GetStations(IfcSchema::IfcAlignment pAlignment, std::vector<std::pair<Float64, Float64>>& vStations, std::vector<std::tuple<Float64, Float64, Float64>>& vStationEquations);
+   Float64 GetStartStation(IfcSchema::IfcAlignment pAlignment);
 
    enum LastAlignmentType { Unknown, Line, Curve } m_LastAlignmentType;
 
    // adds a line to the alignment. returns the station at the end of the line
-   Float64 OnLine(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pLine);
+   Float64 OnLine(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment pLine);
    Float64 OnLine(Float64 sx, Float64 sy, Float64 startStation, Float64 startDirection, Float64 length);
 
    // adds a curve to the alignment. returns the station at the end of the curve
-   Float64 OnCurve(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment* pEntrySpiral, IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IfcSchema::IfcAlignmentHorizontalSegment* pExitSpiral);
+   Float64 OnCurve(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment pEntrySpiral, IfcSchema::IfcAlignmentHorizontalSegment pCurve, IfcSchema::IfcAlignmentHorizontalSegment pExitSpiral);
 
    // adds linear segment to the profile
-   void OnLinearSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment* pLinearSegment);
+   void OnLinearSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment pLinearSegment);
 
    // adds a parabolic curve to the profile
-   void OnParabolicSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment* pParaCurve);
+   void OnParabolicSegment(Float64 startStation, IfcSchema::IfcAlignmentVerticalSegment pParaCurve);
 
-   void GetCurvePoints(IfcSchema::IfcAlignmentHorizontalSegment* pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter);
+   void GetCurvePoints(IfcSchema::IfcAlignmentHorizontalSegment pCurve, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd, IPoint2d** ppCenter);
 
-   void GetSpiralPoints(IfcSchema::IfcAlignmentHorizontalSegment* pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd);
+   void GetSpiralPoints(IfcSchema::IfcAlignmentHorizontalSegment pSpiral, IPoint2d** ppStart, IPoint2d** ppPI, IPoint2d** ppEnd);
 
-   void CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSegment* pSpiral);
+   void CheckSpiralType(IfcSchema::IfcAlignmentHorizontalSegment pSpiral);
 
-   void GetPoint(IfcSchema::IfcCartesianPoint* pPoint, Float64* pX, Float64* pY);
+   void GetPoint(IfcSchema::IfcCartesianPoint pPoint, Float64* pX, Float64* pY);
 };

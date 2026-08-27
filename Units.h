@@ -24,276 +24,239 @@
 #include <CoordGeom\Angle.h>
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* FindUnitByName(IfcHierarchyHelper<Schema>& file, const std::string& name)
+typename Schema::IfcConversionBasedUnit FindUnitByName(hierarchy_helper<Schema>& file, const std::string& name)
 {
    auto units = file.instances_by_type<typename Schema::IfcConversionBasedUnit>();
-   for (auto u : *units)
+   for (auto& u : units)
    {
-      if (u->Name() == name)
+      if (u.Name() == name)
          return u;
    }
 
-   return nullptr;
+   return {};
 }
 
 template <typename Schema>
-double GetConversionFactor(typename Schema::IfcConversionBasedUnit* conversion_based_unit)
+double GetConversionFactor(typename Schema::IfcConversionBasedUnit conversion_based_unit)
 {
-   double conversion_factor = 1.0;
-   auto measure_with_unit = conversion_based_unit->ConversionFactor();
-
-   // this way used to work until rocksdb support was added.
-   // get_attribute_value has a lot more parameters that I don't know how to use
-   try
-   {
-      auto value_component = measure_with_unit->ValueComponent();
-      // here we know we're using in-memory so 'nullptr, nullptr, 0' is safe
-      conversion_factor = (Float64)(value_component->data().get_attribute_value(nullptr,nullptr,0,0));
-      //CHECK(value_component); // not dealing with anything but simple conversion factors
-      //auto real = value_component->as<typename Schema::IfcReal>();
-      //auto ratio = value_component->as<typename Schema::IfcRatioMeasure>();
-      //auto length = value_component->as<typename Schema::IfcLengthMeasure>();
-      //auto area = value_component->as<typename Schema::IfcAreaMeasure>();
-      //auto volume = value_component->as<typename Schema::IfcVolumeMeasure>();
-      //if (real)
-      //   conversion_factor = *real;
-      //else if (ratio)
-      //   conversion_factor = *ratio;
-      //else if (length)
-      //   conversion_factor = *length;
-      //else if (area)
-      //   conversion_factor = *area;
-      //else if (volume)
-      //   conversion_factor = *volume;
-      //else
-      //   ASSERT(false);
-   }
-   catch (IfcParse::IfcInvalidTokenException& e)
-   {
-      // Was expecting something like 
-      // #15 = IFCMEASUREWITHUNIT(IFCLENGTHMEASURE(3.28083333333333), #16);
-      // where the expected token is IFCLENGTHMEASURE, but instead found something like
-      // #15=IFCMEASUREWITHUNIT(3.28083333333333,#16);
-      // we'll just get the value and keep going
-      TRACE(e.what());
-      auto pArgument = measure_with_unit->get("ValueComponent");
-      CHECK(pArgument.type() == IfcUtil::Argument_DOUBLE);
-      conversion_factor = double(pArgument);
-   }
-   return conversion_factor;
+   auto measure_with_unit = conversion_based_unit.ConversionFactor();
+   auto value_component = measure_with_unit.ValueComponent();
+   // ValueComponent is an IfcValue SELECT - regardless of which measure type it
+   // actually is, the wrapped numeric value is always attribute index 0.
+   return (double)value_component.get_attribute_value(0);
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetStressUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetStressUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("ksi");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetStressUnit().UnitOfMeasure.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(-1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0), // pressure = force/area = (force = mass*length*time^-2) / (area = length^2) = mass*length^-1*time^-2
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(-1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0), // pressure = force/area = (force = mass*length*time^-2) / (area = length^2) = mass*length^-1*time^-2
          Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcPressureMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcPressureMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetDisplacementUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetDisplacementUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("inch");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetDeflectionUnit().UnitOfMeasure.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetXSectionDimUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetXSectionDimUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("inch");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetXSectionDimUnit().UnitOfMeasure.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetComponentDimUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetComponentDimUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("inch");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetComponentDimUnit().UnitOfMeasure.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetSpanLengthUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetSpanLengthUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("foot");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(1/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcLengthMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetBigAreaUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetBigAreaUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("square foot");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       auto cf = WBFL::Units::Measure::Feet2.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_AREAUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcAreaMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcAreaMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetSmallAreaUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetSmallAreaUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("square inch");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
       auto cf = pDisplayUnits->GetAreaUnit().UnitOfMeasure.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(2/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_AREAUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcAreaMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcAreaMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_AREAUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetVolumeUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetVolumeUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("cubic foot");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       auto cf = WBFL::Units::Measure::Feet3.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(3/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(3/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcVolumeMeasure(cf), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_CUBIC_METRE))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcVolumeMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_CUBIC_METRE))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetMassUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetMassUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("pound");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       auto cf = WBFL::Units::Measure::PoundMass.GetConvFactor(); // converts to base mass units which is KG
       auto cf2 = WBFL::Units::Measure::Gram.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(0/*length*/, 1/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(0/*length*/, 1/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_MASSUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcMassMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcMassMeasure>().initialize(cf * cf2), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetForceUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetForceUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("kip");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       auto cf = WBFL::Units::Measure::Kip.GetConvFactor(); // converts to base force units which is N
       auto cf2 = WBFL::Units::Measure::Newton.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_FORCEUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcForceMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_NEWTON))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcForceMeasure>().initialize(cf * cf2), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_NEWTON))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-typename Schema::IfcConversionBasedUnit* GetAngleUnit(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
+typename Schema::IfcConversionBasedUnit GetAngleUnit(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    std::string name("degree");
-   typename Schema::IfcConversionBasedUnit* unit = FindUnitByName<Schema>(file, name);
-   if (unit == nullptr)
+   typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
+   if (!unit)
    {
       auto cf = WBFL::Units::Measure::Degree.GetConvFactor(); // converts to base angle units which is rad
       auto cf2 = WBFL::Units::Measure::Radian.GetConvFactor();
-      unit = new typename Schema::IfcConversionBasedUnit(
-         new typename Schema::IfcDimensionalExponents(0/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
+      unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
+         file.create<typename Schema::IfcDimensionalExponents>().initialize(0/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT,
          name,
-         new typename Schema::IfcMeasureWithUnit(new typename Schema::IfcPlaneAngleMeasure(cf * cf2), new typename Schema::IfcSIUnit(Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, boost::none, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcPlaneAngleMeasure>().initialize(cf * cf2), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN))
       );
    }
    return unit;
 }
 
 template <typename Schema>
-std::vector<int> GetCompoundPlaneAngleMeasure(Float64 angle_deg)
+std::vector<int64_t> GetCompoundPlaneAngleMeasure(Float64 angle_deg)
 {
    WBFL::COGO::Angle angle(WBFL::Units::Convert(angle_deg,WBFL::Units::Measure::Degree,WBFL::Units::Measure::Radian));
    auto [d, m, s] = angle.GetDMS();
-   return { d, m, static_cast<int>(s) };
+   return { d, m, static_cast<int64_t>(s) };
 }

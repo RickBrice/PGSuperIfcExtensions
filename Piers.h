@@ -21,6 +21,6 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-PierIndexType get_pier_count(IfcParse::IfcFile& file);
+PierIndexType get_pier_count(ifcopenshell::file& file);
 
-double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart* pier);
+double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart pier);

@@ -4,19 +4,19 @@
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
-// it under the terms of the Alternate Route Open Source License as 
-// published by the Washington State Department of Transportation, 
+// it under the terms of the Alternate Route Open Source License as
+// published by the Washington State Department of Transportation,
 // Bridge and Structures Office.
 //
-// This program is distributed in the hope that it will be useful, but 
-// distribution is AS IS, WITHOUT ANY WARRANTY; without even the implied 
-// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See 
+// This program is distributed in the hope that it will be useful, but
+// distribution is AS IS, WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
 // the Alternate Route Open Source License for more details.
 //
-// You should have received a copy of the Alternate Route Open Source 
-// License along with this program; if not, write to the Washington 
-// State Department of Transportation, Bridge and Structures Office, 
-// P.O. Box  47340, Olympia, WA 98503, USA or e-mail 
+// You should have received a copy of the Alternate Route Open Source
+// License along with this program; if not, write to the Washington
+// State Department of Transportation, Bridge and Structures Office,
+// P.O. Box  47340, Olympia, WA 98503, USA or e-mail
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 #pragma once
@@ -24,40 +24,35 @@
 //#include "Utilities.h"
 
 template <typename Schema>
-void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition* object, typename Schema::IfcPropertySet* pset)
+void AddPropertySet(hierarchy_helper<Schema>& file, typename Schema::IfcObjectDefinition object, typename Schema::IfcPropertySet pset)
 {
-   if (pset == nullptr)
+   if (!pset)
       return;
 
-   typename Schema::IfcObjectDefinition::list::ptr related_objects(new typename Schema::IfcObjectDefinition::list);
-   related_objects->push(object);
+   std::vector<typename Schema::IfcObjectDefinition> related_objects;
+   related_objects.push_back(object);
 
    AddPropertySet(file, related_objects, pset);
 }
 
 template <typename Schema>
-void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcObjectDefinition::list::ptr related_objects, typename Schema::IfcPropertySet* pset)
+void AddPropertySet(hierarchy_helper<Schema>& file, std::vector<typename Schema::IfcObjectDefinition> related_objects, typename Schema::IfcPropertySet pset)
 {
-   if (pset == nullptr)
+   if (!pset)
       return;
 
-   auto related_properties = new typename Schema::IfcRelDefinesByProperties(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, related_objects, pset);
-   file.addEntity(related_properties);
+   file.create<typename Schema::IfcRelDefinesByProperties>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, related_objects, pset);
 }
 
 template <typename Schema>
-void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTypeObject* type, typename Schema::IfcPropertySet* pset)
+void AddPropertySet(hierarchy_helper<Schema>& file, typename Schema::IfcTypeObject type, typename Schema::IfcPropertySet pset)
 {
-   if (pset == nullptr)
+   if (!pset)
       return;
 
-   auto has_property_sets = type->HasPropertySets();
-   if (!has_property_sets)
-   {
-      has_property_sets = typename Schema::IfcPropertySetDefinition::list::ptr(new typename Schema::IfcPropertySetDefinition::list);
-   }
-   (*has_property_sets)->push(pset->as<typename Schema::IfcPropertySetDefinition>());
-   type->setHasPropertySets(has_property_sets);
+   auto has_property_sets = type.HasPropertySets().value_or(std::vector<typename Schema::IfcPropertySetDefinition>{});
+   has_property_sets.push_back(pset.as<typename Schema::IfcPropertySetDefinition>());
+   type.setHasPropertySets(has_property_sets);
 }
 
 //#pragma Reminder("TODO - generalize the property enum methods and move to IfcHierarchyHelper")
@@ -66,120 +61,127 @@ void AddPropertySet(IfcHierarchyHelper<Schema>& file, typename Schema::IfcTypeOb
 // Need to generalize the enumValues from strings to IfcValue
 // createPropertyEnumeratedValue needs two forms, a single value and a vector of values
 template <typename Schema>
-typename Schema::IfcPropertyEnumeration* createPropertyEnumeration(const std::string& name, std::vector<std::string>& enumValues, typename Schema::IfcUnit* unit = nullptr)
+typename Schema::IfcPropertyEnumeration createPropertyEnumeration(hierarchy_helper<Schema>& file, const std::string& name, std::vector<std::string>& enumValues, typename Schema::IfcUnit unit = {})
 {
-   typename Schema::IfcValue::list::ptr enum_values(new typename Schema::IfcValue::list);
+   std::vector<typename Schema::IfcValue> enum_values;
    for (const auto& value : enumValues)
    {
-      enum_values->push(new typename Schema::IfcLabel(value));
+      enum_values.push_back(file.create<typename Schema::IfcLabel>().initialize(value));
    }
 
-   auto property_enum = new typename Schema::IfcPropertyEnumeration(name, enum_values, unit);
+   auto property_enum = file.create<typename Schema::IfcPropertyEnumeration>().initialize(name, enum_values, unit);
    return property_enum;
 }
 
 template <typename Schema>
-typename Schema::IfcPropertyEnumeratedValue* createPropertyEnumeratedValue(const std::string& property_name, typename Schema::IfcPropertyEnumeration* enumeration, const std::string& value)
+typename Schema::IfcPropertyEnumeratedValue createPropertyEnumeratedValue(hierarchy_helper<Schema>& file, const std::string& property_name, typename Schema::IfcPropertyEnumeration enumeration, const std::string& value)
 {
-   typename Schema::IfcValue::list::ptr list_of_selected_enum_values(new typename Schema::IfcValue::list);
-   list_of_selected_enum_values->push(new typename Schema::IfcLabel(value));
-   auto property_enum_value = new typename Schema::IfcPropertyEnumeratedValue(property_name, boost::none, list_of_selected_enum_values, enumeration);
+   std::vector<typename Schema::IfcValue> list_of_selected_enum_values;
+   list_of_selected_enum_values.push_back(file.create<typename Schema::IfcLabel>().initialize(value));
+   auto property_enum_value = file.create<typename Schema::IfcPropertyEnumeratedValue>().initialize(property_name, std::nullopt, list_of_selected_enum_values, enumeration);
    return property_enum_value;
 }
 
 
 template <typename Schema>
-typename Schema::IfcLabel* getPropertyEnumeratedValue(typename Schema::IfcPropertyEnumeratedValue* enum_value)
+typename Schema::IfcLabel getPropertyEnumeratedValue(typename Schema::IfcPropertyEnumeratedValue enum_value)
 {
    if (enum_value)
    {
-      auto list_of_selected_enum_values = enum_value->EnumerationValues();
+      auto list_of_selected_enum_values = enum_value.EnumerationValues();
       if (list_of_selected_enum_values)
       {
-         auto ptr = *list_of_selected_enum_values;
-         ASSERT(ptr->size() == 1); // only expecting one, but there could be more. This is a limitation of this function
-         auto value = *(ptr->begin());
-         return value->as<typename Schema::IfcLabel>();
+         auto& values = *list_of_selected_enum_values;
+         ASSERT(values.size() == 1); // only expecting one, but there could be more. This is a limitation of this function
+         auto value = values.front();
+         return value.as<typename Schema::IfcLabel>();
       }
    }
-   return nullptr;
+   return {};
 }
 
 template <typename Schema>
-typename Schema::IfcPropertySet* GetPropertySet(const typename Schema::IfcObject* object, std::string name)
+typename Schema::IfcPropertySet GetPropertySet(typename Schema::IfcObject object, std::string name)
 {
    // First check for property sets on the object itself since they override
    // properties defined on the object type (if used).
    // See 5.1.3.6 IfcObject
-   auto rel_defines_by_properties = object->IsDefinedBy();
-   for (auto rel : *rel_defines_by_properties)
+   auto rel_defines_by_properties = object.IsDefinedBy();
+   for (auto& rel : rel_defines_by_properties)
    {
-      auto prop_set = rel->RelatingPropertyDefinition()->as<typename Schema::IfcPropertySet>();
-      if(prop_set && prop_set->Name() == name)
+      auto prop_set = rel.RelatingPropertyDefinition().as<typename Schema::IfcPropertySet>();
+      if (prop_set && prop_set.Name() == name)
       {
          return prop_set;
       }
    }
 
    // Now check the object types (if used)
-   auto rel_defines_by_type = object->IsTypedBy();
-   for (auto rel : *rel_defines_by_type)
+   auto rel_defines_by_type = object.IsTypedBy();
+   for (auto& rel : rel_defines_by_type)
    {
-      auto relating_type = rel->RelatingType();
-      auto property_set_definitions = relating_type->HasPropertySets().value_or(nullptr);
+      auto relating_type = rel.RelatingType();
+      auto property_set_definitions = relating_type.HasPropertySets();
 
       if (property_set_definitions)
       {
-         for (auto prop_set_definition : *property_set_definitions)
+         for (auto& prop_set_definition : *property_set_definitions)
          {
-            auto prop_set = prop_set_definition->as<typename Schema::IfcPropertySet>();
-            if (prop_set && prop_set->Name() == name)
+            auto prop_set = prop_set_definition.as<typename Schema::IfcPropertySet>();
+            if (prop_set && prop_set.Name() == name)
                return prop_set;
          }
       }
    }
 
-   return nullptr;
+   return {};
 }
 
 template <typename Schema, typename T>
-typename T* GetProperty(const typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+std::optional<T> GetProperty(typename Schema::IfcObject object, std::string pset_name, std::string property_name)
 {
    auto pset = GetPropertySet<Schema>(object, pset_name);
    if (pset)
    {
-      auto properties = pset->HasProperties();
-      for (auto property : *properties)
+      auto properties = pset.HasProperties();
+      for (auto& property : properties)
       {
-         if (property->Name() == property_name)
+         if (property.Name() == property_name)
          {
-            auto p = property->as<typename Schema::IfcPropertySingleValue>();
+            auto p = property.as<typename Schema::IfcPropertySingleValue>();
             if (p)
-               return p->NominalValue()->as<T>();
-            
+               return p.NominalValue().as<T>();
+
             //TRACE(GetEntityType(property).c_str());
          }
       }
    }
-   return nullptr;
+   return std::nullopt;
 }
 
 template <typename Schema,typename T>
-std::vector<T*> GetPropertyList(const typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+std::vector<T> GetPropertyList(typename Schema::IfcObject object, std::string pset_name, std::string property_name)
 {
-   std::vector<T*> result;
+   std::vector<T> result;
    auto pset = GetPropertySet<Schema>(object, pset_name);
    if (pset)
    {
-      auto properties = pset->HasProperties();
-      for (auto property : *properties)
+      auto properties = pset.HasProperties();
+      for (auto& property : properties)
       {
-         if (property->Name() == property_name)
+         if (property.Name() == property_name)
          {
-            auto list = *(property->as<typename Schema::IfcPropertyListValue>()->ListValues());
-            for (auto value : *list)
+            auto list_value = property.as<typename Schema::IfcPropertyListValue>();
+            if (list_value)
             {
-               result.push_back(value->as<T>());
+               auto list = list_value.ListValues();
+               if (list)
+               {
+                  for (auto& value : *list)
+                  {
+                     result.push_back(value.as<T>());
+                  }
+               }
             }
          }
       }
@@ -188,17 +190,17 @@ std::vector<T*> GetPropertyList(const typename Schema::IfcObject* object, std::s
 }
 
 template <typename Schema, typename T>
-typename T* GetPropertyEnum(const typename Schema::IfcObject* object, std::string pset_name, std::string property_name)
+std::optional<T> GetPropertyEnum(typename Schema::IfcObject object, std::string pset_name, std::string property_name)
 {
    auto pset = GetPropertySet<Schema>(object, pset_name);
    if (pset)
    {
-      auto properties = pset->HasProperties();
-      for (auto property : *properties)
+      auto properties = pset.HasProperties();
+      for (auto& property : properties)
       {
-         if (property->Name() == property_name)
+         if (property.Name() == property_name)
          {
-            auto enum_value = property->as<typename Schema::IfcPropertyEnumeratedValue>();
+            auto enum_value = property.as<typename Schema::IfcPropertyEnumeratedValue>();
             if (enum_value)
                return getPropertyEnumeratedValue<Schema>(enum_value);
 
@@ -206,40 +208,41 @@ typename T* GetPropertyEnum(const typename Schema::IfcObject* object, std::strin
          }
       }
    }
-   return nullptr;
+   return std::nullopt;
 }
 
 
 template <typename Schema>
-typename Schema::IfcMaterialProperties* GetMaterialPropertySet(const typename Schema::IfcMaterialDefinition* matdef, std::string name)
+typename Schema::IfcMaterialProperties GetMaterialPropertySet(typename Schema::IfcMaterialDefinition matdef, std::string name)
 {
-   auto has_properties = matdef->HasProperties();
-   for (auto material_properties : *has_properties)
+   auto has_properties = matdef.HasProperties();
+   for (auto& material_properties : has_properties)
    {
-      if (material_properties->Name() == name)
+      if (material_properties.Name() == name)
       {
          return material_properties;
       }
    }
 
-   return nullptr;
+   return {};
 }
 
 template <typename Schema, typename T>
-typename T* GetMaterialProperty(const typename Schema::IfcMaterialDefinition* matdef, std::string pset_name, std::string property_name)
+std::optional<T> GetMaterialProperty(typename Schema::IfcMaterialDefinition matdef, std::string pset_name, std::string property_name)
 {
    auto pset = GetMaterialPropertySet<Schema>(matdef, pset_name);
    if (pset)
    {
-      auto properties = pset->Properties();
-      for (auto property : *properties)
+      auto properties = pset.Properties();
+      for (auto& property : properties)
       {
-         if (property->Name() == property_name)
+         if (property.Name() == property_name)
          {
-            auto p = property->as<typename Schema::IfcPropertySingleValue>();
-            return p->NominalValue()->as<T>();
+            auto p = property.as<typename Schema::IfcPropertySingleValue>();
+            if (p)
+               return p.NominalValue().as<T>();
          }
       }
    }
-   return nullptr;
+   return std::nullopt;
 }

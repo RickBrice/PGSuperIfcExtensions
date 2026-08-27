@@ -31,35 +31,35 @@
 
 #include <ifcgeom/abstract_mapping.h>
 #include <ifcgeom/iterator.h>
-#include <ifcgeom/ifcgeomelement.h>
-#include <ifcgeom/kernels/opencascade/OpenCascadeKernel.h>
+#include <ifcgeom/element.h>
+#include <ifcgeom/kernels/opencascade/opencascade_kernel.h>
 
 
-PierIndexType get_pier_count(IfcParse::IfcFile& file)
+PierIndexType get_pier_count(ifcopenshell::file& file)
 {
    auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
    PierIndexType nPiers = 0;
-   for (auto& part : *parts)
+   for (auto& part : parts)
    {
-      if (part->PredefinedType().has_value() && (part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part->PredefinedType().get() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
+      if (part.PredefinedType().has_value() && (part.PredefinedType().value() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part.PredefinedType().value() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
          nPiers++;
    }
    return nPiers;
 }
 
-std::set<int> get_bearing_ids(IfcSchema::IfcBridgePart* pier)
+std::set<int> get_bearing_ids(IfcSchema::IfcBridgePart pier)
 {
    std::set<int> bearing_ids;
-   auto rels = pier->ContainsElements();
-   for (auto& rel : *rels)
+   auto rels = pier.ContainsElements();
+   for (auto& rel : rels)
    {
-      auto related_elements = rel->RelatedElements();
-      for (auto& related_element : *related_elements)
+      auto related_elements = rel.RelatedElements();
+      for (auto& related_element : related_elements)
       {
-         auto bearing = related_element->as<IfcSchema::IfcBearing>();
+         auto bearing = related_element.as<IfcSchema::IfcBearing>();
          if (bearing)
          {
-            bearing_ids.insert(bearing->id());
+            bearing_ids.insert(bearing.id());
          }
       }
    }
@@ -67,12 +67,14 @@ std::set<int> get_bearing_ids(IfcSchema::IfcBridgePart* pier)
    return bearing_ids;
 }
 
-double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::IfcFile& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart* pier)
+double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell::file& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart pier)
 {
-   auto rel_positions = pier->PositionedRelativeTo();
-   auto positioning_element = (rel_positions && 0 < rel_positions->size() ? (*rel_positions->begin())->RelatingPositioningElement() : nullptr);
-   auto referent = (positioning_element ? positioning_element->as<IfcSchema::IfcReferent>() : nullptr);
-   auto station = (referent ? GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(referent, "Pset_Stationing", "Station") : nullptr);
+   auto rel_positions = pier.PositionedRelativeTo();
+   IfcSchema::IfcPositioningElement positioning_element;
+   if (!rel_positions.empty())
+      positioning_element = rel_positions.front().RelatingPositioningElement();
+   auto referent = positioning_element ? positioning_element.as<IfcSchema::IfcReferent>() : IfcSchema::IfcReferent{};
+   auto station = referent ? GetProperty<IfcSchema, IfcSchema::IfcLengthMeasure>(referent, "Pset_Stationing", "Station") : std::nullopt;
    if (referent && station)
    {
       return *station;
@@ -82,11 +84,11 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::Ifc
       USES_CONVERSION;
       std::ostringstream os;
       os << "Expected Pier " << T2A(LABEL_PIER(pierIdx)) << " ";
-      pier->toString(os);
+      pier.to_string(os);
       os << " to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER";
       WBFL::System::Logger::Info(os.str().c_str());
 
-      ifcopenshell::geometry::Settings settings;
+      ifcopenshell::geom::settings settings;
       settings.set("use-world-coords", true);
       settings.set("weld-vertices", true);
       settings.set("disable-opening-subtractions", true);
@@ -103,12 +105,12 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::Ifc
       {
 
          // set up filter for the geometry iterator
-         IfcGeom::instance_id_filter filter(true, false, bearing_ids);
-         std::vector<IfcGeom::filter_t> filters({ filter });
+         ifcopenshell::geom::instance_id_filter filter(true, false, bearing_ids);
+         std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
 
-         std::unique_ptr<IfcGeom::OpenCascadeKernel> kernel(std::make_unique<IfcGeom::OpenCascadeKernel>(settings));
+         std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
          int num_threads = 1;// std::thread::hardware_concurrency();
-         IfcGeom::Iterator iterator(std::move(kernel), settings, &file, filters, num_threads);
+         ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, num_threads);
 
 
          Eigen::Vector3d vmax(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity());
@@ -118,7 +120,7 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,IfcParse::Ifc
          {
             auto element = iterator.get();
 
-            auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
+            auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
             auto geometry = triangulation->geometry_pointer();
             const auto& verts = geometry->verts();
             const auto& faces = geometry->faces();

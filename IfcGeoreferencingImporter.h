@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -28,11 +28,11 @@ class CIfcGeoreferencingImporter
 {
 public:
    CIfcGeoreferencingImporter(CIfcImporter& importer);
-   CIfcImporter::ImportResult Import(IfcParse::IfcFile& file);
+   CIfcImporter::ImportResult Import(ifcopenshell::file& file);
 
 private:
    CIfcImporter& m_Importer;
 
-   IfcSchema::IfcProjectedCRS* GetProjectedCRS(IfcParse::IfcFile& file);
-   IfcSchema::IfcMapConversion* GetMapConversion(IfcParse::IfcFile& file);
+   IfcSchema::IfcProjectedCRS GetProjectedCRS(ifcopenshell::file& file);
+   IfcSchema::IfcMapConversion GetMapConversion(ifcopenshell::file& file);
 };

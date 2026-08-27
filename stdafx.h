@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -34,10 +34,10 @@
 #undef max // this is a non-standard macro and it interferes with IfcOpenShell - undefine it.
 #define IFOPSH_WITH_ROCKSDB
 #pragma warning(disable:4250)
-#include <ifcparse/IfcHierarchyHelper.h>
-#include <ifcparse/IfcSchema.h>
+#include <ifcparse/hierarchy_helper.h>
+#include <ifcparse/schema.h>
 
-#include <ifcparse/IfcAlignmentHelper.h>
+#include <ifcparse/alignment_helper.h>
 
 #define IfcSchema Ifc4x3_add2
 

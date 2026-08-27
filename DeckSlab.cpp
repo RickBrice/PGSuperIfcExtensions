@@ -27,8 +27,8 @@
 
 #include <ifcgeom/abstract_mapping.h>
 #include <ifcgeom/iterator.h>
-#include <ifcgeom/ifcgeomelement.h>
-#include <ifcgeom/kernels/opencascade/OpenCascadeKernel.h>
+#include <ifcgeom/element.h>
+#include <ifcgeom/kernels/opencascade/opencascade_kernel.h>
 
 #include <IFace\Project.h>
 #include <IFace/Alignment.h>
@@ -40,15 +40,15 @@
 
 
 // returns the id of the IfcSlab... assumes there is only one
-int get_slab_id(IfcParse::IfcFile& file)
+int get_slab_id(ifcopenshell::file& file)
 {
    auto slabs = file.instances_by_type<IfcSchema::IfcSlab>();
-   auto it = std::find_if(slabs->begin(), slabs->end(), [](const auto& slab) {return slab->PredefinedType() == IfcSchema::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
-   if (it == slabs->end())
+   auto it = std::find_if(slabs.begin(), slabs.end(), [](const auto& slab) {return slab.PredefinedType() == IfcSchema::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
+   if (it == slabs.end())
       return 0; // no slabs
 
    auto slab = *it;
-   return slab->id();
+   return slab.id();
 }
 
 template <typename T,typename U>
@@ -120,7 +120,7 @@ std::map<double, std::pair<double, double>> condense(const std::multimap<double,
    return result;
 }
 
-std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file)
+std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
 {
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
    WBFL::EAF::AutoProgress ap(pProgress);
@@ -134,17 +134,17 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
    CComPtr<IPoint2d> point;
    point.CoCreateInstance(CLSID_Point2d);
 
-   ifcopenshell::geometry::Settings settings;
+   ifcopenshell::geom::settings settings;
    settings.set("use-world-coords", true);
    settings.set("weld-vertices", true);
    settings.set("disable-opening-subtractions", true);
 
    // set up filter for the geometry iterator
-   IfcGeom::instance_id_filter filter(true, false, { slab_id });
-   std::vector<IfcGeom::filter_t> filters({ filter });
+   ifcopenshell::geom::instance_id_filter filter(true, false, { slab_id });
+   std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
 
-   std::unique_ptr<IfcGeom::OpenCascadeKernel> kernel(std::make_unique<IfcGeom::OpenCascadeKernel>(settings));
-   IfcGeom::Iterator iterator(std::move(kernel), settings, &file, filters,1);
+   std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
+   ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters,1);
    bool bResult = iterator.initialize();
    do
    {
@@ -159,7 +159,7 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
       //double vol;
       //brep->geometry_pointer()->calculate_volume(vol);
 
-      auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
+      auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
       auto geometry = triangulation->geometry_pointer();
       const auto& verts = geometry->verts();
       const auto& faces = geometry->faces();
@@ -229,7 +229,7 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
    return results;
 }
 
-bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcParse::IfcFile& file)
+bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
 {
    // The bridge has a deck, but the model does not have an alignment.
    // We can't compute station and offset of the deck edge points without an alignment.
@@ -244,23 +244,23 @@ bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, IfcP
    auto slab_id = get_slab_id(file);
    ASSERT(slab_id != 0); // should not be calling into this function if there isn't a deck slab
 
-   ifcopenshell::geometry::Settings settings;
+   ifcopenshell::geom::settings settings;
    settings.set("use-world-coords", true);
    settings.set("weld-vertices", true);
    settings.set("disable-opening-subtractions", true);
 
    // set up filter for the geometry iterator
-   IfcGeom::instance_id_filter filter(true, false, { slab_id });
-   std::vector<IfcGeom::filter_t> filters({ filter });
+   ifcopenshell::geom::instance_id_filter filter(true, false, { slab_id });
+   std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
 
-   std::unique_ptr<IfcGeom::OpenCascadeKernel> kernel(std::make_unique<IfcGeom::OpenCascadeKernel>(settings));
-   IfcGeom::Iterator iterator(std::move(kernel), settings, &file, filters, 1);
+   std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
+   ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, 1);
    bool bResult = iterator.initialize();
    do
    {
       auto element = iterator.get();
 
-      auto triangulation = dynamic_cast<IfcGeom::TriangulationElement*>(element);
+      auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
       auto geometry = triangulation->geometry_pointer();
       const auto& verts = geometry->verts();
       const auto& faces = geometry->faces();

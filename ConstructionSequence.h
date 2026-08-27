@@ -78,7 +78,7 @@ std::string getCurrentISO8601Time() {
 // NOTE: usBridge has decided to not include the assumed construction sequence as a modeled entity in favor of a document-based attachment to the model.
 // This function is no longer used, but it is retained for an example. There are some details that are commented out to keep the compiler happy.
 template <typename Schema>
-void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+void CreateAssumedConstructionSequence(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    // only doing the PGSuper assumed construction sequence for now. For time-step method (PGSplice) it is much more complex
    USES_CONVERSION;
@@ -93,20 +93,20 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
 
    // Define the work plan
 
-   auto work_plan = new typename Schema::IfcWorkPlan(
-      IfcParse::IfcGlobalId(),
+   auto work_plan = file.create<typename Schema::IfcWorkPlan>().initialize(
+      ifcopenshell::global_id(),
       nullptr,
       std::string("Bridge Project Work Plan"), // Name
       std::string("Work schedules for construction"), // Description
-      boost::none, // ObjectType
-      boost::none, // Identification
+      std::nullopt, // ObjectType
+      std::nullopt, // Identification
       now, // CreationData
-      boost::none, // Creators
+      std::nullopt, // Creators
       std::string("Defines assumed plans and schedules required per AASHTO specifications"), // Purpose
-      boost::none, // Duration
-      boost::none, // TotalFloat
+      std::nullopt, // Duration
+      std::nullopt, // TotalFloat
       now, // StartTime (we don't know the start time, so just use the creation time)
-      boost::none, // FinishTime
+      std::nullopt, // FinishTime
       Schema::IfcWorkPlanTypeEnum::IfcWorkPlanType_PLANNED
    );
 
@@ -115,88 +115,88 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
    file.addRelatedObject<typename Schema::IfcRelDeclares>(project, work_plan);
    
    // Define the assumed construction sequence as a work schedule
-   auto work_schedule = new typename Schema::IfcWorkSchedule(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto work_schedule = file.create<typename Schema::IfcWorkSchedule>().initialize(
+      ifcopenshell::global_id(),
+      {},
       gs_work_schedule_name, // Name
-      boost::none, // Description
-      boost::none, // ObjectType
-      boost::none, // Identification
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
+      std::nullopt, // Identification
       now, // CreationDate
-      boost::none, // Creators
+      std::nullopt, // Creators
       std::string("Satisfies the requirements of AASHTO LRFD BDS 2.5.3"), // Purpose
-      boost::none, // Duration
-      boost::none, // TotalFloat
+      std::nullopt, // Duration
+      std::nullopt, // TotalFloat
       now, // StartTime
-      boost::none, // FinishTime
+      std::nullopt, // FinishTime
       Schema::IfcWorkScheduleTypeEnum::IfcWorkScheduleType_PLANNED // PredefinedType
    );
 
 
    // Aggregate work schedules with the work plan
-   typename Schema::IfcObjectDefinition::list::ptr work_schedules(new typename Schema::IfcObjectDefinition::list);
-   work_schedules->push(work_schedule);
+   std::vector<typename Schema::IfcObjectDefinition> work_schedules;
+   work_schedules.push_back(work_schedule);
 
-   auto rel_aggregates = new typename Schema::IfcRelAggregates(
-      IfcParse::IfcGlobalId(),
-      nullptr,
-      boost::none, // Name
-      boost::none, // Description, 
+   auto rel_aggregates = file.create<typename Schema::IfcRelAggregates>().initialize(
+      ifcopenshell::global_id(),
+      {},
+      std::nullopt, // Name
+      std::nullopt, // Description, 
       work_plan,
       work_schedules
    );
 
-   file.addEntity(rel_aggregates);
+
 
    // Define the tasks associated with the work schedule
 
    // Define summary task for bridge construction
    // See https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcTask.htm Object Nesting concept for
    // discussion about the Identification attribute
-   auto summary_task = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto summary_task = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Construct Bridge"), // Name
       std::string("Assumed construction sequence"), // Description
-      boost::none, // ObjectType
+      std::nullopt, // ObjectType
       std::string("0"), // Identification
       std::string("Provided per requirements of AASHTO LRFD BDS 2.5.3"), // Purpose
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
-   typename Schema::IfcObjectDefinition::list::ptr tasks(new typename Schema::IfcObjectDefinition::list);
-   tasks->push(summary_task);
+   std::vector<typename Schema::IfcObjectDefinition> tasks;
+   tasks.push_back(summary_task);
 
    // Assign the tasks of the construction sequence to the work schedule
-   auto rel_assigns_to_control = new typename Schema::IfcRelAssignsToControl(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto rel_assigns_to_control = file.create<typename Schema::IfcRelAssignsToControl>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Assumed Construction Sequence Work Schedule Tasks"), // Name
-      boost::none, // Description, 
+      std::nullopt, // Description, 
       tasks, // RelatedObjects
-      boost::none, // RelatedObjectsType
+      std::nullopt, // RelatedObjectsType
       work_schedule // RelatingControl
    );
 
-   file.addEntity(rel_assigns_to_control);
+
 
    // Assign the task of construction to the bridge (bridge is the output of the task)
    auto bridge = file.getSingle<typename Schema::IfcBridge>();
-   auto rel_assigns_to_product = new typename Schema::IfcRelAssignsToProduct(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto rel_assigns_to_product = file.create<typename Schema::IfcRelAssignsToProduct>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Bridge is the output product of the construction task"), // Name
-      boost::none, // Description
+      std::nullopt, // Description
       tasks, // RelatedObjects
-      boost::none, // RelatedObjectsType
+      std::nullopt, // RelatedObjectsType
       bridge // RelatingProduct
    );
-   file.addEntity(rel_assigns_to_product);
+
 
    //
    // This is just a concept, but if the construction sequence is document based information, the document
@@ -206,46 +206,46 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
    // define document reference
    GET_IFACE2(pBroker, IBridge, pBridge);
    auto nSpans = pBridge->GetSpanCount();
-   auto document_reference = new typename Schema::IfcDocumentReference(
+   auto document_reference = file.create<typename Schema::IfcDocumentReference>().initialize(
       nSpans == 1 ? std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A2_1.PDF") 
                   : std::string("https://wsdot.wa.gov/publications/fulltext/Bridge/Web_BSD/5.6_A2_2.PDF"),
       nSpans == 1 ? std::string("5.6 A2 1") : std::string("5.6 A2 2"), // Identification
       std::string("Assumed construction sequence"), // Name
-      boost::none, // Description 
-      nullptr);
+      std::nullopt, // Description 
+      {});
 
-   typename Schema::IfcDefinitionSelect::list::ptr tasks2(new typename Schema::IfcDefinitionSelect::list);
-   tasks2->push(summary_task);
+   std::vector<typename Schema::IfcDefinitionSelect> tasks2;
+   tasks2.push_back(summary_task);
 
    // associate document with task
-   auto rel_associates_document = new typename Schema::IfcRelAssociatesDocument(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, tasks2, document_reference);
-   file.addEntity(rel_associates_document);
+   auto rel_associates_document = file.create<typename Schema::IfcRelAssociatesDocument>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, tasks2, document_reference);
+
 
    //
    // Define sub-tasks of the summary task
    //
-   typename Schema::IfcObjectDefinition::list::ptr sub_tasks(new typename Schema::IfcObjectDefinition::list);
+   std::vector<typename Schema::IfcObjectDefinition> sub_tasks;
 
    auto sub_task1 = CreateStage1Tasks(file, pBroker, options);
    auto sub_task2 = CreateStage2Tasks(file, pBroker, options);
    auto sub_task3 = CreateStage3Tasks(file, pBroker, options);
    auto sub_task4 = CreateStage4Tasks(file, pBroker, options);
 
-   sub_tasks->push(sub_task1);
-   sub_tasks->push(sub_task2);
-   sub_tasks->push(sub_task3);
-   sub_tasks->push(sub_task4);
+   sub_tasks.push_back(sub_task1);
+   sub_tasks.push_back(sub_task2);
+   sub_tasks.push_back(sub_task3);
+   sub_tasks.push_back(sub_task4);
 
    // nest the subtasks into the summary task
-   auto rel_nests = new typename Schema::IfcRelNests(
-      IfcParse::IfcGlobalId(),
-      nullptr,
-      boost::none, // Name
-      boost::none, // Description
+   auto rel_nests = file.create<typename Schema::IfcRelNests>().initialize(
+      ifcopenshell::global_id(),
+      {},
+      std::nullopt, // Name
+      std::nullopt, // Description
       summary_task, // RelatingObject
       sub_tasks // RelatedObjects
    );
-   file.addEntity(rel_nests);
+
 
    // Assign relative sequence to subtasks
    auto iter = std::next(sub_tasks->begin());
@@ -257,97 +257,97 @@ void CreateAssumedConstructionSequence(IfcHierarchyHelper<Schema>& file, std::sh
       object_definition = *iter;
       auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-      auto rel_sequence = new IfcSchema::IfcRelSequence(
-            IfcParse::IfcGlobalId(),
-            nullptr,
-            boost::none, // Name
-            boost::none, // Description
+      auto rel_sequence = file.create<typename IfcSchema::IfcRelSequence>().initialize(
+            ifcopenshell::global_id(),
+            {},
+            std::nullopt, // Name
+            std::nullopt, // Description
             relating_process,
             related_process,
-            nullptr, // TimeLag
+            {}, // TimeLag
             Schema::IfcSequenceEnum::IfcSequence_FINISH_START, // SequenceType
-            boost::none // UserDefinedSequenceType
+            std::nullopt // UserDefinedSequenceType
          );
-      file.addEntity(rel_sequence);
+
    }
 
 }
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask CreateStage1Tasks(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   auto task = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto task = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Stage 1 - Set girders in place"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("1"), // Identification
-      boost::none, // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // LongDescription
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_MOVE
    );
 
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/lexical/IfcTask.htm
    // Model the individual steps of girder erection step as sub-tasks of the parent task
    // Each sub-task is IfcRelNests with the parent task.
-   typename Schema::IfcObjectDefinition::list::ptr subtasks(new typename Schema::IfcObjectDefinition::list);
+   std::vector<typename Schema::IfcObjectDefinition> subtasks;
 
-   auto construct_piers = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto construct_piers = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Construct piers and abutments"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("1.1"), // Identification
-      boost::none, // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // LongDescription
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
-   auto install_bearings = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto install_bearings = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Install elastomeric bearing pads"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("1.2"), // Identification
-      boost::none, // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // LongDescription
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_INSTALLATION
    );
 
-   auto set_girders = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto set_girders = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Set and brace girders"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("1.3"), // Identification
       std::string("Install temporary bracing for erection in accordance with Std. Spec. Section 6-02.3(17)F4."), // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_INSTALLATION
    );
 
-   subtasks->push(construct_piers);
-   subtasks->push(install_bearings);
-   subtasks->push(set_girders);
+   subtasks.push_back(construct_piers);
+   subtasks.push_back(install_bearings);
+   subtasks.push_back(set_girders);
 
    bool bHasTempStrands = false;
    GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);
@@ -375,80 +375,80 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
 
    if (bHasTempStrands)
    {
-      auto remove_temp_strands_task = new typename Schema::IfcTask(
-         IfcParse::IfcGlobalId(),
-         nullptr,
+      auto remove_temp_strands_task = file.create<typename Schema::IfcTask>().initialize(
+         ifcopenshell::global_id(),
+         {},
          std::string("Remove temporary strands"), // Name
-         boost::none, // Description
-         boost::none, // ObjectType
+         std::nullopt, // Description
+         std::nullopt, // ObjectType
          std::string("1.4"), // Identification
          std::string("Satisfies the requirements of AASHTO LRFD BDS 5.9.4.5"), // LongDescription
-         boost::none, // Status
-         boost::none, // WorkMethod
+         std::nullopt, // Status
+         std::nullopt, // WorkMethod
          true, // IsMilestone
-         boost::none, // Priority, 
-         nullptr, // TaskTime, 
+         std::nullopt, // Priority, 
+         {}, // TaskTime, 
          Schema::IfcTaskTypeEnum::IfcTaskType_REMOVAL
       );
 
-      subtasks->push(remove_temp_strands_task);
+      subtasks.push_back(remove_temp_strands_task);
 
-      typename Schema::IfcObjectDefinition::list::ptr remove_temp_strands_subtasks(new typename Schema::IfcObjectDefinition::list);
+      std::vector<typename Schema::IfcObjectDefinition> remove_temp_strands_subtasks;
 
-      auto remove_poly = new typename Schema::IfcTask(
-         IfcParse::IfcGlobalId(),
-         nullptr,
+      auto remove_poly = file.create<typename Schema::IfcTask>().initialize(
+         ifcopenshell::global_id(),
+         {},
          std::string("Remove polystyrene"), // Name
-         boost::none, // Description
-         boost::none, // ObjectType
+         std::nullopt, // Description
+         std::nullopt, // ObjectType
          std::string("1.4.1"), // Identification
          std::string("Removed expanded polystyrene in blockouts in top flange of girders. Once the expanded polystyrene has been removed from the strand detensioning blockout, prevent moisture from entering the blockout until the temporary top strand is cut and the blockout filled with grout."), // LongDescription
-         boost::none, // Status
-         boost::none, // WorkMethod
+         std::nullopt, // Status
+         std::nullopt, // WorkMethod
          true, // IsMilestone
-         boost::none, // Priority, 
-         nullptr, // TaskTime, 
+         std::nullopt, // Priority, 
+         {}, // TaskTime, 
          Schema::IfcTaskTypeEnum::IfcTaskType_REMOVAL
       );
 
-      auto cut_strands = new typename Schema::IfcTask(
-         IfcParse::IfcGlobalId(),
-         nullptr,
+      auto cut_strands = file.create<typename Schema::IfcTask>().initialize(
+         ifcopenshell::global_id(),
+         {},
          std::string("Cut strands"), // Name
-         boost::none, // Description
-         boost::none, // ObjectType
+         std::nullopt, // Description
+         std::nullopt, // ObjectType
          std::string("1.4.2"), // Identification
          std::string("Cut strands in blockouts. Strands may be cut by using a cutting torch and moving the flame back and forth over the length of the exposed strand to let individual wires break one at a time to lessen the shock to the girder. Strands shall be released in a symmetrical manner about the girder centerline starting with those furthest from the centerline and working inwards. For post-tensioned temporary top strands, actively restrain the strand chucks at the girder ends during cutting."), // LongDescription
-         boost::none, // Status
-         boost::none, // WorkMethod
+         std::nullopt, // Status
+         std::nullopt, // WorkMethod
          true, // IsMilestone
-         boost::none, // Priority, 
-         nullptr, // TaskTime, 
+         std::nullopt, // Priority, 
+         {}, // TaskTime, 
          Schema::IfcTaskTypeEnum::IfcTaskType_OPERATION
       );
 
-      auto fill_blockouts = new typename Schema::IfcTask(
-         IfcParse::IfcGlobalId(),
-         nullptr,
+      auto fill_blockouts = file.create<typename Schema::IfcTask>().initialize(
+         ifcopenshell::global_id(),
+         {},
          std::string("Fill blockouts"), // Name
-         boost::none, // Description
-         boost::none, // ObjectType
+         std::nullopt, // Description
+         std::nullopt, // ObjectType
          std::string("1.4.3"), // Identification
          std::string("Within 24 hours of cutting the temporary strands, fill the blockouts with a grout conforming to Std. Spec. 9-20.3(2). Remove all moisture in blockouts prior to filling them with grout."), // LongDescription
-         boost::none, // Status
-         boost::none, // WorkMethod
+         std::nullopt, // Status
+         std::nullopt, // WorkMethod
          true, // IsMilestone
-         boost::none, // Priority, 
-         nullptr, // TaskTime, 
+         std::nullopt, // Priority, 
+         {}, // TaskTime, 
          Schema::IfcTaskTypeEnum::IfcTaskType_INSTALLATION
       );
 
-      remove_temp_strands_subtasks->push(remove_poly);
-      remove_temp_strands_subtasks->push(cut_strands);
-      remove_temp_strands_subtasks->push(fill_blockouts);
+      remove_temp_strands_subtasks.push_back(remove_poly);
+      remove_temp_strands_subtasks.push_back(cut_strands);
+      remove_temp_strands_subtasks.push_back(fill_blockouts);
 
-      auto rel_nests = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, remove_temp_strands_task, remove_temp_strands_subtasks);
-      file.addEntity(rel_nests);
+      auto rel_nests = file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, remove_temp_strands_task, remove_temp_strands_subtasks);
+
 
       // connnect sequence of tasks
       auto iter = std::next(remove_temp_strands_subtasks->begin());
@@ -460,24 +460,24 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
          object_definition = *iter;
          auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-         auto rel_sequence = new IfcSchema::IfcRelSequence(
-            IfcParse::IfcGlobalId(),
-            nullptr,
-            boost::none, // Name
-            boost::none, // Description
+         auto rel_sequence = file.create<typename IfcSchema::IfcRelSequence>().initialize(
+            ifcopenshell::global_id(),
+            {},
+            std::nullopt, // Name
+            std::nullopt, // Description
             relating_process,
             related_process,
-            nullptr, // TimeLag
+            {}, // TimeLag
             Schema::IfcSequenceEnum::IfcSequence_FINISH_START, // SequenceType
-            boost::none // UserDefinedSequenceType
+            std::nullopt // UserDefinedSequenceType
          );
-         file.addEntity(rel_sequence);
+
       }
 
    }
 
-   auto rel_nests = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, task, subtasks);
-   file.addEntity(rel_nests);
+   auto rel_nests = file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, task, subtasks);
+
 
    // connect sequence of tasks
    auto iter = std::next(subtasks->begin());
@@ -489,82 +489,82 @@ typename Schema::IfcTask* CreateStage1Tasks(IfcHierarchyHelper<Schema>& file, st
       object_definition = *iter;
       auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-      auto rel_sequence = new IfcSchema::IfcRelSequence(
-         IfcParse::IfcGlobalId(),
-         nullptr,
-         boost::none, // Name
-         boost::none, // Description
+      auto rel_sequence = file.create<typename IfcSchema::IfcRelSequence>().initialize(
+         ifcopenshell::global_id(),
+         {},
+         std::nullopt, // Name
+         std::nullopt, // Description
          relating_process,
          related_process,
-         nullptr, // TimeLag
+         {}, // TimeLag
          Schema::IfcSequenceEnum::IfcSequence_FINISH_START, // SequenceType
-         boost::none // UserDefinedSequenceType
+         std::nullopt // UserDefinedSequenceType
       );
-      file.addEntity(rel_sequence);
+
    }
 
    return task;
 }
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask CreateStage2Tasks(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   auto task = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto task = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Stage 2 - Cast diaphragms and place bridge deck reinforcement"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("2"), // Identification
-      boost::none, // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // LongDescription
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
-   typename Schema::IfcObjectDefinition::list::ptr subtasks(new typename Schema::IfcObjectDefinition::list);
+   std::vector<typename Schema::IfcObjectDefinition> subtasks;
 
-   auto install_bracing = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto install_bracing = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Install temporary bracing"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("2.1"), // Identification
       std::string("Install temporary bracing for diaphragm and deck concrete placement in accordance with Std. Spec. Section 6-02.3(17)F5."), // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_INSTALLATION
    );
 
 
-   auto place_deck_reinforcement = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto place_deck_reinforcement = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Construct deck"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("2.2"), // Identification
       std::string("Form deck and place bridge deck reinforcement after casting diaphragms."), // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
-   subtasks->push(install_bracing);
-   subtasks->push(place_deck_reinforcement);
+   subtasks.push_back(install_bracing);
+   subtasks.push_back(place_deck_reinforcement);
 
-   auto rel_nests = new typename Schema::IfcRelNests(IfcParse::IfcGlobalId(), nullptr, boost::none, boost::none, task, subtasks);
-   file.addEntity(rel_nests);
+   auto rel_nests = file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, task, subtasks);
+
 
 
    auto iter = std::next(subtasks->begin());
@@ -576,39 +576,39 @@ typename Schema::IfcTask* CreateStage2Tasks(IfcHierarchyHelper<Schema>& file, st
       object_definition = *iter;
       auto related_process = object_definition->as<typename Schema::IfcProcess>();
 
-      auto rel_sequence = new IfcSchema::IfcRelSequence(
-         IfcParse::IfcGlobalId(),
-         nullptr,
-         boost::none, // Name
-         boost::none, // Description
+      auto rel_sequence = file.create<typename IfcSchema::IfcRelSequence>().initialize(
+         ifcopenshell::global_id(),
+         {},
+         std::nullopt, // Name
+         std::nullopt, // Description
          relating_process,
          related_process,
-         nullptr, // TimeLag
+         {}, // TimeLag
          Schema::IfcSequenceEnum::IfcSequence_FINISH_START, // SequenceType
-         boost::none // UserDefinedSequenceType
+         std::nullopt // UserDefinedSequenceType
       );
-      file.addEntity(rel_sequence);
+
    }
 
    return task;
 }
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage3Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask CreateStage3Tasks(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   auto task = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto task = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Stage 3 - Cast bridge deck"), // Name
-      boost::none, // Description
-      boost::none, // ObjectType
+      std::nullopt, // Description
+      std::nullopt, // ObjectType
       std::string("3"), // Identification
       std::string("Cast bridge deck when diaphragm concrete compressive strength has reached 3000 psi (minimum)."), // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
@@ -617,21 +617,21 @@ typename Schema::IfcTask* CreateStage3Tasks(IfcHierarchyHelper<Schema>& file, st
 
 
 template <typename Schema>
-typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask CreateStage4Tasks(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   auto task = new typename Schema::IfcTask(
-      IfcParse::IfcGlobalId(),
-      nullptr,
+   auto task = file.create<typename Schema::IfcTask>().initialize(
+      ifcopenshell::global_id(),
+      {},
       std::string("Stage 4 - Cast traffic barriers"), // Name
       std::string("Cast traffic barrier"), // Description
-      boost::none, // ObjectType
+      std::nullopt, // ObjectType
       std::string("4"), // Identification
       std::string("Cast traffic barrier after the deck concrete compressive strength has reached 3000 psi (minimum)"), // LongDescription
-      boost::none, // Status
-      boost::none, // WorkMethod
+      std::nullopt, // Status
+      std::nullopt, // WorkMethod
       true, // IsMilestone
-      boost::none, // Priority, 
-      nullptr, // TaskTime, 
+      std::nullopt, // Priority, 
+      {}, // TaskTime, 
       Schema::IfcTaskTypeEnum::IfcTaskType_CONSTRUCTION
    );
 
@@ -640,7 +640,7 @@ typename Schema::IfcTask* CreateStage4Tasks(IfcHierarchyHelper<Schema>& file, st
 
 
 template <typename Schema>
-typename Schema::IfcTask* GetConstructBridgeSummaryTask(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask GetConstructBridgeSummaryTask(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    // the summary IfcTask is assigned to the IfcWorkSchedule control
    auto assignments = file.instances_by_type<typename Schema::IfcRelAssignsToControl>();
@@ -655,11 +655,11 @@ typename Schema::IfcTask* GetConstructBridgeSummaryTask(IfcHierarchyHelper<Schem
          return task;
       }
    }
-   return nullptr;
+   return {};
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStageTask(IndexType idx,IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask GetStageTask(IndexType idx,hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    auto summary_task = GetConstructBridgeSummaryTask(file, pBroker, options);
    auto nested_by = summary_task->IsNestedBy();
@@ -673,42 +673,42 @@ typename Schema::IfcTask* GetStageTask(IndexType idx,IfcHierarchyHelper<Schema>&
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage1Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask GetStage1Task(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    return GetStageTask(0, file, pBroker, options);
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage2Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask GetStage2Task(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    return GetStageTask(1, file, pBroker, options);
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage3Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask GetStage3Task(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    return GetStageTask(2, file, pBroker, options);
 }
 
 template <typename Schema>
-typename Schema::IfcTask* GetStage4Task(IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+typename Schema::IfcTask GetStage4Task(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
    return GetStageTask(3, file, pBroker, options);
 }
 
 template <typename Schema>
-void AssignTaskToProduct(typename Schema::IfcTask* task,typename Schema::IfcProduct* product,IfcHierarchyHelper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+void AssignTaskToProduct(typename Schema::IfcTask task,typename Schema::IfcProduct product,hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   typename Schema::IfcObjectDefinition::list::ptr tasks(new typename Schema::IfcObjectDefinition::list);
-   tasks->push(task);
-   auto rel_assigns_to_product = new typename Schema::IfcRelAssignsToProduct(
-      IfcParse::IfcGlobalId(),
-      nullptr,
-      boost::none, // Name
-      boost::none, // Description
+   std::vector<typename Schema::IfcObjectDefinition> tasks;
+   tasks.push_back(task);
+   auto rel_assigns_to_product = file.create<typename Schema::IfcRelAssignsToProduct>().initialize(
+      ifcopenshell::global_id(),
+      {},
+      std::nullopt, // Name
+      std::nullopt, // Description
       tasks, // RelatedObjects
-      boost::none, // RelatedObjectsType
+      std::nullopt, // RelatedObjectsType
       product // RelatingProduct
    );
-   file.addEntity(rel_assigns_to_product);
+
 }

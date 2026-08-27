@@ -64,6 +64,18 @@
     <ClCompile Include="ImportResults.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EpsgCatalog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EpsgPickerDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MapConversion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcGeoreferencingImporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IfcImporter.h">
@@ -115,6 +127,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Rebar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RebarRelationshipBatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GirderSheets.h">
@@ -169,6 +184,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Georeferencing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EpsgCatalog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EpsgPickerDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcGeoreferencingImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MapConversion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright ï¿½ 1999-2026  Washington State Department of Transportation
+// Copyright © 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -45,31 +45,31 @@ CIfcGeoreferencingImporter::CIfcGeoreferencingImporter(CIfcImporter& importer) :
 {
 }
 
-IfcSchema::IfcProjectedCRS* CIfcGeoreferencingImporter::GetProjectedCRS(IfcParse::IfcFile& file)
+IfcSchema::IfcProjectedCRS CIfcGeoreferencingImporter::GetProjectedCRS(ifcopenshell::file& file)
 {
    auto projected_crs_list = file.instances_by_type<IfcSchema::IfcProjectedCRS>();
-   if (projected_crs_list->size() < 1)
+   if (projected_crs_list.size() < 1)
    {
       WBFL::System::Logger::Info(_T("IFC model does not contain an IfcProjectedCRS. Georeferencing will not be imported."));
-      return nullptr;
+      return {};
    }
 
-   return *(projected_crs_list->begin());
+   return projected_crs_list.front();
 }
 
-IfcSchema::IfcMapConversion* CIfcGeoreferencingImporter::GetMapConversion(IfcParse::IfcFile& file)
+IfcSchema::IfcMapConversion CIfcGeoreferencingImporter::GetMapConversion(ifcopenshell::file& file)
 {
    auto map_conversion_list = file.instances_by_type<IfcSchema::IfcMapConversion>();
-   if (map_conversion_list->size() < 1)
+   if (map_conversion_list.size() < 1)
    {
       WBFL::System::Logger::Info(_T("IFC model does not contain an IfcMapConversion. Map conversion will be computed for this model."));
-      return nullptr;
+      return {};
    }
 
-   return *(map_conversion_list->begin());
+   return map_conversion_list.front();
 }
 
-CIfcImporter::ImportResult CIfcGeoreferencingImporter::Import(IfcParse::IfcFile& file)
+CIfcImporter::ImportResult CIfcGeoreferencingImporter::Import(ifcopenshell::file& file)
 {
    GET_IFACE2(m_Importer.GetBroker(), IGeoreferencing, pGeoRef);
    auto georefdata = pGeoRef->GetGeoreferencingData();
@@ -81,24 +81,24 @@ CIfcImporter::ImportResult CIfcGeoreferencingImporter::Import(IfcParse::IfcFile&
    }
 
    georefdata.IsCRSValid = true;
-   georefdata.Name = StripEpsgPrefix(CString(projected_crs->Name().value_or("").c_str()));
-   georefdata.Description = CString(projected_crs->Description().value_or("").c_str());
-   georefdata.GeodeticDatum = CString(projected_crs->GeodeticDatum().value_or("").c_str());
-   georefdata.VerticalDatum = StripEpsgPrefix(CString(projected_crs->VerticalDatum().value_or("").c_str()));
-   georefdata.MapProjection = CString(projected_crs->MapProjection().value_or("").c_str());
-   georefdata.MapZone = CString(projected_crs->MapZone().value_or("").c_str());
-   ImportMapUnit<IfcSchema>(projected_crs->MapUnit(), georefdata);
+   georefdata.Name = StripEpsgPrefix(CString(projected_crs.Name().value_or("").c_str()));
+   georefdata.Description = CString(projected_crs.Description().value_or("").c_str());
+   georefdata.GeodeticDatum = CString(projected_crs.GeodeticDatum().value_or("").c_str());
+   georefdata.VerticalDatum = StripEpsgPrefix(CString(projected_crs.VerticalDatum().value_or("").c_str()));
+   georefdata.MapProjection = CString(projected_crs.MapProjection().value_or("").c_str());
+   georefdata.MapZone = CString(projected_crs.MapZone().value_or("").c_str());
+   ImportMapUnit<IfcSchema>(projected_crs.MapUnit(), georefdata);
 
    auto map_conversion = GetMapConversion(file);
    if (map_conversion)
    {
       georefdata.IsMapConversionValid = true;
-      georefdata.Eastings = map_conversion->Eastings();
-      georefdata.Northings = map_conversion->Northings();
-      georefdata.OrthogonalHeight = map_conversion->OrthogonalHeight();
-      georefdata.XAxisAbscissa = map_conversion->XAxisAbscissa().value_or(1.0); // absent means "no rotation"
-      georefdata.XAxisOrdinate = map_conversion->XAxisOrdinate().value_or(0.0);
-      georefdata.Scale = map_conversion->Scale().value_or(1.0);
+      georefdata.Eastings = map_conversion.Eastings();
+      georefdata.Northings = map_conversion.Northings();
+      georefdata.OrthogonalHeight = map_conversion.OrthogonalHeight();
+      georefdata.XAxisAbscissa = map_conversion.XAxisAbscissa().value_or(1.0); // absent means "no rotation"
+      georefdata.XAxisOrdinate = map_conversion.XAxisOrdinate().value_or(0.0);
+      georefdata.Scale = map_conversion.Scale().value_or(1.0);
    }
    else
    {
