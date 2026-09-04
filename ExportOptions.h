@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -24,14 +24,14 @@
 #include "afxdialogex.h"
 #include "IfcExporter.h"
 
-// CExportOptions dialog
+// CExportOptions - the "IFC" tab of CExportOptionsSheet (ExportOptionsSheet.h).
 
-class CExportOptions : public CDialog
+class CExportOptions : public CPropertyPage
 {
 	DECLARE_DYNAMIC(CExportOptions)
 
 public:
-	CExportOptions(CWnd* pParent = nullptr);   // standard constructor
+	CExportOptions();
 	virtual ~CExportOptions();
 
 	CIfcExportOptions options;

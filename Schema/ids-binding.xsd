@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ids-binding.xsd - a local, CodeSynthesis-xsd-friendly adaptation of the official
+  buildingSMART IDS 1.0.0 schema (Schema/ids.xsd).
+
+  The pristine ids.xsd cannot be fed to xsd.exe as-is: it <xs:import>s the XML Schema
+  namespace (http://www.w3.org/2001/XMLSchema) and reuses two constructs from it -
+  <xs:element ref="xs:restriction"> inside idsValue, and <xs:attributeGroup ref="xs:occurs">
+  on applicabilityType. Pulling in the schema-for-schemas is impractical.
+
+  Adaptations (kept deliberately minimal - every change is noted inline):
+    1. The three <xs:import> elements are removed.
+    2. idsValue's  <xs:element ref="xs:restriction"/>  ->  <xs:any namespace="##other"
+       processContents="skip"/>.  The IDS <xs:restriction>/<xs:enumeration>/<xs:pattern>/
+       <xs:minInclusive> subtree is built by hand as xercesc::DOMElement and dropped into
+       the resulting wildcard sequence. (v1's default Exact match uses <ids:simpleValue>
+       only, so this path is exercised only by the optional Minimum match mode.)
+    3. applicabilityType's  <xs:attributeGroup ref="xs:occurs"/>  ->  explicit optional
+       minOccurs / maxOccurs attributes (typed as string; the emitter writes "0" / "1" /
+       "unbounded").
+
+  Output produced against this schema is still validated against the pristine
+  Schema/ids.xsd (xmllint) - that is the real conformance gate.
+-->
+<xs:schema xmlns:ids="http://standards.buildingsmart.org/IDS" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://standards.buildingsmart.org/IDS" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0.0">
+	<xs:element name="ids">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="info">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="title" type="xs:string"/>
+							<xs:element name="copyright" type="xs:string" minOccurs="0"/>
+							<xs:element name="version" type="xs:string" minOccurs="0"/>
+							<xs:element name="description" type="xs:string" minOccurs="0"/>
+							<xs:element name="author" minOccurs="0">
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:pattern value="[^@]+@[^\.]+\..+"/>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="date" type="xs:date" minOccurs="0"/>
+							<xs:element name="purpose" type="xs:string" minOccurs="0"/>
+							<xs:element name="milestone" type="xs:string" minOccurs="0"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="specifications" type="ids:specificationsType"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:complexType name="entityType">
+		<xs:sequence>
+			<xs:element name="name" type="ids:idsValue"/>
+			<xs:element name="predefinedType" type="ids:idsValue" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="idsValue">
+		<xs:choice minOccurs="1">
+			<xs:element name="simpleValue" type="xs:string" minOccurs="1" maxOccurs="1"/>
+			<!-- ADAPTED: was <xs:element ref="xs:restriction"/> -->
+			<xs:any namespace="##other" processContents="skip" minOccurs="1" maxOccurs="1"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="classificationType">
+		<xs:sequence>
+			<xs:element name="value" type="ids:idsValue" minOccurs="0"/>
+			<xs:element name="system" type="ids:idsValue" minOccurs="1"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="partOfType">
+		<xs:sequence>
+			<xs:element name="entity" type="ids:entityType" minOccurs="1"/>
+		</xs:sequence>
+		<xs:attribute name="relation" type="ids:relations" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="applicabilityType">
+		<xs:sequence>
+			<xs:element name="entity" type="ids:entityType" minOccurs="0"/>
+			<xs:element name="partOf" type="ids:partOfType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="classification" type="ids:classificationType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="attribute" type="ids:attributeType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="property" type="ids:propertyType" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="material" type="ids:materialType" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<!-- ADAPTED: was <xs:attributeGroup ref="xs:occurs"/> -->
+		<xs:attribute name="minOccurs" type="xs:string" use="optional"/>
+		<xs:attribute name="maxOccurs" type="xs:string" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="propertyType">
+		<xs:sequence>
+			<xs:element name="propertySet" type="ids:idsValue"/>
+			<xs:element name="baseName" type="ids:idsValue"/>
+			<xs:element name="value" type="ids:idsValue" minOccurs="0"/>
+		</xs:sequence>
+		<xs:attribute name="dataType" type="ids:upperCaseName" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="attributeType">
+		<xs:sequence>
+			<xs:element name="name" type="ids:idsValue"/>
+			<xs:element name="value" type="ids:idsValue" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="materialType">
+		<xs:sequence>
+			<xs:element name="value" type="ids:idsValue" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="requirementsType">
+		<xs:sequence maxOccurs="unbounded">
+			<xs:element name="entity" minOccurs="0">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:entityType">
+							<xs:attribute name="instructions" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="partOf" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:partOfType">
+							<xs:attribute name="cardinality" type="ids:simpleCardinality" use="optional" default="required"/>
+							<xs:attribute name="instructions" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="classification" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:classificationType">
+							<xs:attribute name="uri" type="xs:anyURI" use="optional"/>
+							<xs:attribute name="cardinality" type="ids:conditionalCardinality" use="optional" default="required"/>
+							<xs:attribute name="instructions" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="attribute" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:attributeType">
+							<xs:attribute name="cardinality" type="ids:conditionalCardinality" use="optional" default="required"/>
+							<xs:attribute name="instructions" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="property" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:propertyType">
+							<xs:attribute name="uri" type="xs:anyURI" use="optional"/>
+							<xs:attribute name="cardinality" type="ids:conditionalCardinality" use="optional" default="required"/>
+							<xs:attribute name="instructions" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="material" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:materialType">
+							<xs:attribute name="uri" type="xs:anyURI" use="optional"/>
+							<xs:attribute name="cardinality" type="ids:conditionalCardinality" use="optional" default="required"/>
+							<xs:attribute name="instructions" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="specificationType">
+		<xs:sequence>
+			<xs:element name="applicability" type="ids:applicabilityType"/>
+			<xs:element name="requirements" minOccurs="0">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="ids:requirementsType">
+							<xs:attribute name="description" type="xs:string" use="optional"/>
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required"/>
+		<xs:attribute name="ifcVersion" use="required">
+			<xs:simpleType>
+				<xs:list>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:minLength value="1"/>
+							<xs:enumeration value="IFC2X3"/>
+							<xs:enumeration value="IFC4"/>
+							<xs:enumeration value="IFC4X3_ADD2"/>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:list>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="identifier" type="xs:string" use="optional"/>
+		<xs:attribute name="description" type="xs:string" use="optional"/>
+		<xs:attribute name="instructions" type="xs:string" use="optional"/>
+	</xs:complexType>
+	<xs:complexType name="specificationsType">
+		<xs:sequence>
+			<xs:element name="specification" type="ids:specificationType" minOccurs="1" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:simpleType name="relations">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="IFCRELAGGREGATES"/>
+			<xs:enumeration value="IFCRELASSIGNSTOGROUP"/>
+			<xs:enumeration value="IFCRELCONTAINEDINSPATIALSTRUCTURE"/>
+			<xs:enumeration value="IFCRELNESTS"/>
+			<xs:enumeration value="IFCRELVOIDSELEMENT IFCRELFILLSELEMENT"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="upperCaseName">
+		<xs:restriction base="xs:normalizedString">
+			<xs:pattern value="[A-Z]+"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="simpleCardinality">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="required"/>
+			<xs:enumeration value="prohibited"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="conditionalCardinality">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="required"/>
+			<xs:enumeration value="prohibited"/>
+			<xs:enumeration value="optional"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

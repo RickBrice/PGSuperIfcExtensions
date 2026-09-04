@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -37,10 +37,10 @@
 
 // CExportOptions dialog
 
-IMPLEMENT_DYNAMIC(CExportOptions, CDialog)
+IMPLEMENT_DYNAMIC(CExportOptions, CPropertyPage)
 
-CExportOptions::CExportOptions(CWnd* pParent /*=nullptr*/)
-	: CDialog(IDD_EXPORT_OPTIONS, pParent)
+CExportOptions::CExportOptions()
+	: CPropertyPage(IDD_EXPORT_OPTIONS)
 {
 
 }
@@ -51,7 +51,7 @@ CExportOptions::~CExportOptions()
 
 void CExportOptions::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
+	CPropertyPage::DoDataExchange(pDX);
 	DDX_RadioEnum<CIfcExportOptions::Schema>(pDX, IDC_4X3_ADD2, options.schema);
 	DDX_CBIndex(pDX, IDC_SPAN, (int&)options.girderKey.groupIndex);
    DDX_CBIndex(pDX, IDC_GIRDER, (int&)options.girderKey.girderIndex);
@@ -72,7 +72,7 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BEGIN_MESSAGE_MAP(CExportOptions, CDialog)
+BEGIN_MESSAGE_MAP(CExportOptions, CPropertyPage)
 	ON_CBN_SELCHANGE(IDC_SPAN, OnSpanChanged)
 END_MESSAGE_MAP()
 
@@ -81,7 +81,7 @@ END_MESSAGE_MAP()
 
 BOOL CExportOptions::OnInitDialog()
 {
-	CDialog::OnInitDialog();
+	CPropertyPage::OnInitDialog();
 
    auto broker = EAFGetBroker();
 

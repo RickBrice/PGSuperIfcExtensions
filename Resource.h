@@ -79,15 +79,24 @@
 #define IDC_EPSG_SEARCH                 262
 #define IDC_EPSG_LIST                   263
 #define IDC_EPSG_LEGEND                 264
+#define IDD_IDS_EXPORT_OPTIONS          265
+#define IDC_IDS_ID_NAME                 266
+#define IDC_IDS_ID_GLOBALID             267
+#define IDC_IDS_ENABLED                 268
+#define IDC_IDS_INC_BEAM_PROPS          269
+#define IDC_IDS_INC_QUANTITIES          270
+#define IDC_IDS_INC_CONCRETE_MATERIAL   271
+#define IDC_IDS_INC_STRANDS             272
+#define IDC_IDS_INC_REBAR               273
 #define ID_EDIT_GEOREFERENCING          32771
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        265
+#define _APS_NEXT_RESOURCE_VALUE        266
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         265
+#define _APS_NEXT_CONTROL_VALUE         274
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

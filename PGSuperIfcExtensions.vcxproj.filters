@@ -28,6 +28,18 @@
     <ClCompile Include="PGSuperDataExporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IdsExporter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IdsExportOptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ExportOptionsSheet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Schema\ids-binding.cxx">
+      <Filter>IDS Schema</Filter>
+    </ClCompile>
     <ClCompile Include="PGSuperDataImporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -98,6 +110,21 @@
     </ClInclude>
     <ClInclude Include="PGSuperDataExporter.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IdsExporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IdsExportOptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExportOptionsSheet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BeamLabels.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Schema\ids-binding.hxx">
+      <Filter>IDS Schema</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Header Files</Filter>
@@ -204,6 +231,14 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="IfcExtensions.Manifest.PGSuper" />
+    <None Include="Schema\ids.xsd">
+      <Filter>IDS Schema</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <CXX_Tree_Mapping_Rule Include="Schema\ids-binding.xsd">
+      <Filter>IDS Schema</Filter>
+    </CXX_Tree_Mapping_Rule>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Header Files">
@@ -214,6 +249,9 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{ce55986d-23c2-44c0-9490-8ac1dbc4ee38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IDS Schema">
+      <UniqueIdentifier>{a1b2c3d4-1111-2222-3333-444455556666}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

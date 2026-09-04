@@ -34,6 +34,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(XSDDIR)\etc\vc-10.0\xsd-cxx-tree.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -41,6 +42,7 @@
     <Import Project="$(ARPDIR)\BridgeLink\BridgeLink.props" />
     <Import Project="$(ARPDIR)\WBFL\WBFL.props" />
     <Import Project="$(ARPDIR)\PGSuper\PGSuper.props" />
+    <Import Project="$(ARPDIR)\WBFL\XSD.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -48,6 +50,7 @@
     <Import Project="$(ARPDIR)\BridgeLink\BridgeLink.props" />
     <Import Project="$(ARPDIR)\WBFL\WBFL.props" />
     <Import Project="$(ARPDIR)\PGSuper\PGSuper.props" />
+    <Import Project="$(ARPDIR)\WBFL\XSD.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -131,7 +134,8 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\plugin\$(Configuration)\
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell.parse.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell_parse_schema_ifc4x3_add2.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell.geometry.dll" "$(OutDir)"
-xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_kernel_opencascade.dll" "$(OutDir)"</Command>
+xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_kernel_opencascade.dll" "$(OutDir)"
+xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying proj.db, IfcExtensions.Manifest.PGSuper, and IfcOpenShell DLLs along side EXE</Message>
@@ -199,12 +203,45 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\plugin\$(Configuration)\
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell.parse.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell_parse_schema_ifc4x3_add2.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell.geometry.dll" "$(OutDir)"
-xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_kernel_opencascade.dll" "$(OutDir)"</Command>
+xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_kernel_opencascade.dll" "$(OutDir)"
+xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying proj.db, IfcExtensions.Manifest.PGSuper, and IfcOpenShell DLLs along side EXE</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
+  <!-- buildingSMART IDS schema binding (CodeSynthesis xsd-cxx). See Schema\ids-binding.xsd
+       for why a locally-adapted schema is compiled instead of the pristine Schema\ids.xsd.
+       CharType is forced back to 0 (char) because WBFL\XSD.props sets it to 1 (wchar_t). -->
+  <!-- The Link/AdditionalDependencies in the config ItemDefinitionGroups above do not carry
+       %(AdditionalDependencies), so WBFL\XSD.props' xerces-c link entry is dropped. Re-append it. -->
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Link>
+      <AdditionalDependencies>$(XSDDIR)\lib\xerces-cd.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Link>
+      <AdditionalDependencies>$(XSDDIR)\lib\xerces-c.dll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup>
+    <CXX_Tree_Mapping_Rule>
+      <GenSerialization>true</GenSerialization>
+      <GenWildcard>true</GenWildcard>
+      <CharType>0</CharType>
+      <RootElement>ids</RootElement>
+      <OutDir>Schema</OutDir>
+    </CXX_Tree_Mapping_Rule>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CXX_Tree_Mapping_Rule Include="Schema\ids-binding.xsd">
+      <FileType>XSD</FileType>
+    </CXX_Tree_Mapping_Rule>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Schema\ids.xsd" />
+  </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BeamSpacing.cpp" />
     <ClCompile Include="DeckSlab.cpp" />
@@ -229,6 +266,22 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)
     <ClCompile Include="PGSuperDataImporter.cpp" />
     <ClCompile Include="PGSuperDataExporter.cpp" />
     <ClCompile Include="PGSuperProjectImporter.cpp" />
+    <ClCompile Include="ExportOptionsSheet.cpp" />
+    <ClCompile Include="IdsExportOptions.cpp" />
+    <ClCompile Include="IdsExporter.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ConformanceMode>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ConformanceMode>
+    </ClCompile>
+    <ClCompile Include="Schema\ids-binding.cxx">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ConformanceMode>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ConformanceMode>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level1</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level1</WarningLevel>
+    </ClCompile>
     <ClCompile Include="Piers.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -272,6 +325,11 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)
     <ClInclude Include="PGSuperDataImporter.h" />
     <ClInclude Include="PGSuperDataExporter.h" />
     <ClInclude Include="PGSuperProjectImporter.h" />
+    <ClInclude Include="BeamLabels.h" />
+    <ClInclude Include="IdsExporter.h" />
+    <ClInclude Include="ExportOptionsSheet.h" />
+    <ClInclude Include="IdsExportOptions.h" />
+    <ClInclude Include="Schema\ids-binding.hxx" />
     <ClInclude Include="Properties.h" />
     <ClInclude Include="Rebar.h" />
     <ClInclude Include="RebarRelationshipBatch.h" />
@@ -290,6 +348,7 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(XSDDIR)\etc\vc-10.0\xsd-cxx-tree.targets" />
   </ImportGroup>
   <ProjectExtensions>
     <VisualStudio>

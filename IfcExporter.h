@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,10 @@
 // Bridge_Support@wsdot.wa.gov
 ///////////////////////////////////////////////////////////////////////
 #pragma once
+
+#include <map>
+#include <string>
+#include <PsgLib\Keys.h>
 
 namespace WBFL { namespace EAF { class Broker; }; };
 
@@ -94,6 +98,11 @@ public:
    // are battered so that the end faces are vertical when the beam is erected.
    // PGSuper doesn't explicitly model batter, but we can export batter geometry.
    bool batter_ends = false; // set to false because PGSuper doesn't support batter
+
+   // Optional sink. When non-null, BuildModel records each girder segment's IfcBeam
+   // GlobalId here, keyed by CSegmentKey, so a co-exported IDS can pin its specifications
+   // by GlobalId. Not owned; must outlive the BuildModel call.
+   std::map<CSegmentKey, std::string>* segment_global_ids = nullptr;
 };
 
 ///////////////////////////////////////////////////////////////////////////

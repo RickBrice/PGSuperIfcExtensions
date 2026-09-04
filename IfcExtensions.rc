@@ -70,7 +70,7 @@ BEGIN
             VALUE "FileDescription", "PGSuperIfcExtensions Module"
             VALUE "FileVersion", "9.0.3.1"
             VALUE "InternalName", "PGSuperIfcExtensions"
-            VALUE "LegalCopyright", "Copyright © 1999-2026, Washington State Department of Transportation, All Rights Reserved"
+            VALUE "LegalCopyright", "Copyright Â© 1999-2026, Washington State Department of Transportation, All Rights Reserved"
             VALUE "OriginalFilename", "PGSuperIfcExtensions.DLL"
             VALUE "ProductName", "PGSuperIfcExtensions Module"
             VALUE "ProductVersion", "9.0.3.1"
@@ -96,9 +96,9 @@ IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
 // Dialog
 //
 
-IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 287, 401
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Export Options"
+IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 287, 375
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
+CAPTION "IFC"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Export",IDC_STATIC,7,7,273,79
@@ -142,8 +142,6 @@ BEGIN
     CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,334,103,10
     CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,346,81,10
     CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,358,65,10
-    DEFPUSHBUTTON   "OK",IDOK,177,380,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,230,380,50,14
 END
 
 IDD_IMPORT_OPTIONS DIALOGEX 0, 0, 309, 176
@@ -156,6 +154,31 @@ BEGIN
     GROUPBOX        "Options",IDC_STATIC,7,7,221,76
     CONTROL         "Alignment Only",IDC_ALIGNMENT_ONLY,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,17,26,64,10
     CONTROL         "Alignment and Bridge",IDC_ALIGNMENT_AND_BRIDGE,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,17,42,83,10
+END
+
+IDD_IDS_EXPORT_OPTIONS DIALOGEX 0, 0, 251, 168
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
+CAPTION "IDS"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Enable IDS export (writes a project IDS alongside the IFC file)",IDC_IDS_ENABLED,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,7,7,237,10
+    GROUPBOX        "Identify each beam by",IDC_STATIC,7,24,237,50
+    CONTROL         "Name (IfcBeam.Name, e.g. ""Span 1, Girder B"")",IDC_IDS_ID_NAME,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,37,220,10
+    CONTROL         "GlobalId (IfcBeam.GlobalId)",IDC_IDS_ID_GLOBALID,
+                    "Button",BS_AUTORADIOBUTTON,16,53,220,10
+    GROUPBOX        "Include in the IDS",IDC_STATIC,7,80,237,80
+    CONTROL         "Girder beam properties (strengths, geometry, camber, classification)",IDC_IDS_INC_BEAM_PROPS,
+                    "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,16,93,220,10
+    CONTROL         "Beam quantity sets (presence check)",IDC_IDS_INC_QUANTITIES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,106,220,10
+    CONTROL         "Concrete material properties",IDC_IDS_INC_CONCRETE_MATERIAL,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,119,220,10
+    CONTROL         "Strands / tendons (jacking force and stress, material)",IDC_IDS_INC_STRANDS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,132,220,10
+    CONTROL         "Reinforcing bars (classification, material)",IDC_IDS_INC_REBAR,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,145,220,10
 END
 
 IDD_IMPORT_RESULTS DIALOGEX 0, 0, 471, 280
@@ -228,7 +251,7 @@ BEGIN
         RIGHTMARGIN, 280
         VERTGUIDE, 16
         TOPMARGIN, 7
-        BOTTOMMARGIN, 394
+        BOTTOMMARGIN, 414
     END
 
     IDD_IMPORT_OPTIONS, DIALOG
@@ -269,6 +292,11 @@ BEGIN
 END
 
 IDD_IMPORT_OPTIONS AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_IDS_EXPORT_OPTIONS AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

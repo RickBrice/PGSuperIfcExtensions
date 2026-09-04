@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -2594,6 +2594,7 @@ void CreateGirder(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    std::string girder_name(T2A(os.str().c_str()));
 
    auto beam = CreatePrecastSegment(file, pBroker, options, girder_name, segmentKey, beam_type, rebar_batch);
+   if (options.segment_global_ids) (*options.segment_global_ids)[segmentKey] = beam.GlobalId();
 
    auto project = file.getSingle<typename Schema::IfcProject>();
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(project, beam);
@@ -2889,6 +2890,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
                auto beam_type = beam_types[_T("Spliced_Girder_Type")];
                auto beam = CreatePrecastSegment(file, pBroker, options, segment_name, segmentKey, beam_type, rebar_batch);
+               if (options.segment_global_ids) (*options.segment_global_ids)[segmentKey] = beam.GlobalId();
 
                list_of_girder_segments.push_back(beam); // beams in this girder
                beam_objects.push_back(beam); // all beams
@@ -2958,6 +2960,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
             auto beam_type = beam_types[pIBridgeDesc->GetGirder(segmentKey)->GetGirderName()];
             auto beam = CreatePrecastSegment(file, pBroker, options, girder_name, segmentKey, beam_type, rebar_batch);
+            if (options.segment_global_ids) (*options.segment_global_ids)[segmentKey] = beam.GlobalId();
 
             beam_objects.push_back(beam); // all beams
             file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, beam);
