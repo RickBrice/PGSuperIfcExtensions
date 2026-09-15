@@ -116,12 +116,12 @@ std::pair<typename Schema::IfcCurveSegment, typename Schema::IfcAlignmentSegment
 
 // creates geometry and business logic segments for vertical profile gradient runs
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment, typename Schema::IfcAlignmentSegment> create_gradient(hierarchy_helper<Schema>& file, typename Schema::IfcCartesianPoint p, double slope, double length, const CIfcExportOptions& options)
+std::pair<typename Schema::IfcCurveSegment, typename Schema::IfcAlignmentSegment> create_gradient(hierarchy_helper<Schema>& file, double startDistAlong, double startHeight, double slope, double length, const CIfcExportOptions& options)
 {
    CHECK(0 <= length);
 
    // business logic
-   auto design_parameters = file.create<typename Schema::IfcAlignmentVerticalSegment>().initialize(std::nullopt, std::nullopt, p.Coordinates()[0], length, p.Coordinates()[1], slope, slope, std::nullopt, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
+   auto design_parameters = file.create<typename Schema::IfcAlignmentVerticalSegment>().initialize(std::nullopt, std::nullopt, startDistAlong, length, startHeight, slope, slope, std::nullopt, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_CONSTANTGRADIENT);
    auto alignment_segment = file.create<typename Schema::IfcAlignmentSegment>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, std::nullopt, {}, {}, design_parameters);
 
    // geometry
@@ -136,19 +136,19 @@ std::pair<typename Schema::IfcCurveSegment, typename Schema::IfcAlignmentSegment
 
 // creates geometry and business logic segments for vertical profile parabolic vertical curves
 template <typename Schema>
-std::pair<typename Schema::IfcCurveSegment, typename Schema::IfcAlignmentSegment> create_vcurve(hierarchy_helper<Schema>& file, typename Schema::IfcCartesianPoint p, double start_slope, double end_slope, double length, const CIfcExportOptions& options)
+std::pair<typename Schema::IfcCurveSegment, typename Schema::IfcAlignmentSegment> create_vcurve(hierarchy_helper<Schema>& file, double startDistAlong, double startHeight, double start_slope, double end_slope, double length, const CIfcExportOptions& options)
 {
    CHECK(0 < length);
 
    if (IsEqual(start_slope, end_slope))
    {
       // this is actually a gradient line
-      return create_gradient<Schema>(file, p, start_slope, length, options);
+      return create_gradient<Schema>(file, startDistAlong, startHeight, start_slope, length, options);
    }
 
    // business logic
    double R = length / (end_slope - start_slope);
-   auto design_parameters = file.create<typename Schema::IfcAlignmentVerticalSegment>().initialize(std::nullopt, std::nullopt, p.Coordinates()[0], length, p.Coordinates()[1], start_slope, end_slope, R, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
+   auto design_parameters = file.create<typename Schema::IfcAlignmentVerticalSegment>().initialize(std::nullopt, std::nullopt, startDistAlong, length, startHeight, start_slope, end_slope, R, Schema::IfcAlignmentVerticalSegmentTypeEnum::IfcAlignmentVerticalSegmentType_PARABOLICARC);
    auto alignment_segment = file.create<typename Schema::IfcAlignmentSegment>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, std::nullopt, {}, {}, design_parameters);
 
    // geometry
@@ -179,13 +179,10 @@ void CreateHorizontalAlignment(hierarchy_helper<Schema>& file, std::shared_ptr<W
    Float64 startStation, startElevation, startGrade;
    auto startPoint = GetAlignmentStartPoint(pBroker,&startStation,&startElevation,&startGrade);
 
-   // create the start point
-   auto ifc_start_point = ConvertPoint<Schema>(file, startPoint);
-
    // loop over all the horizontal curves
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    CComPtr<IPoint2d> prevPoint = startPoint;
-   auto ifc_prev_point = ifc_start_point;
+   Float64 curr_direction = 0.0; // direction of travel at prevPoint - tracked so the terminator segment (below) is always tangent with whatever real segment precedes it, even when it coincides exactly with the end of the alignment
    IndexType nHCurves = pAlignment->GetCurveCount();
    for (IndexType i = 0; i < nHCurves; i++)
    {
@@ -205,6 +202,7 @@ void CreateHorizontalAlignment(hierarchy_helper<Schema>& file, std::shared_ptr<W
          Float64 angle;
          direction->get_Value(&angle);
 
+         auto ifc_prev_point = ConvertPoint<Schema>(file, prevPoint);
          auto [geometry_segment, business_segment] = create_tangent<Schema>(file, ifc_prev_point, angle, dist, options);
          alignment_segments.push_back(business_segment);
          if (geometry_segment)
@@ -299,25 +297,31 @@ void CreateHorizontalAlignment(hierarchy_helper<Schema>& file, std::shared_ptr<W
       // end of this curve (Spiral to Tangent, ST) becomes previous point for next alignment segment
       prevPoint.Release();
       curve->get_ST(&prevPoint);
-      ifc_prev_point = ConvertPoint<Schema>(file, prevPoint);
+
+      // direction of travel leaving this curve (including its exit spiral, if any)
+      CComPtr<IDirection> fwdTangentBrg;
+      curve->get_FwdTangentBrg(&fwdTangentBrg);
+      fwdTangentBrg->get_Value(&curr_direction);
    }
 
    // build a linear segment from end of previous alignment segment to the end of the alignment
    Float64 endStation, endElevation, endGrade;
    CComPtr<IPoint2d> endPoint;
    pAlignment->GetEndPoint(2, &endStation, &endElevation, &endGrade, &endPoint);
-
-   GET_IFACE2(pBroker, IGeometry, pGeometry);
-   Float64 dist;
-   CComPtr<IDirection> direction;
-   pGeometry->Inverse(prevPoint, endPoint, &dist, &direction);
    auto ifc_end_point = ConvertPoint<Schema>(file, endPoint);
-   Float64 angle;
-   direction->get_Value(&angle);
 
    if (prevPoint->SameLocation(endPoint) == S_FALSE)
    {
       // end the alignment with a line segment
+      GET_IFACE2(pBroker, IGeometry, pGeometry);
+      Float64 dist;
+      CComPtr<IDirection> direction;
+      pGeometry->Inverse(prevPoint, endPoint, &dist, &direction);
+      Float64 angle;
+      direction->get_Value(&angle);
+      curr_direction = angle; // continuing straight from this line, so the terminator below is tangent with it
+
+      auto ifc_prev_point = ConvertPoint<Schema>(file, prevPoint);
       auto [geometry_segment, business_segment] = create_tangent<Schema>(file, ifc_prev_point, angle, dist, options);
       alignment_segments.push_back(business_segment);
       if (geometry_segment)
@@ -331,7 +335,9 @@ void CreateHorizontalAlignment(hierarchy_helper<Schema>& file, std::shared_ptr<W
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Product_Shape/Product_Geometric_Representation/Alignment_Geometry/Alignment_Geometry_-_Horizontal_and_Vertical/content.html
    // 4.1.7.1.1.2 Zero length segment shall be added at the end of the list of segments
    // 4.1.7.1.1.2 If the geometry definition is present, then a zero length curve segment must be provided as well
-   auto [geometry_segment, business_segment] = create_tangent<Schema>(file, ifc_end_point, angle, 0.0, options);
+   // Must be tangent with the end of the last real segment - curr_direction tracks that, rather than
+   // re-deriving a direction from prevPoint->endPoint, which is undefined when they coincide (the common case).
+   auto [geometry_segment, business_segment] = create_tangent<Schema>(file, ifc_end_point, curr_direction, 0.0, options);
    alignment_segments.push_back(business_segment);
    if (geometry_segment)
    {
@@ -409,8 +415,7 @@ void CreateVerticalProfile(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL:
       {
          // create a linear segment between the last profile element and this curve
          Float64 length = start_dist_along - prev_end_dist_along;
-         auto vertical_point = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{prev_end_dist_along, prev_end_height});
-         auto [geometry_segment, business_segment] = create_gradient<Schema>(file, vertical_point, prev_end_gradient, length, options);
+         auto [geometry_segment, business_segment] = create_gradient<Schema>(file, prev_end_dist_along, prev_end_height, prev_end_gradient, length, options);
          profile_segments.push_back(business_segment);
          if (geometry_segment)
          {
@@ -437,16 +442,14 @@ void CreateVerticalProfile(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL:
          curve->get_EntryGrade(&start_gradient);
          curve->get_ExitGrade(&end_gradient);
 
-         auto vertical_point1 = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{start_dist_along, start_height});
-         auto [geometry_segment1, business_segment1] = create_vcurve<Schema>(file, vertical_point1, start_gradient, pviGrade, l1, options);
+         auto [geometry_segment1, business_segment1] = create_vcurve<Schema>(file, start_dist_along, start_height, start_gradient, pviGrade, l1, options);
          profile_segments.push_back(business_segment1);
          if (geometry_segment1)
          {
             curve_segments.push_back(geometry_segment1);
          }
 
-         auto vertical_point2 = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{start_dist_along + l1, pviElevation});
-         auto [geometry_segment2, business_segment2] = create_vcurve<Schema>(file, vertical_point2, pviGrade, end_gradient, l2, options);
+         auto [geometry_segment2, business_segment2] = create_vcurve<Schema>(file, start_dist_along + l1, pviElevation, pviGrade, end_gradient, l2, options);
          profile_segments.push_back(business_segment2);
          if (geometry_segment2)
          {
@@ -465,8 +468,7 @@ void CreateVerticalProfile(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL:
          if (IsEqual(start_gradient, end_gradient))
          {
             // this is just a straight line
-            auto vertical_point = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{prev_end_dist_along, prev_end_height});
-            auto [geometry_segment, business_segment] = create_gradient<Schema>(file, vertical_point, prev_end_gradient, l1, options);
+            auto [geometry_segment, business_segment] = create_gradient<Schema>(file, prev_end_dist_along, prev_end_height, prev_end_gradient, l1, options);
             profile_segments.push_back(business_segment);
             if (geometry_segment)
             {
@@ -475,8 +477,7 @@ void CreateVerticalProfile(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL:
          }
          else
          {
-            auto vertical_point = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{start_dist_along, start_height});
-            auto [geometry_segment, business_segment] = create_vcurve<Schema>(file, vertical_point, start_gradient, end_gradient, horizontal_length, options);
+            auto [geometry_segment, business_segment] = create_vcurve<Schema>(file, start_dist_along, start_height, start_gradient, end_gradient, horizontal_length, options);
             profile_segments.push_back(business_segment);
             if (geometry_segment)
             {
@@ -505,8 +506,7 @@ void CreateVerticalProfile(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL:
       // create a linear segment between the last profile element and the end of the alignment
       CHECK(IsEqual(prev_end_gradient, endGrade));
       Float64 length = endStation - startStation - prev_end_dist_along;
-      auto vertical_point = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{prev_end_dist_along, prev_end_height});
-      auto [geometry_segment, business_segment] = create_gradient<Schema>(file, vertical_point, prev_end_gradient, length, options);
+      auto [geometry_segment, business_segment] = create_gradient<Schema>(file, prev_end_dist_along, prev_end_height, prev_end_gradient, length, options);
       profile_segments.push_back(business_segment);
       if (geometry_segment)
       {
@@ -526,8 +526,7 @@ void CreateVerticalProfile(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL:
    // https://ifc43-docs.standards.buildingsmart.org/IFC/RELEASE/IFC4x3/HTML/concepts/Product_Shape/Product_Geometric_Representation/Alignment_Geometry/Alignment_Geometry_-_Horizontal_and_Vertical/content.html
    // 4.1.7.1.1.2 Zero length segment shall be added at the end of the list of segments
    // 4.1.7.1.1.2 If the geometry definition is present, then a zero length curve segment must be provided as well
-   auto terminator_vertical_point = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{prev_end_dist_along, prev_end_height});
-   auto [geometry_segment, business_segment] = create_gradient<Schema>(file, terminator_vertical_point, prev_end_gradient, 0.0, options);
+   auto [geometry_segment, business_segment] = create_gradient<Schema>(file, prev_end_dist_along, prev_end_height, prev_end_gradient, 0.0, options);
    profile_segments.push_back(business_segment);
    if (geometry_segment)
    {

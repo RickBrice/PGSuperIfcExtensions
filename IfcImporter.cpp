@@ -54,6 +54,7 @@ void CIfcImporter::InitUnits(ifcopenshell::file& file)
    WBFL::System::Logger::Info(_T("Initializing units and precision from IFC file."));
    auto geometric_representation_contexts = file.instances_by_type<IfcSchema::IfcGeometricRepresentationContext>();
    auto geometric_representation_context = (0 < geometric_representation_contexts.size()) ? geometric_representation_contexts.front() : IfcSchema::IfcGeometricRepresentationContext{};
+   geometric_representation_context.setContextType("Model");
 #pragma Reminder("WORKING HERE - There could be multiple geometric representation contexts, how do we know if we have the right one?")
    if (geometric_representation_context && geometric_representation_context.Precision() != std::nullopt)
    {

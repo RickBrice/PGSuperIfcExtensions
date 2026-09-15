@@ -85,7 +85,7 @@ typename Schema::IfcElementQuantity Create_Qto_BeamBaseQuantities(hierarchy_help
    {
       big_area_unit = GetBigAreaUnit<Schema>(file, pBroker);
       small_area_unit = GetSmallAreaUnit<Schema>(file, pBroker);
-      volume_unit = GetVolumeUnit<Schema>(file, pBroker);
+      //volume_unit = GetVolumeUnit<Schema>(file, pBroker); // GrossVolume/NetVolume quantities below are not yet enabled - creating this unit now would leave it unreferenced (IFC106)
       mass_unit = GetMassUnit<Schema>(file, pBroker);
       length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
 

@@ -36,11 +36,17 @@ typename Schema::IfcMapConversion create_map_conversion(hierarchy_helper<Schema>
    auto grid_scale_factor = get_grid_scale_factor(C, projected_epsg.c_str(), anchor.first, anchor.second);
 
    double project_unit_to_meters = 1.0; // this project's unit is meter
+
+   // Intentionally the combined scale factor (unit ratio x grid scale), per bSI's "User Guide for
+   // Geo-referencing in IFC" recommendation for IfcMapConversion.Scale. The bSI validation service's
+   // GRF005 rule only checks the pure unit-ratio component and flags this as a warning - that's a
+   // known limitation of the rule (buildingSMART/ifc-gherkin-rules#522), not a defect here.
    auto scale = (project_unit_to_meters / map_unit_to_meters) * grid_scale_factor;
 
    proj_context_destroy(C);
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   geometric_representation_context.setContextType(std::string("Model")); // getRepresentationContext sets ContextIdentifier, not ContextType - GEM051 checks ContextType
    auto map_conversion = file.create<typename Schema::IfcMapConversion>().initialize(
       geometric_representation_context,
       projected_crs,

@@ -23,10 +23,43 @@
 
 #include "Properties.h"
 #include <IFace\Bridge.h>
+#include <IFace\Alignment.h>
 #include <PsgLib\GirderLabel.h>
 
 #include <WBFLCogo\CogoHelpers.h>
 #include <Units\StationFormat.h>
+#include <GeomModel/GeomModel.h>
+
+// Computes a real-world (on-alignment, zero-offset) Cartesian position at 'station', for use as
+// IfcLinearPlacement.CartesianPosition - a fallback location for viewers that can't evaluate
+// IfcPointByDistanceExpression against the alignment curve (LIP002).
+template <typename Schema>
+typename Schema::IfcAxis2Placement3D GetStationCartesianPosition(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, double station)
+{
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   CComPtr<IPoint2d> point;
+   pAlignment->GetPoint(station, 0.0, nullptr, pgsTypes::pcGlobal, &point);
+   Float64 x, y;
+   point->Location(&x, &y);
+   Float64 z = pAlignment->GetElevation(station, 0.0);
+
+   // RefDirection is the 3D tangent to the alignment at this station (horizontal bearing combined
+   // with the profile grade), and Axis is the corresponding "up" direction, tilted to stay
+   // perpendicular to that tangent rather than assumed to be global (0,0,1).
+   CComPtr<IDirection> bearing;
+   pAlignment->GetBearing(station, &bearing);
+   Float64 angle;
+   bearing->get_Value(&angle);
+   Float64 grade = pAlignment->GetProfileGrade(station);
+
+   WBFL::Geometry::Vector3d tangent(cos(angle), sin(angle), grade);
+   tangent.Normalize();
+   WBFL::Geometry::Vector3d global_up(0, 0, 1);
+   WBFL::Geometry::Vector3d y_axis = global_up.Cross(tangent);
+   WBFL::Geometry::Vector3d axis = tangent.Cross(y_axis); // "up", tilted to remain perpendicular to the tangent
+
+   return file.addPlacement3d(x, y, z, axis.X(), axis.Y(), axis.Z(), tangent.X(), tangent.Y(), tangent.Z());
+}
 
 template <typename Schema>
 typename Schema::IfcRelNests GetReferentNest(hierarchy_helper<Schema>& file, typename Schema::IfcAlignment alignment)
@@ -156,7 +189,8 @@ void CreateAlignmentStartStationReferent(hierarchy_helper<Schema>& file, std::sh
       std::nullopt, std::nullopt, std::nullopt,
       directrix);
    auto relative_placement = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(point_on_alignment, {}, {});
-   auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, {});
+   auto fallback_placement = GetStationCartesianPosition<Schema>(file, pBroker, startStation);
+   auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, fallback_placement);
 
    // Create referent
    auto start_station_referent = file.create<typename Schema::IfcReferent>().initialize(ifcopenshell::global_id(), {}, std::string("Start of alignment station"), std::nullopt, std::nullopt, referent_placement, {}, Schema::IfcReferentTypeEnum::IfcReferentType_STATION);
@@ -256,7 +290,7 @@ std::string GetVerticalKeyPointLabel(typename Schema::IfcAlignmentSegment prev_s
 // Creates an IfcReferent at 'distance_along' the alignment directrix, named "<label> (<station>)", with
 // its Pset_Stationing.Station property set. Does not nest the referent to anything -- the caller does that.
 template <typename Schema>
-typename Schema::IfcReferent CreateKeyPointReferent(hierarchy_helper<Schema>& file, typename Schema::IfcCurve directrix, const std::string& label, double distance_along, double station, const WBFL::Units::StationFormat& station_format)
+typename Schema::IfcReferent CreateKeyPointReferent(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, typename Schema::IfcCurve directrix, const std::string& label, double distance_along, double station, const WBFL::Units::StationFormat& station_format)
 {
    USES_CONVERSION;
 
@@ -265,7 +299,8 @@ typename Schema::IfcReferent CreateKeyPointReferent(hierarchy_helper<Schema>& fi
       std::nullopt, std::nullopt, std::nullopt,
       directrix);
    auto relative_placement = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(point_on_alignment, {}, {});
-   auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, {});
+   auto fallback_placement = GetStationCartesianPosition<Schema>(file, pBroker, station);
+   auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, fallback_placement);
 
    std::ostringstream os;
    os << label << " (" << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str()) << ")";
@@ -325,14 +360,14 @@ void UpdateKeyPointReferents(hierarchy_helper<Schema>& file, std::shared_ptr<WBF
          auto dp = segment.DesignParameters().template as<typename Schema::IfcAlignmentHorizontalSegment>();
 
          auto label = GetHorizontalKeyPointLabel<Schema>(prev_segment, segment);
-         new_horizontal_referents.push_back(CreateKeyPointReferent<Schema>(file, directrix, label, distance_along, startStation + distance_along, station_format));
+         new_horizontal_referents.push_back(CreateKeyPointReferent<Schema>(file, pBroker, directrix, label, distance_along, startStation + distance_along, station_format));
 
          distance_along += dp.SegmentLength();
          prev_segment = segment;
       }
 
       auto label = GetHorizontalKeyPointLabel<Schema>(prev_segment, {});
-      new_horizontal_referents.push_back(CreateKeyPointReferent<Schema>(file, directrix, label, distance_along, startStation + distance_along, station_format));
+      new_horizontal_referents.push_back(CreateKeyPointReferent<Schema>(file, pBroker, directrix, label, distance_along, startStation + distance_along, station_format));
    }
 
    // vertical key points (interior transitions only -- see GetVerticalKeyPointLabel)
@@ -348,7 +383,7 @@ void UpdateKeyPointReferents(hierarchy_helper<Schema>& file, std::shared_ptr<WBF
          {
             auto dp = segment.DesignParameters().template as<typename Schema::IfcAlignmentVerticalSegment>();
             auto label = GetVerticalKeyPointLabel<Schema>(prev_segment, segment);
-            new_vertical_referents.push_back(CreateKeyPointReferent<Schema>(file, directrix, label, dp.StartDistAlong(), startStation + dp.StartDistAlong(), station_format));
+            new_vertical_referents.push_back(CreateKeyPointReferent<Schema>(file, pBroker, directrix, label, dp.StartDistAlong(), startStation + dp.StartDistAlong(), station_format));
          }
          prev_segment = segment;
       }

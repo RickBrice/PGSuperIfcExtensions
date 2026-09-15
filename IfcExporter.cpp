@@ -2448,7 +2448,8 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
          std::nullopt, std::nullopt, std::nullopt,
          directrix);
       auto relative_placement = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(point_on_alignment, {}, {});
-      auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, {});
+      auto fallback_placement = GetStationCartesianPosition<Schema>(file, pBroker, pierStation);
+      auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, fallback_placement);
 
       // create referent to semantically position the pier and foundation.
       std::ostringstream os2;
@@ -3105,10 +3106,17 @@ void CreateSiteLocalPlacement(hierarchy_helper<Schema>& file, std::shared_ptr<WB
    Float64 minX = Min(x1, x2);
    Float64 maxY = Max(y1, y2);
 
-   // site local placement is the top left corner of the bounding box
+   // site local placement is the top left corner of the bounding box.
+   // addSite() already created a default IfcLocalPlacement at the origin - update its location in
+   // place instead of building a new placement chain, which would leave the original one unreferenced (IFC106)
    auto site = file.getSingle<typename Schema::IfcSite>();
-   auto site_placement = file.addLocalPlacement({}, minX, maxY, 0.0);
-   site.setObjectPlacement(site_placement);
+   auto site_placement = site.ObjectPlacement().template as<typename Schema::IfcLocalPlacement>();
+   CHECK(site_placement);
+   auto placement_3d = site_placement.RelativePlacement().template as<typename Schema::IfcAxis2Placement3D>();
+   CHECK(placement_3d);
+   auto location = placement_3d.Location().template as<typename Schema::IfcCartesianPoint>();
+   CHECK(location);
+   location.setCoordinates(std::vector<double>{minX, maxY, 0.0});
 
    auto anchor = map_to_lonlat(pBroker, minX, maxY);
    site.setRefLongitude(GetCompoundPlaneAngleMeasure<Schema>(anchor.first));
@@ -3142,6 +3150,7 @@ void CreateGeoreferencing(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
    {
       // echo back exactly what was imported - do not recompute
       auto geometric_representation_context = file.getRepresentationContext(std::string("Model"));
+      geometric_representation_context.setContextType(std::string("Model")); // getRepresentationContext sets ContextIdentifier, not ContextType - GEM051 checks ContextType
       map_conversion = file.create<typename Schema::IfcMapConversion>().initialize(
          geometric_representation_context, projected_crs,
          georef.Eastings, georef.Northings, georef.OrthogonalHeight,
