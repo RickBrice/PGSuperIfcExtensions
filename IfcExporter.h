@@ -79,6 +79,19 @@ public:
       FacetedBrep
    };
 
+   // Individual: one IfcReinforcingBar per physical bar, per ACI 131 Article 7.3's
+   // 1:1 correspondence between a real bar and an IfcReinforcingBar. Each bar gets
+   // its own single-item IfcMappedItem shape representation.
+   //
+   // Mapped: identical bars (same mark, same zone/layout item) are grouped under a
+   // single IfcReinforcingBar whose shape representation holds one IfcMappedItem
+   // per physical bar location - fewer, denser entities instead of one per bar.
+   enum class RebarRepresentation
+   {
+      Individual,
+      Mapped
+   };
+
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    CGirderKey girderKey = CGirderKey(0,0); // only valid for model_elements = ModelElements::GirderOnly
@@ -88,6 +101,7 @@ public:
    Representations representations = Representations::Curve3dOnly;
    SweepProfile sweep_profile = SweepProfile::Polyline;
    bool include_rebar = true;
+   RebarRepresentation rebar_representation = RebarRepresentation::Mapped;
    bool include_camber = true;
    bool include_quantities = true;
    bool display_units_for_properties = true; // if true, properties will be exported in display units. If false, properties will be exported in internal system units (which are typically metric for PGSuper)

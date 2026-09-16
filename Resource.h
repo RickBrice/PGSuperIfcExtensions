@@ -88,6 +88,8 @@
 #define IDC_IDS_INC_CONCRETE_MATERIAL   271
 #define IDC_IDS_INC_STRANDS             272
 #define IDC_IDS_INC_REBAR               273
+#define IDC_REBAR_INDIVIDUAL            274
+#define IDC_REBAR_MAPPED                275
 #define ID_EDIT_GEOREFERENCING          32771
 
 // Next default values for new objects
@@ -96,7 +98,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        266
 #define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         274
+#define _APS_NEXT_CONTROL_VALUE         276
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

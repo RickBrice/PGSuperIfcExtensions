@@ -96,7 +96,7 @@ IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
 // Dialog
 //
 
-IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 287, 375
+IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 287, 389
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
 CAPTION "IFC"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -127,21 +127,24 @@ BEGIN
     LTEXT           "Deck and Beam Section Profile",IDC_STATIC,16,188,97,8
     CONTROL         "IfcPolyline",IDC_SWEEP_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,199,49,10
     CONTROL         "IfcIndexPolyCurve",IDC_SWEEP_INDEXPOLYCURVE,"Button",BS_AUTORADIOBUTTON,140,199,76,10
-    GROUPBOX        "Girders",IDC_STATIC,7,224,273,147
+    GROUPBOX        "Girders",IDC_STATIC,7,224,273,161
     CONTROL         "Include rebar (pseudo-dummy data)",IDC_INCLUDE_REBAR,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,234,131,10
+    LTEXT           "Rebar Model",IDC_STATIC,16,246,42,8
+    CONTROL         "Individual bars (ACI 131)",IDC_REBAR_INDIVIDUAL,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,246,110,10
+    CONTROL         "Mapped bars (grouped)",IDC_REBAR_MAPPED,"Button",BS_AUTORADIOBUTTON,188,246,85,10
     CONTROL         "Include camber in PSet_PrecastConcreteElementGeneral",IDC_INCLUDE_CAMBER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,248,196,10
-    CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,261,99,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,259,196,10
+    CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,272,99,10
     CONTROL         "Properties and Quantities per Display Units",IDC_PROPERTY_UNITS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,275,153,10
-    LTEXT           "Placement",IDC_STATIC,16,298,34,8
-    CONTROL         "IfcLinearPlacement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,309,79,10
-    CONTROL         "IfcLocalPlacement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,98,308,71,10
-    LTEXT           "Representation",IDC_STATIC,16,324,50,8
-    CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,334,103,10
-    CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,346,81,10
-    CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,358,65,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,286,153,10
+    LTEXT           "Placement",IDC_STATIC,16,312,34,8
+    CONTROL         "IfcLinearPlacement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,323,79,10
+    CONTROL         "IfcLocalPlacement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,98,322,71,10
+    LTEXT           "Representation",IDC_STATIC,16,338,50,8
+    CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,348,103,10
+    CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,360,81,10
+    CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,372,65,10
 END
 
 IDD_IMPORT_OPTIONS DIALOGEX 0, 0, 309, 176
@@ -166,8 +169,7 @@ BEGIN
     GROUPBOX        "Identify each beam by",IDC_STATIC,7,24,237,50
     CONTROL         "Name (IfcBeam.Name, e.g. ""Span 1, Girder B"")",IDC_IDS_ID_NAME,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,37,220,10
-    CONTROL         "GlobalId (IfcBeam.GlobalId)",IDC_IDS_ID_GLOBALID,
-                    "Button",BS_AUTORADIOBUTTON,16,53,220,10
+    CONTROL         "GlobalId (IfcBeam.GlobalId)",IDC_IDS_ID_GLOBALID,"Button",BS_AUTORADIOBUTTON,16,53,220,10
     GROUPBOX        "Include in the IDS",IDC_STATIC,7,80,237,80
     CONTROL         "Girder beam properties (strengths, geometry, camber, classification)",IDC_IDS_INC_BEAM_PROPS,
                     "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,16,93,220,10
@@ -251,7 +253,6 @@ BEGIN
         RIGHTMARGIN, 280
         VERTGUIDE, 16
         TOPMARGIN, 7
-        BOTTOMMARGIN, 414
     END
 
     IDD_IMPORT_OPTIONS, DIALOG

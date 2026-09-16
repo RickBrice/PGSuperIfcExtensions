@@ -46,5 +46,10 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
 	void OnSpanChanged();
+	afx_msg void OnIncludeRebarClicked();
+
+	// Rebar Model radios only mean something when rebar is being exported at all.
+	void UpdateRebarRepresentationEnable();
+
 	DECLARE_MESSAGE_MAP()
 };

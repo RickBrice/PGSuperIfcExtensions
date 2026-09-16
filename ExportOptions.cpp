@@ -63,6 +63,7 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 	DDX_RadioEnum<CIfcExportOptions::SweepProfile>(pDX, IDC_SWEEP_POLYLINE, options.sweep_profile);
 
 	DDX_Check_Bool(pDX, IDC_INCLUDE_REBAR, options.include_rebar);
+	DDX_RadioEnum<CIfcExportOptions::RebarRepresentation>(pDX, IDC_REBAR_INDIVIDUAL, options.rebar_representation);
 	DDX_Check_Bool(pDX, IDC_INCLUDE_CAMBER, options.include_camber);
 	DDX_Check_Bool(pDX, IDC_QUANTITIES, options.include_quantities);
    DDX_Check_Bool(pDX, IDC_PROPERTY_UNITS, options.display_units_for_properties);
@@ -74,6 +75,7 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CExportOptions, CPropertyPage)
 	ON_CBN_SELCHANGE(IDC_SPAN, OnSpanChanged)
+	ON_BN_CLICKED(IDC_INCLUDE_REBAR, OnIncludeRebarClicked)
 END_MESSAGE_MAP()
 
 
@@ -108,8 +110,22 @@ BOOL CExportOptions::OnInitDialog()
 	if (pGirderBox->SetCurSel((int)options.girderKey.girderIndex) == CB_ERR)
 		pGirderBox->SetCurSel(0);
 
+	UpdateRebarRepresentationEnable();
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CExportOptions::OnIncludeRebarClicked()
+{
+	UpdateRebarRepresentationEnable();
+}
+
+void CExportOptions::UpdateRebarRepresentationEnable()
+{
+	BOOL bIncludeRebar = ((CButton*)GetDlgItem(IDC_INCLUDE_REBAR))->GetCheck() == BST_CHECKED;
+	GetDlgItem(IDC_REBAR_INDIVIDUAL)->EnableWindow(bIncludeRebar);
+	GetDlgItem(IDC_REBAR_MAPPED)->EnableWindow(bIncludeRebar);
 }
 
 void CExportOptions::OnSpanChanged()

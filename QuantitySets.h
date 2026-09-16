@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -129,6 +129,21 @@ typename Schema::IfcElementQuantity Create_Qto_ReinforcingElementBaseQuantities(
 
    //AddQto(file, segment, qto);
    return {};
+}
+
+// For CIfcExportOptions::RebarRepresentation::Mapped, one IfcReinforcingBar represents
+// several physical bars, so - unlike the value-less, shared instance above - it needs a
+// real Count quantity. This is per bar-group (the count differs between groups), so it
+// must NOT be registered as a shared/batched property set the way the sets above are.
+template <typename Schema>
+typename Schema::IfcElementQuantity Create_Qto_ReinforcingElementGroupQuantities(hierarchy_helper<Schema>& file, IndexType count)
+{
+   std::vector<typename Schema::IfcPhysicalQuantity> quantities;
+   quantities.push_back(file.create<typename Schema::IfcQuantityCount>().initialize(std::string("Count"), std::nullopt, std::nullopt, (int64_t)count, std::nullopt));
+
+   auto qto = file.create<typename Schema::IfcElementQuantity>().initialize(ifcopenshell::global_id(), {}, std::string("Qto_ReinforcingElementBaseQuantities"), std::nullopt, std::string("BaseQuantities"), quantities);
+
+   return qto;
 }
 
 template <typename Schema>
