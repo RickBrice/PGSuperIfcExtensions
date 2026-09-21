@@ -737,8 +737,8 @@ typename Schema::IfcPropertySet Create_usBrPset_TendonDebondingInCenter(hierarch
 
    std::vector<typename Schema::IfcProperty> list_of_properties;
 
-   list_of_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("DebondLengthMidspanToStart"), BSDD_PROPERTY("DebondLengthMidspanToStart"), file.create<typename Schema::IfcLengthMeasure>().initialize(debond_start), length_unit));
-   list_of_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("DebondLengthMidspanToEnd"), BSDD_PROPERTY("DebondLengthMidspanToEnd"), file.create<typename Schema::IfcLengthMeasure>().initialize(debond_end), length_unit));
+   list_of_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("DebondLengthMidspanToStart"), BSDD_PROPERTY("DebondLengthMidspanToStart"), file.create<typename Schema::IfcPositiveLengthMeasure>().initialize(debond_start), length_unit));
+   list_of_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("DebondLengthMidspanToEnd"), BSDD_PROPERTY("DebondLengthMidspanToEnd"), file.create<typename Schema::IfcPositiveLengthMeasure>().initialize(debond_end), length_unit));
 
    auto property_set = file.create<typename Schema::IfcPropertySet>().initialize(ifcopenshell::global_id(), {}, std::string("usBrPset_TendonDebonding"), std::string("https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_TendonDebonding"), list_of_properties);
 
