@@ -223,6 +223,24 @@ typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file,
    return concrete_material;
 }
 
+template <typename Schema>
+typename Schema::IfcMaterial GetElastomerMaterial(hierarchy_helper<Schema>& file)
+{
+   std::string name("Elastomer");
+
+   // search to see if the elastomer IfcMaterial has already been created
+   auto materials = file.instances_by_type<typename Schema::IfcMaterial>();
+   for (auto& material : materials)
+   {
+      if (material.Name() == name)
+         return material;
+   }
+
+   // if we got this far, the material was not previously created
+   // create it now
+   return file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("elastomer")/*category*/);
+}
+
 template <typename Schema> 
 void AssociateMaterial(hierarchy_helper<Schema>& file, typename Schema::IfcMaterial material, typename Schema::IfcProduct product)
 {
