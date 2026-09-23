@@ -61,6 +61,7 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 	DDX_RadioEnum<CIfcExportOptions::Tangents>(pDX, IDC_POLYLINE_TANGENT, options.tangents);
 	DDX_RadioEnum<CIfcExportOptions::Representations>(pDX, IDC_REPRESENTATION_CURVE, options.representations);
 	DDX_RadioEnum<CIfcExportOptions::SweepProfile>(pDX, IDC_SWEEP_POLYLINE, options.sweep_profile);
+	DDX_RadioEnum<CIfcExportOptions::BearingSeatSurveyPoints>(pDX, IDC_SURVEY_POINTS_NONE, options.bearing_seat_survey_points);
 
 	DDX_Check_Bool(pDX, IDC_INCLUDE_REBAR, options.include_rebar);
 	DDX_RadioEnum<CIfcExportOptions::RebarRepresentation>(pDX, IDC_REBAR_INDIVIDUAL, options.rebar_representation);

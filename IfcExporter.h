@@ -92,6 +92,17 @@ public:
       Mapped
    };
 
+   // IfcAnnotation::SURVEY points at CL Bearing/CL Girder, bearing seat elevation (bottom of bearing).
+   // Only for model_elements = ModelElements::AlignmentAndBridge
+   // Individual: one IfcAnnotation per point, linearly placed (Single Survey Point Linearly Placed)
+   // Set: one IfcAnnotation per pier with all the points in an IfcCartesianPointList3D (Set Of Survey Points)
+   enum class BearingSeatSurveyPoints
+   {
+      None,
+      Individual,
+      Set
+   };
+
    Schema schema = Schema::Schema_4x3_add2;
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
    CGirderKey girderKey = CGirderKey(0,0); // only valid for model_elements = ModelElements::GirderOnly
@@ -100,6 +111,7 @@ public:
    Tangents tangents = Tangents::Line;
    Representations representations = Representations::Curve3dOnly;
    SweepProfile sweep_profile = SweepProfile::Polyline;
+   BearingSeatSurveyPoints bearing_seat_survey_points = BearingSeatSurveyPoints::Set;
    bool include_rebar = true;
    RebarRepresentation rebar_representation = RebarRepresentation::Mapped;
    bool include_camber = true;

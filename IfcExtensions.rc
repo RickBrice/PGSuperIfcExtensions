@@ -96,7 +96,7 @@ IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
 // Dialog
 //
 
-IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 287, 389
+IDD_EXPORT_OPTIONS DIALOGEX 0, 0, 287, 403
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
 CAPTION "IFC"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -123,28 +123,32 @@ BEGIN
     CONTROL         "Curve3d",IDC_REPRESENTATION_CURVE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,75,154,43,10
     CONTROL         "Curve3d and FootPrint",IDC_REPRESENTATION_FOOTPRINT,
                     "Button",BS_AUTORADIOBUTTON,144,154,89,10
-    GROUPBOX        "Bridge",IDC_STATIC,7,175,273,42
+    GROUPBOX        "Bridge",IDC_STATIC,7,175,273,56
     LTEXT           "Deck and Beam Section Profile",IDC_STATIC,16,188,97,8
     CONTROL         "IfcPolyline",IDC_SWEEP_POLYLINE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,69,199,49,10
     CONTROL         "IfcIndexPolyCurve",IDC_SWEEP_INDEXPOLYCURVE,"Button",BS_AUTORADIOBUTTON,140,199,76,10
-    GROUPBOX        "Girders",IDC_STATIC,7,224,273,161
+    LTEXT           "Bearing Seat Survey Points",IDC_STATIC,16,214,88,8
+    CONTROL         "None",IDC_SURVEY_POINTS_NONE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,110,214,32,10
+    CONTROL         "Individual",IDC_SURVEY_POINTS_INDIVIDUAL,"Button",BS_AUTORADIOBUTTON,148,214,47,10
+    CONTROL         "Set",IDC_SURVEY_POINTS_SET,"Button",BS_AUTORADIOBUTTON,201,214,28,10
+    GROUPBOX        "Girders",IDC_STATIC,7,238,273,161
     CONTROL         "Include rebar (pseudo-dummy data)",IDC_INCLUDE_REBAR,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,234,131,10
-    LTEXT           "Rebar Model",IDC_STATIC,16,246,42,8
-    CONTROL         "Individual bars (ACI 131)",IDC_REBAR_INDIVIDUAL,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,246,110,10
-    CONTROL         "Mapped bars (grouped)",IDC_REBAR_MAPPED,"Button",BS_AUTORADIOBUTTON,188,246,85,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,248,131,10
+    LTEXT           "Rebar Model",IDC_STATIC,16,260,42,8
+    CONTROL         "Individual bars (ACI 131)",IDC_REBAR_INDIVIDUAL,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,74,260,110,10
+    CONTROL         "Mapped bars (grouped)",IDC_REBAR_MAPPED,"Button",BS_AUTORADIOBUTTON,188,260,85,10
     CONTROL         "Include camber in PSet_PrecastConcreteElementGeneral",IDC_INCLUDE_CAMBER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,259,196,10
-    CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,272,99,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,273,196,10
+    CONTROL         "Included quantities (QTO)",IDC_QUANTITIES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,286,99,10
     CONTROL         "Properties and Quantities per Display Units",IDC_PROPERTY_UNITS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,286,153,10
-    LTEXT           "Placement",IDC_STATIC,16,312,34,8
-    CONTROL         "IfcLinearPlacement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,323,79,10
-    CONTROL         "IfcLocalPlacement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,98,322,71,10
-    LTEXT           "Representation",IDC_STATIC,16,338,50,8
-    CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,348,103,10
-    CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,360,81,10
-    CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,372,65,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,300,153,10
+    LTEXT           "Placement",IDC_STATIC,16,326,34,8
+    CONTROL         "IfcLinearPlacement",IDC_LINEAR_PLACEMENT,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,337,79,10
+    CONTROL         "IfcLocalPlacement",IDC_LOCAL_PLACEMENT,"Button",BS_AUTORADIOBUTTON,98,336,71,10
+    LTEXT           "Representation",IDC_STATIC,16,352,50,8
+    CONTROL         "IfcSectionedSolidHorizontal",IDC_MODEL_SSH,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,362,103,10
+    CONTROL         "IfcPolygonalFaceSet",IDC_MODEL_PFS,"Button",BS_AUTORADIOBUTTON,16,374,81,10
+    CONTROL         "IfcFacetedBrep",IDC_MODEL_BREP,"Button",BS_AUTORADIOBUTTON,16,386,65,10
 END
 
 IDD_IMPORT_OPTIONS DIALOGEX 0, 0, 309, 176

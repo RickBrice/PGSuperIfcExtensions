@@ -2687,6 +2687,189 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
    return list_of_piers;
 }
 
+// Creates IfcAnnotation::SURVEY points at the intersection of CL Bearing and CL Girder, at the bearing seat elevation
+// (bottom of bearing = top of grout pad), for every girder on every bearing line. The survey annotations at a pier
+// are contained in the pier's spatial structure.
+// IfcBridgePart::PIER/ABUTMENT <-> IfcRelContainedInSpatialStructure <-> IfcAnnotation::SURVEY
+//
+// BearingSeatSurveyPoints::Individual - one IfcAnnotation per point
+// Single Survey Point Linearly Placed (Concept Template 4.2.2.1.3)
+// Each point is an IfcPointByDistanceExpression on the horizontal base curve of the alignment IfcGradientCurve with
+// OffsetVertical equal to the bearing seat elevation - the same convention used for the girder segment IfcLinearPlacement.
+// The base curve is used rather than the gradient curve because offsets from a gradient curve are measured perpendicular
+// to its sloped tangent, not plumb, which would shift the point along the alignment by roughly offset x grade.
+// When the alignment is modeled as a 3D IfcPolyline, distance along the curve is not horizontal stationing so there is
+// no way to linearly place the points exactly. In that case, use Single Survey Point (Concept Template 4.2.2.1.2) with
+// an IfcCartesianPoint.
+//
+// BearingSeatSurveyPoints::Set - one IfcAnnotation per pier
+// Set Of Survey Points (Concept Template 4.2.2.1.1)
+// All of the points at the pier are in a single IfcCartesianPointList3D. Point lists cannot be linearly placed so
+// the coordinates are Cartesian. TagList identifies each point since properties can only be associated with the whole set.
+template <typename Schema>
+void CreateBearingSeatSurveyPoints(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const std::vector<typename Schema::IfcObjectDefinition>& list_of_piers)
+{
+   USES_CONVERSION;
+
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   auto station_format = pDisplayUnits->GetStationFormat();
+
+   Float64 startStation, startElevation, startGrade;
+   GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+
+   typename Schema::IfcCurve basis_curve = {};
+   if (auto gc = GetAlignmentDirectrix(file, options).template as<typename Schema::IfcGradientCurve>())
+   {
+      basis_curve = gc.BaseCurve();
+   }
+
+   // point geometry is defined in the same coordinate system as the alignment curves
+   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+   auto survey_point_placement = alignment.ObjectPlacement();
+
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+   auto annotation_model_representation_subcontext = file.create<typename Schema::IfcGeometricRepresentationSubContext>().initialize(std::string("Annotation"), std::string("Model"), geometric_representation_context, std::nullopt, Schema::IfcGeometricProjectionEnum::IfcGeometricProjection_MODEL_VIEW, std::nullopt);
+
+   auto create_annotation = [&](const std::string& name, const std::string& description, typename Schema::IfcRepresentationItem item)
+   {
+      std::vector<typename Schema::IfcRepresentationItem> representation_items;
+      representation_items.push_back(item);
+      std::vector<typename Schema::IfcRepresentation> shape_representation_list;
+      shape_representation_list.push_back(file.create<typename Schema::IfcShapeRepresentation>().initialize(annotation_model_representation_subcontext, std::string("Annotation"), std::string("Point"), representation_items));
+      auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
+
+      return file.create<typename Schema::IfcAnnotation>().initialize(ifcopenshell::global_id(), {}, name, description, std::nullopt,
+         survey_point_placement, product_definition_shape, Schema::IfcAnnotationTypeEnum::IfcAnnotationType_SURVEY);
+   };
+
+   auto nPiers = pBridge->GetPierCount();
+   CHECK(list_of_piers.size() == nPiers);
+   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
+   {
+      std::string pier_name(T2A(LABEL_PIER_EX(pBridge->IsAbutment(pierIdx), pierIdx)));
+      auto pier = list_of_piers[pierIdx].template as<typename Schema::IfcBridgePart>();
+
+      // bearing lines at this pier - same as the Bearing Seat Elevations report
+      std::vector<pgsTypes::PierFaceType> faces;
+      if (pierIdx == 0)
+         faces.push_back(pgsTypes::Ahead);
+      else if (pierIdx == nPiers - 1)
+         faces.push_back(pgsTypes::Back);
+      else if (pBridge->IsInteriorPier(pierIdx))
+         faces.push_back(pgsTypes::Back); // girder is continuous over the pier, there is a single bearing line
+      else
+         faces = { pgsTypes::Back, pgsTypes::Ahead };
+
+      std::vector<std::vector<double>> set_coordinates;
+      std::vector<std::string> set_tags;
+      for (auto face : faces)
+      {
+         // bIgnoreUnrecoverableDeformations = false so the elevations match the Bearing Seat Elevations report
+         auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, false);
+         for (const auto& elevDetails : vElevDetails)
+         {
+            // only want the CL Girder value, not the individual bearings when there are multiple bearings per girder
+            if (elevDetails.BearingIdx != IBridge::sbiCLValue && elevDetails.BearingIdx != IBridge::sbiSingleBearingValue)
+               continue;
+
+            std::ostringstream os;
+            os << pier_name;
+            if (faces.size() == 2) os << (face == pgsTypes::Back ? " Back" : " Ahead");
+            os << ", Girder " << T2A(LABEL_GIRDER(elevDetails.GirderKey.girderIndex));
+
+            // offset is measured normal to the alignment (a nullptr direction would measure it along the X axis)
+            CComPtr<IDirection> normal;
+            pAlignment->GetBearingNormal(elevDetails.Station, &normal);
+            CComPtr<IPoint2d> pnt;
+            pAlignment->GetPoint(elevDetails.Station, elevDetails.Offset, normal, pgsTypes::pcGlobal, &pnt);
+            Float64 x, y;
+            pnt->Location(&x, &y);
+
+            if (options.bearing_seat_survey_points == CIfcExportOptions::BearingSeatSurveyPoints::Set)
+            {
+               set_coordinates.push_back({ x, y, elevDetails.BrgSeatElevation });
+               set_tags.push_back(os.str());
+            }
+            else
+            {
+               typename Schema::IfcRepresentationItem item;
+               if (basis_curve)
+               {
+                  // per PGSuper, positive offset is to the right, per IFC, positive value is to the left.... use -offset
+                  item = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(
+                     file.create<typename Schema::IfcLengthMeasure>().initialize(elevDetails.Station - startStation),
+                     -elevDetails.Offset, elevDetails.BrgSeatElevation, std::nullopt, basis_curve);
+               }
+               else
+               {
+                  item = file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{x, y, elevDetails.BrgSeatElevation});
+               }
+
+               std::ostringstream os_description;
+               os_description << "CL Bearing/CL Girder at bearing seat (bottom of bearing), Station " << T2A(WBFL::COGO::Station(elevDetails.Station).AsString(station_format).c_str());
+
+               auto survey_point = create_annotation(os.str(), os_description.str(), item);
+               file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(pier, survey_point);
+            }
+         }
+      }
+
+      if (!set_coordinates.empty())
+      {
+         // The set is placed at the intersection of the alignment and CL Pier with
+         // x along CL Pier (positive to the right, same as PGSuper offsets), y normal to CL Pier (positive ahead on station), and z up.
+         // The origin is at elevation 0.0 so the local z coordinate of each point is its bearing seat elevation.
+         Float64 pierStation = pBridge->GetPierStation(pierIdx);
+
+         CComPtr<IPoint2d> pntLeft, pntAlignment, pntBridge, pntRight;
+         pBridge->GetPierPoints(pierIdx, pgsTypes::pcGlobal, &pntLeft, &pntAlignment, &pntBridge, &pntRight);
+         Float64 lx, ly, rx, ry;
+         pntLeft->Location(&lx, &ly);
+         pntRight->Location(&rx, &ry);
+         WBFL::Geometry::Vector3d x_dir(rx - lx, ry - ly, 0.0);
+         x_dir.Normalize();
+         WBFL::Geometry::Vector3d z_dir(0, 0, 1);
+         WBFL::Geometry::Vector3d y_dir = z_dir.Cross(x_dir);
+
+         CComPtr<IPoint2d> pntOrigin;
+         pAlignment->GetPoint(pierStation, 0.0, nullptr, pgsTypes::pcGlobal, &pntOrigin);
+         Float64 ox, oy;
+         pntOrigin->Location(&ox, &oy);
+
+         for (auto& coordinate : set_coordinates)
+         {
+            WBFL::Geometry::Vector3d d(coordinate[0] - ox, coordinate[1] - oy, 0.0);
+            coordinate[0] = d.Dot(x_dir);
+            coordinate[1] = d.Dot(y_dir);
+         }
+
+         typename Schema::IfcObjectPlacement set_placement;
+         if (basis_curve)
+         {
+            auto pde = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(pierStation - startStation), std::nullopt, std::nullopt, std::nullopt, basis_curve);
+            auto a2pl = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(pde,
+               file.create<typename Schema::IfcDirection>().initialize({ z_dir.X(), z_dir.Y(), z_dir.Z() }),
+               file.create<typename Schema::IfcDirection>().initialize({ x_dir.X(), x_dir.Y(), x_dir.Z() }));
+            auto fallback_placement = file.addPlacement3d(ox, oy, 0.0, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+            set_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, a2pl, fallback_placement);
+         }
+         else
+         {
+            set_placement = file.addLocalPlacement({}, ox, oy, 0.0, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+         }
+
+         std::ostringstream os;
+         os << "Bearing Seats at " << pier_name;
+         auto point_list = file.create<typename Schema::IfcCartesianPointList3D>().initialize(set_coordinates, set_tags);
+         auto survey_point_set = create_annotation(os.str(), std::string("Bearing seat (bottom of bearing) survey points at CL Bearing/CL Girder"), point_list);
+         survey_point_set.setObjectPlacement(set_placement);
+         file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(pier, survey_point_set);
+      }
+   }
+}
+
 template <typename Schema>
 typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType beam_type, RebarRelationshipBatch<Schema>& rebar_batch)
 {
@@ -2877,6 +3060,11 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    for (auto& pier : list_of_piers)
    {
       file.addRelatedObject<typename Schema::IfcRelAggregates>(substructure, pier);
+   }
+
+   if (options.bearing_seat_survey_points != CIfcExportOptions::BearingSeatSurveyPoints::None)
+   {
+      CreateBearingSeatSurveyPoints<Schema>(file, pBroker, options, list_of_piers);
    }
 
    //if (options.include_work_plan)
