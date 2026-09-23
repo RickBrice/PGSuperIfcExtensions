@@ -444,9 +444,9 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
       }
 
       strand_placement = (!strand_placement ? file.addLocalPlacement(beam.ObjectPlacement()) : strand_placement);
-      std::vector<typename Schema::IfcRepresentationItem> strand_representation_items;
       for (StrandIndexType strandIdx = 0; strandIdx < nStrands; strandIdx++)
       {
+         std::vector<typename Schema::IfcRepresentationItem> strand_representation_items; // each strand has its own representation
          std::vector<typename Schema::IfcCartesianPoint> points;
 
          CComPtr<IPoint2d> pntStart;
@@ -530,6 +530,7 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
          auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
          CHECK(geometric_representation_context);
          auto strand_shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(geometric_representation_context, std::string("Body"), std::string("AdvancedSweptSolid"), strand_representation_items);
+         StyleShapeRepresentation<Schema>(file, strand_shape_representation, GetSurfaceStyle<Schema>(file, "Strand", STRAND_FILL_COLOR));
          std::vector<typename Schema::IfcRepresentation> strand_shape_representation_list;
          strand_shape_representation_list.push_back(strand_shape_representation);
          auto strand_product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, strand_shape_representation_list);
@@ -1610,6 +1611,7 @@ void GirderSegment_SectionedSolidHorizontal(hierarchy_helper<Schema>& file, std:
    std::vector<typename Schema::IfcRepresentation> shape_representation_list;
    auto shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list.push_back(shape_representation);
+   StyleShapeRepresentation<Schema>(file, shape_representation, GetSurfaceStyle<Schema>(file, "Girder", SEGMENT_FILL_COLOR));
    auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
    segment.setRepresentation(product_definition_shape);
 }
@@ -1740,6 +1742,7 @@ void GirderSegment_PolygonalFaceSet(hierarchy_helper<Schema>& file, std::shared_
    std::vector<typename Schema::IfcRepresentation> shape_representation_list;
    auto shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("Tessellation"), representation_items);
    shape_representation_list.push_back(shape_representation);
+   StyleShapeRepresentation<Schema>(file, shape_representation, GetSurfaceStyle<Schema>(file, "Girder", SEGMENT_FILL_COLOR));
    auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
    segment.setRepresentation(product_definition_shape);
 }
@@ -1776,6 +1779,7 @@ void GirderSegment_FacetedBrep(hierarchy_helper<Schema>& file, std::shared_ptr<W
    std::vector<typename Schema::IfcRepresentation> shape_representation_list;
    auto shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("Brep"), representation_items);
    shape_representation_list.push_back(shape_representation);
+   StyleShapeRepresentation<Schema>(file, shape_representation, GetSurfaceStyle<Schema>(file, "Girder", SEGMENT_FILL_COLOR));
    auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
    segment.setRepresentation(product_definition_shape);
 }
@@ -2154,6 +2158,7 @@ void CreateClosureJointRepresentation(hierarchy_helper<Schema>& file, std::share
    std::vector<typename Schema::IfcRepresentation> shape_representation_list;
    auto shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list.push_back(shape_representation);
+   StyleShapeRepresentation<Schema>(file, shape_representation, GetSurfaceStyle<Schema>(file, "Closure Joint", CLOSURE_FILL_COLOR));
    auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
 
    // Place the segment in 3D space
@@ -2328,6 +2333,7 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
    std::vector<typename Schema::IfcRepresentation> shape_representation_list;
    auto shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
    shape_representation_list.push_back(shape_representation);
+   StyleShapeRepresentation<Schema>(file, shape_representation, GetSurfaceStyle<Schema>(file, "Deck", DECK_FILL_COLOR));
    auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
 
 
@@ -2545,6 +2551,7 @@ void CreateBarrierSystemRepresentation(hierarchy_helper<Schema>& file, std::shar
       std::vector<typename Schema::IfcRepresentation> shape_representation_list;
       auto shape_representation = file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("AdvancedSweptSolid"), representation_items);
       shape_representation_list.push_back(shape_representation);
+      StyleShapeRepresentation<Schema>(file, shape_representation, GetSurfaceStyle<Schema>(file, "Barrier", BARRIER_FILL_COLOR));
       auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
 
 
@@ -2947,6 +2954,9 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
    std::vector<typename Schema::IfcDefinitionSelect> bearings;
 
+   // one surface style shared by all the bearing solids
+   auto bearing_surface_style = GetSurfaceStyle<Schema>(file, "Bearing", BEARING_FILL_COLOR);
+
    auto nPiers = pBridge->GetPierCount();
    CHECK(list_of_piers.size() == nPiers);
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
@@ -3000,6 +3010,7 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
             }
 
             auto solid = CreatePrismFaceSet<Schema>(file, plan_points, height);
+            StyleRepresentationItem<Schema>(file, solid, bearing_surface_style);
 
             std::vector<typename Schema::IfcRepresentationItem> representation_items;
             representation_items.push_back(solid);

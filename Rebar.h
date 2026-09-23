@@ -21,6 +21,8 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "Materials.h"
+
 inline double getMinBendRadius(const WBFL::Materials::Rebar* pRebar,bool bStirrup)
 {
    auto radius = 0.0;
@@ -64,6 +66,11 @@ typename Schema::IfcReinforcingBarType GetReinforcingBarType(hierarchy_helper<Sc
 template <typename Schema>
 typename Schema::IfcReinforcingBarType CreateReinforcingBarType(hierarchy_helper<Schema>& file, const CIfcExportOptions& options, const std::string& name, const WBFL::Materials::Rebar* pRebar, typename Schema::IfcReinforcingBarTypeEnum::Value type, typename Schema::IfcShapeRepresentation shape_representation)
 {
+   // style the mapped representation - every IfcMappedItem of this bar type gets its color from it
+   // longitudinal bars are MAIN, all others are stirrups (same as the Rebar and Stirrup materials)
+   auto surface_style = (type == Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN ? GetSurfaceStyle<Schema>(file, "Rebar", REBAR_COLOR) : GetSurfaceStyle<Schema>(file, "Stirrup", STIRRUP_COLOR));
+   StyleShapeRepresentation<Schema>(file, shape_representation, surface_style);
+
    auto placement = file.addPlacement3d();
    auto representation_map = file.create<typename Schema::IfcRepresentationMap>().initialize(placement, shape_representation);
    std::vector<typename Schema::IfcRepresentationMap> representation_maps;

@@ -30,10 +30,8 @@ std::string GetStrandMaterialName(const WBFL::Materials::PsStrand* pStrand)
 }
 
 template <typename Schema>
-typename Schema::IfcStyledRepresentation CreateMaterialRepresentation(hierarchy_helper<Schema>& file, std::string name, COLORREF clr)
+typename Schema::IfcSurfaceStyle CreateSurfaceStyle(hierarchy_helper<Schema>& file, std::string name, COLORREF clr)
 {
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-
    double r = (double)GetRValue(clr) / 255.;
    double g = (double)GetGValue(clr) / 255.;
    double b = (double)GetBValue(clr) / 255.;
@@ -46,9 +44,54 @@ typename Schema::IfcStyledRepresentation CreateMaterialRepresentation(hierarchy_
 
    std::vector<typename Schema::IfcSurfaceStyleElementSelect> list_of_surface_styles;
    list_of_surface_styles.push_back(ssr);
-   
-   auto ss = file.create<typename Schema::IfcSurfaceStyle>().initialize(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
 
+   return file.create<typename Schema::IfcSurfaceStyle>().initialize(name, Schema::IfcSurfaceSide::IfcSurfaceSide_BOTH, list_of_surface_styles);
+}
+
+// Styles a geometric representation item directly (Surface Colour Style concept), rather than through a material representation.
+// IfcStyledItem.Item <-> IfcRepresentationItem
+// IfcStyledItem.Styles <-> IfcSurfaceStyle
+template <typename Schema>
+typename Schema::IfcStyledItem StyleRepresentationItem(hierarchy_helper<Schema>& file, typename Schema::IfcRepresentationItem item, typename Schema::IfcSurfaceStyle surface_style)
+{
+   std::vector<typename Schema::IfcPresentationStyle> list_of_presentation_styles;
+   list_of_presentation_styles.push_back(surface_style);
+   return file.create<typename Schema::IfcStyledItem>().initialize(item, list_of_presentation_styles, std::nullopt);
+}
+
+// Returns the IfcSurfaceStyle with the specified name, creating it if it doesn't already exist.
+// Use this so all geometry of a kind shares a single surface style.
+template <typename Schema>
+typename Schema::IfcSurfaceStyle GetSurfaceStyle(hierarchy_helper<Schema>& file, std::string name, COLORREF clr)
+{
+   auto surface_styles = file.instances_by_type<typename Schema::IfcSurfaceStyle>();
+   for (auto& surface_style : surface_styles)
+   {
+      if (surface_style.Name() == name)
+         return surface_style;
+   }
+
+   return CreateSurfaceStyle<Schema>(file, name, clr);
+}
+
+// Styles every item of a shape representation. IfcMappedItem is skipped because it gets its style from the
+// representation it maps - style the IfcRepresentationMap's MappedRepresentation instead.
+template <typename Schema>
+void StyleShapeRepresentation(hierarchy_helper<Schema>& file, typename Schema::IfcShapeRepresentation shape_representation, typename Schema::IfcSurfaceStyle surface_style)
+{
+   for (auto& item : shape_representation.Items())
+   {
+      if (!item.template as<typename Schema::IfcMappedItem>())
+         StyleRepresentationItem<Schema>(file, item, surface_style);
+   }
+}
+
+template <typename Schema>
+typename Schema::IfcStyledRepresentation CreateMaterialRepresentation(hierarchy_helper<Schema>& file, std::string name, COLORREF clr)
+{
+   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
+
+   auto ss = CreateSurfaceStyle<Schema>(file, name, clr);
 
    std::vector<typename Schema::IfcPresentationStyle> list_of_presentation_styles;
    list_of_presentation_styles.push_back(ss);
@@ -226,6 +269,7 @@ typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file,
 template <typename Schema>
 typename Schema::IfcMaterial GetElastomerMaterial(hierarchy_helper<Schema>& file)
 {
+   // Colors are applied to the bearing geometry with IfcStyledItem, not with a material representation
    std::string name("Elastomer");
 
    // search to see if the elastomer IfcMaterial has already been created
