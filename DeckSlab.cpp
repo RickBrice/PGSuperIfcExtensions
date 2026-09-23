@@ -145,7 +145,12 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
 
    std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
    ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters,1);
-   bool bResult = iterator.initialize();
+   if (!iterator.initialize())
+   {
+      WBFL::System::Logger::Info(_T("Unable to process deck slab geometry. Deck edges will not be imported."));
+      return {};
+   }
+
    do
    {
       auto element = iterator.get();
@@ -199,6 +204,12 @@ std::map<double, std::pair<double, double>> get_deck_slab(std::shared_ptr<WBFL::
          {
             return a.plan_length() < b.plan_length();
          });
+
+      if (segments.size() < 2)
+      {
+         WBFL::System::Logger::Info(_T("Unable to identify deck slab edges from the slab geometry."));
+         continue;
+      }
 
       // Assume two longest segments are the slab edges
       for (auto iter = segments.end() - 2; iter != segments.end(); iter++)
@@ -255,7 +266,12 @@ bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifco
 
    std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
    ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, 1);
-   bool bResult = iterator.initialize();
+   if (!iterator.initialize())
+   {
+      WBFL::System::Logger::Info(_T("Unable to process deck slab geometry."));
+      return false;
+   }
+
    do
    {
       auto element = iterator.get();
@@ -306,6 +322,12 @@ bool create_alignment_from_deck(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifco
          {
             return a.plan_length() < b.plan_length();
          });
+
+      if (segments.size() < 2)
+      {
+         WBFL::System::Logger::Info(_T("Unable to identify deck slab ends from the slab geometry."));
+         continue;
+      }
 
       // 7. Assume two shortest segments are the ends of the slab
       Wire start_seg = segments[0];

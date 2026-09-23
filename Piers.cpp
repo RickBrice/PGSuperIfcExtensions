@@ -115,7 +115,12 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell:
 
          Eigen::Vector3d vmax(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity());
          Eigen::Vector3d vmin(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
-         bool bResult = iterator.initialize();
+         if (!iterator.initialize())
+         {
+            WBFL::System::Logger::Info("Unable to process bearing geometry. Assuming piers to be at stations on 100ft increment.");
+            return WBFL::Units::ConvertToSysUnits(pierIdx * 100.0, WBFL::Units::Measure::Feet);
+         }
+
          do
          {
             auto element = iterator.get();

@@ -542,6 +542,8 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
    auto slab = *it;
 
    auto deck_points = get_deck_slab(m_Importer.GetBroker(), file);
+   if (deck_points.empty())
+      return; // keep the default deck edges
 
    //auto stations = GetPropertyList<IfcSchema, IfcSchema::IfcLengthMeasure>(slab, "pgsDeck", "Stations");
    //if (stations.empty())

@@ -101,8 +101,11 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
 
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> start_points;
    std::map<GroupIndexType, std::vector<Eigen::Vector3d>> end_points;
-   bool bResult = iterator.initialize();
-   // NOTE: need to deal with (bResult == false)
+   if (!iterator.initialize())
+   {
+      WBFL::System::Logger::Info(_T("Unable to process beam geometry. Girder spacing will not be imported."));
+      return {};
+   }
 
    // This do loop can be multi-threaded
    SpanIndexType nSpans = get_pier_count(file) + 1; // number of spans is typically one more than the number of piers, but this is not guaranteed 
@@ -167,6 +170,14 @@ std::pair<Spacing, Spacing> get_beam_spacing(std::shared_ptr<WBFL::EAF::Broker> 
          {
             return a.plan_length() < b.plan_length();
          });
+
+      if (segments.size() < 2)
+      {
+         os.str(_T(""));
+         os << _T("Unable to identify the ends of ") << LABEL_GIRDER(girder_key) << _T(" from the beam geometry.");
+         WBFL::System::Logger::Info(os.str().c_str());
+         continue;
+      }
 
       // 7. Take the two shortest segments
       Wire start_seg = segments[0];

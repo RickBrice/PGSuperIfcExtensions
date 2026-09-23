@@ -135,6 +135,7 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell_parse_schema_ifc4x3_add2.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell.geometry.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_kernel_opencascade.dll" "$(OutDir)"
+xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_mapping_ifc4x3_add2.dll" "$(OutDir)"
 xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
@@ -204,6 +205,7 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell_parse_schema_ifc4x3_add2.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell.geometry.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_kernel_opencascade.dll" "$(OutDir)"
+xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)\ifcopenshell_geometry_mapping_ifc4x3_add2.dll" "$(OutDir)"
 xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>

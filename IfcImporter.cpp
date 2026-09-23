@@ -54,7 +54,6 @@ void CIfcImporter::InitUnits(ifcopenshell::file& file)
    WBFL::System::Logger::Info(_T("Initializing units and precision from IFC file."));
    auto geometric_representation_contexts = file.instances_by_type<IfcSchema::IfcGeometricRepresentationContext>();
    auto geometric_representation_context = (0 < geometric_representation_contexts.size()) ? geometric_representation_contexts.front() : IfcSchema::IfcGeometricRepresentationContext{};
-   geometric_representation_context.setContextType("Model");
 #pragma Reminder("WORKING HERE - There could be multiple geometric representation contexts, how do we know if we have the right one?")
    if (geometric_representation_context && geometric_representation_context.Precision() != std::nullopt)
    {
@@ -301,6 +300,20 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
        std::_tostringstream os;
        os << _T("IFC import failed:\n") << e.What();
        WBFL::System::Logger::Info(os.str().c_str());
+       hr = E_FAIL;
+    }
+    catch (const std::exception& e)
+    {
+       // IfcOpenShell reports errors by throwing std::exception (e.g. the geometry iterator)
+       // Don't let them escape - that terminates the application
+       std::ostringstream os;
+       os << "IFC import failed:\n" << e.what();
+       WBFL::System::Logger::Info(os.str().c_str());
+       hr = E_FAIL;
+    }
+    catch (...)
+    {
+       WBFL::System::Logger::Info(_T("IFC import failed:\nUnknown exception"));
        hr = E_FAIL;
     }
 
