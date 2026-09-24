@@ -1,0 +1,56 @@
+[Info] [2026-09-24 14:39:45] Starting IFC import from file
+[Info] [2026-09-24 14:39:45] Initializing units and precision from IFC file.
+[Info] [2026-09-24 14:39:45] IFC model does not contain an IfcMapConversion. Map conversion will be computed for this model.
+[Info] [2026-09-24 14:39:45] Importing alignment data from IFC file...
+[Info] [2026-09-24 14:39:45] Importing from bridge IFC file.
+[Info] [2026-09-24 14:39:45] NumberOfSpans property not found in usBrPset_BridgeGeometry property set
+[Info] [2026-09-24 14:39:45] Expected Pier 1 #24=IfcBridgePart('1d9RH4z8fBLecnKnmtEis7',$,'Abutment1','',$,#27,$,$,.ELEMENT.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-24 14:39:45] Expected Pier 2 #32=IfcBridgePart('2FCI8sjAn9ER9R5W0DnDWU',$,'Abutment2','',$,#35,$,$,.COMPLEX.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-24 14:39:45] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:45] Beam designation: Beam1 is not expected.
+[Info] [2026-09-24 14:39:45] IfcBeam::Name was not formatted as expected
+[Info] [2026-09-24 14:39:45] Could not determine girder key from IfcBeam
+[Info] [2026-09-24 14:39:45] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:45] Beam designation: Beam2 is not expected.
+[Info] [2026-09-24 14:39:45] IfcBeam::Name was not formatted as expected
+[Info] [2026-09-24 14:39:45] Could not determine girder key from IfcBeam
+[Info] [2026-09-24 14:39:45] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:45] Beam designation: Beam3 is not expected.
+[Info] [2026-09-24 14:39:45] IfcBeam::Name was not formatted as expected
+[Info] [2026-09-24 14:39:45] Could not determine girder key from IfcBeam
+[Info] [2026-09-24 14:39:45] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:45] Beam designation: Beam4 is not expected.
+[Info] [2026-09-24 14:39:45] IfcBeam::Name was not formatted as expected
+[Info] [2026-09-24 14:39:45] Could not determine girder key from IfcBeam
+[Info] [2026-09-24 14:39:45] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:45] Beam designation: Beam5 is not expected.
+[Info] [2026-09-24 14:39:45] IfcBeam::Name was not formatted as expected
+[Info] [2026-09-24 14:39:45] Could not determine girder key from IfcBeam
+[Info] [2026-09-24 14:39:45] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-24 14:39:45] Abutment 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-24 14:39:45] Uniform girder spacing 6.500 ft, measured normal to the alignment at the pier lines
+[Info] [2026-09-24 14:39:45] Girder type of Beam1 ("PA Bulb-Tee 33/31.25") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:39:45] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:45] Materials are not associated with the beam
+[Info] [2026-09-24 14:39:45] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:45] Materials are not associated with the beam
+[Info] [2026-09-24 14:39:45] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:45] Materials are not associated with the beam
+[Info] [2026-09-24 14:39:45] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:45] Materials are not associated with the beam
+[Info] [2026-09-24 14:39:45] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:45] Materials are not associated with the beam
+[Info] [2026-09-24 14:39:45] Abutment 1 ahead face: end distance 12 in, bearing offset -3.47928e-12 in (from the CL bearings)
+[Info] [2026-09-24 14:39:45] Abutment 2 back face: end distance 12 in, bearing offset -1.76724e-09 in (from the CL bearings)
+[Info] [2026-09-24 14:39:45] Bearings: the same bearing everywhere, rectangular, 12.000 in x 31.500 in, height 0.750 in, fixed
+[Info] [2026-09-24 14:39:45] Deck gross depth 8.000 in (from deck geometry)
+[Info] [2026-09-24 14:39:45] Left overhang edge depth 10.019 in (from deck geometry)
+[Info] [2026-09-24 14:39:45] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:45] Right overhang edge depth 10.020 in (from deck geometry)
+[Info] [2026-09-24 14:39:45] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:45] Haunch shape: square (from deck geometry)
+[Info] [2026-09-24 14:39:45] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-24 14:39:45] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-09-24 14:39:45] Done IFC import from file
+IFC import succeeded
+Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PennDOT.pgs

@@ -256,7 +256,9 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="ImportOptions.cpp" />
     <ClCompile Include="ExportOptions.cpp" />
     <ClCompile Include="IfcImporter.cpp" />
+    <ClCompile Include="IfcCommandLineInfo.cpp" />
     <ClCompile Include="IfcImporterException.cpp" />
+    <ClCompile Include="IfcImportUnits.cpp" />
     <ClCompile Include="IfcExtensions.cpp" />
     <ClCompile Include="IfcExtensionAgent.cpp" />
     <ClCompile Include="GeoReferencingPage.cpp" />
@@ -317,7 +319,9 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="GirderSheets.h" />
     <ClInclude Include="IfcAlignmentBuilder.h" />
     <ClInclude Include="IfcImporter.h" />
+    <ClInclude Include="IfcCommandLineInfo.h" />
     <ClInclude Include="IfcImporterException.h" />
+    <ClInclude Include="IfcImportUnits.h" />
     <ClInclude Include="IfcExtensions.h" />
     <ClInclude Include="IfcExtensionAgent.h" />
     <ClInclude Include="GeoReferencingPage.h" />

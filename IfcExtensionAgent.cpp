@@ -30,6 +30,13 @@
 #include <IFace\EditByUI.h>
 #include <EAF\Transaction.h>
 #include "EditGeoreferencing.h"
+#include "IfcCommandLineInfo.h"
+#include "IfcImporter.h"
+#include "IfcExporter.h"
+
+#include <EAF\EAFApp.h>
+#include <EAF\EAFDocument.h>
+#include <EAF\EAFUtilities.h>
 
 BEGIN_MESSAGE_MAP(CIfcExtensionAgent,CCmdTarget)
    ON_COMMAND(ID_EDIT_GEOREFERENCING,&CIfcExtensionAgent::OnEditGeoreferencing)
@@ -243,4 +250,81 @@ std::unique_ptr<WBFL::EAF::Transaction> CIfcExtensionAgent::OnOK(CPropertyPage* 
    auto pTxn = std::make_unique<txnEditGeoreferencing>(m_GeoreferencingData, pMyPage->m_GeoRefData);
    m_GeoreferencingData = pMyPage->m_GeoRefData;
    return pTxn;
+}
+
+
+////////////////////////////////////////////////////////////////////
+// IEAFProcessCommandLine
+BOOL CIfcExtensionAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   // cmdInfo is the command line information from the application. The application
+   // doesn't know about this extension at the time the command line parameters are parsed
+   //
+   // Re-parse the parameters with our own command line information object
+   CIfcCommandLineInfo ifcCmdInfo;
+   EAFGetApp()->ParseCommandLine(ifcCmdInfo);
+   if (!ifcCmdInfo.m_bIfcImport && !ifcCmdInfo.m_bIfcExport)
+      return FALSE; // not our command line
+
+   if (ifcCmdInfo.m_bError)
+   {
+      ifcCmdInfo.SetErrorInfo(ifcCmdInfo.GetUsageMessage());
+      cmdInfo = ifcCmdInfo;
+      return TRUE; // our command line, but it isn't correct. The application reports the error
+   }
+
+   cmdInfo = ifcCmdInfo; // copies m_bCommandLineMode so the application shuts down when we are done
+
+   if (ifcCmdInfo.m_bIfcImport)
+      ImportFromCommandLine(ifcCmdInfo);
+   else
+      ExportFromCommandLine(ifcCmdInfo);
+
+   return TRUE;
+}
+
+void CIfcExtensionAgent::ImportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo)
+{
+   // The template given on the command line has been opened as a new project.
+   // Import the IFC model into it
+   CIfcImportOptions options;
+   options.interactive = false;
+   options.log_file = ifcCmdInfo.m_strLogFile;
+   CString strIfcFile(ifcCmdInfo.m_strIfcFile);
+   HRESULT hr = CIfcImporter(EAFGetBroker()).ImportFromIFC(strIfcFile, options);
+
+   // Save the project even if the import failed so the partial result can be inspected
+   CEAFDocument* pDoc = EAFGetDocument();
+   BOOL bSaved = pDoc->DoSave(ifcCmdInfo.m_strOutFile, TRUE);
+
+   std::wofstream log(ifcCmdInfo.m_strLogFile.GetString(), std::ios::app);
+   log << (SUCCEEDED(hr) ? _T("IFC import succeeded") : _T("IFC import failed")) << std::endl;
+   log << (bSaved ? _T("Project saved to ") : _T("Unable to save project to ")) << ifcCmdInfo.m_strOutFile.GetString() << std::endl;
+}
+
+void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo)
+{
+   // The project given on the command line has been opened.
+   // Export it with the default export options
+   CIfcExportOptions options;
+   options.display_units_for_properties = ifcCmdInfo.m_bDisplayUnitsForProperties;
+
+   bool bResult = false;
+   CString strError;
+   try
+   {
+      bResult = CIfcExporter().BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile);
+   }
+   catch (const std::exception& e)
+   {
+      strError = e.what();
+   }
+
+   std::wofstream log(ifcCmdInfo.m_strLogFile.GetString());
+   log << _T("Exported ") << ifcCmdInfo.m_strFileName.GetString() << _T(" with property values in ") << (options.display_units_for_properties ? _T("display units") : _T("system units")) << std::endl;
+   if (!strError.IsEmpty())
+      log << _T("IFC export failed: ") << strError.GetString() << std::endl;
+   log << (bResult ? _T("IFC export succeeded: ") : _T("IFC export failed: ")) << ifcCmdInfo.m_strIfcFile.GetString() << std::endl;
 }

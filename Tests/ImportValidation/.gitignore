@@ -1,0 +1,6 @@
+# regenerated on every run - only the reports, logs, and imported projects are tracked
+results/*.ifc
+results/models/
+__pycache__/
+# import and export logs are part of the results (*.log is ignored at the repository root)
+!results/*.log

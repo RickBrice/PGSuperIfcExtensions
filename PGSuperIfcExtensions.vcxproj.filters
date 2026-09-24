@@ -4,6 +4,12 @@
     <ClCompile Include="IfcImporter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IfcCommandLineInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcImportUnits.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcImporterException.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -91,6 +97,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IfcImporter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcCommandLineInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcImportUnits.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcImporterException.h">

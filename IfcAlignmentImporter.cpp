@@ -621,7 +621,7 @@ void CIfcAlignmentImporter::GetStations(IfcSchema::IfcAlignment pAlignment, std:
                   auto point_by_distance_expression = location.as<IfcSchema::IfcPointByDistanceExpression>();
                   if (point_by_distance_expression)
                   {
-                     distance_along = (Float64)(point_by_distance_expression.DistanceAlong().as<IfcSchema::IfcLengthMeasure>());
+                     distance_along = WBFL::Units::ConvertToSysUnits((Float64)(point_by_distance_expression.DistanceAlong().as<IfcSchema::IfcLengthMeasure>()), m_Importer.GetLengthUnit());
                   }
                }
             }
@@ -640,20 +640,20 @@ void CIfcAlignmentImporter::GetStations(IfcSchema::IfcAlignment pAlignment, std:
                   {
                      if (prop.Name() == "Station")
                      {
-                        auto single_value_property = prop.as<IfcSchema::IfcPropertySingleValue>();
-                        if (single_value_property.NominalValue())
+                        auto value = ConvertToSysUnits<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), prop.as<IfcSchema::IfcPropertySingleValue>());
+                        if (value)
                         {
                            bHasStation = true;
-                           station = (Float64)(single_value_property.NominalValue().as<IfcSchema::IfcLengthMeasure>());
+                           station = *value;
                         }
                      }
                      else if (prop.Name() == "IncomingStation")
                      {
-                        auto single_value_property = prop.as<IfcSchema::IfcPropertySingleValue>();
-                        if (single_value_property.NominalValue())
+                        auto value = ConvertToSysUnits<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), prop.as<IfcSchema::IfcPropertySingleValue>());
+                        if (value)
                         {
                            bHasIncomingStation = true;
-                           incoming_station = (Float64)(single_value_property.NominalValue().as<IfcSchema::IfcLengthMeasure>());
+                           incoming_station = *value;
                         }
                      }
                   }
@@ -679,15 +679,8 @@ void CIfcAlignmentImporter::GetStations(IfcSchema::IfcAlignment pAlignment, std:
 
 Float64 CIfcAlignmentImporter::GetStartStation(IfcSchema::IfcAlignment pAlignment)
 {
-   auto value = GetProperty<IfcSchema, IfcSchema::IfcReal>(pAlignment, "Pset_Stationing", "Station");
-   if (value)
-   {
-      return (Float64)(*value);
-   }
-   else
-   {
-      return 0.0;
-   }
+   auto value = GetMeasureProperty<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), pAlignment, "Pset_Stationing", "Station");
+   return value.value_or(0.0);
 }
 
 Float64 CIfcAlignmentImporter::OnLine(Float64 startStation, IfcSchema::IfcAlignmentHorizontalSegment pLine)

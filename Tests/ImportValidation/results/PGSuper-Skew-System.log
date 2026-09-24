@@ -1,0 +1,32 @@
+[Info] [2026-09-24 14:38:50] Starting IFC import from file
+[Info] [2026-09-24 14:38:50] Initializing units and precision from IFC file.
+[Info] [2026-09-24 14:38:50] Importing alignment data from IFC file...
+[Info] [2026-09-24 14:38:50] Importing from bridge IFC file.
+[Info] [2026-09-24 14:38:59] No IfcBearing geometry found. Girder end distances and bearing offsets will not be imported.
+[Info] [2026-09-24 14:38:59] Abutment 1 orientation 20 L (from positioning referent)
+[Info] [2026-09-24 14:38:59] Pier 2 orientation NORMAL (from positioning referent)
+[Info] [2026-09-24 14:38:59] Pier 3 orientation 15 R (from positioning referent)
+[Info] [2026-09-24 14:38:59] Pier 4 orientation 30 R (from positioning referent)
+[Info] [2026-09-24 14:38:59] Abutment 5 orientation 25 L (from positioning referent)
+[Info] [2026-09-24 14:38:59] Uniform girder spacing 6.000 ft, measured normal to the alignment at the pier lines
+[Info] [2026-09-24 14:38:59] Girder type of Span 1, Girder 1 ("WF42G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:38:59] Abutment 1 ahead face: end distance 20.5 in, bearing offset 25.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Pier 2 ahead face: end distance 20.5 in, bearing offset 32.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Pier 2 back face: end distance 20.5 in, bearing offset 20.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Pier 3 ahead face: end distance 20.5 in, bearing offset 25.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Pier 3 back face: end distance 20.5 in, bearing offset 32.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Pier 4 ahead face: end distance 20.5 in, bearing offset 20.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Pier 4 back face: end distance 20.5 in, bearing offset 20.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:38:59] Abutment 5 back face: end distance 20.5 in, bearing offset 13.5 in (no bearings: the end distance is from the template and the bearing offset locates the ends of the girders)
+[Info] [2026-09-24 14:39:05] Deck gross depth 7.500 in (from deck geometry)
+[Info] [2026-09-24 14:39:05] Left overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-09-24 14:39:05] Left overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:05] Right overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-09-24 14:39:05] Right overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:05] Haunch shape: filleted (from deck geometry)
+[Info] [2026-09-24 14:39:05] Fillet 0.719 in (from deck geometry)
+[Info] [2026-09-24 14:39:05] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-24 14:39:05] Slab offset for the bridge 11.000 in (from deck geometry)
+[Info] [2026-09-24 14:39:05] Done IFC import from file
+IFC import succeeded
+Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Skew-System.pgs

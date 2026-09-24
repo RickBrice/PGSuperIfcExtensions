@@ -30,19 +30,12 @@
 
 #include <EAF/AutoProgress.h>
 
-std::string& to_lower(std::string& s)
-{
-   std::transform(s.begin(), s.end(), s.begin(), [](auto c) {return std::tolower(c); });
-   return s;
-}
-
 Float64 CIfcImporter::m_Precision = 0.001;
+CIfcImportUnits CIfcImporter::m_Units;
 
 CIfcImporter::CIfcImporter(std::shared_ptr<WBFL::EAF::Broker> pBroker) :
    m_pBroker(pBroker)
 {
-   m_pLengthUnit = nullptr;
-   m_pAngleUnit = nullptr;
 }
 
 CIfcImporter::~CIfcImporter(void)
@@ -60,128 +53,12 @@ void CIfcImporter::InitUnits(ifcopenshell::file& file)
       m_Precision = *(geometric_representation_context.Precision());
    }
 
-#pragma Reminder("WORKING HERE - UNITS - THERE ARE MANY CASES THIS DOESN'T DEAL WITH")
-   auto unit_assignment_instances = file.instances_by_type<IfcSchema::IfcUnitAssignment>();
-   CHECK(unit_assignment_instances.size() == 1);
-   auto unit_assignment = unit_assignment_instances.front();
-   auto units = unit_assignment.Units();
-   for (auto& unit : units)
-   {
-      auto derived_unit = unit.as<IfcSchema::IfcDerivedUnit>();
-      auto monitary_unit = unit.as<IfcSchema::IfcMonetaryUnit>();
-      auto si_unit = unit.as<IfcSchema::IfcSIUnit>();
-      auto conversion_based_unit = unit.as<IfcSchema::IfcConversionBasedUnit>();
-      auto conversion_based_unit_with_offset = unit.as<IfcSchema::IfcConversionBasedUnitWithOffset>();
+   m_Units.Init(file);
 
-      if (si_unit)
-      {
-         if (si_unit.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE)
-         {
-            if (si_unit.Prefix() != std::nullopt)
-            {
-               switch (*(si_unit.Prefix()))
-               {
-               case IfcSchema::IfcSIPrefix::IfcSIPrefix_KILO:
-                  m_pLengthUnit = &WBFL::Units::Measure::Kilometer;
-                  break;
-
-               case IfcSchema::IfcSIPrefix::IfcSIPrefix_CENTI:
-                  m_pLengthUnit = &WBFL::Units::Measure::Centimeter;
-                  break;
-
-               case IfcSchema::IfcSIPrefix::IfcSIPrefix_MILLI:
-                  m_pLengthUnit = &WBFL::Units::Measure::Millimeter;
-                  break;
-
-               default:
-                  CHECK(false); // unit prefix isn't supported
-               }
-            }
-            else
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::Meter;
-            }
-            continue;
-         }
-
-         if (si_unit.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN)
-         {
-            CHECK(si_unit.Prefix() == std::nullopt); // not expecting anything like Kilo-radians
-            m_pAngleUnit = &WBFL::Units::Measure::Radian;
-            continue;
-         }
-      }
-
-      if (conversion_based_unit)
-      {
-         auto conversion_factor = GetConversionFactor<IfcSchema>(conversion_based_unit);
-
-         auto measure_with_unit = conversion_based_unit.ConversionFactor();
-         auto unit_component = measure_with_unit.UnitComponent().as<IfcSchema::IfcSIUnit>();
-
-         if (conversion_based_unit.UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT)
-         {
-            CHECK(unit_component.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_RADIAN);
-
-            if (IsEqual(conversion_factor, WBFL::Units::Measure::Degree.GetConvFactor()))
-            {
-               m_pAngleUnit = &WBFL::Units::Measure::Degree;
-            }
-         }
-         else if (conversion_based_unit.UnitType() == IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT)
-         {
-            if (unit_component.Prefix() == IfcSchema::IfcSIPrefix::IfcSIPrefix_MILLI)
-            {
-               // lengths are in millimeter, so divide the conversion factor by 1000.
-               // so it is in meter so we can match the WBFL::Measure::Length conversion factors, which convert to/from meter
-               conversion_factor /= 1000.0;
-            }
-
-            CHECK(unit_component.Name() == IfcSchema::IfcSIUnitName::IfcSIUnitName_METRE);
-
-            std::string name = conversion_based_unit.Name();
-            to_lower(name);
-            if (IsEqual(conversion_factor, WBFL::Units::Measure::Feet.GetConvFactor()) || name == std::string("foot"))
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::Feet;
-            }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyFoot.GetConvFactor()) || name == std::string("us survey foot"))
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::USSurveyFoot;
-            }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Inch.GetConvFactor()) || name == std::string("inch"))
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::Inch;
-            }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Mile.GetConvFactor()) || name == std::string("mile"))
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::Mile;
-            }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::Yard.GetConvFactor()) || name == std::string("yard"))
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::Yard;
-            }
-            else if (IsEqual(conversion_factor, WBFL::Units::Measure::USSurveyYard.GetConvFactor()))
-            {
-               m_pLengthUnit = &WBFL::Units::Measure::USSurveyYard;
-            }
-            else
-            {
-               CHECK(false); // we don't have a unit of measure for this
-            }
-         }
-         continue;
-      }
-   }
-
-   // if the file doesn't have unit information,
-   // assume meter and radian
-   if (m_pLengthUnit == nullptr)
-      m_pLengthUnit = &WBFL::Units::Measure::Meter;
-
-   if(m_pAngleUnit == nullptr)
-      m_pAngleUnit = &WBFL::Units::Measure::Radian;
-
+   // Geometry is always in project units
+   USES_CONVERSION;
+   m_LengthUnit = WBFL::Units::Length(m_Units.GetConversionFactor({}, IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT), A2T(m_Units.GetProjectUnitName(IfcSchema::IfcUnitEnum::IfcUnit_LENGTHUNIT).c_str()));
+   m_AngleUnit = WBFL::Units::Angle(m_Units.GetConversionFactor({}, IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT), A2T(m_Units.GetProjectUnitName(IfcSchema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT).c_str()));
 }
 
 // Here is a good reference to redirecting cout
@@ -233,6 +110,8 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    USES_CONVERSION;
 
+
+   m_Options = options;
 
    HRESULT hr = S_OK;
    try
@@ -317,10 +196,18 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
        hr = E_FAIL;
     }
 
-    CImportResults dlg(m_LogStream);
-    dlg.DoModal();
-
     WBFL::System::Logger::Info(_T("Done IFC import from file"));
+
+    if (m_Options.interactive)
+    {
+       CImportResults dlg(m_LogStream);
+       dlg.DoModal();
+    }
+    else if (!m_Options.log_file.IsEmpty())
+    {
+       std::ofstream log(m_Options.log_file.GetString());
+       log << m_LogStream.str();
+    }
 
     WBFL::System::Logger::SetOutput(m_pOldLogStream);
 

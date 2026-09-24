@@ -23,6 +23,7 @@
 
 #include <IFace/Tools.h>
 #include <IFace\Project.h>
+#include "IfcImportUnits.h"
 
 class CIfcImportOptions
 {
@@ -34,6 +35,12 @@ public:
    };
 
    ModelElements model_elements = ModelElements::AlignmentAndBridge;
+
+   // When false, the import runs without user interaction (e.g. from the command line).
+   // No dialogs are shown, choices default to the first option, and the import
+   // log is written to log_file instead of being displayed.
+   bool interactive = true;
+   CString log_file;
 };
 
 
@@ -61,15 +68,23 @@ public:
 
    std::shared_ptr<WBFL::EAF::Broker> GetBroker() { return m_pBroker; }
 
-   const WBFL::Units::Length& GetLengthUnit() const { return *m_pLengthUnit; }
-   const WBFL::Units::Angle& GetAngleUnit() const { return *m_pAngleUnit; }
+   bool IsInteractive() const { return m_Options.interactive; }
+
+   // Project length and angle units, for converting geometric values to system units
+   const WBFL::Units::Length& GetLengthUnit() const { return m_LengthUnit; }
+   const WBFL::Units::Angle& GetAngleUnit() const { return m_AngleUnit; }
+
+   // Converts property values to system units. See CIfcImportUnits
+   static const CIfcImportUnits& GetUnits() { return m_Units; }
 
 
 private:
    std::shared_ptr<WBFL::EAF::Broker> m_pBroker;
+   CIfcImportOptions m_Options;
    static Float64 m_Precision;
-   const WBFL::Units::Length* m_pLengthUnit;
-   const WBFL::Units::Angle* m_pAngleUnit;
+   static CIfcImportUnits m_Units;
+   WBFL::Units::Length m_LengthUnit{ 1.0, _T("m") };
+   WBFL::Units::Angle m_AngleUnit{ 1.0, _T("rad") };
    std::ostringstream m_LogStream;
    std::ostream* m_pOldLogStream = nullptr;
 

@@ -89,6 +89,7 @@ typename Schema::IfcElementQuantity Create_Qto_BeamBaseQuantities(hierarchy_help
       mass_unit = GetMassUnit<Schema>(file, pBroker);
       length_unit = GetSpanLengthUnit<Schema>(file, pBroker);
 
+      OSA = WBFL::Units::ConvertFromSysUnits(OSA, WBFL::Units::Measure::Feet2);
       GSA = WBFL::Units::ConvertFromSysUnits(GSA, WBFL::Units::Measure::Feet2);
       GV = WBFL::Units::ConvertFromSysUnits(GV, WBFL::Units::Measure::Feet3);
       L = WBFL::Units::ConvertFromSysUnits(L, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure);

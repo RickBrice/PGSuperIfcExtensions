@@ -1,0 +1,103 @@
+[Info] [2026-09-24 14:39:47] Starting IFC import from file
+[Info] [2026-09-24 14:39:49] Initializing units and precision from IFC file.
+[Info] [2026-09-24 14:39:49] Importing alignment data from IFC file...
+[Info] [2026-09-24 14:39:49] Importing from bridge IFC file.
+[Info] [2026-09-24 14:39:49] NumberOfSpans property not found in usBrPset_BridgeGeometry property set
+[Info] [2026-09-24 14:39:49] Expected Pier 1 #679=IfcBridgePart('0pyGw5cdLBju4mkNqayzKu',$,'Abutment 1',$,$,#2616,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-24 14:39:49] Expected Pier 2 #2786=IfcBridgePart('1UYyVXuwj99uHgd4PvNEY_',$,'Abutment 2',$,$,#20246,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-24 14:39:49] Expected Pier 3 #3357=IfcBridgePart('3e9_ctlvr45xIz5UO_ym6j',$,'Pier 1',$,$,#13660,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-24 14:39:50] Expected Pier 4 #4395=IfcBridgePart('3C_4h4D8nBvhIMFgPGIP4w',$,'Pier 2',$,$,#17575,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Pset_PrecastConcreteElementGeneral not found.
+[Info] [2026-09-24 14:39:52] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-24 14:39:52] Pier 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-24 14:39:52] Pier 3 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-24 14:39:52] Abutment 4 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-24 14:39:52] Uniform girder spacing 6.694 ft, measured normal to the alignment at the pier lines
+[Info] [2026-09-24 14:39:52] Girder type of Beam 1 Span 1 ("BTB45", "Beam, PPC, BTB45") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:39:52] Girder type of Beam 1 Span 2 ("BTB105", "Beam, PPC, BTB105") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found
+[Info] [2026-09-24 14:39:52] CompressiveStrength property in Pset_MaterialConcrete property set not found
+[Info] [2026-09-24 14:39:52] Abutment 1 ahead face: end distance 8.00002 in, bearing offset 1.17855e-08 in (from the CL bearings)
+[Info] [2026-09-24 14:39:52] Pier 2 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-24 14:39:52] Pier 2 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-24 14:39:52] Pier 3 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-24 14:39:52] Pier 3 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-24 14:39:52] Abutment 4 back face: end distance 8.00002 in, bearing offset -5.23895e-09 in (from the CL bearings)
+[Info] [2026-09-24 14:39:52] Bearings at Abutment 1 ahead face: rectangular, 3.000 in x 28.500 in, height 3.000 in, fixed
+[Info] [2026-09-24 14:39:52] Bearings at Pier 2 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in, fixed
+[Info] [2026-09-24 14:39:52] Bearings at Pier 2 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in, fixed
+[Info] [2026-09-24 14:39:52] Bearings at Pier 3 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in, fixed
+[Info] [2026-09-24 14:39:52] Bearings at Pier 3 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in, fixed
+[Info] [2026-09-24 14:39:52] Bearings at Abutment 4 back face: rectangular, 3.000 in x 28.500 in, height 3.000 in, fixed
+[Info] [2026-09-24 14:39:52] 21 haunch elements found. They are measured with the deck slab.
+[Info] [2026-09-24 14:39:53] Deck gross depth 8.470 in (from deck geometry)
+[Info] [2026-09-24 14:39:53] Left overhang edge depth 10.059 in (from deck geometry)
+[Info] [2026-09-24 14:39:53] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:53] Right overhang edge depth 9.942 in (from deck geometry)
+[Info] [2026-09-24 14:39:53] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:53] Haunch shape: square (from deck geometry)
+[Info] [2026-09-24 14:39:53] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-24 14:39:53] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-09-24 14:39:53] Done IFC import from file
+IFC import succeeded
+Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\Iowa.pgs

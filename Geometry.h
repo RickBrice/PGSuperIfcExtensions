@@ -90,6 +90,12 @@ struct Mesh {
    // ------------------------------------------------------------
    Wire boundary() const;
 
+   // ------------------------------------------------------------
+   // Lowest and highest elevation of the mesh surface at a point in plan,
+   // or nullopt if the point is outside the plan footprint of the mesh
+   // ------------------------------------------------------------
+   std::optional<std::pair<double, double>> z_range_at(double x, double y) const;
+
    void print(std::ostream& os) const;
 };
 

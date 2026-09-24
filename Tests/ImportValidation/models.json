@@ -1,0 +1,33 @@
+{
+  "template": "../../IfcImportTemplate.pgt",
+  "models": [
+    {
+      "name": "PGSuper",
+      "pgs": "models/PGSuper_Import_Model.pgs",
+      "property_units": [ "Display", "System" ]
+    },
+    {
+      "name": "PGSuper-Skew",
+      "pgs": "models/PGSuper_Skew_Straight.pgs",
+      "property_units": [ "System" ]
+    },
+    {
+      "name": "PGSuper-Skew-Bearings",
+      "pgs": "models/PGSuper_Skew_Straight_Bearings.pgs",
+      "property_units": [ "System" ]
+    },
+    {
+      "name": "PGSuper-Skew-AlongPier",
+      "pgs": "models/PGSuper_Skew_Straight_AlongPier.pgs",
+      "property_units": [ "System" ]
+    },
+    {
+      "name": "PennDOT",
+      "ifc": "models/PennDOT_Rearick_Rd_323010451_STR1.ifc"
+    },
+    {
+      "name": "Iowa",
+      "ifc": "models/Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip"
+    }
+  ]
+}

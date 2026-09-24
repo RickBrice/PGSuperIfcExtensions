@@ -53,6 +53,7 @@
 constexpr Float64 gs_InsideBendRadius = 0.01; // dummy inside bend radius.
 
 constexpr IndexType NUM_DECK_SECTIONS = 10;
+constexpr IndexType NUM_HAUNCH_SECTIONS = 10; // cross sections along each segment for the haunch solids
 
 #define CLOCKWISE 0
 #define COUNTERCLOCKWISE 1
@@ -2213,13 +2214,10 @@ void CreateClosureJointRepresentation(hierarchy_helper<Schema>& file, std::share
 template <typename Schema>
 void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart deck, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)
 {
-#pragma Reminder("WORKING HERE - Deck Model - need to re-think this approach")
-   // Consider modeling the slab separately from the haunch. The basic slab is the same everywhere.
-   // Each girder has it's own haunch.
-   // This should eliminate the problem with different number of points in the cross section profile.
-   // The deck representation would be a composite of the main slab and each haunch (This is what Representation.Items is for. Deck + each haunch are items)
-
-   // This is not a good model of the deck. This model just creates NUM_DECK_SECTIONS cross sections and extrudes between them.
+   // The deck and its haunches are one element (they are cast together) with several representation items: the slab without
+   // the haunches, swept along the alignment, and a haunch over each mating surface of each segment, swept along the segment.
+   // The slab shape without haunches has the same points at every station, including skewed ends where a cut misses girders,
+   // which a single slab solid with haunches can't have.
    GET_IFACE2(pBroker, IBridge, pBridge);
    USES_CONVERSION;
 
@@ -2253,8 +2251,6 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
    IndexType point_count = 0;
 
-   bool bIncludeHaunch = IsZero(start_skew) && IsZero(end_skew) ? true : false;
-
    GET_IFACE2(pBroker, IShapes, pShapes);
    GET_IFACE2(pBroker, IRoadway, pAlignment);
    std::vector<typename Schema::IfcProfileDef> cross_sections;
@@ -2274,7 +2270,7 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
 
       CComPtr<IShape> slab_shape;
-      pShapes->GetSlabShape(station, nullptr/*objDir*/, bIncludeHaunch, &slab_shape);
+      pShapes->GetSlabShapeWithoutHaunches(station, nullptr/*objDir*/, &slab_shape);
 
       // All of the deck cross sections must have exactly the same number of points or it is an invalid IFC representation
       // Capture the number of points for the first deck section, then compare all other deck sections
@@ -2325,6 +2321,136 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
    std::vector<typename Schema::IfcRepresentationItem> representation_items;
    auto sectioned_solid = file.create<typename Schema::IfcSectionedSolidHorizontal>().initialize(directrix, cross_sections, cross_section_positions);
    representation_items.push_back(sectioned_solid);
+
+   // Haunches, one solid over each mating surface of each segment, swept along the CL of the segment.
+   // The directrix is the CL segment at elevation 0 so the haunch profiles are at their elevations.
+   {
+      GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+      GET_IFACE2(pBroker, IGirder, pGirder);
+
+      // true if the points of a haunch shape make a valid profile: at least 3 points and no zero length edges
+      auto is_valid_profile = [](IShape* shape, IndexType* pnPoints)
+         {
+            CComPtr<IPoint2dCollection> points;
+            shape->get_PolyPoints(&points);
+            points->get_Count(pnPoints);
+            if (*pnPoints < 3)
+               return false;
+            for (IndexType i = 0; i < *pnPoints; i++)
+            {
+               CComPtr<IPoint2d> a, b;
+               points->get_Item(i, &a);
+               points->get_Item((i + 1) % *pnPoints, &b);
+               Float64 d;
+               a->DistanceEx(b, &d);
+               if (d < 1.0e-6)
+                  return false;
+            }
+            return true;
+         };
+
+      GroupIndexType nGroups = pIBridgeDesc->GetGirderGroupCount();
+      for (GroupIndexType grpIdx = 0; grpIdx < nGroups; grpIdx++)
+      {
+         GirderIndexType nGirders = pIBridgeDesc->GetGirderGroup(grpIdx)->GetGirderCount();
+         for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+         {
+            CGirderKey girderKey(grpIdx, gdrIdx);
+            MatingSurfaceIndexType nMatingSurfaces = pGirder->GetMatingSurfaceCount(girderKey);
+            SegmentIndexType nSegments = pIBridgeDesc->GetGirder(girderKey)->GetSegmentCount();
+            for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
+            {
+               CSegmentKey segmentKey(grpIdx, gdrIdx, segIdx);
+               Float64 Ls = pBridge->GetSegmentLength(segmentKey);
+
+               // the haunch is only where the slab is, between the start and end stations of the slab
+               auto station_at = [&](Float64 Xs)
+                  {
+                     Float64 station, offset;
+                     pBridge->GetStationAndOffset(pgsPointOfInterest(segmentKey, Xs), &station, &offset);
+                     return station;
+                  };
+               auto find_Xs = [&](Float64 station) // Xs where the segment is at station, if the segment spans the station
+                  {
+                     Float64 a = 0, b = Ls;
+                     for (int i = 0; i < 50; i++)
+                     {
+                        Float64 m = (a + b) / 2;
+                        (station_at(m) < station ? a : b) = m;
+                     }
+                     return (a + b) / 2;
+                  };
+               Float64 Xs_start = (station_at(0.0) < startBrgStation ? find_Xs(startBrgStation) : 0.0);
+               Float64 Xs_end = (endBrgStation < station_at(Ls) ? find_Xs(endBrgStation) : Ls);
+               if (Xs_end <= Xs_start)
+                  continue; // the segment is beyond the slab
+
+               CComPtr<IPoint2d> pntPier1, pntEnd1, pntBrg1, pntBrg2, pntEnd2, pntPier2;
+               pGirder->GetSegmentEndPoints(segmentKey, pgsTypes::pcGlobal, &pntPier1, &pntEnd1, &pntBrg1, &pntBrg2, &pntEnd2, &pntPier2);
+               Float64 x1, y1, x2, y2;
+               pntEnd1->Location(&x1, &y1);
+               pntEnd2->Location(&x2, &y2);
+               WBFL::Geometry::Vector3d segment_direction(x2 - x1, y2 - y1, 0.0);
+               segment_direction.Normalize();
+
+               for (MatingSurfaceIndexType msIdx = 0; msIdx < nMatingSurfaces; msIdx++)
+               {
+                  // the haunch shapes along the segment. All of the profiles must have the same number of points
+                  std::vector<std::pair<Float64, CComPtr<IShape>>> shapes;
+                  IndexType point_count = INVALID_INDEX;
+                  bool bValid = true;
+                  for (IndexType i = 0; i <= NUM_HAUNCH_SECTIONS; i++)
+                  {
+                     Float64 Xs = Xs_start + i * (Xs_end - Xs_start) / NUM_HAUNCH_SECTIONS;
+                     CComPtr<IShape> haunch_shape;
+                     pShapes->GetHaunchShape(segmentKey, Xs, msIdx, &haunch_shape);
+                     IndexType nPoints;
+                     if (haunch_shape == nullptr || !is_valid_profile(haunch_shape, &nPoints) || (point_count != INVALID_INDEX && nPoints != point_count))
+                     {
+                        bValid = false;
+                        break;
+                     }
+                     point_count = nPoints;
+                     shapes.emplace_back(Xs, haunch_shape);
+                  }
+
+                  std::_tostringstream os_name;
+                  os_name << _T("Haunch, ") << SEGMENT_LABEL(segmentKey);
+                  if (1 < nMatingSurfaces) os_name << _T(", Mating Surface ") << (msIdx + 1);
+                  std::string haunch_name(T2A(os_name.str().c_str()));
+
+                  if (!bValid)
+                  {
+                     std::ostringstream os;
+                     os << haunch_name << " was not modeled. The haunch depth is too small for a valid cross section.";
+                     WBFL::System::Logger::Info(os.str().c_str());
+                     continue;
+                  }
+
+                  std::vector<typename Schema::IfcCartesianPoint> segment_line_points;
+                  segment_line_points.push_back(file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{x1, y1, 0.0}));
+                  segment_line_points.push_back(file.create<typename Schema::IfcCartesianPoint>().initialize(std::vector<double>{x2, y2, 0.0}));
+                  auto segment_line = file.create<typename Schema::IfcPolyline>().initialize(segment_line_points);
+
+                  std::vector<typename Schema::IfcProfileDef> haunch_sections;
+                  std::vector<typename Schema::IfcAxis2PlacementLinear> haunch_section_positions;
+                  for (auto& [Xs, haunch_shape] : shapes)
+                  {
+                     auto polyline = CreatePolyline<Schema>(file, haunch_shape, options);
+                     haunch_sections.push_back(file.create<typename Schema::IfcArbitraryClosedProfileDef>().initialize(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, haunch_name, polyline));
+
+                     auto pde = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(Xs), std::nullopt, std::nullopt, std::nullopt, segment_line);
+                     auto rd = file.create<typename Schema::IfcDirection>().initialize({ segment_direction.X(), segment_direction.Y(), 0.0 }); // normal to the plane of the cross section
+                     auto axis = file.create<typename Schema::IfcDirection>().initialize({ 0,0,1 }); // up
+                     haunch_section_positions.push_back(file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(pde, axis, rd));
+                  }
+
+                  representation_items.push_back(file.create<typename Schema::IfcSectionedSolidHorizontal>().initialize(segment_line, haunch_sections, haunch_section_positions));
+               }
+            }
+         }
+      }
+   }
 
 
    auto alignment = file.getSingle<typename Schema::IfcAlignment>();
@@ -2577,6 +2703,7 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
    auto directrix = GetAlignmentDirectrix(file, options);
 
    GET_IFACE2(pBroker, IBridge, pBridge);
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
    auto nPiers = pBridge->GetPierCount();
    for (IndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
@@ -2633,8 +2760,24 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
          file.create<typename Schema::IfcLengthMeasure>().initialize(pierStation - startStation),
          std::nullopt, std::nullopt, std::nullopt,
          directrix);
-      auto relative_placement = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(point_on_alignment, {}, {});
-      auto fallback_placement = GetStationCartesianPosition<Schema>(file, pBroker, pierStation);
+      // the local x-axis is along the CL pier (IBridge::GetPierDirection), so the placement carries the pier skew.
+      // the z-axis is up.
+      CComPtr<IDirection> pier_direction;
+      pBridge->GetPierDirection(pierIdx, &pier_direction);
+      Float64 dir;
+      pier_direction->get_Value(&dir);
+      WBFL::Geometry::Vector3d x_dir(cos(dir), sin(dir), 0.0);
+      WBFL::Geometry::Vector3d z_dir(0, 0, 1);
+
+      auto relative_placement = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(point_on_alignment,
+         file.create<typename Schema::IfcDirection>().initialize({ z_dir.X(), z_dir.Y(), z_dir.Z() }),
+         file.create<typename Schema::IfcDirection>().initialize({ x_dir.X(), x_dir.Y(), x_dir.Z() }));
+      CComPtr<IPoint2d> pier_point;
+      pAlignment->GetPoint(pierStation, 0.0, nullptr, pgsTypes::pcGlobal, &pier_point);
+      Float64 x, y;
+      pier_point->Location(&x, &y);
+      Float64 z = pAlignment->GetElevation(pierStation, 0.0);
+      auto fallback_placement = file.addPlacement3d(x, y, z, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
       auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, fallback_placement);
 
       // create referent to semantically position the pier and foundation.
@@ -3782,6 +3925,9 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    // Emit the buffered reinforcement relationships - one instance per relating
    // object, each with its complete member list set in a single write.
    rebar_batch.Flush(file);
+
+   // Declare project units for values that rely on them (e.g. quantities without their own unit)
+   AddUsedProjectUnits(file);
 
    std::ofstream ofs(T2A(strFilePath));
    ofs << file;

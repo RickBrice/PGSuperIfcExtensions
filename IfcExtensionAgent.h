@@ -40,13 +40,16 @@
 #include "GeoReferencingPage.h"
 #include "GeoReferencing.h"
 
+class CIfcCommandLineInfo;
+
 class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheritance, see Warning C4407
    public WBFL::EAF::Agent,
    public WBFL::EAF::IAgentPersist,
    public WBFL::EAF::IAgentUIIntegration,
    public IGeoreferencing,
    public IEditAlignmentCallback,
-   public WBFL::EAF::ICommandCallback
+   public WBFL::EAF::ICommandCallback,
+   public IEAFProcessCommandLine
 {
 public:
    CIfcExtensionAgent()
@@ -96,6 +99,12 @@ public:
    BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
 
    afx_msg void OnEditGeoreferencing();
+
+// IEAFProcessCommandLine
+public:
+   BOOL ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo) override;
+   void ImportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
+   void ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
 
    DECLARE_MESSAGE_MAP()
 

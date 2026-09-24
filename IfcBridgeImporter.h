@@ -22,6 +22,7 @@
 #pragma once
 
 #include "IfcImporter.h"
+#include "BeamSpacing.h"
 #include <IFace\Project.h>
 
 class CIfcBridgeImporter
@@ -39,10 +40,12 @@ private:
    bool HasValidGirdersByTPF(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
    bool HasValidGirdersByOther(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
 
-   void SetGirderProperties(ifcopenshell::file& file, CBridgeDescription2& bridge_desc);
-   void ImportSlab(ifcopenshell::file& file, CBridgeDescription2& bridge_desc);
+   void SetGirderProperties(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout);
+   void ImportSlab(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout, const std::vector<Float64>& pier_stations);
    
    const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam beam);
+   std::vector<std::string> GetGirderTypeNames(IfcSchema::IfcBeam beam);
+   std::map<std::vector<std::string>, const GirderLibraryEntry*> m_GirderMatches; // girder type names -> library entry, so each girder type is matched and logged once
 
    bool DeriveAlignmentFromDeck(ifcopenshell::file& file);
 

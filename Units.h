@@ -260,3 +260,103 @@ std::vector<int64_t> GetCompoundPlaneAngleMeasure(Float64 angle_deg)
    auto [d, m, s] = angle.GetDMS();
    return { d, m, static_cast<int64_t>(s) };
 }
+
+// Values without their own unit use the project unit for their unit type. The project unit assignment
+// starts with the fundamental units only. This adds the SI project unit (system units) for every other
+// unit type that is used by a property or quantity without its own unit, and nothing more, so the model
+// doesn't declare units it doesn't use. Call after the model is built.
+template <typename Schema>
+void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
+{
+   using UnitType = typename Schema::IfcUnitEnum::Value;
+   std::set<UnitType> used;
+
+   auto use_measure = [&used](const std::string& measure)
+      {
+         static const std::map<std::string, UnitType> unit_types{
+            {"IfcLengthMeasure", Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT},
+            {"IfcPositiveLengthMeasure", Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT},
+            {"IfcNonNegativeLengthMeasure", Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT},
+            {"IfcPlaneAngleMeasure", Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT},
+            {"IfcPositivePlaneAngleMeasure", Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT},
+            {"IfcAreaMeasure", Schema::IfcUnitEnum::IfcUnit_AREAUNIT},
+            {"IfcVolumeMeasure", Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT},
+            {"IfcMassMeasure", Schema::IfcUnitEnum::IfcUnit_MASSUNIT},
+            {"IfcTimeMeasure", Schema::IfcUnitEnum::IfcUnit_TIMEUNIT},
+            {"IfcForceMeasure", Schema::IfcUnitEnum::IfcUnit_FORCEUNIT},
+            {"IfcPressureMeasure", Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT},
+            {"IfcQuantityLength", Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT},
+            {"IfcQuantityArea", Schema::IfcUnitEnum::IfcUnit_AREAUNIT},
+            {"IfcQuantityVolume", Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT},
+            {"IfcQuantityWeight", Schema::IfcUnitEnum::IfcUnit_MASSUNIT},
+            {"IfcQuantityTime", Schema::IfcUnitEnum::IfcUnit_TIMEUNIT},
+         };
+         // measures without units don't need a project unit
+         static const std::set<std::string> unitless{
+            "IfcRatioMeasure",
+            "IfcPositiveRatioMeasure",
+            "IfcNormalisedRatioMeasure",
+            "IfcCountMeasure",
+            "IfcNumericMeasure",
+            "IfcContextDependentMeasure",
+            "IfcDescriptiveMeasure",
+         };
+         auto found = unit_types.find(measure);
+         if (found != unit_types.end())
+            used.insert(found->second);
+         else
+            ASSERT(!measure.ends_with("Measure") || unitless.contains(measure)); // a measure type with units that isn't handled here - add it to unit_types
+      };
+
+   for (auto& property : file.template instances_by_type<typename Schema::IfcPropertySingleValue>())
+   {
+      if (property.NominalValue() && !property.Unit())
+         use_measure(property.NominalValue().declaration().name());
+   }
+
+   for (auto& property : file.template instances_by_type<typename Schema::IfcPropertyListValue>())
+   {
+      auto values = property.ListValues();
+      if (values && !property.Unit())
+      {
+         for (auto& value : *values)
+            use_measure(value.declaration().name());
+      }
+   }
+
+   for (auto& quantity : file.template instances_by_type<typename Schema::IfcPhysicalSimpleQuantity>())
+   {
+      if (!quantity.Unit())
+         use_measure(quantity.declaration().name());
+   }
+
+   auto unit_assignment = file.template instances_by_type<typename Schema::IfcUnitAssignment>().front();
+   auto units = unit_assignment.Units();
+   for (auto& unit : units)
+   {
+      if (auto named_unit = unit.template as<typename Schema::IfcNamedUnit>())
+         used.erase(named_unit.UnitType()); // already defined
+   }
+
+   if (used.empty())
+      return;
+
+   // PGSuper system units are SI (kg, m, Pa, etc)
+   static const std::map<UnitType, std::pair<std::optional<typename Schema::IfcSIPrefix::Value>, typename Schema::IfcSIUnitName::Value>> si_units{
+      {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_METRE}},
+      {Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN}},
+      {Schema::IfcUnitEnum::IfcUnit_AREAUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_SQUARE_METRE}},
+      {Schema::IfcUnitEnum::IfcUnit_VOLUMEUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_CUBIC_METRE}},
+      {Schema::IfcUnitEnum::IfcUnit_MASSUNIT, {Schema::IfcSIPrefix::IfcSIPrefix_KILO, Schema::IfcSIUnitName::IfcSIUnitName_GRAM}},
+      {Schema::IfcUnitEnum::IfcUnit_TIMEUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_SECOND}},
+      {Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_NEWTON}},
+      {Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL}},
+   };
+
+   for (auto unit_type : used)
+   {
+      const auto& [prefix, name] = si_units.at(unit_type);
+      units.push_back(file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name));
+   }
+   unit_assignment.setUnits(units);
+}

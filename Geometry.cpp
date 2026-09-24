@@ -408,6 +408,44 @@ Mesh get_top_mesh(const std::vector<Mesh>& meshes)
    return *top_component_it;
 }
 
+std::optional<std::pair<double, double>> Mesh::z_range_at(double x, double y) const
+{
+   // barycentric coordinates of (x,y) in the plan projection of each triangle
+   double zmin = std::numeric_limits<double>::max();
+   double zmax = std::numeric_limits<double>::lowest();
+   bool bFound = false;
+   for (const auto& f : faces)
+   {
+      const auto& a = verts[f[0]];
+      const auto& b = verts[f[1]];
+      const auto& c = verts[f[2]];
+      if (x < std::min({ a.x(), b.x(), c.x() }) || std::max({ a.x(), b.x(), c.x() }) < x ||
+          y < std::min({ a.y(), b.y(), c.y() }) || std::max({ a.y(), b.y(), c.y() }) < y)
+         continue;
+
+      double d = (b.y() - c.y()) * (a.x() - c.x()) + (c.x() - b.x()) * (a.y() - c.y());
+      if (fabs(d) < 1.0e-12)
+         continue; // vertical face
+
+      double l1 = ((b.y() - c.y()) * (x - c.x()) + (c.x() - b.x()) * (y - c.y())) / d;
+      double l2 = ((c.y() - a.y()) * (x - c.x()) + (a.x() - c.x()) * (y - c.y())) / d;
+      double l3 = 1.0 - l1 - l2;
+      const double tol = -1.0e-9;
+      if (l1 < tol || l2 < tol || l3 < tol)
+         continue;
+
+      double z = l1 * a.z() + l2 * b.z() + l3 * c.z();
+      zmin = std::min(zmin, z);
+      zmax = std::max(zmax, z);
+      bFound = true;
+   }
+
+   if (!bFound)
+      return std::nullopt;
+
+   return std::make_pair(zmin, zmax);
+}
+
 void Mesh::print(std::ostream& os) const
 {
    os << "verts" << std::endl;

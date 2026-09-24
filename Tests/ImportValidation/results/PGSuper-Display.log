@@ -1,0 +1,29 @@
+[Info] [2026-09-24 14:38:23] Starting IFC import from file
+[Info] [2026-09-24 14:38:23] Initializing units and precision from IFC file.
+[Info] [2026-09-24 14:38:23] Importing alignment data from IFC file...
+[Info] [2026-09-24 14:38:23] Importing from bridge IFC file.
+[Info] [2026-09-24 14:38:28] Abutment 1 orientation NORMAL (from positioning referent)
+[Info] [2026-09-24 14:38:28] Pier 2 orientation NORMAL (from positioning referent)
+[Info] [2026-09-24 14:38:28] Pier 3 orientation NORMAL (from positioning referent)
+[Info] [2026-09-24 14:38:28] Abutment 4 orientation NORMAL (from positioning referent)
+[Info] [2026-09-24 14:38:28] Girder type of Span 1, Girder 1 ("WF66G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:38:28] Girder type of Span 2, Girder 1 ("WF100G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:38:28] Abutment 1 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-09-24 14:38:28] Pier 2 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-09-24 14:38:28] Pier 2 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-09-24 14:38:28] Pier 3 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-09-24 14:38:28] Pier 3 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-09-24 14:38:28] Abutment 4 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-09-24 14:38:28] Bearings: the same bearing everywhere, rectangular, 12.000 in x 47.000 in, height 1.725 in
+[Info] [2026-09-24 14:38:32] Deck gross depth 7.500 in (from deck geometry)
+[Info] [2026-09-24 14:38:32] Left overhang edge depth 7.001 in (from deck geometry)
+[Info] [2026-09-24 14:38:32] Left overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:38:32] Right overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-09-24 14:38:32] Right overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:38:32] Haunch shape: filleted (from deck geometry)
+[Info] [2026-09-24 14:38:32] Fillet 0.750 in (from deck geometry)
+[Info] [2026-09-24 14:38:32] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-24 14:38:32] Slab offset for the bridge 9.500 in (from deck geometry)
+[Info] [2026-09-24 14:38:32] Done IFC import from file
+IFC import succeeded
+Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Display.pgs

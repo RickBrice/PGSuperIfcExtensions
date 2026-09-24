@@ -1,0 +1,32 @@
+[Info] [2026-09-24 14:39:30] Starting IFC import from file
+[Info] [2026-09-24 14:39:30] Initializing units and precision from IFC file.
+[Info] [2026-09-24 14:39:30] Importing alignment data from IFC file...
+[Info] [2026-09-24 14:39:30] Importing from bridge IFC file.
+[Info] [2026-09-24 14:39:38] Abutment 1 orientation 20 L (from positioning referent)
+[Info] [2026-09-24 14:39:38] Pier 2 orientation NORMAL (from positioning referent)
+[Info] [2026-09-24 14:39:38] Pier 3 orientation 15 R (from positioning referent)
+[Info] [2026-09-24 14:39:38] Pier 4 orientation 30 R (from positioning referent)
+[Info] [2026-09-24 14:39:38] Abutment 5 orientation 25 L (from positioning referent)
+[Info] [2026-09-24 14:39:38] Uniform girder spacing 6.000 ft, measured along the CL piers at the pier lines
+[Info] [2026-09-24 14:39:38] Girder type of Span 1, Girder 1 ("WF42G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-24 14:39:38] Abutment 1 ahead face: end distance 15 in, bearing offset 20 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Pier 2 ahead face: end distance 18 in, bearing offset 30 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Pier 2 back face: end distance 15 in, bearing offset 15 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Pier 3 ahead face: end distance 10 in, bearing offset 15 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Pier 3 back face: end distance 18 in, bearing offset 30 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Pier 4 ahead face: end distance 6 in, bearing offset 6 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Pier 4 back face: end distance 6 in, bearing offset 6 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Abutment 5 back face: end distance 25 in, bearing offset 18 in (from the CL bearings)
+[Info] [2026-09-24 14:39:38] Bearings: the same bearing everywhere, rectangular, 12.000 in x 12.000 in, height 2.000 in
+[Info] [2026-09-24 14:39:43] Deck gross depth 0.000 in (from deck geometry)
+[Info] [2026-09-24 14:39:43] Left overhang edge depth 0.009 in (from deck geometry)
+[Info] [2026-09-24 14:39:43] Left overhang taper could not be measured from the deck geometry. The default is used.
+[Info] [2026-09-24 14:39:43] Right overhang edge depth 0.246 in (from deck geometry)
+[Info] [2026-09-24 14:39:43] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-24 14:39:43] Haunch shape: filleted (from deck geometry)
+[Info] [2026-09-24 14:39:43] Fillet 0.750 in (from deck geometry)
+[Info] [2026-09-24 14:39:43] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-24 14:39:43] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-09-24 14:39:43] Done IFC import from file
+IFC import succeeded
+Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Skew-AlongPier-System.pgs
