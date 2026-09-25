@@ -2,6 +2,40 @@
 
 Drafted 2026-09-23. Last completed work before this plan: estimating deck slab edges from geometry.
 
+## Resume here (status 2026-09-25)
+
+Work was paused here to resume in a new session, possibly on a different computer. Everything below is in the repositories; nothing depends on local notes.
+
+**Repositories** (all on `develop`, committed and pushed as of 2026-09-25):
+- PGSuperIfcExtensions: importer/exporter work through bearing data (see Phases 0-3 and 2 below).
+- WBFL: `ISectionCutTool::CreateSlabShapeWithoutHaunches`/`CreateHaunchShape`, `GetExteriorGirderPoint` (uses the exterior girder whose line the cut crosses), the `CreateSlabShape` refactor (`CreateSlabTop`), and the fillet point elevation fix. PGSuper regression tests passed (minor numerical differences only).
+- PGSuper: `IShapes::GetSlabShapeWithoutHaunches`/`GetHaunchShape` (added at the end of the interface), and the Test/TxDOT agent command line fix (F2).
+- IfcOpenShell (`F:\IfcOpenShell`, branch `rab_infrastructure`): the false GEO 242 "IfcCurveSegment belongs to multiple IfcCompositeCurve instances" warning is fixed (592ea02f7, #9590), with the example `src/examples/IfcCompositeCurveSegments.cpp`. `v0.9.0` is the upstream branch that matters (compare and target PRs against it). The IfcOpenShell build must be current, or the fix and example don't take effect.
+
+**Decisions waiting on answers:**
+- Phase 2, boundary conditions and connections (see Phase 2): (1) is `Pset_BearingCommon` in the AbV? (2) should the exporter emit PGSuper's pier diaphragms as `IfcBeam .DIAPHRAGM.`? (3) default when there is no fixity information? (4) is "after deck" the right default for continuity timing?
+- Phase 5, girder library entries (see Phase 5): (1) a new PGSuper interface to create girder library entries (creation is UI-only today)? (2) clone the closest entry of the family as the base for data the IFC doesn't define? (3) naming of created entries? (4) prefer an existing entry that matches geometrically over creating one, even when names differ?
+- F1 (girders as constructed vs. with camber) is still open; the haunch bottom follows PGSuper's haunch depth, so a gap to the cambered girder is expected for now.
+
+**Parked / to do:**
+- IfcOpenShell drops the main deck slab solid of the `PGSuper_Skew_Straight_AlongPier` export without a message (see Phase 2). Needs an IfcOpenShell debug build to find the failing OpenCASCADE loft step.
+- `kernels/opencascade/loft.cpp:176-180` on IfcOpenShell `rab_infrastructure` prints every loft's sections to `std::wcout` (leftover debug output).
+- Phase 8: Visual Studio unit tests for the checks now run by hand (one of the last steps).
+- E2 validation template with unusual values; expected values for PennDOT and Iowa.
+
+**Next:** Phase 5 (girder library matching and entry creation) once its questions are answered; Phase 2 boundary conditions once those are answered.
+
+**How to validate:** Release build of BridgeLink with this extension (`%ARPDIR%\BridgeLink\RegFreeCOM\x64\Release`), then `python Tests/ImportValidation/run_validation.py` (see its README). Models are in `Tests/ImportValidation/models.json`: the PGSuper round trip (0 mismatches), the three skew models (`PGSuper-Skew`, `-Bearings` with 0 mismatches, `-AlongPier` with the parked deck issue), PennDOT, and Iowa. Use `--config-file` with a copy of the template that has unusual values to show a value is set by the import rather than a template default.
+
+**Working conventions:**
+- Commit code and docs separately from `Tests/ImportValidation/results` (code first, then an "Updates IFC import validation results ..." commit). Don't push; the user pushes after PGSuper regression tests. Don't commit WBFL or PGSuper changes until the user says so.
+- The importer starts from `IfcImportTemplate.pgt` on purpose (fault tolerant, handles data drift); building `CBridgeDescription2` from scratch is the long-term goal. Keep import code independent of template values.
+- PGSuper configuration may be switched for tests with `/Configuration`; record the current one and switch back (normally `Regression:Regression`).
+- PGSuper system units are SI (kg, m, Pa), in memory and in `.pgs` files.
+- Geometry for the export comes from WBFL GenericBridge tools, exposed through PGSuper interfaces that don't reveal the implementation. New interface methods go at the end of the interface.
+- `IfcRelConnectsWithRealizingElements` and other entities outside the Alignment-based View (AbV) are out of scope.
+- New files in IfcOpenShell need the "generated with the assistance of an AI coding tool" note, and commits that change code need it in the message body (see its AGENTS.md).
+
 ## Requirements
 
 ### R1: Clean round trip - GlobalIds don't change
