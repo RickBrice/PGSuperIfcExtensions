@@ -340,7 +340,7 @@ A general-purpose (agency) IDS already states the IFC side: applicability (entit
 The reverse also works: a table can be written out as a general-purpose IDS (applicability by element class, required properties and data types, no design values), so an agency can publish what it expects from PGSuper models. Writing the standard table out and generating a table back from that IDS is also the test for the generator.
 
 ### Steps
-- **M0:** design note, element registry (element identities shared with R1 GlobalId persistence), and target vocabulary for what import and export use today (girder f'c, f'ci, type, camber, deck, bearings, bridge geometry pset).
+- **M0:** design note ([MappingTablesDesign.md](MappingTablesDesign.md), reviewed 2026-09-29, decisions G1–G6), element registry (element identities shared with R1 GlobalId persistence), and target vocabulary for what import and export use today (girder f'c, f'ci, type, camber, deck, bearings, bridge geometry pset).
 - **M1:** import engine plus a standard table that reproduces today's import. The validation results must not change. Add the sources to the import log.
 - **M2:** Iowa and PennDOT tables (f'c, f'ci, girder type, deck thickness). The validation inventories should show these values move from template default to set by the import.
 - **M3:** export engine for property sets, quantity sets, classifications, and element names/ObjectType (A5). The standard table reproduces today's export (IFC diff plus round trip). Then remove the hard-coded definitions.
