@@ -41,6 +41,7 @@
 #include <nlohmann/json.hpp>
 
 #include "IfcMappingTable.h"
+#include "IfcModelBrowser.h"
 
 #include <filesystem>
 #include <memory>
@@ -140,6 +141,17 @@ public:
    // Writes a field being edited to the table (a pane writes a field when it loses the focus)
    void CommitPendingEdit();
 
+   // The table as imports and exports see it: loaded from the current JSON, again when the JSON changes.
+   // nullptr, with the table's error, if it isn't valid
+   const CIfcMappingTable* GetCurrentTable(std::string& error);
+
+   // The IFC model open in the editor (stage 4), or nullptr
+   CIfcModel* GetModel() { return m_pModel.get(); }
+   const CIfcModel* GetModel() const { return m_pModel.get(); }
+
+   // Asks for a model file and opens it, and shows the Model item. Returns true if a model was opened
+   bool OpenModel();
+
    BOOL OnNewDocument() override;
    BOOL SaveModified() override;
    BOOL OpenTheDocument(LPCTSTR lpszPathName) override;
@@ -160,10 +172,17 @@ protected:
    afx_msg void OnValidate();
    afx_msg void OnWriteIds();
    afx_msg void OnGenerateFromIds();
+   afx_msg void OnOpenModel();
+   afx_msg void OnTryModel();
    DECLARE_MESSAGE_MAP()
 
 private:
    nlohmann::ordered_json m_Table;
    std::unique_ptr<CIfcMappingTable> m_pBase;
    std::string m_BaseError;
+
+   std::unique_ptr<CIfcModel> m_pModel;
+   std::unique_ptr<CIfcMappingTable> m_pCurrent; // GetCurrentTable
+   std::string m_CurrentText;                    // the JSON m_pCurrent was loaded from
+   std::string m_CurrentError;
 };

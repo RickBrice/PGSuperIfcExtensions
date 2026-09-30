@@ -108,6 +108,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Generate from IDS...",       ID_MAPPING_FROM_IDS
         MENUITEM "&Write as General IDS...",    ID_MAPPING_WRITE_IDS
+        MENUITEM SEPARATOR
+        MENUITEM "Open &Model...",              ID_MAPPING_OPEN_MODEL
+        MENUITEM "&Try on Model",               ID_MAPPING_TRY_MODEL
     END
     POPUP "&View"
     BEGIN
@@ -353,6 +356,24 @@ BEGIN
     EDITTEXT        IDC_LOC_COMMENT,60,276,263,14,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,219,299,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,273,299,50,14
+END
+
+IDD_MAPPING_MODEL_PANE DIALOGEX 0, 0, 360, 300
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_MODEL_INFO,7,7,278,18,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+    PUSHBUTTON      "Open Model...",IDC_MODEL_OPEN,290,7,63,14
+    LTEXT           "Element role:",IDC_STATIC,7,32,60,8
+    COMBOBOX        IDC_MODEL_ROLE,70,30,140,160,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Element:",IDC_STATIC,7,50,60,8
+    COMBOBOX        IDC_MODEL_ELEMENT,70,48,283,200,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Properties of the element (double-click one to add it as a location of the target):",IDC_STATIC,7,68,346,8
+    CONTROL         "",IDC_MODEL_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | WS_BORDER | WS_TABSTOP,7,79,346,120
+    LTEXT           "Target:",IDC_STATIC,7,207,60,8
+    COMBOBOX        IDC_MODEL_TARGET,70,205,180,200,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Add as Location...",IDC_MODEL_ADD,256,205,97,14
+    EDITTEXT        IDC_MODEL_READING,7,224,346,70,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
 END
 
 IDD_MAPPING_FROM_IDS DIALOGEX 0, 0, 330, 150
@@ -645,6 +666,8 @@ BEGIN
     ID_MAPPING_VALIDATE     "Check the table the way IFC imports and exports do\nValidate"
     ID_MAPPING_WRITE_IDS    "Write what the table exports as a general IDS\nWrite as IDS"
     ID_MAPPING_FROM_IDS     "Generate a mapping table from a general IDS, e.g. an agency IDS\nGenerate from IDS"
+    ID_MAPPING_OPEN_MODEL   "Open an IFC model to pick properties from and to try the table on\nOpen Model"
+    ID_MAPPING_TRY_MODEL    "Read every target from the model with the table, as an import would\nTry on Model"
     IDR_MAPPING_EDITOR      "\nIfcMapping\nIFC Mapping Table\nIFC Mapping Tables (*.json)\n.json\nPGSuperIfc.MappingTable\nIFC Mapping Table"
 END
 

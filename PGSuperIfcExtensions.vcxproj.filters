@@ -52,6 +52,12 @@
     <ClCompile Include="MappingEditorExportPanes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MappingEditorModelPane.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcModelBrowser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="MappingEditorPanes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -184,6 +190,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MappingEditorExportPanes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingEditorModelPane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcModelBrowser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MappingEditorUtil.h">

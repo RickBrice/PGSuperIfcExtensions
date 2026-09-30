@@ -203,6 +203,8 @@ BEGIN_MESSAGE_MAP(CMappingEditorDoc, CEAFDocument)
    ON_COMMAND(ID_MAPPING_VALIDATE, &CMappingEditorDoc::OnValidate)
    ON_COMMAND(ID_MAPPING_WRITE_IDS, &CMappingEditorDoc::OnWriteIds)
    ON_COMMAND(ID_MAPPING_FROM_IDS, &CMappingEditorDoc::OnGenerateFromIds)
+   ON_COMMAND(ID_MAPPING_OPEN_MODEL, &CMappingEditorDoc::OnOpenModel)
+   ON_COMMAND(ID_MAPPING_TRY_MODEL, &CMappingEditorDoc::OnTryModel)
 END_MESSAGE_MAP()
 
 CMappingEditorDoc::CMappingEditorDoc()
@@ -283,6 +285,80 @@ bool CMappingEditorDoc::Validate(std::string& message) const
       message = e.what();
       return false;
    }
+}
+
+const CIfcMappingTable* CMappingEditorDoc::GetCurrentTable(std::string& error)
+{
+   std::string text = FormatMappingTable(m_Table);
+   if (!m_pCurrent || text != m_CurrentText)
+   {
+      m_CurrentText = text;
+      m_CurrentError.clear();
+      m_pCurrent.reset();
+      try
+      {
+         m_pCurrent = CIfcMappingTable::Load(GetTablePath(), MappingTableSource::Editor, &text);
+      }
+      catch (const std::exception& e)
+      {
+         m_CurrentError = e.what();
+      }
+   }
+   error = m_CurrentError;
+   return m_pCurrent.get();
+}
+
+bool CMappingEditorDoc::OpenModel()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CFileDialog dlg(TRUE, _T("ifc"), nullptr, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
+      _T("IFC Models (*.ifc)|*.ifc|All Files (*.*)|*.*||"), EAFGetMainFrame());
+   if (dlg.DoModal() != IDOK)
+      return false;
+
+   try
+   {
+      CWaitCursor wait;
+      m_pModel = CIfcModel::Open(std::filesystem::path(dlg.GetPathName().GetString()));
+   }
+   catch (const std::exception& e)
+   {
+      AfxMessageBox(Utf8ToCString(e.what()), MB_OK | MB_ICONEXCLAMATION);
+      return false;
+   }
+
+   UpdateAllViews(nullptr, HINT_STRUCTURE); // the Model item shows the file
+   SelectNode(MappingNode{ MappingNode::Kind::Model, "" });
+   return true;
+}
+
+void CMappingEditorDoc::OnOpenModel()
+{
+   CommitPendingEdit();
+   OpenModel();
+}
+
+void CMappingEditorDoc::OnTryModel()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CommitPendingEdit();
+   if (!m_pModel && !OpenModel())
+      return;
+
+   std::string error;
+   const auto* pTable = GetCurrentTable(error);
+   CString strReport;
+   if (!pTable)
+   {
+      strReport = _T("The table must be valid to try it on a model.\n\n") + Utf8ToCString(error);
+   }
+   else
+   {
+      CWaitCursor wait;
+      strReport = Utf8ToCString(m_pModel->TryTable(*pTable));
+   }
+   CMappingMessagesDlg dlg(_T("Try the Table on the Model"), strReport, EAFGetMainFrame());
+   dlg.DoModal();
 }
 
 void CMappingEditorDoc::CommitPendingEdit()
@@ -429,6 +505,10 @@ void CMappingEditorDoc::DeleteContents()
    m_Table = nlohmann::ordered_json::object();
    m_pBase.reset();
    m_BaseError.clear();
+   m_pCurrent.reset();
+   m_CurrentText.clear();
+   m_CurrentError.clear();
+   // the model stays open: it's the editor's, not the table's (e.g. when a table is generated from an IDS)
    __super::DeleteContents();
 }
 

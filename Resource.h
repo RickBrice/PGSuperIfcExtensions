@@ -208,6 +208,17 @@
 #define ID_MAPPING_VALIDATE             32773
 #define ID_MAPPING_WRITE_IDS            32774
 #define ID_MAPPING_FROM_IDS             32775
+#define ID_MAPPING_OPEN_MODEL           32776
+#define ID_MAPPING_TRY_MODEL            32777
+#define IDD_MAPPING_MODEL_PANE          397
+#define IDC_MODEL_INFO                  398
+#define IDC_MODEL_OPEN                  399
+#define IDC_MODEL_ROLE                  400
+#define IDC_MODEL_ELEMENT               401
+#define IDC_MODEL_PROPERTIES            402
+#define IDC_MODEL_TARGET                403
+#define IDC_MODEL_READING               404
+#define IDC_MODEL_ADD                   405
 #define IDD_MAPPING_FROM_IDS            391
 #define IDC_FROMIDS_IDS                 392
 #define IDC_FROMIDS_IDS_BROWSE          393
@@ -219,9 +230,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        397
-#define _APS_NEXT_COMMAND_VALUE         32776
-#define _APS_NEXT_CONTROL_VALUE         397
+#define _APS_NEXT_RESOURCE_VALUE        406
+#define _APS_NEXT_COMMAND_VALUE         32778
+#define _APS_NEXT_CONTROL_VALUE         406
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

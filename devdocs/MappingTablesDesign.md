@@ -593,6 +593,8 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 | `MappingEditorPanes.h/.cpp` | editor panes (table, selector, target locations) and the location dialog |
 | `MappingEditorExportPanes.h/.cpp` | editor export sections (stage 2): property and quantity sets, classification systems, classifications, and the base table's entries |
 | `MappingEditorUtil.h` | helpers shared by the editor panes |
+| `MappingEditorModelPane.h/.cpp` | editor Model item (stage 4): browse a model, see what the table reads, add a property as a location |
+| `IfcModelBrowser.h/.cpp` | `CIfcModel`: an IFC model opened by the editor, its elements and properties, and "try the table on the model" (with `CIfcTargetReader` and `CIfcTargetHints`) |
 | `IfcExtensions.Manifest.BridgeLink` | registers the editor with BridgeLink (copied next to the DLL by the post-build step) |
 | `MappingTables/Standard.json` | standard table, installed next to the DLL (post-build copy for development builds) |
 | `Tests/ImportValidation/mappings/Iowa.json`, `PennDOT.json` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |

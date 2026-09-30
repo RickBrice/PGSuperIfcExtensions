@@ -41,7 +41,8 @@ struct MappingNode
       PropertySets, PropertySetGroup, PropertySet,
       QuantitySets, QuantitySetGroup, QuantitySet,
       ClassificationSystems, ClassificationSystem,
-      Classifications, ClassificationGroup, Classification
+      Classifications, ClassificationGroup, Classification,
+      Model
    };
    Kind kind = Kind::Table;
    // Role: role name; TargetGroup, PropertySetGroup, QuantitySetGroup, ClassificationGroup: element role name; Target: target name.

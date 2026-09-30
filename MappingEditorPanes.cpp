@@ -30,6 +30,7 @@
 #include "IfcMappingTable.h"
 #include "MappingEditorUtil.h"
 #include "MappingEditorExportPanes.h"
+#include "MappingEditorModelPane.h"
 
 #include <sstream>
 
@@ -169,6 +170,9 @@ std::unique_ptr<CMappingPane> CreateMappingPane(const MappingNode& node, CMappin
    {
    case MappingNode::Kind::Table:
       return std::make_unique<CTablePane>(pDoc);
+
+   case MappingNode::Kind::Model:
+      return std::make_unique<CModelPane>(pDoc);
 
    case MappingNode::Kind::Role:
       return std::make_unique<CSelectorPane>(pDoc, node.key);

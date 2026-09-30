@@ -29,6 +29,7 @@
 #include "MappingEditorDoc.h"
 #include "MappingEditorPanes.h"
 #include "MappingEditorExportPanes.h"
+#include "MappingEditorModelPane.h"
 #include "MappingEditorUtil.h"
 #include "IfcTargets.h"
 
@@ -211,6 +212,12 @@ void CMappingTreeView::Build()
    }
 
    AddExportSections();
+
+   // the IFC model, for picking properties and trying the table (stage 4)
+   CString strModel(_T("Model"));
+   if (const auto* pModel = GetDocument()->GetModel())
+      strModel += _T(": ") + CString(pModel->GetPath().filename().c_str());
+   Add(TVI_ROOT, strModel, { MappingNode::Kind::Model, "" }, GetDocument()->GetModel() != nullptr);
 
    // restore
    HTREEITEM hSelect = nullptr;
