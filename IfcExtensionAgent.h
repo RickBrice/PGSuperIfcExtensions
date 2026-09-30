@@ -99,6 +99,7 @@ public:
    BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
 
    afx_msg void OnEditGeoreferencing();
+   afx_msg void OnIfcMappingTable();
 
 // IEAFProcessCommandLine
 public:
@@ -118,6 +119,7 @@ private:
    IDType m_EditAlignmentCallbackID;
 
    std::shared_ptr<WBFL::EAF::Menu> m_pEditMenu;
+   std::shared_ptr<WBFL::EAF::Menu> m_pOptionsMenu;
    CBitmap m_bmpMenu;
    void CreateMenus();
    void RemoveMenus();

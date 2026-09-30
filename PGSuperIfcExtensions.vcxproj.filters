@@ -40,6 +40,9 @@
     <ClCompile Include="GeoReferencingPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MappingTableDlg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Georeferencing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -154,6 +157,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GeoReferencingPage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingTableDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EditGeoreferencing.h">

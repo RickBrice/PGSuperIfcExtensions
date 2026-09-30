@@ -122,7 +122,7 @@ Mapping tables are JSON files ([MappingTablesDesign.md](MappingTablesDesign.md))
 
 **Design notes:**
 - The editor uses the extension's table code (`CIfcMappingTable`, `CIfcTargetReader`, `CIfcTargetHints`, `IfcTargets`), so the editor and the importer can't disagree about the format. The code may move to a library that the extension and the editor both link.
-- The configuration wizard page (M6) could open the editor for the selected table.
+- The IFC Mapping Table dialog (Options menu, M6) could open the editor for the selected table.
 
 **Decided (2026-09-29):**
 - **R3.1 Form:** a BridgeLink application, like PGSLibraryEditor.
@@ -133,7 +133,8 @@ Mapping tables are JSON files ([MappingTablesDesign.md](MappingTablesDesign.md))
 Answers to the open questions (`IFC_Import_Open_Questions.docx`). The IDs are used in the rest of this plan.
 
 **Mapping tables and IDS**
-- **A1 Location:** The BridgeLink configuration system (catalog servers) does not extend to extension agents. The IFC extension adds a page to the BridgeLink configuration wizard where the user picks the mapping file. The file can be anywhere, and the setting is stored in the registry. `/IfcMapping=<file>` overrides it on the command line.
+- **A1 Location:** The BridgeLink configuration system (catalog servers) does not extend to extension agents. The user picks the mapping file in an IFC Mapping Table dialog on the PGSuper Options menu, which the extension agent adds. The file can be anywhere, and the setting is stored in the registry (`HKCU\...\BridgeLink\IfcExtensions\MappingTable`, shared by PGSuper and PGSplice). `/IfcMapping=<file>` overrides it on the command line.
+  - *Changed 2026-09-29 (M6):* A1 first planned a page in the BridgeLink configuration wizard. BridgeLink only shows pages that are registered by components that live for the whole application, and the IFC DLL has none: its agents live with a document, and its project importer is loaded on demand. An Options menu command needs no BridgeLink change.
 - **A2 Selection:** The mapping table comes from that registry setting (or `/IfcMapping=`). No automatic detection.
 - **A3 Format:** JSON.
 - **A4 IDS binding:** A separate binding (overlay) file. Agency IDS files are not modified.
@@ -344,7 +345,7 @@ The Iowa model imports end to end. What its log shows:
   - on export: display or system units per `display_units_for_properties`
   
   Text values may need a parser (number, feet-inches `8'-6"`, a pattern).
-- **Mapping table**: selectors plus an ordered list of locations for each target, in a JSON file (A3). Tables are layered: an agency table on top of the standard table. The active table is set on an IFC page in the BridgeLink configuration wizard and stored in the registry, and `/IfcMapping=` overrides it (A1, A2).
+- **Mapping table**: selectors plus an ordered list of locations for each target, in a JSON file (A3). Tables are layered: an agency table on top of the standard table. The active table is set with Options > IFC Mapping Table and stored in the registry, and `/IfcMapping=` overrides it (A1, A2).
 
 ### Bidirectional
 - **Import:** for each target, try the locations in order and use the first value found. Record which table and location supplied it (feeds the structured import report).
@@ -378,7 +379,8 @@ The reverse also works: a table can be written out as a general-purpose IDS (app
   - **Done 2026-09-29:** requirements and classifications from the table; `/IfcIds=` on the command line; `run_validation.py` checks every round-trip IDS against a baseline recorded before M4 (all the same). See [MappingTablesDesign.md](MappingTablesDesign.md), "Design-value IDS (M4)".
 - **M5:** general IDS → table generator (instructions tag, standard-table matching, unbound report) and table → general IDS writer. Test by writing the standard table out as a general IDS and generating it back, and with an agency IDS. The design-value IDS is not an input.
   - **Done 2026-09-29:** `/IfcTableToIds` and `/IfcIdsToTable` (with a binding file, and `/IfcTableExtends`). The table has a selector for every element role. The round trip of the standard table through a general IDS is the same (272 declarations, `check_table_ids.py`, a `run_validation.py` row). The binding path was tested with a hand-written agency-style IDS. A test with a real agency IDS is still to do. See [MappingTablesDesign.md](MappingTablesDesign.md), "Tables and general IDS (M5)".
-- **M6:** the IFC page in the BridgeLink configuration wizard (mapping file in the registry) and `/IfcMapping=` (A1, A2).
+- **M6:** the mapping table setting (mapping file in the registry) and `/IfcMapping=` (A1, A2).
+  - **Done 2026-09-29:** Options > IFC Mapping Table (a PGSuper and PGSplice menu command added by the extension agent) chooses the standard table or an agency table file. The dialog loads and validates the table and shows the table and the tables it extends, or the error. A table that can't be used isn't saved. Imports, exports, the design-value IDS, and `/IfcTableToIds` load the table in the G5 order: `/IfcMapping=`, the setting, the standard table (`CIfcMappingTable::LoadActive`). `run_validation.py` warns, and says in the summary, when a setting is present, because runs without a `mapping` would use it.
 - **M7:** the mapping table editor (R3).
 - **Validation:** `Tests/ImportValidation` gets export checks as well:
   - run ifctester with the design-value IDS against the exported model (the exported values match the design)

@@ -93,15 +93,22 @@
 #define IDC_SURVEY_POINTS_NONE          276
 #define IDC_SURVEY_POINTS_INDIVIDUAL    277
 #define IDC_SURVEY_POINTS_SET           278
+#define IDD_MAPPING_TABLE               279
+#define IDC_MAPPING_STANDARD            280
+#define IDC_MAPPING_AGENCY              281
+#define IDC_MAPPING_FILE                282
+#define IDC_MAPPING_BROWSE              283
+#define IDC_MAPPING_STATUS              284
 #define ID_EDIT_GEOREFERENCING          32771
+#define ID_OPTIONS_IFC_MAPPING_TABLE    32772
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        266
-#define _APS_NEXT_COMMAND_VALUE         32770
-#define _APS_NEXT_CONTROL_VALUE         279
+#define _APS_NEXT_RESOURCE_VALUE        285
+#define _APS_NEXT_COMMAND_VALUE         32773
+#define _APS_NEXT_CONTROL_VALUE         285
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

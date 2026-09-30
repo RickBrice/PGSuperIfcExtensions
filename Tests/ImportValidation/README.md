@@ -29,7 +29,7 @@ After the models, the last row ("Standard table <-> IDS") checks the standard ta
 - compares what the two tables declare, with any differences in `results/Standard-from-ids.diff.txt`
 
 Two optional entries apply to any model:
-- **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the standard table installed with the extension is used. See `devdocs/MappingTablesDesign.md`.
+- **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the mapping table setting (Options > IFC Mapping Table) is used, or the standard table installed with the extension if there's no setting. The committed results are made without a setting. `run_validation.py` warns, and says in the summary, when one is set. See `devdocs/MappingTablesDesign.md`.
 - **`expect_log`:** text the import log must contain. The summary reports any text that is missing. The `-StandardTable` runs use it to check that the import suggests the agency properties (hints) when the agency table isn't used.
 
 An expected file lists values in SI (PGSuper system units) by the keys that `pgs_extract.py` produces, e.g. `{"values": {"pier[1].station": 16.4592, "group[0].girder_count": 5}}`. Only the listed values are compared.

@@ -7,8 +7,9 @@ For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
    otherwise report which values the import set (inventory).
 
-A model can name a "mapping" table (/IfcMapping); without one, the standard table installed with the
-extension is used. "expect_log" lists text the import log must contain (e.g. mapping table hints);
+A model can name a "mapping" table (/IfcMapping); without one, the mapping table setting (Options >
+IFC Mapping Table) is used, or the standard table installed with the extension if there's no setting.
+The committed results are made without a setting; the summary says when one is set. "expect_log" lists text the import log must contain (e.g. mapping table hints);
 the summary reports any that is missing.
 
 The table-driven content of each round-trip export (property sets, quantity sets, classifications,
@@ -54,6 +55,7 @@ RESULTS = HERE / "results"
 EXPORT_BASELINE = HERE / "export_baseline"
 TIMEOUT = 600  # seconds for one BridgeLink run
 PGSUPER_OPTIONS_KEY = r"Software\Washington State Department of Transportation\PGSuper\Options"
+IFC_EXTENSIONS_KEY = r"Software\Washington State Department of Transportation\BridgeLink\IfcExtensions"
 
 
 def rel(path):
@@ -88,6 +90,15 @@ def get_configuration():
         server = winreg.QueryValueEx(key, "CatalogServer2")[0]
         publisher = winreg.QueryValueEx(key, "Publisher2")[0]
     return server, publisher
+
+
+def get_mapping_table_setting():
+    """the mapping table setting (Options > IFC Mapping Table), or an empty string"""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, IFC_EXTENSIONS_KEY) as key:
+            return winreg.QueryValueEx(key, "MappingTable")[0].strip()
+    except OSError:
+        return ""
 
 
 def set_configuration(exe, server, publisher):
@@ -271,6 +282,10 @@ def main():
 
     RESULTS.mkdir(exist_ok=True)
 
+    mapping_setting = get_mapping_table_setting()
+    if mapping_setting:
+        print(f"WARNING: the IFC mapping table setting is {mapping_setting}. Runs without a \"mapping\" use it instead of the standard table.")
+
     original_configuration = None
     if args.configuration:
         server, _, publisher = args.configuration.partition(":")
@@ -293,7 +308,10 @@ def main():
             print(f'Configuration restored to "{original_configuration[0]}":"{original_configuration[1]}"')
 
     configuration = args.configuration or "{}:{}".format(*get_configuration())
-    lines = [f"# IFC import validation", "", f"- Run: {datetime.datetime.now():%Y-%m-%d %H:%M}", f"- Configuration: {configuration}", "",
+    lines = [f"# IFC import validation", "", f"- Run: {datetime.datetime.now():%Y-%m-%d %H:%M}", f"- Configuration: {configuration}"]
+    if mapping_setting:
+        lines.append(f"- Mapping table setting: {mapping_setting} (used by the runs without a \"mapping\")")
+    lines += ["",
              "| Run | Result | Match | Default match | Mismatch | Not imported | Not comparable | Missing |",
              "|---|---|---|---|---|---|---|---|"]
     for run, message, score in summary:

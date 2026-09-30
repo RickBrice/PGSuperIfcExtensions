@@ -196,6 +196,22 @@ BEGIN
     EDITTEXT        IDC_EDIT,7,7,457,248,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
 END
 
+IDD_MAPPING_TABLE DIALOGEX 0, 0, 330, 222
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "IFC Mapping Table"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "The mapping table says where IFC imports and exports read and write each value. The setting applies to PGSuper and PGSplice. /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,7,7,316,26
+    CONTROL         "Standard table (installed with the IFC extension)",IDC_MAPPING_STANDARD,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,38,316,10
+    CONTROL         "Agency table:",IDC_MAPPING_AGENCY,"Button",BS_AUTORADIOBUTTON,7,53,316,10
+    EDITTEXT        IDC_MAPPING_FILE,19,66,280,14,ES_AUTOHSCROLL | WS_GROUP
+    PUSHBUTTON      "...",IDC_MAPPING_BROWSE,303,66,20,14
+    EDITTEXT        IDC_MAPPING_STATUS,7,88,316,106,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,219,201,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,273,201,50,14
+END
+
 IDD_GEOREFERENCING DIALOGEX 0, 0, 316, 235
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Georeferencing"
@@ -282,6 +298,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 228
     END
+
+    IDD_MAPPING_TABLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 323
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 215
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -337,6 +361,7 @@ IDI_BSI                 ICON                    "IfcProjectImporter.ico"
 STRINGTABLE
 BEGIN
     ID_EDIT_GEOREFERENCING  "Edit Georeferencing\nEdit Georeferencing"
+    ID_OPTIONS_IFC_MAPPING_TABLE "Choose the mapping table used by IFC imports and exports\nIFC Mapping Table"
 END
 
 #endif    // English (United States) resources

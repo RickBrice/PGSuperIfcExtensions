@@ -42,8 +42,8 @@ public:
    bool interactive = true;
    CString log_file;
 
-   // Mapping table given on the command line (/IfcMapping). When empty, the installed standard table is used.
-   // The BridgeLink configuration setting comes later (devdocs/MappingTablesDesign.md, M6)
+   // Mapping table given on the command line (/IfcMapping). When empty, the mapping table setting
+   // (Options > IFC Mapping Table), else the installed standard table, is used (CIfcMappingTable::LoadActive)
    CString mapping_file;
 };
 

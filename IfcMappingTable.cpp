@@ -25,6 +25,9 @@
 
 #include <nlohmann/json.hpp>
 
+#include <EAF\EAFApp.h>
+#include <EAF\EAFUtilities.h>
+
 #include <cstdio>
 #include <cstring>
 
@@ -84,7 +87,7 @@ namespace
       switch (source)
       {
       case MappingTableSource::CommandLine: return "the command line (/IfcMapping)";
-      case MappingTableSource::ConfigurationSetting: return "the BridgeLink configuration setting";
+      case MappingTableSource::ConfigurationSetting: return "the mapping table setting (Options > IFC Mapping Table)";
       case MappingTableSource::InstalledStandard: return "the standard table installed with the IFC extension";
       case MappingTableSource::Extends: return "\"extends\" in another table";
       }
@@ -127,7 +130,7 @@ namespace
             os << "Correct the table, or give a different table with /IfcMapping=<file>.";
             break;
          case MappingTableSource::ConfigurationSetting:
-            os << "Correct the table, or choose a different table in the BridgeLink configuration.";
+            os << "Correct the table, or choose a different table with Options > IFC Mapping Table (choose the standard table to go back to it).";
             break;
          default:
             os << "Correct the table. It may have been edited after the IFC extension was installed; reinstalling the extension restores it.";
@@ -1158,6 +1161,42 @@ std::string PathToString(const std::filesystem::path& path)
       auto text = path.u8string();
       return std::string(text.begin(), text.end());
    }
+}
+
+namespace
+{
+   // HKCU\Software\Washington State Department of Transportation\BridgeLink\IfcExtensions, shared by PGSuper and PGSplice
+   const TCHAR* const SETTING_SECTION = _T("IfcExtensions");
+   const TCHAR* const SETTING_MAPPING_TABLE = _T("MappingTable");
+}
+
+std::string MappingTableSourceDescription(MappingTableSource source)
+{
+   return source_description(source);
+}
+
+std::filesystem::path CIfcMappingTable::GetTableSetting()
+{
+   CString path = EAFGetApp()->GetProfileString(SETTING_SECTION, SETTING_MAPPING_TABLE, _T(""));
+   path.Trim();
+   return std::filesystem::path(path.GetString());
+}
+
+void CIfcMappingTable::SetTableSetting(const std::filesystem::path& path)
+{
+   EAFGetApp()->WriteProfileString(SETTING_SECTION, SETTING_MAPPING_TABLE, path.native().c_str());
+}
+
+std::unique_ptr<CIfcMappingTable> CIfcMappingTable::LoadActive(const std::filesystem::path& command_line_file)
+{
+   if (!command_line_file.empty())
+      return Load(command_line_file, MappingTableSource::CommandLine);
+
+   auto setting = GetTableSetting();
+   if (!setting.empty())
+      return Load(setting, MappingTableSource::ConfigurationSetting);
+
+   return Load(std::filesystem::path(), MappingTableSource::InstalledStandard);
 }
 
 std::filesystem::path CIfcMappingTable::GetStandardTablePath()

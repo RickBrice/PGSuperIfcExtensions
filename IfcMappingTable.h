@@ -46,10 +46,13 @@ CLASS
 enum class MappingTableSource
 {
    CommandLine,          // /IfcMapping=<file>
-   ConfigurationSetting, // the BridgeLink configuration (registry)
+   ConfigurationSetting, // the mapping table setting (Options > IFC Mapping Table, registry)
    InstalledStandard,    // the standard table installed with the extension
    Extends               // named by the "extends" of another table
 };
+
+// How a table file was chosen, for logs and messages (e.g. "the command line (/IfcMapping)")
+std::string MappingTableSourceDescription(MappingTableSource source);
 
 // A unit a table can state for a model value that has no unit of its own (e.g. "ksi")
 struct TableUnit
@@ -205,8 +208,17 @@ public:
    // Throws CIfcMappingTableException with a message for users and support staff if a table can't be found, read, or used.
    static std::unique_ptr<CIfcMappingTable> Load(const std::filesystem::path& path, MappingTableSource source);
 
+   // Loads the table an import or export uses, first found wins: command_line_file (/IfcMapping=, if not empty),
+   // the mapping table setting, the installed standard table. Throws CIfcMappingTableException like Load
+   static std::unique_ptr<CIfcMappingTable> LoadActive(const std::filesystem::path& command_line_file);
+
    // The standard table installed with the extension (MappingTables\Standard.json next to the extension DLL)
    static std::filesystem::path GetStandardTablePath();
+
+   // The mapping table setting (Options > IFC Mapping Table), stored in the registry for all BridgeLink applications.
+   // Empty means the installed standard table
+   static std::filesystem::path GetTableSetting();
+   static void SetTableSetting(const std::filesystem::path& path);
 
    // Import locations of a target, in the order they are tried
    const std::vector<MappingLocation>& GetLocations(const TargetDef& target) const;

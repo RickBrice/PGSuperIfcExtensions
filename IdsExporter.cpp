@@ -708,7 +708,7 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
 
       // the property locations of the IFC export. Throws CIfcMappingTableException if the table can't be used
       std::filesystem::path table_path(options.mapping_file.GetString());
-      auto pTable = CIfcMappingTable::Load(table_path, table_path.empty() ? MappingTableSource::InstalledStandard : MappingTableSource::CommandLine);
+      auto pTable = CIfcMappingTable::LoadActive(table_path);
       CTableLocations table(*pTable);
 
       GET_IFACE2(pBroker, IDocumentType, pDocType);

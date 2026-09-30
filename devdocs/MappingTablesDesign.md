@@ -21,7 +21,7 @@ Status: **reviewed 2026-09-29.** The questions of the first draft are answered (
 5. **Layering.** The standard table describes TPF/usBridge, which is what PGSuper exports today. An agency table extends it:
    - On import, the agency's locations are tried first.
    - On export, the agency table can add, replace, or remove property sets.
-6. **Selection.** The active table comes from the setting on the configuration wizard page, or from `/IfcMapping=` (A1, A2).
+6. **Selection.** The active table comes from the setting (Options > IFC Mapping Table), or from `/IfcMapping=` (A1, A2).
 7. **IDS.** The design-value IDS takes its property locations from the same table (M4).
 
 Until the mapping table editor exists (requirement R3 in the plan, step M7), tables are written by hand.
@@ -344,7 +344,7 @@ Pset fields:
 
 **Where tables come from**, first found wins:
 1. `/IfcMapping=<file>` on the command line.
-2. The configuration wizard setting (registry, A1). Added in M6; until then, only the command line.
+2. The mapping table setting: Options > IFC Mapping Table (registry, A1; M6).
 3. The installed standard table: `MappingTables\Standard.json` in the extension's install folder (next to the DLL).
 
 An `extends` chain is followed from there. `"standard"` always means file 3.
@@ -359,7 +359,7 @@ Support staff can then tell from a log which tables produced a result.
 
 | Problem | Example message |
 |---|---|
-| file not found | `IFC mapping table not found: D:\Tables\IowaDOT.json (from the configuration setting). Choose a different file in the BridgeLink configuration, or remove the setting to use the standard table.` |
+| file not found | `File: D:\Tables\IowaDOT.json` / `The file was chosen by the mapping table setting (Options > IFC Mapping Table).` / `The file was not found.` / `What to do: Correct the table, or choose a different table with Options > IFC Mapping Table (choose the standard table to go back to it).` |
 | standard table missing | `The standard IFC mapping table is missing: C:\...\MappingTables\Standard.json. The IFC extension installation is incomplete; reinstall it.` |
 | can't read the file | the path plus the system error text (access denied, locked, ...) |
 | invalid JSON | the path plus line, column, and the parser's message |
@@ -371,7 +371,7 @@ Support staff can then tell from a log which tables produced a result.
 - A table error stops the import or export. There is no silent fallback to the standard table, because the results would differ without notice.
 - Interactive: a message box shows the error and the log path. Headless (`/IfcImport`, `/IfcExport`): the error goes to the log and the command fails.
 - Findings that aren't errors (e.g. a declared property with no target) are logged as warnings and don't stop anything.
-- The configuration page (M6) loads and validates a file when the user picks it, and shows the same messages.
+- The IFC Mapping Table dialog (M6) loads and validates a file when the user picks it, and shows the same messages. It saves only a table that can be used.
 
 ## Import engine (M1)
 
@@ -584,6 +584,7 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 | `IfcTargetHints.h/.cpp` | hint rules for targets that weren't found (G3) |
 | `IdsBuilder.h` | IDS document helpers (facets, restrictions, writing) shared by the design-value IDS and M5 |
 | `IfcTableIds.h/.cpp` | table -> general IDS writer and general IDS -> table generator (M5) |
+| `MappingTableDlg.h/.cpp` | Options > IFC Mapping Table dialog (M6); the setting itself is `CIfcMappingTable::GetTableSetting`/`SetTableSetting` |
 | `MappingTables/Standard.json` | standard table, installed next to the DLL (post-build copy for development builds) |
 | `Tests/ImportValidation/mappings/Iowa.json`, `PennDOT.json` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |
 | `Tests/ImportValidation/models.json` | `PennDOT-StandardTable` and `Iowa-StandardTable` runs with `expect_log`: text the log must contain (the hints) |

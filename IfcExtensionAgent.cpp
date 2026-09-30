@@ -35,6 +35,7 @@
 #include "IfcExporter.h"
 #include "IdsExporter.h"
 #include "IfcTableIds.h"
+#include "MappingTableDlg.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -42,6 +43,7 @@
 
 BEGIN_MESSAGE_MAP(CIfcExtensionAgent,CCmdTarget)
    ON_COMMAND(ID_EDIT_GEOREFERENCING,&CIfcExtensionAgent::OnEditGeoreferencing)
+   ON_COMMAND(ID_OPTIONS_IFC_MAPPING_TABLE,&CIfcExtensionAgent::OnIfcMappingTable)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////
@@ -142,6 +144,14 @@ void CIfcExtensionAgent::CreateMenus()
    auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
    m_pEditMenu->InsertMenu(alignmentPos, ID_EDIT_GEOREFERENCING, _T("&Georeferencing..."), callback);
    m_pEditMenu->SetMenuItemBitmaps(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
+
+   UINT optionsPos = pMenu->FindMenuItem(_T("Options"));
+   if (optionsPos != (UINT)-1)
+   {
+      m_pOptionsMenu = pMenu->GetSubMenu(optionsPos);
+      m_pOptionsMenu->AppendMenu(ID_OPTIONS_IFC_MAPPING_TABLE, _T("&IFC Mapping Table..."), callback);
+      m_pOptionsMenu->SetMenuItemBitmaps(ID_OPTIONS_IFC_MAPPING_TABLE, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
+   }
 }
 
 void CIfcExtensionAgent::RemoveMenus()
@@ -151,6 +161,13 @@ void CIfcExtensionAgent::RemoveMenus()
       auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
       m_pEditMenu->RemoveMenu(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, callback);
       m_pEditMenu.reset();
+   }
+
+   if ( m_pOptionsMenu )
+   {
+      auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+      m_pOptionsMenu->RemoveMenu(ID_OPTIONS_IFC_MAPPING_TABLE, MF_BYCOMMAND, callback);
+      m_pOptionsMenu.reset();
    }
 }
 
@@ -203,6 +220,15 @@ void CIfcExtensionAgent::OnEditGeoreferencing()
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    GET_IFACE(IEditByUI,pEditByUI);
    pEditByUI->EditAlignmentDescription(_T("Georeferencing"));
+}
+
+void CIfcExtensionAgent::OnIfcMappingTable()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CMappingTableDlg dlg(EAFGetMainFrame());
+   dlg.m_strTable = CIfcMappingTable::GetTableSetting().c_str();
+   if (dlg.DoModal() == IDOK)
+      CIfcMappingTable::SetTableSetting(std::filesystem::path(dlg.m_strTable.GetString()));
 }
 
 void CIfcExtensionAgent::RegisterUIExtensions()
@@ -370,9 +396,9 @@ void CIfcExtensionAgent::TableToIdsFromCommandLine(const CIfcCommandLineInfo& if
    try
    {
       std::filesystem::path table_path(ifcCmdInfo.m_strMappingFile.GetString());
-      auto table = CIfcMappingTable::Load(table_path, table_path.empty() ? MappingTableSource::InstalledStandard : MappingTableSource::CommandLine);
+      auto table = CIfcMappingTable::LoadActive(table_path);
       for (const auto& file : table->GetFiles())
-         log << "IFC mapping table \"" << file.name << "\" (version " << file.version << "): " << PathToString(file.path) << std::endl;
+         log << "IFC mapping table \"" << file.name << "\" (version " << file.version << "): " << PathToString(file.path) << ", chosen by " << MappingTableSourceDescription(file.source) << std::endl;
 
       std::ofstream ids(ifcCmdInfo.m_strToolIdsFile.GetString(), std::ios::binary);
       if (!ids)

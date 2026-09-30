@@ -97,7 +97,7 @@ public:
    CString specification_name_prefix = _T("Girder design values");
 
    // Mapping table whose property locations the IDS uses, as the IFC export does (CIfcExportOptions::mapping_file).
-   // When empty, the installed standard table is used
+   // When empty, the mapping table setting, else the installed standard table, is used (CIfcMappingTable::LoadActive)
    CString mapping_file;
 };
 

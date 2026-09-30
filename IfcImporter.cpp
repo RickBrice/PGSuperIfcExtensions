@@ -49,7 +49,7 @@ void CIfcImporter::LoadMappingTable()
    m_pMappingTable.reset();
 
    std::filesystem::path path(m_Options.mapping_file.GetString());
-   m_pMappingTable = CIfcMappingTable::Load(path, path.empty() ? MappingTableSource::InstalledStandard : MappingTableSource::CommandLine);
+   m_pMappingTable = CIfcMappingTable::LoadActive(path);
    m_pMappingTable->LogFiles();
    m_pTargetReader = std::make_unique<CIfcTargetReader>(*m_pMappingTable, m_Units);
 }
