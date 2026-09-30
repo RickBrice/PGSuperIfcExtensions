@@ -55,7 +55,7 @@ void WriteTableAsIds(const CIfcMappingTable& table, std::ostream& os, std::vecto
 
 struct IdsToTableResult
 {
-   std::string table_json;          // the generated mapping table
+   std::string table_json;          // the generated mapping table, in the style of Standard.json (FormatMappingTable)
    std::vector<std::string> report; // specifications and facets without an element role or target (with binding entries), unsupported constructs
    size_t bound = 0;                // property facets with a target
    size_t unbound = 0;              // property facets without a target

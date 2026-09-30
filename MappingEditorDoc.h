@@ -58,6 +58,24 @@ protected:
    void GetStatusIndicators(const UINT** lppIDArray, int* pnIDCount) override;
 };
 
+// Table > Generate from IDS: the IDS, the binding file, and whether the table extends the standard table
+class CMappingFromIdsDlg : public CDialog
+{
+public:
+   CMappingFromIdsDlg(CWnd* pParent = nullptr) : CDialog(IDD_MAPPING_FROM_IDS, pParent) {}
+
+   CString m_strIds;
+   CString m_strBinding;
+   BOOL m_bExtend = TRUE;
+
+protected:
+   void DoDataExchange(CDataExchange* pDX) override;
+   void OnOK() override;
+   afx_msg void OnBrowseIds();
+   afx_msg void OnBrowseBinding();
+   DECLARE_MESSAGE_MAP()
+};
+
 // The BridgeLink application plugin
 class CMappingEditorPlugin : public WBFL::EAF::ComponentObject, public WBFL::EAF::IPluginApp
 {
@@ -140,6 +158,8 @@ protected:
    void DeleteContents() override;
 
    afx_msg void OnValidate();
+   afx_msg void OnWriteIds();
+   afx_msg void OnGenerateFromIds();
    DECLARE_MESSAGE_MAP()
 
 private:

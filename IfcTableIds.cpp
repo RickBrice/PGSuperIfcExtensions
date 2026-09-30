@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "IfcTableIds.h"
+#include "IfcTableFormat.h"
 #include "IdsBuilder.h"
 
 #include <nlohmann/json.hpp>
@@ -791,6 +792,6 @@ IdsToTableResult GenerateTableFromIds(const std::filesystem::path& ids_path, con
    if (!classifications.empty()) table["classifications"] = classifications;
    if (!targets.empty()) table["targets"] = targets;
 
-   result.table_json = table.dump(2);
+   result.table_json = FormatMappingTable(table); // the style of Standard.json
    return result;
 }

@@ -464,7 +464,7 @@ void CIfcExtensionAgent::IdsToTableFromCommandLine(const CIfcCommandLineInfo& if
          std::ofstream table(table_path, std::ios::binary);
          if (!table)
             throw std::runtime_error("The mapping table can't be written: " + PathToString(table_path));
-         table << result.table_json << std::endl;
+         table << result.table_json;
       }
 
       log << "Mapping table generated from " << PathToString(ids_path) << (binding_path.empty() ? std::string() : " with the binding file " + PathToString(binding_path)) << ": " << PathToString(table_path) << std::endl;

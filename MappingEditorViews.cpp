@@ -126,6 +126,13 @@ LRESULT CMappingTreeView::OnRebuild(WPARAM wParam, LPARAM lParam)
             if (m_Nodes[tree.GetItemData(hItem)].Matches(target))
             {
                tree.EnsureVisible(hItem);
+               if (tree.GetSelectedItem() == hItem)
+               {
+                  // already selected (e.g. the whole table was replaced): show its pane again
+                  auto pFrame = (CMappingEditorFrame*)GetParentFrame();
+                  pFrame->GetDetailView()->ShowNode(m_Nodes[tree.GetItemData(hItem)]);
+                  return 0;
+               }
                tree.SelectItem(hItem); // shows its pane
                if (tree.GetSelectedItem() == hItem)
                   GetParentFrame()->SetFocus();

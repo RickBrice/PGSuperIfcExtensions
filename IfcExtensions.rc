@@ -105,6 +105,9 @@ BEGIN
     POPUP "&Table"
     BEGIN
         MENUITEM "&Validate",                   ID_MAPPING_VALIDATE
+        MENUITEM SEPARATOR
+        MENUITEM "&Generate from IDS...",       ID_MAPPING_FROM_IDS
+        MENUITEM "&Write as General IDS...",    ID_MAPPING_WRITE_IDS
     END
     POPUP "&View"
     BEGIN
@@ -350,6 +353,24 @@ BEGIN
     EDITTEXT        IDC_LOC_COMMENT,60,276,263,14,ES_AUTOHSCROLL
     DEFPUSHBUTTON   "OK",IDOK,219,299,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,273,299,50,14
+END
+
+IDD_MAPPING_FROM_IDS DIALOGEX 0, 0, 330, 150
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Generate a Table from an IDS"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "A mapping table is generated from a general IDS (e.g. an agency IDS). It replaces the table in the editor, as a new table to save.",IDC_STATIC,7,7,316,18
+    LTEXT           "IDS:",IDC_STATIC,7,32,60,8
+    EDITTEXT        IDC_FROMIDS_IDS,70,30,230,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_FROMIDS_IDS_BROWSE,303,30,20,14
+    LTEXT           "Binding file:",IDC_STATIC,7,52,60,8
+    EDITTEXT        IDC_FROMIDS_BINDING,70,50,230,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_FROMIDS_BINDING_BROWSE,303,50,20,14
+    LTEXT           "Optional. It assigns element roles and targets the IDS doesn't give (see devdocs/MappingTablesDesign.md, M5).",IDC_STATIC,70,66,253,18
+    CONTROL         "Extend the standard table (the table has only what differs from it)",IDC_FROMIDS_EXTEND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,92,316,10
+    DEFPUSHBUTTON   "Generate",IDOK,219,129,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,273,129,50,14
 END
 
 IDD_MAPPING_SECTION_PANE DIALOGEX 0, 0, 360, 160
@@ -622,6 +643,8 @@ BEGIN
     ID_EDIT_GEOREFERENCING  "Edit Georeferencing\nEdit Georeferencing"
     ID_OPTIONS_IFC_MAPPING_TABLE "Choose the mapping table used by IFC imports and exports\nIFC Mapping Table"
     ID_MAPPING_VALIDATE     "Check the table the way IFC imports and exports do\nValidate"
+    ID_MAPPING_WRITE_IDS    "Write what the table exports as a general IDS\nWrite as IDS"
+    ID_MAPPING_FROM_IDS     "Generate a mapping table from a general IDS, e.g. an agency IDS\nGenerate from IDS"
     IDR_MAPPING_EDITOR      "\nIfcMapping\nIFC Mapping Table\nIFC Mapping Tables (*.json)\n.json\nPGSuperIfc.MappingTable\nIFC Mapping Table"
 END
 

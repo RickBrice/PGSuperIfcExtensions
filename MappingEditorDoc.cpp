@@ -29,6 +29,7 @@
 #include "MappingEditorViews.h"
 #include "MappingEditorPanes.h"
 #include "IfcTableFormat.h"
+#include "IfcTableIds.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFMainFrame.h>
@@ -64,6 +65,50 @@ void CMappingEditorStatusBar::GetStatusIndicators(const UINT** lppIDArray, int* 
    };
    *lppIDArray = indicators;
    *pnIDCount = sizeof(indicators) / sizeof(UINT);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CMappingFromIdsDlg
+
+BEGIN_MESSAGE_MAP(CMappingFromIdsDlg, CDialog)
+   ON_BN_CLICKED(IDC_FROMIDS_IDS_BROWSE, &CMappingFromIdsDlg::OnBrowseIds)
+   ON_BN_CLICKED(IDC_FROMIDS_BINDING_BROWSE, &CMappingFromIdsDlg::OnBrowseBinding)
+END_MESSAGE_MAP()
+
+void CMappingFromIdsDlg::DoDataExchange(CDataExchange* pDX)
+{
+   CDialog::DoDataExchange(pDX);
+   DDX_Text(pDX, IDC_FROMIDS_IDS, m_strIds);
+   DDX_Text(pDX, IDC_FROMIDS_BINDING, m_strBinding);
+   DDX_Check(pDX, IDC_FROMIDS_EXTEND, m_bExtend);
+}
+
+void CMappingFromIdsDlg::OnOK()
+{
+   if (!UpdateData(TRUE))
+      return;
+   m_strIds.Trim();
+   m_strBinding.Trim();
+   if (m_strIds.IsEmpty())
+   {
+      AfxMessageBox(_T("Choose the IDS."), MB_OK | MB_ICONEXCLAMATION);
+      return;
+   }
+   CDialog::OnOK();
+}
+
+void CMappingFromIdsDlg::OnBrowseIds()
+{
+   CFileDialog dlg(TRUE, _T("ids"), nullptr, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, _T("IDS Files (*.ids)|*.ids|All Files (*.*)|*.*||"), this);
+   if (dlg.DoModal() == IDOK)
+      SetDlgItemText(IDC_FROMIDS_IDS, dlg.GetPathName());
+}
+
+void CMappingFromIdsDlg::OnBrowseBinding()
+{
+   CFileDialog dlg(TRUE, _T("json"), nullptr, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST, _T("Binding Files (*.json)|*.json|All Files (*.*)|*.*||"), this);
+   if (dlg.DoModal() == IDOK)
+      SetDlgItemText(IDC_FROMIDS_BINDING, dlg.GetPathName());
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -156,6 +201,8 @@ IMPLEMENT_DYNCREATE(CMappingEditorDoc, CEAFDocument)
 
 BEGIN_MESSAGE_MAP(CMappingEditorDoc, CEAFDocument)
    ON_COMMAND(ID_MAPPING_VALIDATE, &CMappingEditorDoc::OnValidate)
+   ON_COMMAND(ID_MAPPING_WRITE_IDS, &CMappingEditorDoc::OnWriteIds)
+   ON_COMMAND(ID_MAPPING_FROM_IDS, &CMappingEditorDoc::OnGenerateFromIds)
 END_MESSAGE_MAP()
 
 CMappingEditorDoc::CMappingEditorDoc()
@@ -383,6 +430,105 @@ void CMappingEditorDoc::DeleteContents()
    m_pBase.reset();
    m_BaseError.clear();
    __super::DeleteContents();
+}
+
+void CMappingEditorDoc::OnWriteIds()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CommitPendingEdit();
+
+   // the table as imports and exports see it
+   std::unique_ptr<CIfcMappingTable> pTable;
+   std::string text = FormatMappingTable(m_Table);
+   try
+   {
+      pTable = CIfcMappingTable::Load(GetTablePath(), MappingTableSource::Editor, &text);
+   }
+   catch (const std::exception& e)
+   {
+      CMappingMessagesDlg dlg(_T("Table Has Problems"), _T("The table must be valid to write it as an IDS.\n\n") + Utf8ToCString(e.what()), EAFGetMainFrame());
+      dlg.DoModal();
+      return;
+   }
+
+   CString strDefault = GetPathName().IsEmpty() ? CString(_T("Untitled.ids")) : CString(GetTablePath().replace_extension(L".ids").filename().c_str());
+   CFileDialog dlg(FALSE, _T("ids"), strDefault, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IDS Files (*.ids)|*.ids|All Files (*.*)|*.*||"), EAFGetMainFrame());
+   if (dlg.DoModal() != IDOK)
+      return;
+
+   std::ostringstream os;
+   std::vector<std::string> notes;
+   try
+   {
+      CWaitCursor wait;
+      std::ofstream ids(std::filesystem::path(dlg.GetPathName().GetString()), std::ios::binary);
+      if (!ids)
+         throw std::runtime_error("The IDS file can't be written.");
+      WriteTableAsIds(*pTable, ids, notes);
+      os << "IDS written: " << CStringToUtf8(dlg.GetPathName()) << std::endl;
+      for (const auto& note : notes)
+         os << std::endl << "Note: " << note;
+   }
+   catch (const std::exception& e)
+   {
+      os << "The IDS wasn't written: " << e.what();
+   }
+   CMappingMessagesDlg result(_T("General IDS"), Utf8ToCString(os.str()), EAFGetMainFrame());
+   result.DoModal();
+}
+
+void CMappingEditorDoc::OnGenerateFromIds()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CommitPendingEdit();
+   if (!SaveModified()) // the generated table replaces this one
+      return;
+
+   CMappingFromIdsDlg dlg(EAFGetMainFrame());
+   if (dlg.DoModal() != IDOK)
+      return;
+
+   std::ostringstream os;
+   try
+   {
+      CWaitCursor wait;
+      // targets come from the standard table where the IDS and the binding file don't say
+      auto standard = CIfcMappingTable::Load(std::filesystem::path(), MappingTableSource::InstalledStandard);
+      auto result = GenerateTableFromIds(std::filesystem::path(dlg.m_strIds.GetString()), std::filesystem::path(dlg.m_strBinding.GetString()), *standard, "", dlg.m_bExtend ? true : false);
+
+      m_Table = nlohmann::ordered_json::parse(result.table_json);
+
+      // a new table, to be saved
+      m_strPathName.Empty();
+      SetTitle(_T("Untitled"));
+      for (POSITION pos = GetFirstViewPosition(); pos; )
+      {
+         if (CFrameWnd* pFrame = GetNextView(pos)->GetParentFrame())
+            pFrame->OnUpdateFrameTitle(TRUE);
+      }
+      static_cast<CFrameWnd*>(EAFGetMainFrame())->OnUpdateFrameTitle(TRUE); // public in CFrameWnd, virtual
+      LoadBaseTable();
+      SetModifiedFlag(TRUE);
+      UpdateAllViews(nullptr, HINT_STRUCTURE);
+      SelectNode(MappingNode{ MappingNode::Kind::Table, "" });
+
+      os << "Table generated from " << CStringToUtf8(dlg.m_strIds);
+      if (!dlg.m_strBinding.IsEmpty())
+         os << " with the binding file " << CStringToUtf8(dlg.m_strBinding);
+      os << "." << std::endl << result.bound << " property facets with a target, " << result.unbound << " without." << std::endl;
+      for (const auto& line : result.report)
+         os << std::endl << line;
+
+      std::string message;
+      bool bValid = Validate(message);
+      os << std::endl << std::endl << (bValid ? "The generated table is valid." : "The generated table has problems:\n" + message);
+   }
+   catch (const std::exception& e)
+   {
+      os << "The table wasn't generated: " << e.what();
+   }
+   CMappingMessagesDlg result(_T("Table Generated from IDS"), Utf8ToCString(os.str()), EAFGetMainFrame());
+   result.DoModal();
 }
 
 void CMappingEditorDoc::OnValidate()
