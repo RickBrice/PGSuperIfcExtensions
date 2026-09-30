@@ -34,7 +34,7 @@
 // Flush().
 //
 // It replaces the per-occurrence calls to hierarchy_helper::addRelatedObject(),
-// AssociateMaterial(), Classify_usBridge_*() and AddPropertySet()/AddQto(). In
+// AssociateMaterial(), Classify() and AddPropertySet()/AddQto(). In
 // IfcOpenShell 0.9 every one of those calls does a full instances_by_type<>() file
 // scan and then copies + rewrites the target relationship's entire RelatedObjects
 // list, so calling them once per bar is O(n^2) in bar count (a real PGSuper model
@@ -101,30 +101,6 @@ public:
       }
    }
 
-   // occurrence -> a usBridge bSDD classification (IfcRelAssociatesClassification).
-   // The shared IfcClassificationReference is built on first use of each name and
-   // mirrors Classify_ObjectDefinition() in USBridge_Classifications.h.
-   void Classify(hierarchy_helper<Schema>& file, const std::string& name, typename Schema::IfcObjectDefinition occurrence)
-   {
-      auto found = m_Classifications.find(name);
-      if (found == m_Classifications.end())
-      {
-         std::string code("usBridge_");
-         code += name;
-
-         auto classification_reference = file.template create<typename Schema::IfcClassificationReference>();
-         classification_reference.setLocation(BSDD_URI + std::string("class/") + code);
-         classification_reference.setIdentification(code);
-         classification_reference.setName(name);
-         classification_reference.setReferencedSource(file.template getSingle<typename Schema::IfcClassification>());
-
-         found = m_Classifications.emplace(name,
-            std::make_pair(classification_reference, std::vector<typename Schema::IfcObjectDefinition>{})).first;
-      }
-
-      found->second.second.push_back(occurrence);
-   }
-
    // Emit one relationship instance per relating object with its full member list.
    void Flush(hierarchy_helper<Schema>& file)
    {
@@ -187,7 +163,7 @@ private:
       return selects;
    }
 
-   // keyed by the relating instance's id (std::string name for classifications)
+   // keyed by the relating instance's id ("#id" for classification references)
    std::map<uint32_t, std::pair<typename Schema::IfcObjectDefinition, std::vector<typename Schema::IfcObjectDefinition>>> m_Aggregates;
    std::map<uint32_t, std::pair<typename Schema::IfcObjectDefinition, std::vector<typename Schema::IfcObjectDefinition>>> m_Types;
    std::map<uint32_t, std::pair<typename Schema::IfcMaterial, std::vector<typename Schema::IfcObjectDefinition>>> m_Materials;

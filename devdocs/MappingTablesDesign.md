@@ -481,6 +481,11 @@ Each stage keeps the export identical to the baseline:
      - All five round-trip exports are the same as the baseline, with unchanged export times.
      - The round-trip models have no strands debonded at the ends. That path was checked separately: two PGSuper regression models with debonding (`PCI_BDM_Ex9.2.pgs`, `Debond_IBeam.pgs`), exported with the stage 2 build and the stage 3 build in both property-unit modes, give the same listings.
 4. Remove the replaced `Create_*` functions.
+   - **Done 2026-09-29:** 53 functions removed from `PropertySets.h`, `QuantitySets.h`, and `USBridge_Classifications.h` (1,095 lines), and the name-based `RebarRelationshipBatch::Classify`. What's left in code:
+     - the code-owned reinforcing bar property sets and the bar count quantity (stage 3 decision)
+     - `Classify_usBridge_ReinforcingBarType` (empty: usBridge has no classification for bar types)
+     - `Pset_Stationing` on the referents and `Pset_LinearReferencingMethod` on the alignment (`Referents.h`): stationing is part of the alignment structure, which stays in code, as on the import side
+   - The exports are the same as the baseline, and the end-debonding A/B check still passes.
 
 M4 then moves the design-value IDS onto the table.
 

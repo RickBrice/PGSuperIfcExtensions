@@ -462,7 +462,7 @@ namespace
       {
          // DesignLocationNumber is always the numeric form ("Span 1, Girder 1"),
          // independent of the ambient alpha/numeric label preference - matches
-         // Create_Pset_PrecastConcreteElementGeneral (PropertySets.h). The RAII guard
+         // the girder.designation target (IfcTargets.cpp). The RAII guard
          // restores the ambient setting so it doesn't leak into GetIfcBeamName() for
          // later segments.
          pgsAutoGirderLabel autoLabel;
