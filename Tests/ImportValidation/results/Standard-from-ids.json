@@ -1,0 +1,2149 @@
+{
+  "comment": "Generated from the IDS Standard.ids. Assign targets and element roles in the binding file and generate the table again, rather than editing this table.",
+  "format": "PGSuperIfcMapping",
+  "version": 1,
+  "name": "Standard (TPF/usBridge) (PGSuper IFC mapping table)",
+  "elements": {
+    "project": {
+      "entity": "IFCPROJECT"
+    },
+    "site": {
+      "entity": "IFCSITE"
+    },
+    "bridge": {
+      "entity": "IFCBRIDGE",
+      "predefined_type": "GIRDER"
+    },
+    "superstructure": {
+      "entity": "IFCBRIDGEPART",
+      "predefined_type": "SUPERSTRUCTURE"
+    },
+    "substructure": {
+      "entity": "IFCBRIDGEPART",
+      "predefined_type": "SUBSTRUCTURE"
+    },
+    "deck_part": {
+      "entity": "IFCBRIDGEPART",
+      "predefined_type": "DECK"
+    },
+    "pier": {
+      "entity": "IFCBRIDGEPART",
+      "predefined_type": "PIER"
+    },
+    "abutment": {
+      "entity": "IFCBRIDGEPART",
+      "predefined_type": "ABUTMENT"
+    },
+    "foundation": {
+      "entity": "IFCBRIDGEPART",
+      "predefined_type": "FOUNDATION"
+    },
+    "girder": {
+      "entity": "IFCBEAM",
+      "predefined_type": "BEAM"
+    },
+    "girder_assembly": {
+      "entity": "IFCELEMENTASSEMBLY",
+      "predefined_type": "GIRDER"
+    },
+    "closure_joint": {
+      "entity": "IFCBEAM",
+      "attributes": {
+        "ObjectType": "CLOSUREJOINT"
+      }
+    },
+    "tendon": {
+      "entity": "IFCTENDON",
+      "predefined_type": "STRAND"
+    },
+    "tendon_bundle": {
+      "entity": "IFCELEMENTASSEMBLY",
+      "predefined_type": "USERDEFINED"
+    },
+    "rebar": {
+      "entity": "IFCREINFORCINGBAR"
+    },
+    "reinforcement_cage": {
+      "entity": "IFCELEMENTASSEMBLY",
+      "predefined_type": "REINFORCEMENT_UNIT"
+    },
+    "deck": {
+      "entity": "IFCSLAB",
+      "predefined_type": "FLOOR"
+    },
+    "bearing": {
+      "entity": "IFCBEARING"
+    },
+    "barrier": {
+      "entity": "IFCWALL",
+      "predefined_type": "USERDEFINED",
+      "attributes": {
+        "ObjectType": "BARRIER"
+      }
+    }
+  },
+  "property_sets": [
+    {
+      "name": "Pset_ProjectCommon",
+      "applies_to": "project",
+      "condition": "always",
+      "properties": [
+        {
+          "name": "ProjectType",
+          "type": "IFCLABEL",
+          "value": "NEWBUILD",
+          "enumeration": {
+            "name": "PEnum_ProjectType",
+            "values": [
+              "MODIFICATION",
+              "NEWBUILD",
+              "OPERATIONMAINTENANCE",
+              "RENOVATION",
+              "REPAIR"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_ProjectCommon",
+      "applies_to": "project",
+      "properties": [
+        {
+          "name": "ApprovalStatus",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ApprovalStatus"
+        },
+        {
+          "name": "FileNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/FileNumber"
+        },
+        {
+          "name": "LettingDate",
+          "type": "IFCDATE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/LettingDate"
+        },
+        {
+          "name": "ModelPreparationDate",
+          "type": "IFCDATE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ModelPreparationDate"
+        },
+        {
+          "name": "ModelVersion",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ModelVersion"
+        },
+        {
+          "name": "ProjectDirectory",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ProjectDirectory"
+        },
+        {
+          "name": "ProjectIdentification",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ProjectIdentification"
+        },
+        {
+          "name": "ProjectNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ProjectNumber"
+        },
+        {
+          "name": "ProjectURL",
+          "type": "IFCURIREFERENCE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ProjectURL"
+        },
+        {
+          "name": "PSEData",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PSEData"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_ProjectLocation",
+      "applies_to": "project",
+      "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_ProjectLocation",
+      "properties": [
+        {
+          "name": "City",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/City"
+        },
+        {
+          "name": "County",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/County"
+        },
+        {
+          "name": "District",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/District"
+        },
+        {
+          "name": "State",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/State"
+        },
+        {
+          "name": "Section",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Section"
+        },
+        {
+          "name": "Township",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Township"
+        },
+        {
+          "name": "Range",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Range"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "bridge",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_BridgeGeometry",
+      "applies_to": "bridge",
+      "properties": [
+        {
+          "name": "BridgeEndStation",
+          "type": "IFCLENGTHMEASURE",
+          "target": "bridge.end_station",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BridgeEndStation"
+        },
+        {
+          "name": "BridgeEndStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BridgeEndStationOffset"
+        },
+        {
+          "name": "BridgeLength",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "bridge.length",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BridgeLength"
+        },
+        {
+          "name": "BridgeSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "bridge.max_skew",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BridgeSkew"
+        },
+        {
+          "name": "BridgeStartStation",
+          "type": "IFCLENGTHMEASURE",
+          "target": "bridge.start_station",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BridgeStartStation"
+        },
+        {
+          "name": "BridgeStartStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BridgeStartStationOffset"
+        },
+        {
+          "name": "LowBeamElevation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/LowBeamElevation"
+        },
+        {
+          "name": "NumberOfSpans",
+          "type": "IFCINTEGER",
+          "target": "bridge.number_of_spans",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/NumberOfSpans"
+        },
+        {
+          "name": "RoadwayWidth",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "bridge.roadway_width",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/RoadwayWidth"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_BridgeIdentification",
+      "applies_to": "bridge",
+      "properties": [
+        {
+          "name": "SNBIBridgeNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIBridgeNumber"
+        },
+        {
+          "name": "SNBIBridgeName",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIBridgeName"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_DesignLoading",
+      "applies_to": "bridge",
+      "properties": [
+        {
+          "name": "DesignMethodology",
+          "type": "IFCLABEL",
+          "value": "LRFD",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DesignMethodology"
+        },
+        {
+          "name": "VehicularLiveLoad",
+          "type": "IFCLABEL",
+          "target": "bridge.design_live_load",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/VehicularLiveLoad"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_FeatureIdentification",
+      "applies_to": "bridge",
+      "properties": [
+        {
+          "name": "FeatureType",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/FeatureType"
+        },
+        {
+          "name": "FeatureLocation",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/FeatureLocation"
+        },
+        {
+          "name": "FeatureName",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/FeatureName"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Roadway",
+      "applies_to": "bridge",
+      "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_Roadway",
+      "properties": [
+        {
+          "name": "AnnualAverageDailyTraffic",
+          "type": "IFCINTEGER",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AnnualAverageDailyTraffic"
+        },
+        {
+          "name": "AnnualAverageDailyTruckTraffic",
+          "type": "IFCINTEGER",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AnnualAverageDailyTruckTraffic"
+        },
+        {
+          "name": "DesignAnnualAverageDailyTraffic",
+          "type": "IFCINTEGER",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DesignAnnualAverageDailyTraffic"
+        },
+        {
+          "name": "DesignAnnualAverageDailyTruckTraffic",
+          "type": "IFCINTEGER",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DesignAnnualAverageDailyTruckTraffic"
+        },
+        {
+          "name": "DesignTrafficYear",
+          "type": "IFCINTEGER",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DesignTrafficYear"
+        },
+        {
+          "name": "MinimumHorizontalClearanceLeft",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MinimumHorizontalClearanceLeft"
+        },
+        {
+          "name": "MinimumHorizontalClearanceRight",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MinimumHorizontalClearanceRight"
+        },
+        {
+          "name": "RoadwayMinimumVerticalClearance",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/RoadwayMinimumVerticalClearance"
+        },
+        {
+          "name": "RoadwayName",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/RoadwayName"
+        },
+        {
+          "name": "RoadwayType",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/RoadwayType"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "bridge",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "superstructure",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_BridgePartCommon",
+      "applies_to": "superstructure",
+      "properties": [
+        {
+          "name": "EndSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndSkew"
+        },
+        {
+          "name": "EndStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStation"
+        },
+        {
+          "name": "EndStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStationOffset"
+        },
+        {
+          "name": "StartSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartSkew"
+        },
+        {
+          "name": "StartStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStation"
+        },
+        {
+          "name": "StartStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStationOffset"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "substructure",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_BridgePartCommon",
+      "applies_to": "substructure",
+      "properties": [
+        {
+          "name": "EndSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndSkew"
+        },
+        {
+          "name": "EndStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStation"
+        },
+        {
+          "name": "EndStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStationOffset"
+        },
+        {
+          "name": "StartSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartSkew"
+        },
+        {
+          "name": "StartStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStation"
+        },
+        {
+          "name": "StartStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStationOffset"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "deck_part",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_BridgePartCommon",
+      "applies_to": "deck_part",
+      "properties": [
+        {
+          "name": "EndSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndSkew"
+        },
+        {
+          "name": "EndStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStation"
+        },
+        {
+          "name": "EndStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStationOffset"
+        },
+        {
+          "name": "StartSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartSkew"
+        },
+        {
+          "name": "StartStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStation"
+        },
+        {
+          "name": "StartStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStationOffset"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "pier",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_SubstructureCommon",
+      "applies_to": "pier",
+      "properties": [
+        {
+          "name": "StationAheadBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationAheadBearing"
+        },
+        {
+          "name": "StationAtCenterline",
+          "type": "IFCLENGTHMEASURE",
+          "target": "pier.station",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PierStation"
+        },
+        {
+          "name": "StationBackBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationBackBearing"
+        },
+        {
+          "name": "StationOffsetAheadBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationOffsetAheadBearing"
+        },
+        {
+          "name": "StationOffsetAtCenterline",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationOffsetAtCenterline"
+        },
+        {
+          "name": "StationOffsetBackBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationOffsetBackBearing"
+        },
+        {
+          "name": "SubstructureSkewAngle",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "pier.skew",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SubstructureSkewAngle"
+        },
+        {
+          "name": "SubstructureType",
+          "type": "IFCLABEL",
+          "value": "New",
+          "enumeration": {
+            "name": "usBrPEnum_SubstructureType",
+            "values": [
+              "New",
+              "Other"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SubstructureType"
+        },
+        {
+          "name": "ReturnInterval",
+          "type": "IFCTIMEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ReturnInterval"
+        },
+        {
+          "name": "ScourElevation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ScourElevation"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "abutment",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_SubstructureCommon",
+      "applies_to": "abutment",
+      "properties": [
+        {
+          "name": "StationAheadBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationAheadBearing"
+        },
+        {
+          "name": "StationAtCenterline",
+          "type": "IFCLENGTHMEASURE",
+          "target": "pier.station",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PierStation"
+        },
+        {
+          "name": "StationBackBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationBackBearing"
+        },
+        {
+          "name": "StationOffsetAheadBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationOffsetAheadBearing"
+        },
+        {
+          "name": "StationOffsetAtCenterline",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationOffsetAtCenterline"
+        },
+        {
+          "name": "StationOffsetBackBearing",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StationOffsetBackBearing"
+        },
+        {
+          "name": "SubstructureSkewAngle",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "pier.skew",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SubstructureSkewAngle"
+        },
+        {
+          "name": "SubstructureType",
+          "type": "IFCLABEL",
+          "value": "New",
+          "enumeration": {
+            "name": "usBrPEnum_SubstructureType",
+            "values": [
+              "New",
+              "Other"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SubstructureType"
+        },
+        {
+          "name": "ReturnInterval",
+          "type": "IFCTIMEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ReturnInterval"
+        },
+        {
+          "name": "ScourElevation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ScourElevation"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "foundation",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "girder",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "girder",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "Pset_BeamCommon",
+      "applies_to": "girder",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "PEnum_ElementStatus",
+            "values": [
+              "DEMOLISH",
+              "EXISTING",
+              "NEW",
+              "TEMPORARY",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "Span",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "girder.span"
+        },
+        {
+          "name": "Slope",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "girder.slope"
+        },
+        {
+          "name": "Roll",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "girder.roll"
+        }
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral",
+      "applies_to": "girder",
+      "properties": [
+        {
+          "name": "StrengthClass",
+          "type": "IFCLABEL",
+          "target": "girder.strength_class"
+        }
+      ]
+    },
+    {
+      "name": "Pset_PrecastConcreteElementGeneral",
+      "applies_to": "girder",
+      "properties": [
+        {
+          "name": "TypeDesignation",
+          "type": "IFCLABEL",
+          "target": "girder.family_name"
+        },
+        {
+          "name": "CornerChamfer",
+          "type": "IFCPOSITIVELENGTHMEASURE"
+        },
+        {
+          "name": "ManufacturingToleranceClass",
+          "type": "IFCLABEL"
+        },
+        {
+          "name": "FormStrippingStrength",
+          "type": "IFCPRESSUREMEASURE",
+          "target": "girder.fci",
+          "import": false
+        },
+        {
+          "name": "LiftingStrength",
+          "type": "IFCPRESSUREMEASURE",
+          "target": "girder.fci",
+          "import": false
+        },
+        {
+          "name": "ReleaseStrength",
+          "type": "IFCPRESSUREMEASURE",
+          "target": "girder.fci"
+        },
+        {
+          "name": "MinimumAllowableSupportLength",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "girder.bunk_point"
+        },
+        {
+          "name": "InitialTension",
+          "type": "IFCPRESSUREMEASURE",
+          "target": "girder.jacking_stress"
+        },
+        {
+          "name": "TendonRelaxation",
+          "type": "IFCPOSITIVERATIOMEASURE"
+        },
+        {
+          "name": "TransportationStrength",
+          "type": "IFCPRESSUREMEASURE",
+          "target": "girder.fc",
+          "import": false
+        },
+        {
+          "name": "SupportDuringTransportDescription",
+          "type": "IFCTEXT",
+          "value": "Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property"
+        },
+        {
+          "name": "HollowCorePlugging",
+          "type": "IFCLABEL"
+        },
+        {
+          "name": "CamberAtMidspan",
+          "type": "IFCRATIOMEASURE",
+          "target": "girder.camber_ratio"
+        },
+        {
+          "name": "BatterAtStart",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "girder.batter"
+        },
+        {
+          "name": "BatterAtEnd",
+          "type": "IFCPLANEANGLEMEASURE",
+          "target": "girder.batter"
+        },
+        {
+          "name": "Twisting",
+          "type": "IFCPLANEANGLEMEASURE"
+        },
+        {
+          "name": "Shortening",
+          "type": "IFCRATIOMEASURE"
+        },
+        {
+          "name": "PieceMark",
+          "type": "IFCLABEL"
+        },
+        {
+          "name": "DesignLocationNumber",
+          "type": "IFCLABEL",
+          "target": "girder.designation"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PrecastConcreteBeam",
+      "applies_to": "girder",
+      "properties": [
+        {
+          "name": "DeflectionLongTerm",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DeflectionLongTerm"
+        },
+        {
+          "name": "DeflectionShortTerm",
+          "type": "IFCLENGTHMEASURE",
+          "target": "girder.screed_camber",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DeflectionShortTerm"
+        },
+        {
+          "name": "ElasticShortening",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ElasticShortening"
+        },
+        {
+          "name": "LiftingLoopLocation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/LiftingLoopLocation"
+        },
+        {
+          "name": "MidSpanCamberAfterLosses",
+          "type": "IFCLENGTHMEASURE",
+          "target": "girder.camber_after_losses",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MidSpanCamberAfterLosses"
+        },
+        {
+          "name": "MidSpanCamberAtRelease",
+          "type": "IFCLENGTHMEASURE",
+          "target": "girder.camber_at_release",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MidSpanCamberAtRelease"
+        },
+        {
+          "name": "MinimumTimeToDeckPlacement",
+          "type": "IFCTIMEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MinimumTimetoDeckPlacement"
+        },
+        {
+          "name": "ShapeName",
+          "type": "IFCLABEL",
+          "target": "girder.type_names",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ShapeName"
+        },
+        {
+          "name": "TopSurfaceFinish",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/TopSurfaceFinish"
+        }
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral",
+      "applies_to": "girder",
+      "attach": "type",
+      "condition": "always",
+      "properties": [
+        {
+          "name": "AssemblyPlace",
+          "type": "IFCLABEL",
+          "value": "FACTORY",
+          "enumeration": {
+            "name": "PEnum_AssemblyPlace",
+            "values": [
+              "FACTORY",
+              "OFFSITE",
+              "SITE",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "CastingMethod",
+          "type": "IFCLABEL",
+          "value": "PRECAST",
+          "enumeration": {
+            "name": "PEnum_ConcreteCastingMethod",
+            "values": [
+              "INSITU",
+              "MIXED",
+              "PRECAST",
+              "PRINTED",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral",
+      "applies_to": "closure_joint",
+      "condition": "always",
+      "properties": [
+        {
+          "name": "AssemblyPlace",
+          "type": "IFCLABEL",
+          "value": "SITE",
+          "enumeration": {
+            "name": "PEnum_AssemblyPlace",
+            "values": [
+              "FACTORY",
+              "OFFSITE",
+              "SITE",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "CastingMethod",
+          "type": "IFCLABEL",
+          "value": "INSITU",
+          "enumeration": {
+            "name": "PEnum_ConcreteCastingMethod",
+            "values": [
+              "INSITU",
+              "MIXED",
+              "PRECAST",
+              "PRINTED",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "tendon",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "tendon",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "Pset_ElementComponentCommon",
+      "applies_to": "tendon",
+      "condition": "always",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "enumeration": {
+            "name": "PEnum_ElementStatus",
+            "values": [
+              "DEMOLISH",
+              "EXISTING",
+              "NEW",
+              "TEMPORARY",
+              "OTHER",
+              "NOTKNOWN",
+              "UNSET"
+            ]
+          },
+          "target": "tendon.status"
+        },
+        {
+          "name": "CorrosionTreatment",
+          "type": "IFCLABEL",
+          "enumeration": {
+            "name": "PEnum_ElementComponentCorrosionTreatment",
+            "values": [
+              "EPOXYCOATED",
+              "GALVANISED",
+              "NONE",
+              "PAINTED",
+              "STAINLESS",
+              "NOTDEFINED"
+            ]
+          },
+          "target": "tendon.corrosion_treatment"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_TendonDebonding",
+      "applies_to": "tendon",
+      "condition": "always",
+      "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_TendonDebonding",
+      "properties": [
+        {
+          "name": "DebondLengthStart",
+          "type": "IFCLENGTHMEASURE",
+          "target": "tendon.debond_start",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DebondLengthStart"
+        },
+        {
+          "name": "DebondLengthEnd",
+          "type": "IFCLENGTHMEASURE",
+          "target": "tendon.debond_end",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DebondLengthEnd"
+        },
+        {
+          "name": "DebondLengthMidspanToStart",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "tendon.debond_midspan_to_start",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DebondLengthMidspanToStart"
+        },
+        {
+          "name": "DebondLengthMidspanToEnd",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "tendon.debond_midspan_to_end",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DebondLengthMidspanToEnd"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "tendon_bundle",
+      "attach": "type",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "tendon_bundle",
+      "attach": "type",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "rebar",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "rebar",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Reinforcing",
+      "applies_to": "rebar",
+      "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_Reinforcing",
+      "properties": [
+        {
+          "name": "EmbedmentAtEnd",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EmbedmentAtEnd"
+        },
+        {
+          "name": "EmbedmentAtStart",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EmbedmentAtStart"
+        },
+        {
+          "name": "MinimumSpliceLength",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MinimumSpliceLength"
+        },
+        {
+          "name": "PlacementMethod",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PlacementMethod"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "reinforcement_cage",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "reinforcement_cage",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "deck",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "deck",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral",
+      "applies_to": "deck",
+      "properties": [
+        {
+          "name": "AssemblyPlace",
+          "type": "IFCLABEL",
+          "value": "SITE",
+          "enumeration": {
+            "name": "PEnum_AssemblyPlace",
+            "values": [
+              "FACTORY",
+              "OFFSITE",
+              "SITE",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "CastingMethod",
+          "type": "IFCLABEL",
+          "value": "INSITU",
+          "enumeration": {
+            "name": "PEnum_ConcreteCastingMethod",
+            "values": [
+              "INSITU",
+              "MIXED",
+              "PRECAST",
+              "PRINTED",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "StrengthClass",
+          "type": "IFCLABEL",
+          "target": "deck.strength_class"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_SlabCommon",
+      "applies_to": "deck",
+      "properties": [
+        {
+          "name": "CoatingNote",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CoatingNote"
+        },
+        {
+          "name": "CrossSectionalArea",
+          "type": "IFCAREAMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CrossSectionalArea"
+        },
+        {
+          "name": "CrossSlope",
+          "type": "IFCRATIOMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CrossSlope"
+        },
+        {
+          "name": "EndSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndSkew"
+        },
+        {
+          "name": "EndStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStation"
+        },
+        {
+          "name": "EndStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndStationOffset"
+        },
+        {
+          "name": "StartSkew",
+          "type": "IFCPLANEANGLEMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartSkew"
+        },
+        {
+          "name": "StartStation",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStation"
+        },
+        {
+          "name": "StartStationOffset",
+          "type": "IFCLENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartStationOffset"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_RoadwaySlab",
+      "applies_to": "deck",
+      "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_RoadwaySlab",
+      "properties": [
+        {
+          "name": "FormType",
+          "type": "IFCLABEL",
+          "value": "Wood",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/FormType"
+        },
+        {
+          "name": "SacrificialWearingSurface",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SacrificialWearingThickness"
+        },
+        {
+          "name": "SurfaceArea",
+          "type": "IFCAREAMEASURE",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SurfaceArea"
+        },
+        {
+          "name": "SurfaceFinish",
+          "type": "IFCLABEL",
+          "value": "Raked",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SurfaceFinish"
+        }
+      ]
+    },
+    {
+      "name": "Pset_BearingCommon",
+      "applies_to": "bearing",
+      "condition": "always",
+      "properties": [
+        {
+          "name": "DisplacementAccommodated",
+          "type": "IFCBOOLEAN"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_Common",
+      "applies_to": "barrier",
+      "properties": [
+        {
+          "name": "Status",
+          "type": "IFCLABEL",
+          "value": "NEW",
+          "enumeration": {
+            "name": "usBrPEnum_ElementStatus",
+            "values": [
+              "NEW",
+              "EXISTING - REMAIN",
+              "EXISTING - REMOVE",
+              "TEMPORARY",
+              "OTHER"
+            ]
+          },
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"
+        },
+        {
+          "name": "AssociatedStandard",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"
+        },
+        {
+          "name": "Note",
+          "type": "IFCTEXT",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"
+        },
+        {
+          "name": "SNBIElementNumber",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"
+        },
+        {
+          "name": "WorkingDrawingApproval",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities",
+      "applies_to": "barrier",
+      "properties": [
+        {
+          "name": "PayItemReference",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"
+        },
+        {
+          "name": "PayQuantity",
+          "type": "IFCREAL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"
+        },
+        {
+          "name": "UnitOfMeasure",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"
+        }
+      ]
+    },
+    {
+      "name": "usBrPset_MASH",
+      "applies_to": "barrier",
+      "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_MASH",
+      "properties": [
+        {
+          "name": "MASHTestingLevel",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/MASHTestingLevel"
+        },
+        {
+          "name": "GuardrailType",
+          "type": "IFCLABEL",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/GuardrailType"
+        },
+        {
+          "name": "BarrierType",
+          "type": "IFCLABEL",
+          "target": "barrier.type",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BarrierType"
+        },
+        {
+          "name": "BarrierHeight",
+          "type": "IFCPOSITIVELENGTHMEASURE",
+          "target": "barrier.height",
+          "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BarrierHeight"
+        }
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral",
+      "applies_to": "barrier",
+      "properties": [
+        {
+          "name": "AssemblyPlace",
+          "type": "IFCLABEL",
+          "value": "SITE",
+          "enumeration": {
+            "name": "PEnum_AssemblyPlace",
+            "values": [
+              "FACTORY",
+              "OFFSITE",
+              "SITE",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "CastingMethod",
+          "type": "IFCLABEL",
+          "value": "INSITU",
+          "enumeration": {
+            "name": "PEnum_ConcreteCastingMethod",
+            "values": [
+              "INSITU",
+              "MIXED",
+              "PRECAST",
+              "PRINTED",
+              "OTHER",
+              "UNKNOWN",
+              "UNSET"
+            ]
+          }
+        },
+        {
+          "name": "StrengthClass",
+          "type": "IFCLABEL",
+          "target": "barrier.strength_class"
+        }
+      ]
+    }
+  ],
+  "quantity_sets": [
+    {
+      "name": "Qto_BeamBaseQuantities",
+      "applies_to": "girder",
+      "condition": "quantities",
+      "method": "BaseQuantities",
+      "quantities": [
+        {
+          "name": "Length",
+          "type": "IFCQUANTITYLENGTH",
+          "target": "girder.length",
+          "import": false
+        },
+        {
+          "name": "CrossSectionArea",
+          "type": "IFCQUANTITYAREA",
+          "target": "girder.cross_section_area",
+          "import": false
+        },
+        {
+          "name": "OuterSurfaceArea",
+          "type": "IFCQUANTITYAREA",
+          "target": "girder.outer_surface_area",
+          "import": false
+        },
+        {
+          "name": "GrossWeight",
+          "type": "IFCQUANTITYWEIGHT",
+          "target": "girder.gross_weight",
+          "import": false
+        }
+      ]
+    },
+    {
+      "name": "Qto_SlabBaseQuantities",
+      "applies_to": "deck",
+      "method": "BaseQuantities",
+      "quantities": [
+        {
+          "name": "Length",
+          "type": "IFCQUANTITYLENGTH",
+          "target": "deck.length",
+          "import": false
+        },
+        {
+          "name": "Depth",
+          "type": "IFCQUANTITYLENGTH",
+          "target": "deck.depth",
+          "import": false
+        },
+        {
+          "name": "Perimeter",
+          "type": "IFCQUANTITYLENGTH",
+          "target": "deck.perimeter",
+          "import": false
+        },
+        {
+          "name": "GrossArea",
+          "type": "IFCQUANTITYAREA",
+          "target": "deck.gross_area",
+          "import": false
+        }
+      ]
+    }
+  ],
+  "classifications": [
+    {
+      "applies_to": "project",
+      "system": "usBridge",
+      "identification": "usBridge_BridgeProject",
+      "name": "BridgeProject",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_BridgeProject"
+    },
+    {
+      "applies_to": "site",
+      "system": "usBridge",
+      "identification": "usBridge_BridgeSite",
+      "name": "BridgeSite",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_BridgeSite"
+    },
+    {
+      "applies_to": "bridge",
+      "system": "usBridge",
+      "identification": "usBridge_GirderBridge",
+      "name": "GirderBridge",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_GirderBridge"
+    },
+    {
+      "applies_to": "superstructure",
+      "system": "usBridge",
+      "identification": "usBridge_BridgeSuperstructure",
+      "name": "BridgeSuperstructure",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_BridgeSuperstructure"
+    },
+    {
+      "applies_to": "substructure",
+      "system": "usBridge",
+      "identification": "usBridge_BridgeSubstructure",
+      "name": "BridgeSubstructure",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_BridgeSubstructure"
+    },
+    {
+      "applies_to": "deck_part",
+      "system": "usBridge",
+      "identification": "usBridge_Deck",
+      "name": "Deck",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Deck"
+    },
+    {
+      "applies_to": "pier",
+      "system": "usBridge",
+      "identification": "usBridge_Pier",
+      "name": "Pier",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Pier"
+    },
+    {
+      "applies_to": "abutment",
+      "system": "usBridge",
+      "identification": "usBridge_Abutment",
+      "name": "Abutment",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Abutment"
+    },
+    {
+      "applies_to": "foundation",
+      "system": "usBridge",
+      "identification": "usBridge_Foundation",
+      "name": "Foundation",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Foundation"
+    },
+    {
+      "applies_to": "girder",
+      "system": "usBridge",
+      "identification": "usBridge_GirderPrecastConcrete",
+      "name": "GirderPrecastConcrete",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_GirderPrecastConcrete"
+    },
+    {
+      "applies_to": "girder_assembly",
+      "system": "usBridge",
+      "identification": "usBridge_Girder",
+      "name": "Girder",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Girder"
+    },
+    {
+      "applies_to": "tendon",
+      "system": "usBridge",
+      "identification": "usBridge_Tendon",
+      "name": "Tendon",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Tendon"
+    },
+    {
+      "applies_to": "tendon_bundle",
+      "system": "usBridge",
+      "identification": "usBridge_TendonBundle",
+      "name": "TendonBundle",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_TendonBundle"
+    },
+    {
+      "applies_to": "rebar",
+      "system": "usBridge",
+      "identification": "usBridge_ReinforcingBar",
+      "name": "ReinforcingBar",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_ReinforcingBar"
+    },
+    {
+      "applies_to": "reinforcement_cage",
+      "system": "usBridge",
+      "identification": "usBridge_ReinforcementCage",
+      "name": "ReinforcementCage",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_ReinforcementCage"
+    },
+    {
+      "applies_to": "deck",
+      "system": "usBridge",
+      "identification": "usBridge_DeckSlab",
+      "name": "DeckSlab",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_DeckSlab"
+    },
+    {
+      "applies_to": "barrier",
+      "system": "usBridge",
+      "identification": "usBridge_Barrier",
+      "name": "Barrier",
+      "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Barrier"
+    }
+  ]
+}

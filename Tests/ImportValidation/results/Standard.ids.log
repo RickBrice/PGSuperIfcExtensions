@@ -1,0 +1,9 @@
+IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json
+Note: Material property set Pset_MaterialConcrete of the girder isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set Pset_MaterialSteel of the tendon isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set usBrPset_ACI_TendonMaterial of the tendon isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set Pset_MaterialSteel of the rebar isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set usBrPset_ACI_ReinforcingMaterial of the rebar isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set Pset_MaterialConcrete of the deck isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set Pset_MaterialConcrete of the barrier isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+IDS written: D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\Standard.ids
