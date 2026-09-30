@@ -2476,10 +2476,9 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
    if (options.classify)
    {
-      Classify_usBridge_Slab(file, slab);
+      Classify<Schema>(file, ElementKind::Deck, slab, options);
 
       WritePropertySets<Schema>(file, ElementKind::Deck, slab, context);
-      AddQto(file,slab,Create_Qto_SlabBaseQuantatities<Schema>(file));
    }
 
    // need a list of entities that are associated with this material
@@ -2713,14 +2712,12 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
 
       if (options.classify)
       {
-         if (pBridge->IsAbutment(pierIdx))
-            Classify_usBridge_Abutment<Schema>(file, pier);
-         else
-            Classify_usBridge_Pier<Schema>(file, pier);
+         ElementKind role = pBridge->IsAbutment(pierIdx) ? ElementKind::Abutment : ElementKind::Pier;
+         Classify<Schema>(file, role, pier, options);
 
          ExportContext context{ pBroker, &options };
          context.pier = pierIdx;
-         WritePropertySets<Schema>(file, ElementKind::Pier, pier, context);
+         WritePropertySets<Schema>(file, role, pier, context);
       }
 
       std::ostringstream os;
@@ -2732,7 +2729,7 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
 
       if (options.classify)
       {
-         Classify_usBridge_Foundation<Schema>(file, foundation);
+         Classify<Schema>(file, ElementKind::Foundation, foundation, options);
 
          ExportContext context{ pBroker, &options };
          context.pier = pierIdx;
@@ -3234,21 +3231,13 @@ typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, st
    CreatePrecastSegmentStrandRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_batch);
    CreatePrecastSegmentReinforcing<Schema>(file, pBroker, options, name, segmentKey, beam, rebar_batch);
 
-   if (options.include_quantities)
-   {
-      AddQto(file,beam,Create_Qto_BeamBaseQuantities(file, pBroker, options, segmentKey));
-   }
-
-   if (options.classify)
-   {
-      Classify_usBridge_PrecastGirderElement(file, beam);
-
-      // Pset_ConcreteElementGeneral is attached to the IfcBeamType, but the StrengthClass property is beam
-      // specific, so the beam gets its own Pset_ConcreteElementGeneral with it
-      ExportContext context{ pBroker, &options };
-      context.segment = segmentKey;
-      WritePropertySets<Schema>(file, ElementKind::Girder, beam, context);
-   }
+   // Property sets and quantity sets from the mapping table. Their conditions decide which ones the options include.
+   // Pset_ConcreteElementGeneral is attached to the IfcBeamType, but the StrengthClass property is beam
+   // specific, so the beam gets its own Pset_ConcreteElementGeneral with it
+   ExportContext context{ pBroker, &options };
+   context.segment = segmentKey;
+   Classify<Schema>(file, ElementKind::Girder, beam, options);
+   WritePropertySets<Schema>(file, ElementKind::Girder, beam, context);
 
    return beam;
 }
@@ -3349,9 +3338,9 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    file.addRelatedObject<typename Schema::IfcRelAggregates>(bridge, superstructure);
    if (options.classify)
    {
-      Classify_usBridge_Superstructure<Schema>(file, superstructure);
+      Classify<Schema>(file, ElementKind::Superstructure, superstructure, options);
 
-      WritePropertySets<Schema>(file, ElementKind::BridgePart, superstructure, ExportContext{ pBroker, &options });
+      WritePropertySets<Schema>(file, ElementKind::Superstructure, superstructure, ExportContext{ pBroker, &options });
    }
 
    auto substructure = file.create<typename Schema::IfcBridgePart>().initialize(ifcopenshell::global_id(), {}, std::string("Substructure"), std::nullopt, std::nullopt, {}, {}, std::nullopt,
@@ -3362,9 +3351,9 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    file.addRelatedObject<typename Schema::IfcRelAggregates>(bridge, substructure);
    if (options.classify)
    {
-      Classify_usBridge_Substructure<Schema>(file, substructure);
+      Classify<Schema>(file, ElementKind::Substructure, substructure, options);
 
-      WritePropertySets<Schema>(file, ElementKind::BridgePart, substructure, ExportContext{ pBroker, &options });
+      WritePropertySets<Schema>(file, ElementKind::Substructure, substructure, ExportContext{ pBroker, &options });
    }
 
    auto deck = file.create<typename Schema::IfcBridgePart>().initialize(ifcopenshell::global_id(), {}, std::string("Deck"), std::nullopt, std::nullopt, {}, {}, std::nullopt,
@@ -3375,9 +3364,9 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    if (options.classify)
    {
-      Classify_usBridge_Deck<Schema>(file, deck);
+      Classify<Schema>(file, ElementKind::DeckPart, deck, options);
 
-      WritePropertySets<Schema>(file, ElementKind::BridgePart, deck, ExportContext{ pBroker, &options });
+      WritePropertySets<Schema>(file, ElementKind::DeckPart, deck, ExportContext{ pBroker, &options });
    }
 
    file.addRelatedObject<typename Schema::IfcRelAggregates>(superstructure, deck);
@@ -3441,8 +3430,8 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    if (options.classify)
    {
-      Classify_usBridge_Barrier(file, left_barrier);
-      Classify_usBridge_Barrier(file, right_barrier);
+      Classify<Schema>(file, ElementKind::Barrier, left_barrier, options);
+      Classify<Schema>(file, ElementKind::Barrier, right_barrier, options);
 
       WritePropertySets<Schema>(file, ElementKind::Barrier, barriers, context);
    }
@@ -3558,7 +3547,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
             file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, girder);
             if (options.classify)
             {
-               Classify_usBridge_Girder<Schema>(file, girder);
+               Classify<Schema>(file, ElementKind::GirderAssembly, girder, options);
             }
          }
 
@@ -3660,7 +3649,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    if (options.classify)
    {
-      Classify_usBridge_GirderBridge<Schema>(file, bridge);
+      Classify<Schema>(file, ElementKind::Bridge, bridge, options);
 
       WritePropertySets<Schema>(file, ElementKind::Bridge, bridge, ExportContext{ pBroker, &options });
    }
@@ -3882,11 +3871,11 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    {
       if (options.classify)
       {
-         Add_usBridge_Classification<Schema>(file);
+         WriteClassificationSystems<Schema>(file);
 
          auto site = file.getSingle<typename Schema::IfcSite>();
-         Classify_usBridge_BridgeProject<Schema>(file, project);
-         Classify_usBridge_BridgeSite<Schema>(file, site);
+         Classify<Schema>(file, ElementKind::Project, project, options);
+         Classify<Schema>(file, ElementKind::Site, site, options);
 
          WritePropertySets<Schema>(file, ElementKind::Project, project, project_context, PropertySetDeclaration::Condition::Classify);
       }

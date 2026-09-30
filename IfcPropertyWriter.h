@@ -37,6 +37,7 @@
 #include "IfcExporter.h"
 #include "Properties.h"
 #include "Units.h"
+#include "USBridge_Classifications.h"
 
 #include <EAF/EAFDisplayUnits.h>
 
@@ -55,6 +56,13 @@ public:
 
    // IfcPropertyEnumeration instances already written, by name and values, so each is written once
    std::map<std::string, uint32_t> enumerations;
+
+   // IfcClassification instances written by WriteClassificationSystems, by name
+   std::map<std::string, uint32_t> classification_systems;
+
+   // IfcClassificationReference instances already written, by system and identification. Elements with the same
+   // classification share a reference and its IfcRelAssociatesClassification
+   std::map<std::string, uint32_t> classification_references;
 
 private:
    std::unique_ptr<CIfcMappingTable> m_pTable;
@@ -95,6 +103,9 @@ namespace ifc_property_writer
       case ExportUnit::Deflection: return GetDisplacementUnit<Schema>(file, pBroker);
       case ExportUnit::Stress: return GetStressUnit<Schema>(file, pBroker);
       case ExportUnit::Angle: return GetAngleUnit<Schema>(file, pBroker);
+      case ExportUnit::SmallArea: return GetSmallAreaUnit<Schema>(file, pBroker);
+      case ExportUnit::BigArea: return GetBigAreaUnit<Schema>(file, pBroker);
+      case ExportUnit::Mass: return GetMassUnit<Schema>(file, pBroker);
       default: return {};
       }
    }
@@ -145,17 +156,17 @@ namespace ifc_property_writer
       return e;
    }
 
-   // The property, or an empty property if the target's value is absent
+   // The value of a property or quantity, from its constant or its target, in display or system units, and the unit of a
+   // display unit value. Returns false if the target's value is absent
    template <typename Schema>
-   typename Schema::IfcProperty create_property(hierarchy_helper<Schema>& file, const PropertyDeclaration& property, const ExportContext& context)
+   bool get_value(hierarchy_helper<Schema>& file, const PropertyDeclaration& property, const ExportContext& context, std::optional<TargetValue>& value, typename Schema::IfcUnit& unit)
    {
-      std::optional<TargetValue> value = property.value;
-      typename Schema::IfcUnit unit;
+      value = property.value;
       if (!value && property.target && property.target->get)
       {
          auto result = property.target->get(context);
          if (result.state == ExportValue::State::Absent)
-            return {};
+            return false;
 
          if (result.state == ExportValue::State::Value)
          {
@@ -167,6 +178,17 @@ namespace ifc_property_writer
             }
          }
       }
+      return true;
+   }
+
+   // The property, or an empty property if the target's value is absent
+   template <typename Schema>
+   typename Schema::IfcProperty create_property(hierarchy_helper<Schema>& file, const PropertyDeclaration& property, const ExportContext& context)
+   {
+      std::optional<TargetValue> value;
+      typename Schema::IfcUnit unit;
+      if (!get_value<Schema>(file, property, context, value, unit))
+         return {};
 
       std::optional<std::string> specification;
       if (!property.uri.empty())
@@ -199,6 +221,51 @@ namespace ifc_property_writer
       return properties;
    }
 
+   // The quantity, or an empty quantity if the target's value is absent. A quantity without a value is written as 0,
+   // because IfcPhysicalSimpleQuantity values aren't optional
+   template <typename Schema>
+   typename Schema::IfcPhysicalQuantity create_quantity(hierarchy_helper<Schema>& file, const PropertyDeclaration& quantity, const ExportContext& context)
+   {
+      std::optional<TargetValue> value;
+      typename Schema::IfcUnit unit;
+      if (!get_value<Schema>(file, quantity, context, value, unit))
+         return {};
+
+      Float64 v = value ? as_number(*value) : 0.0;
+      auto named_unit = unit.template as<typename Schema::IfcNamedUnit>();
+      const auto& type = quantity.type;
+      if (type == "IFCQUANTITYLENGTH") return file.template create<typename Schema::IfcQuantityLength>().initialize(quantity.name, std::nullopt, named_unit, v, std::nullopt);
+      if (type == "IFCQUANTITYAREA") return file.template create<typename Schema::IfcQuantityArea>().initialize(quantity.name, std::nullopt, named_unit, v, std::nullopt);
+      if (type == "IFCQUANTITYVOLUME") return file.template create<typename Schema::IfcQuantityVolume>().initialize(quantity.name, std::nullopt, named_unit, v, std::nullopt);
+      if (type == "IFCQUANTITYWEIGHT") return file.template create<typename Schema::IfcQuantityWeight>().initialize(quantity.name, std::nullopt, named_unit, v, std::nullopt);
+      if (type == "IFCQUANTITYCOUNT") return file.template create<typename Schema::IfcQuantityCount>().initialize(quantity.name, std::nullopt, named_unit, (int64_t)std::llround(v), std::nullopt);
+      ASSERT(false); // the table loader only accepts the types above
+      return {};
+   }
+
+   template <typename Schema>
+   typename Schema::IfcElementQuantity create_quantity_set(hierarchy_helper<Schema>& file, const PropertySetDeclaration& qto, const ExportContext& context)
+   {
+      std::vector<typename Schema::IfcPhysicalQuantity> quantities;
+      for (const auto& quantity : qto.properties)
+      {
+         if (auto q = create_quantity<Schema>(file, quantity, context))
+            quantities.push_back(q);
+      }
+      if (quantities.empty())
+         return {};
+
+      std::optional<std::string> description;
+      if (!qto.uri.empty())
+         description = qto.uri;
+
+      std::optional<std::string> method;
+      if (!qto.method.empty())
+         method = qto.method;
+
+      return file.template create<typename Schema::IfcElementQuantity>().initialize(ifcopenshell::global_id(), {}, qto.name, description, method, quantities);
+   }
+
    template <typename Schema>
    typename Schema::IfcPropertySet create_property_set(hierarchy_helper<Schema>& file, const PropertySetDeclaration& pset, const ExportContext& context)
    {
@@ -225,8 +292,15 @@ void WritePropertySets(hierarchy_helper<Schema>& file, ElementKind role, const s
       if (!IncludePropertySet(*pset, *context.options) || (only && pset->condition != *only))
          continue;
 
-      if (auto property_set = ifc_property_writer::create_property_set<Schema>(file, *pset, context))
+      if (pset->quantities)
+      {
+         if (auto qto = ifc_property_writer::create_quantity_set<Schema>(file, *pset, context))
+            file.template create<typename Schema::IfcRelDefinesByProperties>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, objects, qto);
+      }
+      else if (auto property_set = ifc_property_writer::create_property_set<Schema>(file, *pset, context))
+      {
          AddPropertySet(file, objects, property_set);
+      }
    }
 }
 
@@ -271,5 +345,67 @@ void WriteMaterialProperties(hierarchy_helper<Schema>& file, ElementKind role, t
          description = pset->uri;
 
       file.template create<typename Schema::IfcMaterialProperties>().initialize(pset->name, description, properties, material);
+   }
+}
+
+// Writes the classification systems (IfcClassification) the mapping table declares, associated with the project
+template <typename Schema>
+void WriteClassificationSystems(hierarchy_helper<Schema>& file)
+{
+   auto& session = CIfcExportSession::Current();
+   auto project = file.template getSingle<typename Schema::IfcProject>();
+   for (const auto* system : session.GetTable().GetClassificationSystems())
+   {
+      auto optional = [](const std::string& text) {return text.empty() ? std::optional<std::string>() : std::optional<std::string>(text); };
+      auto classification = file.template create<typename Schema::IfcClassification>().initialize(
+         optional(system->source), optional(system->edition), optional(system->edition_date), system->name,
+         std::nullopt /*Description*/, optional(system->specification), std::nullopt /*ReferenceTokens*/);
+      session.classification_systems[system->name] = classification.id();
+
+      std::vector<typename Schema::IfcDefinitionSelect> projects{ project };
+      auto rel = file.template create<typename Schema::IfcRelAssociatesClassification>();
+      rel.setGlobalId(ifcopenshell::global_id());
+      rel.setRelatedObjects(projects);
+      rel.setRelatingClassification(classification);
+   }
+}
+
+// Classifies an object with the classification references the mapping table declares for its element role
+template <typename Schema>
+void Classify(hierarchy_helper<Schema>& file, ElementKind role, typename Schema::IfcObjectDefinition object, const CIfcExportOptions& options)
+{
+   auto& session = CIfcExportSession::Current();
+   for (const auto* classification : session.GetTable().GetClassifications(role))
+   {
+      PropertySetDeclaration condition;
+      condition.condition = classification->condition;
+      if (!IncludePropertySet(condition, options))
+         continue;
+
+      std::string key = classification->system + "|" + classification->identification;
+      typename Schema::IfcClassificationReference reference;
+      auto found = session.classification_references.find(key);
+      if (found != session.classification_references.end())
+      {
+         reference = file.instance_by_id(found->second).template as<typename Schema::IfcClassificationReference>();
+      }
+      else
+      {
+         reference = file.template create<typename Schema::IfcClassificationReference>();
+         if (!classification->location.empty())
+            reference.setLocation(classification->location);
+         reference.setIdentification(classification->identification);
+         if (!classification->name.empty())
+            reference.setName(classification->name);
+
+         // a system that wasn't written in this export (e.g. a girder only export) leaves the source empty, as before
+         auto system = session.classification_systems.find(classification->system);
+         if (system != session.classification_systems.end())
+            reference.setReferencedSource(file.instance_by_id(system->second).template as<typename Schema::IfcClassification>());
+
+         session.classification_references.emplace(key, reference.id());
+      }
+
+      AssociateClassification<Schema>(file, reference, object);
    }
 }

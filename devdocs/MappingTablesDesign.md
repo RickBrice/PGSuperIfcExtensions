@@ -279,7 +279,8 @@ The values in `map` (e.g. every value `3_Fixity` actually takes) are taken from 
   - The loader checks entity and attribute names against the IFC schema.
   - Roles the importer uses in M1: `girder` (together with superstructure containment, G1), `deck`, `haunch`, `bearing`.
 - **Target lists:** a target's locations are a list, or `{ "mode": "replace", "locations": [...] }` to replace the base table's locations instead of going before them.
-- **Not in M1:** quantity locations (`quantity: {qto, name}`), and the `quantity_sets`, `classifications`, and `attributes` export sections. They come with the export engine (M3).
+- **Element roles** can be given as a list in `applies_to` (property sets, quantity sets, classifications). The table loader makes one declaration per role.
+- **Not yet:** quantity locations for the import (`quantity: {qto, name}`), and the `attributes` export section (element `Name`/`ObjectType` stay in code, see the export engine).
 
 ### Location reference
 
@@ -464,6 +465,13 @@ Each stage keeps the export identical to the baseline:
 1. The engine and getters. Property sets of the project, bridge, bridge parts, piers, foundations, deck slab, barriers, girders (occurrences and types), closure joints, and concrete materials.
    - **Done 2026-09-29:** `IfcPropertyWriter.h/.cpp` (`CIfcExportSession`, `WritePropertySets`, `CreateTypePropertySets`, `WriteMaterialProperties`), 34 export targets with getters in `IfcTargets.cpp`, and 36 property set declarations in `Standard.json`. All five round-trip exports are the same as the baseline, and the import scores are unchanged. The export log names the table files, and `/IfcMapping` works for the export too.
 2. Quantity sets and classifications.
+   - **Done 2026-09-29:**
+     - `quantity_sets` (`Qto_BeamBaseQuantities`, `Qto_SlabBaseQuantities`), with new export units for area (in², ft²) and mass (lb).
+     - `classification_systems` and `classifications`: `WriteClassificationSystems` and `Classify` replace `Add_usBridge_Classification` and the `Classify_usBridge_*` calls. Elements with the same classification share one reference and relationship.
+     - New element roles `superstructure`, `substructure`, and `deck_part` replace `bridge_part`; `abutment` is split from `pier` (it uses the pier targets); `girder_assembly` is added.
+     - `applies_to` can be a list of roles. `usBrPset_Common` is declared once for ten roles.
+     - The girder's property sets and quantity sets are written with one call, and their conditions decide which ones the options include.
+     - All five round-trip exports are the same as the baseline.
 3. Reinforcement and tendons: shared property sets, `Pset_MaterialSteel`, debonding, `usBrPset_ACI_*` bar properties, and group quantities. Bar shapes have a different set of dimensions per shape code, so this stage may leave the bar shape property sets in code. That's decided when the stage starts.
 4. Remove the replaced `Create_*` functions.
 

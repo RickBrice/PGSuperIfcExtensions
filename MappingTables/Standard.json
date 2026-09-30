@@ -4,397 +4,330 @@
   "version": 1,
   "name": "Standard (TPF/usBridge)",
   "elements": {
-    "girder": { "entity": "IfcBeam", "predefined_type": "BEAM" },
-    "deck": { "entity": "IfcSlab", "predefined_type": "FLOOR" },
-    "bearing": { "entity": "IfcBearing" }
+    "girder": {"entity": "IfcBeam", "predefined_type": "BEAM"},
+    "deck": {"entity": "IfcSlab", "predefined_type": "FLOOR"},
+    "bearing": {"entity": "IfcBearing"}
   },
   "property_sets": [
     {
       "name": "Pset_ProjectCommon", "applies_to": "project", "condition": "always",
       "properties": [
-        { "name": "ProjectType", "type": "IfcLabel", "value": "NEWBUILD",
-          "enumeration": { "name": "PEnum_ProjectType", "values": [ "MODIFICAITON", "NEWBUILD", "OPERATIONMAINTENANCE", "RENOVATION", "REPAIR" ] } }
+        {"name": "ProjectType", "type": "IfcLabel", "value": "NEWBUILD", "enumeration": {"name": "PEnum_ProjectType", "values": ["MODIFICAITON", "NEWBUILD", "OPERATIONMAINTENANCE", "RENOVATION", "REPAIR"]}}
       ]
     },
     {
       "name": "usBrPset_ProjectCommon", "applies_to": "project",
       "properties": [
-        { "name": "ApprovalStatus", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "FileNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "LettingDate", "type": "IfcDate", "uri": "bsdd" },
-        { "name": "ModelPreparationDate", "type": "IfcDate", "uri": "bsdd" },
-        { "name": "ModelVersion", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "ProjectDirectory", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "ProjectIdentification", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "ProjectNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "ProjectURL", "type": "IfcURIReference", "uri": "bsdd" },
-        { "name": "PSEData", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "ApprovalStatus", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "FileNumber", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "LettingDate", "type": "IfcDate", "uri": "bsdd"},
+        {"name": "ModelPreparationDate", "type": "IfcDate", "uri": "bsdd"},
+        {"name": "ModelVersion", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "ProjectDirectory", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "ProjectIdentification", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "ProjectNumber", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "ProjectURL", "type": "IfcURIReference", "uri": "bsdd"},
+        {"name": "PSEData", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
       "name": "usBrPset_ProjectLocation", "applies_to": "project", "uri": "bsdd",
       "properties": [
-        { "name": "City", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "County", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "District", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "State", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Section", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Township", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Range", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "City", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "County", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "District", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "State", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "Section", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "Township", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "Range", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
-
     {
-      "name": "usBrPset_Common", "applies_to": "bridge",
+      "name": "usBrPset_Common", "applies_to": ["bridge", "superstructure", "substructure", "deck_part", "pier", "abutment", "foundation", "deck", "barrier", "girder"],
       "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}},
+        {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "Note", "type": "IfcText", "uri": "bsdd"},
+        {"name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
       "name": "usBrPset_BridgeGeometry", "applies_to": "bridge",
       "properties": [
-        { "name": "BridgeEndStation", "type": "IfcLengthMeasure", "target": "bridge.end_station", "uri": "bsdd" },
-        { "name": "BridgeEndStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "BridgeLength", "type": "IfcPositiveLengthMeasure", "target": "bridge.length", "uri": "bsdd" },
-        { "name": "BridgeSkew", "type": "IfcPlaneAngleMeasure", "target": "bridge.max_skew", "uri": "bsdd" },
-        { "name": "BridgeStartStation", "type": "IfcLengthMeasure", "target": "bridge.start_station", "uri": "bsdd" },
-        { "name": "BridgeStartStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "LowBeamElevation", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "NumberOfSpans", "type": "IfcInteger", "target": "bridge.number_of_spans", "uri": "bsdd" },
-        { "name": "RoadwayWidth", "type": "IfcPositiveLengthMeasure", "target": "bridge.roadway_width", "uri": "bsdd" }
+        {"name": "BridgeEndStation", "type": "IfcLengthMeasure", "target": "bridge.end_station", "uri": "bsdd"},
+        {"name": "BridgeEndStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "BridgeLength", "type": "IfcPositiveLengthMeasure", "target": "bridge.length", "uri": "bsdd"},
+        {"name": "BridgeSkew", "type": "IfcPlaneAngleMeasure", "target": "bridge.max_skew", "uri": "bsdd"},
+        {"name": "BridgeStartStation", "type": "IfcLengthMeasure", "target": "bridge.start_station", "uri": "bsdd"},
+        {"name": "BridgeStartStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "LowBeamElevation", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "NumberOfSpans", "type": "IfcInteger", "target": "bridge.number_of_spans", "uri": "bsdd"},
+        {"name": "RoadwayWidth", "type": "IfcPositiveLengthMeasure", "target": "bridge.roadway_width", "uri": "bsdd"}
       ]
     },
     {
       "name": "usBrPset_BridgeIdentification", "applies_to": "bridge",
       "properties": [
-        { "name": "SNBIBridgeNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "SNBIBridgeName", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "SNBIBridgeNumber", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "SNBIBridgeName", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
       "name": "usBrPset_DesignLoading", "applies_to": "bridge",
       "properties": [
-        { "name": "DesignMethodology", "type": "IfcLabel", "value": "LRFD", "uri": "bsdd" },
-        { "name": "VehicularLiveLoad", "type": "IfcLabel", "target": "bridge.design_live_load", "uri": "bsdd" }
+        {"name": "DesignMethodology", "type": "IfcLabel", "value": "LRFD", "uri": "bsdd"},
+        {"name": "VehicularLiveLoad", "type": "IfcLabel", "target": "bridge.design_live_load", "uri": "bsdd"}
       ]
     },
     {
       "name": "usBrPset_FeatureIdentification", "applies_to": "bridge",
       "properties": [
-        { "name": "FeatureType", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "FeatureLocation", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "FeatureName", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "FeatureType", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "FeatureLocation", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "FeatureName", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
-      "name": "usBrPset_PayItemQuantities", "applies_to": "bridge",
+      "name": "usBrPset_PayItemQuantities", "applies_to": ["bridge", "deck", "barrier", "girder"],
       "properties": [
-        { "name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "PayQuantity", "type": "IfcReal", "uri": "bsdd" },
-        { "name": "UnitOfMeasure", "type": "IfcLabel", "uri": "bsdd" }
-      ]
-    },
-
-    {
-      "name": "usBrPset_Common", "applies_to": "bridge_part",
-      "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "PayQuantity", "type": "IfcReal", "uri": "bsdd"},
+        {"name": "UnitOfMeasure", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
-      "name": "usBrPset_BridgePartCommon", "applies_to": "bridge_part",
+      "name": "usBrPset_BridgePartCommon", "applies_to": ["superstructure", "substructure", "deck_part"],
       "properties": [
-        { "name": "EndSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd" },
-        { "name": "EndStation", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "EndStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StartSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd" },
-        { "name": "StartStation", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StartStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd" }
-      ]
-    },
-
-    {
-      "name": "usBrPset_Common", "applies_to": "pier",
-      "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "EndSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd"},
+        {"name": "EndStation", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "EndStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StartSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd"},
+        {"name": "StartStation", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StartStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd"}
       ]
     },
     {
-      "name": "usBrPset_SubstructureCommon", "applies_to": "pier",
+      "name": "usBrPset_SubstructureCommon", "applies_to": ["pier", "abutment"],
       "properties": [
-        { "name": "StationAheadBearing", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StationAtCenterline", "type": "IfcLengthMeasure", "target": "pier.station", "uri": "bsdd:PierStation" },
-        { "name": "StationBackBearing", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StationOffsetAheadBearing", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StationOffsetAtCenterline", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StationOffsetBackBearing", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "SubstructureSkewAngle", "type": "IfcPlaneAngleMeasure", "target": "pier.skew", "uri": "bsdd" },
-        { "name": "SubstructureType", "type": "IfcLabel", "value": "New", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_SubstructureType", "values": [ "New", "Other" ] } },
-        { "name": "ReturnInterval", "type": "IfcTimeMeasure", "uri": "bsdd" },
-        { "name": "ScourElevation", "type": "IfcLengthMeasure", "uri": "bsdd" }
+        {"name": "StationAheadBearing", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StationAtCenterline", "type": "IfcLengthMeasure", "target": "pier.station", "uri": "bsdd:PierStation"},
+        {"name": "StationBackBearing", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StationOffsetAheadBearing", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StationOffsetAtCenterline", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StationOffsetBackBearing", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "SubstructureSkewAngle", "type": "IfcPlaneAngleMeasure", "target": "pier.skew", "uri": "bsdd"},
+        {"name": "SubstructureType", "type": "IfcLabel", "value": "New", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_SubstructureType", "values": ["New", "Other"]}},
+        {"name": "ReturnInterval", "type": "IfcTimeMeasure", "uri": "bsdd"},
+        {"name": "ScourElevation", "type": "IfcLengthMeasure", "uri": "bsdd"}
       ]
     },
-
-    {
-      "name": "usBrPset_Common", "applies_to": "foundation",
-      "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
-      ]
-    },
-
     {
       "name": "Pset_ConcreteElementGeneral", "applies_to": "deck",
       "properties": [
-        { "name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE",
-          "enumeration": { "name": "PEnum_AssemblyPlace", "values": [ "FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "CastingMethod", "type": "IfcLabel", "value": "INSITU",
-          "enumeration": { "name": "PEnum_ConcreteCastingMethod", "values": [ "INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "StrengthClass", "type": "IfcLabel", "target": "deck.strength_class" }
-      ]
-    },
-    {
-      "name": "usBrPset_Common", "applies_to": "deck",
-      "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
-      ]
-    },
-    {
-      "name": "usBrPset_PayItemQuantities", "applies_to": "deck",
-      "properties": [
-        { "name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "PayQuantity", "type": "IfcReal", "uri": "bsdd" },
-        { "name": "UnitOfMeasure", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "INSITU", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "StrengthClass", "type": "IfcLabel", "target": "deck.strength_class"}
       ]
     },
     {
       "name": "usBrPset_SlabCommon", "applies_to": "deck",
       "properties": [
-        { "name": "CoatingNote", "type": "IfcText", "uri": "bsdd" },
-        { "name": "CrossSectionalArea", "type": "IfcAreaMeasure", "uri": "bsdd" },
-        { "name": "CrossSlope", "type": "IfcRatioMeasure", "uri": "bsdd" },
-        { "name": "EndSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd" },
-        { "name": "EndStation", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "EndStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StartSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd" },
-        { "name": "StartStation", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "StartStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd" }
+        {"name": "CoatingNote", "type": "IfcText", "uri": "bsdd"},
+        {"name": "CrossSectionalArea", "type": "IfcAreaMeasure", "uri": "bsdd"},
+        {"name": "CrossSlope", "type": "IfcRatioMeasure", "uri": "bsdd"},
+        {"name": "EndSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd"},
+        {"name": "EndStation", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "EndStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StartSkew", "type": "IfcPlaneAngleMeasure", "uri": "bsdd"},
+        {"name": "StartStation", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "StartStationOffset", "type": "IfcLengthMeasure", "uri": "bsdd"}
       ]
     },
     {
       "name": "usBrPset_RoadwaySlab", "applies_to": "deck", "uri": "bsdd",
       "properties": [
-        { "name": "FormType", "type": "IfcLabel", "value": "Wood", "uri": "bsdd" },
-        { "name": "SacrificialWearingSurface", "type": "IfcPositiveLengthMeasure", "uri": "bsdd:SacrificialWearingThickness" },
-        { "name": "SurfaceArea", "type": "IfcAreaMeasure", "uri": "bsdd" },
-        { "name": "SurfaceFinish", "type": "IfcLabel", "value": "Raked", "uri": "bsdd" }
+        {"name": "FormType", "type": "IfcLabel", "value": "Wood", "uri": "bsdd"},
+        {"name": "SacrificialWearingSurface", "type": "IfcPositiveLengthMeasure", "uri": "bsdd:SacrificialWearingThickness"},
+        {"name": "SurfaceArea", "type": "IfcAreaMeasure", "uri": "bsdd"},
+        {"name": "SurfaceFinish", "type": "IfcLabel", "value": "Raked", "uri": "bsdd"}
       ]
     },
     {
       "name": "Pset_MaterialConcrete", "applies_to": "deck", "attach": "material", "condition": "always",
       "properties": [
-        { "name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "deck.fc" },
-        { "name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "deck.max_aggregate_size" }
+        {"name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "deck.fc"},
+        {"name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "deck.max_aggregate_size"}
       ]
     },
-
     {
       "name": "usBrPset_MASH", "applies_to": "barrier", "uri": "bsdd",
       "properties": [
-        { "name": "MASHTestingLevel", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd" },
-        { "name": "GuardrailType", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd" },
-        { "name": "BarrierType", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd" },
-        { "name": "BarrierHeight", "type": "IfcPositiveLengthMeasure", "value": 0.01, "uri": "bsdd" }
+        {"name": "MASHTestingLevel", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd"},
+        {"name": "GuardrailType", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd"},
+        {"name": "BarrierType", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd"},
+        {"name": "BarrierHeight", "type": "IfcPositiveLengthMeasure", "value": 0.01, "uri": "bsdd"}
       ]
     },
     {
       "name": "Pset_ConcreteElementGeneral", "applies_to": "barrier",
       "properties": [
-        { "name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE",
-          "enumeration": { "name": "PEnum_AssemblyPlace", "values": [ "FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "CastingMethod", "type": "IfcLabel", "value": "INSITU",
-          "enumeration": { "name": "PEnum_ConcreteCastingMethod", "values": [ "INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "StrengthClass", "type": "IfcLabel", "target": "barrier.strength_class" }
-      ]
-    },
-    {
-      "name": "usBrPset_Common", "applies_to": "barrier",
-      "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
-      ]
-    },
-    {
-      "name": "usBrPset_PayItemQuantities", "applies_to": "barrier",
-      "properties": [
-        { "name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "PayQuantity", "type": "IfcReal", "uri": "bsdd" },
-        { "name": "UnitOfMeasure", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "INSITU", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "StrengthClass", "type": "IfcLabel", "target": "barrier.strength_class"}
       ]
     },
     {
       "name": "Pset_MaterialConcrete", "applies_to": "barrier", "attach": "material", "condition": "always",
       "properties": [
-        { "name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "barrier.fc" },
-        { "name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "barrier.max_aggregate_size" }
+        {"name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "barrier.fc"},
+        {"name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "barrier.max_aggregate_size"}
       ]
     },
-
     {
       "name": "Pset_BeamCommon", "applies_to": "girder",
       "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW",
-          "enumeration": { "name": "PEnum_ElementStatus", "values": [ "DEMOLISH", "EXISTING", "NEW", "TEMPORARY", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "Span", "type": "IfcPositiveLengthMeasure", "target": "girder.span" },
-        { "name": "Slope", "type": "IfcPlaneAngleMeasure", "target": "girder.slope" },
-        { "name": "Roll", "type": "IfcPlaneAngleMeasure", "target": "girder.roll" }
+        {"name": "Status", "type": "IfcLabel", "value": "NEW", "enumeration": {"name": "PEnum_ElementStatus", "values": ["DEMOLISH", "EXISTING", "NEW", "TEMPORARY", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "Span", "type": "IfcPositiveLengthMeasure", "target": "girder.span"},
+        {"name": "Slope", "type": "IfcPlaneAngleMeasure", "target": "girder.slope"},
+        {"name": "Roll", "type": "IfcPlaneAngleMeasure", "target": "girder.roll"}
       ]
     },
     {
       "name": "Pset_ConcreteElementGeneral", "applies_to": "girder",
       "properties": [
-        { "name": "StrengthClass", "type": "IfcLabel", "target": "girder.strength_class" }
+        {"name": "StrengthClass", "type": "IfcLabel", "target": "girder.strength_class"}
       ]
     },
     {
       "name": "Pset_PrecastConcreteElementGeneral", "applies_to": "girder",
       "properties": [
-        { "name": "TypeDesignation", "type": "IfcLabel", "target": "girder.family_name" },
-        { "name": "CornerChamfer", "type": "IfcPositiveLengthMeasure" },
-        { "name": "ManufacturingToleranceClass", "type": "IfcLabel" },
-        { "name": "FormStrippingStrength", "type": "IfcPressureMeasure", "target": "girder.fci", "import": false },
-        { "name": "LiftingStrength", "type": "IfcPressureMeasure", "target": "girder.fci", "import": false },
-        { "name": "ReleaseStrength", "type": "IfcPressureMeasure", "target": "girder.fci" },
-        { "name": "MinimumAllowableSupportLength", "type": "IfcPositiveLengthMeasure", "target": "girder.bunk_point" },
-        { "name": "InitialTension", "type": "IfcPressureMeasure", "target": "girder.jacking_stress" },
-        { "name": "TendonRelaxation", "type": "IfcPositiveRatioMeasure" },
-        { "name": "TransportationStrength", "type": "IfcPressureMeasure", "target": "girder.fc", "import": false },
-        { "name": "SupportDuringTransportDescription", "type": "IfcText", "value": "Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property" },
-        { "name": "HollowCorePlugging", "type": "IfcLabel" },
-        { "name": "CamberAtMidspan", "type": "IfcRatioMeasure", "target": "girder.camber_ratio" },
-        { "name": "BatterAtStart", "type": "IfcPlaneAngleMeasure", "target": "girder.batter" },
-        { "name": "BatterAtEnd", "type": "IfcPlaneAngleMeasure", "target": "girder.batter" },
-        { "name": "Twisting", "type": "IfcPlaneAngleMeasure" },
-        { "name": "Shortening", "type": "IfcRatioMeasure" },
-        { "name": "PieceMark", "type": "IfcLabel" },
-        { "name": "DesignLocationNumber", "type": "IfcLabel", "target": "girder.designation" }
-      ]
-    },
-    {
-      "name": "usBrPset_Common", "applies_to": "girder",
-      "properties": [
-        { "name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd",
-          "enumeration": { "name": "usBrPEnum_ElementStatus", "values": [ "NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER" ] } },
-        { "name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "Note", "type": "IfcText", "uri": "bsdd" },
-        { "name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd" }
-      ]
-    },
-    {
-      "name": "usBrPset_PayItemQuantities", "applies_to": "girder",
-      "properties": [
-        { "name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd" },
-        { "name": "PayQuantity", "type": "IfcReal", "uri": "bsdd" },
-        { "name": "UnitOfMeasure", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "TypeDesignation", "type": "IfcLabel", "target": "girder.family_name"},
+        {"name": "CornerChamfer", "type": "IfcPositiveLengthMeasure"},
+        {"name": "ManufacturingToleranceClass", "type": "IfcLabel"},
+        {"name": "FormStrippingStrength", "type": "IfcPressureMeasure", "target": "girder.fci", "import": false},
+        {"name": "LiftingStrength", "type": "IfcPressureMeasure", "target": "girder.fci", "import": false},
+        {"name": "ReleaseStrength", "type": "IfcPressureMeasure", "target": "girder.fci"},
+        {"name": "MinimumAllowableSupportLength", "type": "IfcPositiveLengthMeasure", "target": "girder.bunk_point"},
+        {"name": "InitialTension", "type": "IfcPressureMeasure", "target": "girder.jacking_stress"},
+        {"name": "TendonRelaxation", "type": "IfcPositiveRatioMeasure"},
+        {"name": "TransportationStrength", "type": "IfcPressureMeasure", "target": "girder.fc", "import": false},
+        {"name": "SupportDuringTransportDescription", "type": "IfcText", "value": "Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property"},
+        {"name": "HollowCorePlugging", "type": "IfcLabel"},
+        {"name": "CamberAtMidspan", "type": "IfcRatioMeasure", "target": "girder.camber_ratio"},
+        {"name": "BatterAtStart", "type": "IfcPlaneAngleMeasure", "target": "girder.batter"},
+        {"name": "BatterAtEnd", "type": "IfcPlaneAngleMeasure", "target": "girder.batter"},
+        {"name": "Twisting", "type": "IfcPlaneAngleMeasure"},
+        {"name": "Shortening", "type": "IfcRatioMeasure"},
+        {"name": "PieceMark", "type": "IfcLabel"},
+        {"name": "DesignLocationNumber", "type": "IfcLabel", "target": "girder.designation"}
       ]
     },
     {
       "name": "usBrPset_PrecastConcreteBeam", "applies_to": "girder",
       "properties": [
-        { "name": "DeflectionLongTerm", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "DeflectionShortTerm", "type": "IfcLengthMeasure", "target": "girder.screed_camber", "uri": "bsdd" },
-        { "name": "ElasticShortening", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "LiftingLoopLocation", "type": "IfcLengthMeasure", "uri": "bsdd" },
-        { "name": "MidSpanCamberAfterLosses", "type": "IfcLengthMeasure", "target": "girder.camber_after_losses", "uri": "bsdd" },
-        { "name": "MidSpanCamberAtRelease", "type": "IfcLengthMeasure", "target": "girder.camber_at_release", "uri": "bsdd" },
-        { "name": "MinimumTimeToDeckPlacement", "type": "IfcTimeMeasure", "uri": "bsdd:MinimumTimetoDeckPlacement" },
-        { "name": "ShapeName", "type": "IfcLabel", "target": "girder.type_names", "uri": "bsdd" },
-        { "name": "TopSurfaceFinish", "type": "IfcLabel", "uri": "bsdd" }
+        {"name": "DeflectionLongTerm", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "DeflectionShortTerm", "type": "IfcLengthMeasure", "target": "girder.screed_camber", "uri": "bsdd"},
+        {"name": "ElasticShortening", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "LiftingLoopLocation", "type": "IfcLengthMeasure", "uri": "bsdd"},
+        {"name": "MidSpanCamberAfterLosses", "type": "IfcLengthMeasure", "target": "girder.camber_after_losses", "uri": "bsdd"},
+        {"name": "MidSpanCamberAtRelease", "type": "IfcLengthMeasure", "target": "girder.camber_at_release", "uri": "bsdd"},
+        {"name": "MinimumTimeToDeckPlacement", "type": "IfcTimeMeasure", "uri": "bsdd:MinimumTimetoDeckPlacement"},
+        {"name": "ShapeName", "type": "IfcLabel", "target": "girder.type_names", "uri": "bsdd"},
+        {"name": "TopSurfaceFinish", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
       "name": "Pset_ConcreteElementGeneral", "applies_to": "girder", "attach": "type", "condition": "always",
       "properties": [
-        { "name": "AssemblyPlace", "type": "IfcLabel", "value": "FACTORY",
-          "enumeration": { "name": "PEnum_AssemblyPlace", "values": [ "FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "CastingMethod", "type": "IfcLabel", "value": "PRECAST",
-          "enumeration": { "name": "PEnum_ConcreteCastingMethod", "values": [ "INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET" ] } }
+        {"name": "AssemblyPlace", "type": "IfcLabel", "value": "FACTORY", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "PRECAST", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}}
       ]
     },
     {
       "name": "Pset_MaterialConcrete", "applies_to": "girder", "attach": "material", "condition": "always",
       "properties": [
-        { "name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "girder.fc" },
-        { "name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "girder.max_aggregate_size" }
+        {"name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "girder.fc"},
+        {"name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "girder.max_aggregate_size"}
       ]
     },
-
     {
       "name": "Pset_ConcreteElementGeneral", "applies_to": "closure_joint", "condition": "always",
       "properties": [
-        { "name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE",
-          "enumeration": { "name": "PEnum_AssemblyPlace", "values": [ "FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET" ] } },
-        { "name": "CastingMethod", "type": "IfcLabel", "value": "INSITU",
-          "enumeration": { "name": "PEnum_ConcreteCastingMethod", "values": [ "INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET" ] } }
+        {"name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "INSITU", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}}
       ]
     },
-
     {
       "name": "Pset_BearingCommon", "applies_to": "bearing", "condition": "always",
       "comment": "Not exported yet: declared for the import. DisplacementAccommodated is a list, [0] along the girder and [1] across, read by the locations of bearing.fixed_x and bearing.fixed_y",
       "properties": [
-        { "name": "DisplacementAccommodated", "type": "IfcBoolean" }
+        {"name": "DisplacementAccommodated", "type": "IfcBoolean"}
       ]
     }
   ],
+  "quantity_sets": [
+    {
+      "name": "Qto_BeamBaseQuantities", "applies_to": "girder", "condition": "quantities", "method": "BaseQuantities",
+      "comment": "Simple sections are assumed (no end blocks or variable depth)",
+      "quantities": [
+        {"name": "Length", "type": "IfcQuantityLength", "target": "girder.length"},
+        {"name": "CrossSectionArea", "type": "IfcQuantityArea", "target": "girder.cross_section_area"},
+        {"name": "OuterSurfaceArea", "type": "IfcQuantityArea", "target": "girder.outer_surface_area"},
+        {"name": "GrossWeight", "type": "IfcQuantityWeight", "target": "girder.gross_weight"}
+      ]
+    },
+    {
+      "name": "Qto_SlabBaseQuantities", "applies_to": "deck", "method": "BaseQuantities",
+      "comment": "Placeholders: every quantity is 0 (see the export findings in the design note)",
+      "quantities": [
+        {"name": "Width", "type": "IfcQuantityLength", "value": 0.0},
+        {"name": "Length", "type": "IfcQuantityLength", "value": 0.0},
+        {"name": "Depth", "type": "IfcQuantityLength", "value": 0.0},
+        {"name": "Perimeter", "type": "IfcQuantityLength", "value": 0.0},
+        {"name": "GrossArea", "type": "IfcQuantityArea", "value": 0.0},
+        {"name": "NetArea", "type": "IfcQuantityArea", "value": 0.0},
+        {"name": "GrossVolume", "type": "IfcQuantityVolume", "value": 0.0},
+        {"name": "NetVolume", "type": "IfcQuantityVolume", "value": 0.0},
+        {"name": "GrossWeight", "type": "IfcQuantityWeight", "value": 0.0},
+        {"name": "NetWeight", "type": "IfcQuantityWeight", "value": 0.0}
+      ]
+    }
+  ],
+  "classification_systems": [
+    {"name": "usBridge", "source": "usBridge", "edition": "1", "edition_date": "2026-04-20", "specification": "bsdd"}
+  ],
+  "classifications": [
+    {"applies_to": "project", "system": "usBridge", "identification": "usBridge_BridgeProject", "name": "BridgeProject", "location": "bsdd"},
+    {"applies_to": "site", "system": "usBridge", "identification": "usBridge_BridgeSite", "name": "BridgeSite", "location": "bsdd"},
+    {"applies_to": "bridge", "system": "usBridge", "identification": "usBridge_GirderBridge", "name": "GirderBridge", "location": "bsdd"},
+    {"applies_to": "superstructure", "system": "usBridge", "identification": "usBridge_BridgeSuperstructure", "name": "BridgeSuperstructure", "location": "bsdd"},
+    {"applies_to": "substructure", "system": "usBridge", "identification": "usBridge_BridgeSubstructure", "name": "BridgeSubstructure", "location": "bsdd"},
+    {"applies_to": "deck_part", "system": "usBridge", "identification": "usBridge_Deck", "name": "Deck", "location": "bsdd"},
+    {"applies_to": "abutment", "system": "usBridge", "identification": "usBridge_Abutment", "name": "Abutment", "location": "bsdd"},
+    {"applies_to": "pier", "system": "usBridge", "identification": "usBridge_Pier", "name": "Pier", "location": "bsdd"},
+    {"applies_to": "foundation", "system": "usBridge", "identification": "usBridge_Foundation", "name": "Foundation", "location": "bsdd"},
+    {"applies_to": "deck", "system": "usBridge", "identification": "usBridge_DeckSlab", "name": "DeckSlab", "location": "bsdd"},
+    {"applies_to": "barrier", "system": "usBridge", "identification": "usBridge_Barrier", "name": "Barrier", "location": "bsdd"},
+    {"applies_to": "girder_assembly", "system": "usBridge", "identification": "usBridge_Girder", "name": "Girder", "location": "bsdd"},
+    {"applies_to": "girder", "system": "usBridge", "identification": "usBridge_GirderPrecastConcrete", "name": "GirderPrecastConcrete", "location": "bsdd"}
+  ],
   "targets": {
     "girder.type_names": [
-      { "type_attribute": "Name" },
-      { "property": { "pset": "usBrPset_PrecastConcreteBeam", "name": "ShapeName" } }
+      {"type_attribute": "Name"},
+      {"property": {"pset": "usBrPset_PrecastConcreteBeam", "name": "ShapeName"}}
     ],
     "girder.assembly_place": [
-      { "property": { "pset": "Pset_ConcreteElementGeneral", "name": "AssemblyPlace" }, "comment": "on the type object; \"occurrence\" also looks at the type" }
+      {"property": {"pset": "Pset_ConcreteElementGeneral", "name": "AssemblyPlace"}, "comment": "on the type object; \"occurrence\" also looks at the type"}
     ],
     "girder.casting_method": [
-      { "property": { "pset": "Pset_ConcreteElementGeneral", "name": "CastingMethod" } }
+      {"property": {"pset": "Pset_ConcreteElementGeneral", "name": "CastingMethod"}}
     ],
     "bearing.fixed_x": [
-      { "property": { "pset": "Pset_BearingCommon", "name": "DisplacementAccommodated" }, "list_index": 0,
-        "map": { "true": false, "false": true }, "comment": "displacement accommodated means not fixed" }
+      {"property": {"pset": "Pset_BearingCommon", "name": "DisplacementAccommodated"}, "list_index": 0, "map": {"true": false, "false": true}, "comment": "displacement accommodated means not fixed"}
     ],
     "bearing.fixed_y": [
-      { "property": { "pset": "Pset_BearingCommon", "name": "DisplacementAccommodated" }, "list_index": 1,
-        "map": { "true": false, "false": true } }
+      {"property": {"pset": "Pset_BearingCommon", "name": "DisplacementAccommodated"}, "list_index": 1, "map": {"true": false, "false": true}}
     ]
   }
 }

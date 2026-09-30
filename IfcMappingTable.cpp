@@ -152,7 +152,7 @@ namespace
             return;
          }
 
-         CheckKeys(j, "", { "format", "version", "name", "extends", "elements", "targets", "property_sets" });
+         CheckKeys(j, "", { "format", "version", "name", "extends", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
 
          auto format = GetString(j, "format", "", true);
          if (format && *format != table_format)
@@ -179,7 +179,16 @@ namespace
             ParseElements(j["elements"]);
 
          if (j.contains("property_sets"))
-            ParsePropertySets(j["property_sets"]);
+            ParsePropertySets(j["property_sets"], "property_sets", false);
+
+         if (j.contains("quantity_sets"))
+            ParsePropertySets(j["quantity_sets"], "quantity_sets", true);
+
+         if (j.contains("classification_systems"))
+            ParseClassificationSystems(j["classification_systems"]);
+
+         if (j.contains("classifications"))
+            ParseClassifications(j["classifications"]);
 
          if (j.contains("targets"))
             ParseTargets(j["targets"]);
@@ -255,18 +264,54 @@ namespace
          return j[key].get<bool>();
       }
 
-      bool GetRole(const json& j, const char* key, const std::string& path, ElementKind& kind)
+      // an element role, or a list of element roles
+      bool GetRoles(const json& j, const char* key, const std::string& path, std::vector<ElementKind>& roles)
       {
-         auto role = GetString(j, key, path, true);
-         if (!role)
-            return false;
-
-         if (!GetElementKind(*role, kind))
+         if (!j.contains(key))
          {
-            Error(Path(path, key), "unknown element role \"" + *role + "\"");
+            Error(Path(path, key), "missing");
             return false;
          }
-         return true;
+
+         const auto& value = j[key];
+         std::vector<std::string> names;
+         if (value.is_string())
+            names.push_back(value.get<std::string>());
+         else if (value.is_array() && !value.empty() && std::all_of(value.begin(), value.end(), [](const auto& v) {return v.is_string(); }))
+            names = value.get<std::vector<std::string>>();
+         else
+         {
+            Error(Path(path, key), "must be an element role or a list of element roles");
+            return false;
+         }
+
+         bool bOk = true;
+         for (const auto& name : names)
+         {
+            ElementKind kind;
+            if (GetElementKind(name, kind))
+            {
+               roles.push_back(kind);
+            }
+            else
+            {
+               Error(Path(path, key), "unknown element role \"" + name + "\"");
+               bOk = false;
+            }
+         }
+         return bOk;
+      }
+
+      PropertySetDeclaration::Condition GetCondition(const json& j, const std::string& path)
+      {
+         auto condition = GetString(j, "condition", path, false).value_or("classify");
+         if (condition == "quantities")
+            return PropertySetDeclaration::Condition::Quantities;
+         if (condition == "always")
+            return PropertySetDeclaration::Condition::Always;
+         if (condition != "classify")
+            Error(Path(path, "condition"), "must be \"classify\", \"quantities\", or \"always\"");
+         return PropertySetDeclaration::Condition::Classify;
       }
 
       bool GetOwner(const json& j, const char* key, const std::string& path, PropertyOwner& owner)
@@ -428,17 +473,18 @@ namespace
          return std::nullopt;
       }
 
-      void ParsePropertySets(const json& j)
+      // property sets, or quantity sets (bQuantities). A declaration for a list of element roles becomes one declaration per role
+      void ParsePropertySets(const json& j, const char* section, bool bQuantities)
       {
          if (!j.is_array())
          {
-            Error("property_sets", "must be a list of property sets");
+            Error(section, bQuantities ? "must be a list of quantity sets" : "must be a list of property sets");
             return;
          }
 
          for (size_t i = 0; i < j.size(); i++)
          {
-            auto path = Path("property_sets", i);
+            auto path = Path(section, i);
             const auto& jpset = j[i];
             if (!jpset.is_object())
             {
@@ -446,127 +492,224 @@ namespace
                continue;
             }
 
-            CheckKeys(jpset, path, { "name", "applies_to", "attach", "condition", "uri", "shared", "remove", "properties" });
+            if (bQuantities)
+               CheckKeys(jpset, path, { "name", "applies_to", "condition", "method", "uri", "remove", "quantities" });
+            else
+               CheckKeys(jpset, path, { "name", "applies_to", "attach", "condition", "uri", "shared", "remove", "properties" });
 
             PropertySetDeclaration pset;
             pset.name = GetString(jpset, "name", path, true).value_or("");
-            bool bRole = GetRole(jpset, "applies_to", path, pset.applies_to);
-            GetOwner(jpset, "attach", path, pset.attach);
+            std::vector<ElementKind> roles;
+            bool bRoles = GetRoles(jpset, "applies_to", path, roles);
+            if (!bQuantities)
+               GetOwner(jpset, "attach", path, pset.attach);
+            pset.condition = GetCondition(jpset, path);
             pset.uri = ResolveUri(GetString(jpset, "uri", path, false).value_or(""), pset.name, "class");
+            pset.quantities = bQuantities;
+            pset.method = GetString(jpset, "method", path, false).value_or("");
             pset.shared = GetBool(jpset, "shared", path).value_or(false);
             pset.remove = GetBool(jpset, "remove", path).value_or(false);
 
-            auto condition = GetString(jpset, "condition", path, false).value_or("classify");
-            if (condition == "classify")
-               pset.condition = PropertySetDeclaration::Condition::Classify;
-            else if (condition == "quantities")
-               pset.condition = PropertySetDeclaration::Condition::Quantities;
-            else if (condition == "always")
-               pset.condition = PropertySetDeclaration::Condition::Always;
-            else
-               Error(Path(path, "condition"), "must be \"classify\", \"quantities\", or \"always\"");
-
-            if (pset.remove)
+            const char* items_key = bQuantities ? "quantities" : "properties";
+            if (!pset.remove)
             {
-               // only the key is needed to remove a property set
-               m_File.property_sets.push_back(pset);
-               continue;
-            }
-
-            if (!jpset.contains("properties") || !jpset["properties"].is_array() || jpset["properties"].empty())
-            {
-               Error(Path(path, "properties"), "missing, or not a list of properties");
-               continue;
-            }
-
-            const auto& jproperties = jpset["properties"];
-            for (size_t k = 0; k < jproperties.size(); k++)
-            {
-               auto property_path = Path(Path(path, "properties"), k);
-               const auto& jproperty = jproperties[k];
-               if (!jproperty.is_object())
+               if (!jpset.contains(items_key) || !jpset[items_key].is_array() || jpset[items_key].empty())
                {
-                  Error(property_path, "must be an object");
+                  Error(Path(path, items_key), bQuantities ? "missing, or not a list of quantities" : "missing, or not a list of properties");
                   continue;
                }
 
-               CheckKeys(jproperty, property_path, { "name", "type", "target", "value", "import", "uri", "enumeration" });
-
-               PropertyDeclaration property;
-               property.name = GetString(jproperty, "name", property_path, true).value_or("");
-
-               if (auto type = GetString(jproperty, "type", property_path, true))
+               const auto& jproperties = jpset[items_key];
+               for (size_t k = 0; k < jproperties.size(); k++)
                {
-                  auto declaration = find_declaration(*type);
-                  if (!declaration || declaration->as_entity())
-                     Error(Path(property_path, "type"), "\"" + *type + "\" isn't an IFC value type");
-                  else
-                     property.type = upper(*type);
+                  auto property_path = Path(Path(path, items_key), k);
+                  if (auto property = ParseProperty(jproperties[k], property_path, pset, bRoles ? roles : std::vector<ElementKind>{}))
+                     pset.properties.push_back(*property);
                }
-
-               if (auto target_name = GetString(jproperty, "target", property_path, false))
-               {
-                  property.target = FindTargetDef(*target_name);
-                  if (!property.target)
-                  {
-                     Error(Path(property_path, "target"), UnknownTarget(*target_name));
-                  }
-                  else if (bRole && property.target->element != pset.applies_to)
-                  {
-                     Error(Path(property_path, "target"), "\"" + *target_name + "\" belongs to the " + std::string(GetElementRoleName(property.target->element)) +
-                        ", but the property set applies to the " + std::string(GetElementRoleName(pset.applies_to)));
-                  }
-                  else if (pset.shared)
-                  {
-                     Error(Path(property_path, "target"), "a shared property set can't have properties with targets, because target values belong to one element");
-                  }
-               }
-
-               if (jproperty.contains("value"))
-               {
-                  if (property.target)
-                     Error(Path(property_path, "value"), "a property can have a target or a value, not both");
-                  else if (!property.type.empty())
-                     property.value = GetConstant(jproperty["value"], Path(property_path, "value"), property.type);
-               }
-
-               // a property without a value only declares the property, so any value type will do
-               if ((property.target || property.value) && !property.type.empty() && !IsExportValueType(property.type))
-                  Error(Path(property_path, "type"), "\"" + property.type + "\" isn't a value type the exporter can write");
-
-               property.import = GetBool(jproperty, "import", property_path).value_or(true);
-               property.uri = ResolveUri(GetString(jproperty, "uri", property_path, false).value_or(""), property.name, "prop");
-
-               if (jproperty.contains("enumeration"))
-               {
-                  const auto& jenum = jproperty["enumeration"];
-                  auto enum_path = Path(property_path, "enumeration");
-                  if (!jenum.is_object())
-                  {
-                     Error(enum_path, "must be an object with a name and values");
-                  }
-                  else
-                  {
-                     CheckKeys(jenum, enum_path, { "name", "values" });
-                     property.enumeration_name = GetString(jenum, "name", enum_path, true).value_or("");
-                     if (!jenum.contains("values") || !jenum["values"].is_array() || jenum["values"].empty() || !std::all_of(jenum["values"].begin(), jenum["values"].end(), [](const auto& v) {return v.is_string(); }))
-                        Error(Path(enum_path, "values"), "missing, or not a list of text values");
-                     else
-                        property.enumeration_values = jenum["values"].get<std::vector<std::string>>();
-
-                     if (property.target && property.target->kind != ValueKind::Text)
-                        Error(Path(property_path, "target"), "an enumerated property needs a text target");
-
-                     if (property.value && std::holds_alternative<std::string>(*property.value) &&
-                        std::find(property.enumeration_values.begin(), property.enumeration_values.end(), std::get<std::string>(*property.value)) == property.enumeration_values.end())
-                        Error(Path(property_path, "value"), "isn't one of the enumeration values");
-                  }
-               }
-
-               pset.properties.push_back(property);
             }
 
-            m_File.property_sets.push_back(pset);
+            for (auto role : roles)
+            {
+               pset.applies_to = role;
+               m_File.property_sets.push_back(pset);
+            }
+         }
+      }
+
+      std::optional<PropertyDeclaration> ParseProperty(const json& jproperty, const std::string& property_path, const PropertySetDeclaration& pset, const std::vector<ElementKind>& roles)
+      {
+         if (!jproperty.is_object())
+         {
+            Error(property_path, "must be an object");
+            return std::nullopt;
+         }
+
+         if (pset.quantities)
+            CheckKeys(jproperty, property_path, { "name", "type", "target", "value", "import" });
+         else
+            CheckKeys(jproperty, property_path, { "name", "type", "target", "value", "import", "uri", "enumeration" });
+
+         PropertyDeclaration property;
+         property.name = GetString(jproperty, "name", property_path, true).value_or("");
+
+         if (auto type = GetString(jproperty, "type", property_path, true))
+         {
+            if (pset.quantities)
+            {
+               if (!IsExportQuantityType(upper(*type)))
+                  Error(Path(property_path, "type"), "\"" + *type + "\" isn't a quantity type the exporter can write (IfcQuantityLength, IfcQuantityArea, IfcQuantityVolume, IfcQuantityWeight, IfcQuantityCount)");
+               else
+                  property.type = upper(*type);
+            }
+            else
+            {
+               auto declaration = find_declaration(*type);
+               if (!declaration || declaration->as_entity())
+                  Error(Path(property_path, "type"), "\"" + *type + "\" isn't an IFC value type");
+               else
+                  property.type = upper(*type);
+            }
+         }
+
+         if (auto target_name = GetString(jproperty, "target", property_path, false))
+         {
+            property.target = FindTargetDef(*target_name);
+            if (!property.target)
+            {
+               Error(Path(property_path, "target"), UnknownTarget(*target_name));
+            }
+            else if (pset.shared)
+            {
+               Error(Path(property_path, "target"), "a shared property set can't have properties with targets, because target values belong to one element");
+            }
+            else
+            {
+               for (auto role : roles)
+               {
+                  if (property.target->element != GetTargetElement(role))
+                  {
+                     Error(Path(property_path, "target"), "\"" + *target_name + "\" belongs to the " + std::string(GetElementRoleName(property.target->element)) +
+                        ", but the property set applies to the " + std::string(GetElementRoleName(role)));
+                     break;
+                  }
+               }
+            }
+         }
+
+         if (jproperty.contains("value"))
+         {
+            if (property.target)
+               Error(Path(property_path, "value"), "a property can have a target or a value, not both");
+            else if (!property.type.empty())
+               property.value = GetConstant(jproperty["value"], Path(property_path, "value"), pset.quantities ? std::string("IFCREAL") : property.type);
+         }
+
+         // a property without a value only declares the property, so any value type will do
+         if (!pset.quantities && (property.target || property.value) && !property.type.empty() && !IsExportValueType(property.type))
+            Error(Path(property_path, "type"), "\"" + property.type + "\" isn't a value type the exporter can write");
+
+         property.import = GetBool(jproperty, "import", property_path).value_or(!pset.quantities);
+         property.uri = ResolveUri(GetString(jproperty, "uri", property_path, false).value_or(""), property.name, "prop");
+
+         if (jproperty.contains("enumeration"))
+         {
+            const auto& jenum = jproperty["enumeration"];
+            auto enum_path = Path(property_path, "enumeration");
+            if (!jenum.is_object())
+            {
+               Error(enum_path, "must be an object with a name and values");
+            }
+            else
+            {
+               CheckKeys(jenum, enum_path, { "name", "values" });
+               property.enumeration_name = GetString(jenum, "name", enum_path, true).value_or("");
+               if (!jenum.contains("values") || !jenum["values"].is_array() || jenum["values"].empty() || !std::all_of(jenum["values"].begin(), jenum["values"].end(), [](const auto& v) {return v.is_string(); }))
+                  Error(Path(enum_path, "values"), "missing, or not a list of text values");
+               else
+                  property.enumeration_values = jenum["values"].get<std::vector<std::string>>();
+
+               if (property.target && property.target->kind != ValueKind::Text)
+                  Error(Path(property_path, "target"), "an enumerated property needs a text target");
+
+               if (property.value && std::holds_alternative<std::string>(*property.value) &&
+                  std::find(property.enumeration_values.begin(), property.enumeration_values.end(), std::get<std::string>(*property.value)) == property.enumeration_values.end())
+                  Error(Path(property_path, "value"), "isn't one of the enumeration values");
+            }
+         }
+
+         return property;
+      }
+
+      void ParseClassificationSystems(const json& j)
+      {
+         if (!j.is_array())
+         {
+            Error("classification_systems", "must be a list of classification systems");
+            return;
+         }
+
+         for (size_t i = 0; i < j.size(); i++)
+         {
+            auto path = Path("classification_systems", i);
+            const auto& jsystem = j[i];
+            if (!jsystem.is_object())
+            {
+               Error(path, "must be an object");
+               continue;
+            }
+
+            CheckKeys(jsystem, path, { "name", "source", "edition", "edition_date", "specification" });
+
+            ClassificationSystemDeclaration system;
+            system.name = GetString(jsystem, "name", path, true).value_or("");
+            system.source = GetString(jsystem, "source", path, false).value_or("");
+            system.edition = GetString(jsystem, "edition", path, false).value_or("");
+            system.edition_date = GetString(jsystem, "edition_date", path, false).value_or("");
+            auto specification = GetString(jsystem, "specification", path, false).value_or("");
+            system.specification = (specification == "bsdd" ? BSDD_URI : specification);
+            m_File.classification_systems.push_back(system);
+         }
+      }
+
+      void ParseClassifications(const json& j)
+      {
+         if (!j.is_array())
+         {
+            Error("classifications", "must be a list of classifications");
+            return;
+         }
+
+         for (size_t i = 0; i < j.size(); i++)
+         {
+            auto path = Path("classifications", i);
+            const auto& jclassification = j[i];
+            if (!jclassification.is_object())
+            {
+               Error(path, "must be an object");
+               continue;
+            }
+
+            CheckKeys(jclassification, path, { "applies_to", "condition", "system", "identification", "name", "location", "remove" });
+
+            ClassificationDeclaration classification;
+            std::vector<ElementKind> roles;
+            GetRoles(jclassification, "applies_to", path, roles);
+            classification.condition = GetCondition(jclassification, path);
+            classification.identification = GetString(jclassification, "identification", path, true).value_or("");
+            classification.remove = GetBool(jclassification, "remove", path).value_or(false);
+            if (!classification.remove)
+            {
+               classification.system = GetString(jclassification, "system", path, true).value_or("");
+               classification.name = GetString(jclassification, "name", path, false).value_or("");
+               auto location = GetString(jclassification, "location", path, false).value_or("");
+               classification.location = (location == "bsdd" ? BSDD_URI + "class/" + classification.identification : location);
+            }
+
+            for (auto role : roles)
+            {
+               classification.applies_to = role;
+               m_File.classifications.push_back(classification);
+            }
          }
       }
 
@@ -929,6 +1072,11 @@ const TableUnit* FindTableUnit(std::string_view name)
    return found == std::end(units) ? nullptr : found;
 }
 
+bool IsExportQuantityType(const std::string& type)
+{
+   return type == "IFCQUANTITYLENGTH" || type == "IFCQUANTITYAREA" || type == "IFCQUANTITYVOLUME" || type == "IFCQUANTITYWEIGHT" || type == "IFCQUANTITYCOUNT";
+}
+
 bool IsExportValueType(const std::string& type)
 {
    // the value types CIfcPropertyWriter can create (see CreateIfcValue in IfcPropertyWriter.h)
@@ -1085,6 +1233,8 @@ void CIfcMappingTable::Merge()
             for (size_t i = 0; i < file.property_sets.size(); i++)
             {
                const auto& pset = file.property_sets[i];
+               if (pset.quantities)
+                  continue; // the reader doesn't read quantities yet
                for (size_t k = 0; k < pset.properties.size(); k++)
                {
                   const auto& property = pset.properties[k];
@@ -1135,7 +1285,41 @@ void CIfcMappingTable::Merge()
             m_PropertySets.push_back(&pset);
          }
       }
+
+      for (const auto& system : file->classification_systems)
+      {
+         auto found = std::find_if(m_ClassificationSystems.begin(), m_ClassificationSystems.end(), [&](const auto* s) {return s->name == system.name; });
+         if (found != m_ClassificationSystems.end())
+            *found = &system;
+         else
+            m_ClassificationSystems.push_back(&system);
+      }
+
+      for (const auto& classification : file->classifications)
+      {
+         auto found = std::find_if(m_Classifications.begin(), m_Classifications.end(), [&](const auto* c) {return c->applies_to == classification.applies_to && c->identification == classification.identification; });
+         if (classification.remove)
+         {
+            if (found != m_Classifications.end())
+               m_Classifications.erase(found);
+         }
+         else if (found != m_Classifications.end())
+         {
+            *found = &classification;
+         }
+         else
+         {
+            m_Classifications.push_back(&classification);
+         }
+      }
    }
+}
+
+std::vector<const ClassificationDeclaration*> CIfcMappingTable::GetClassifications(ElementKind role) const
+{
+   std::vector<const ClassificationDeclaration*> classifications;
+   std::copy_if(m_Classifications.begin(), m_Classifications.end(), std::back_inserter(classifications), [role](const auto* c) {return c->applies_to == role; });
+   return classifications;
 }
 
 std::vector<const PropertySetDeclaration*> CIfcMappingTable::GetPropertySets(ElementKind role, PropertyOwner attach) const

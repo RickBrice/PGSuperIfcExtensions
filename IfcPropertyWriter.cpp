@@ -73,6 +73,9 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    case ExportUnit::Deflection: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure); break;
    case ExportUnit::Stress: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetStressUnit().UnitOfMeasure); break;
    case ExportUnit::Angle: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetAngleUnit().UnitOfMeasure); break;
+   case ExportUnit::SmallArea: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetAreaUnit().UnitOfMeasure); break;
+   case ExportUnit::BigArea: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Feet2); break; // as GetBigAreaUnit
+   case ExportUnit::Mass: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::PoundMass); break; // as GetMassUnit
    default: break;
    }
 

@@ -197,6 +197,29 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetExcessCamber(released_midspan(c.broker, c.segment), pgsTypes::CreepTime::Max)); } },
       { .name = "girder.screed_camber", .element = ElementKind::Girder, .kind = ValueKind::Length, .description = "screed camber", .display_unit = DU::Deflection,
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetScreedCamber(released_midspan(c.broker, c.segment), pgsTypes::CreepTime::Max)); } },
+      // Qto_BeamBaseQuantities. Simple sections are assumed (no end blocks or variable depth)
+      { .name = "girder.length", .element = ElementKind::Girder, .kind = ValueKind::Length, .description = "girder plan length", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridge, pBridge); return ExportValue(pBridge->GetSegmentPlanLength(c.segment)); } },
+      { .name = "girder.cross_section_area", .element = ElementKind::Girder, .kind = ValueKind::Area, .description = "girder cross section area at mid-span", .display_unit = DU::SmallArea,
+        .get = [](const ExportContext& c)
+         {
+            GET_IFACE2(c.broker, IIntervals, pIntervals);
+            GET_IFACE2(c.broker, ISectionProperties, pSectProps);
+            return ExportValue(pSectProps->GetAg(pIntervals->GetPrestressReleaseInterval(c.segment), released_midspan(c.broker, c.segment)));
+         } },
+      { .name = "girder.outer_surface_area", .element = ElementKind::Girder, .kind = ValueKind::Area, .description = "girder outer surface area (length times perimeter)", .display_unit = DU::BigArea,
+        .get = [](const ExportContext& c)
+         {
+            GET_IFACE2(c.broker, IBridge, pBridge);
+            GET_IFACE2(c.broker, ISectionProperties, pSectProps);
+            return ExportValue(pBridge->GetSegmentPlanLength(c.segment) * pSectProps->GetPerimeter(released_midspan(c.broker, c.segment)));
+         } },
+      { .name = "girder.gross_weight", .element = ElementKind::Girder, .kind = ValueKind::Mass, .description = "girder mass (weight and mass are the same in IfcQuantityWeight)", .display_unit = DU::Mass,
+        .get = [](const ExportContext& c)
+         {
+            GET_IFACE2(c.broker, ISectionProperties, pSectProps);
+            return ExportValue(pSectProps->GetSegmentWeight(c.segment) / WBFL::Units::System::GetGravitationalAcceleration());
+         } },
 
       //
       // Deck
@@ -243,12 +266,16 @@ namespace
          { ElementKind::Project, "project" },
          { ElementKind::Site, "site" },
          { ElementKind::Bridge, "bridge" },
-         { ElementKind::BridgePart, "bridge_part" },
+         { ElementKind::Superstructure, "superstructure" },
+         { ElementKind::Substructure, "substructure" },
+         { ElementKind::DeckPart, "deck_part" },
          { ElementKind::Pier, "pier" },
+         { ElementKind::Abutment, "abutment" },
          { ElementKind::Foundation, "foundation" },
          { ElementKind::Alignment, "alignment" },
          { ElementKind::Referent, "referent" },
          { ElementKind::Girder, "girder" },
+         { ElementKind::GirderAssembly, "girder_assembly" },
          { ElementKind::ClosureJoint, "closure_joint" },
          { ElementKind::Deck, "deck" },
          { ElementKind::Haunch, "haunch" },
@@ -283,9 +310,14 @@ bool GetElementKind(std::string_view role_name, ElementKind& kind)
    return false;
 }
 
+ElementKind GetTargetElement(ElementKind role)
+{
+   return role == ElementKind::Abutment ? ElementKind::Pier : role;
+}
+
 bool HasUnit(ValueKind kind)
 {
-   return kind == ValueKind::Stress || kind == ValueKind::Length || kind == ValueKind::Angle || kind == ValueKind::Force;
+   return kind == ValueKind::Stress || kind == ValueKind::Length || kind == ValueKind::Angle || kind == ValueKind::Force || kind == ValueKind::Area || kind == ValueKind::Mass;
 }
 
 bool IsNumeric(ValueKind kind)
@@ -301,6 +333,8 @@ std::string_view GetValueKindName(ValueKind kind)
    case ValueKind::Length: return "length";
    case ValueKind::Angle: return "angle";
    case ValueKind::Force: return "force";
+   case ValueKind::Area: return "area";
+   case ValueKind::Mass: return "mass";
    case ValueKind::Ratio: return "ratio";
    case ValueKind::Count: return "count";
    case ValueKind::Boolean: return "boolean";

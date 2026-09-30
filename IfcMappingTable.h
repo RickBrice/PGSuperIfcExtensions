@@ -140,6 +140,8 @@ struct PropertySetDeclaration
    PropertyOwner attach = PropertyOwner::Occurrence;
    Condition condition = Condition::Classify;
    std::string uri; // the property set's Description: a bSDD class URI, an explicit URI, or empty
+   bool quantities = false; // an IfcElementQuantity: the properties are quantities (type IfcQuantityLength, ...)
+   std::string method; // quantity set MethodOfMeasurement (e.g. "BaseQuantities")
    bool shared = false;
    bool remove = false; // an extending table removes the base table's property set with the same name, element role, and attach
    std::vector<PropertyDeclaration> properties;
@@ -147,6 +149,31 @@ struct PropertySetDeclaration
 
 // True if the IFC value type can be written by the exporter (e.g. "IFCLABEL", "IFCPRESSUREMEASURE")
 bool IsExportValueType(const std::string& type);
+
+// True if the quantity type can be written by the exporter (e.g. "IFCQUANTITYLENGTH")
+bool IsExportQuantityType(const std::string& type);
+
+// A classification system (IfcClassification), associated with the project when it's exported
+struct ClassificationSystemDeclaration
+{
+   std::string name;
+   std::string source;
+   std::string edition;
+   std::string edition_date;
+   std::string specification; // a URI, or empty
+};
+
+// A classification reference of an element role
+struct ClassificationDeclaration
+{
+   ElementKind applies_to = ElementKind::Bridge;
+   PropertySetDeclaration::Condition condition = PropertySetDeclaration::Condition::Classify;
+   std::string system; // name of the classification system
+   std::string identification;
+   std::string name;
+   std::string location; // a URI, or empty
+   bool remove = false; // an extending table removes the base table's classification with the same element role and identification
+};
 
 // One table file
 struct MappingTableFile
@@ -160,7 +187,9 @@ struct MappingTableFile
    std::map<std::string, std::vector<MappingLocation>, std::less<>> targets; // explicit import locations
    std::set<std::string, std::less<>> replace_targets; // targets whose locations replace those of the base table
    std::map<ElementKind, ElementSelector> elements;
-   std::vector<PropertySetDeclaration> property_sets;
+   std::vector<PropertySetDeclaration> property_sets; // and quantity sets
+   std::vector<ClassificationSystemDeclaration> classification_systems;
+   std::vector<ClassificationDeclaration> classifications;
 };
 
 class CIfcMappingTableException : public std::runtime_error
@@ -189,6 +218,12 @@ public:
    // replaces the base table's property set with the same name, element role, and attach, or removes it
    std::vector<const PropertySetDeclaration*> GetPropertySets(ElementKind role, PropertyOwner attach) const;
 
+   // The classification systems. An extending table's system replaces the base table's system with the same name
+   const std::vector<const ClassificationSystemDeclaration*>& GetClassificationSystems() const { return m_ClassificationSystems; }
+
+   // The classification references of an element role, in table order
+   std::vector<const ClassificationDeclaration*> GetClassifications(ElementKind role) const;
+
    // The table files, the selected table first
    const std::vector<MappingTableFile>& GetFiles() const { return m_Files; }
 
@@ -200,6 +235,8 @@ private:
    std::map<std::string, std::vector<MappingLocation>, std::less<>> m_Locations; // merged import locations
    std::map<ElementKind, ElementSelector> m_Selectors; // merged selectors
    std::vector<const PropertySetDeclaration*> m_PropertySets; // merged export property sets, in table order
+   std::vector<const ClassificationSystemDeclaration*> m_ClassificationSystems; // merged
+   std::vector<const ClassificationDeclaration*> m_Classifications; // merged, in table order
 
    void Merge();
 };

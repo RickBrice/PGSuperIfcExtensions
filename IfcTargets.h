@@ -42,12 +42,16 @@ enum class ElementKind
    Project,
    Site,
    Bridge,
-   BridgePart,
+   Superstructure, // IfcBridgePart.SUPERSTRUCTURE
+   Substructure,   // IfcBridgePart.SUBSTRUCTURE
+   DeckPart,       // IfcBridgePart.DECK
    Pier,
+   Abutment,       // an abutment is a pier in PGSuper: pier targets apply to it
    Foundation,
    Alignment,
    Referent,
-   Girder,
+   Girder,         // IfcBeam, one per segment
+   GirderAssembly, // IfcElementAssembly.GIRDER of the segments of a spliced girder
    ClosureJoint,
    Deck,
    Haunch,
@@ -62,6 +66,8 @@ enum class ValueKind
    Length,
    Angle,
    Force,
+   Area,
+   Mass,
    Ratio,
    Count,
    Boolean,
@@ -79,7 +85,10 @@ enum class ExportUnit
    SpanLength, // e.g. ft
    Deflection, // e.g. in
    Stress,     // e.g. ksi
-   Angle       // degrees
+   Angle,      // degrees
+   SmallArea,  // e.g. in^2
+   BigArea,    // ft^2
+   Mass        // lb
 };
 
 // The element whose target values are exported. The exporter fills in the keys the element's targets need
@@ -136,7 +145,10 @@ const TargetDef* FindTargetDef(std::string_view name);
 std::string_view GetElementRoleName(ElementKind kind);
 bool GetElementKind(std::string_view role_name, ElementKind& kind);
 
-// True if the value kind is a number with a unit (stress, length, angle, force)
+// The element whose targets an element role uses (e.g. an abutment uses the pier targets)
+ElementKind GetTargetElement(ElementKind role);
+
+// True if the value kind is a number with a unit (stress, length, angle, force, area, mass)
 bool HasUnit(ValueKind kind);
 
 // True if the value kind is a number (with or without a unit)
