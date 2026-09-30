@@ -1,2 +1,3 @@
 Exported D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\models\PGSuper_Skew_Straight_Bearings.pgs with property values in system units
+IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json
 IFC export succeeded: D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Skew-Bearings-System.ifc
