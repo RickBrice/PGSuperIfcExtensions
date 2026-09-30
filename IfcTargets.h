@@ -107,6 +107,7 @@ struct ExportContext
    pgsTypes::StrandType strand_type = pgsTypes::Straight; // Tendon
    StrandIndexType strand_index = INVALID_INDEX; // Tendon
    const WBFL::Materials::Rebar* rebar = nullptr; // Rebar material
+   pgsTypes::TrafficBarrierOrientation barrier_side = pgsTypes::tboLeft; // Barrier
 };
 
 // The value a target's getter gives the exporter

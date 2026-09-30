@@ -32,6 +32,9 @@
 #include <EAF/EAFDisplayUnits.h>
 #include <PsgLib/BridgeDescription2.h>
 #include <PsgLib/GirderLabel.h>
+#include <PsgLib/TrafficBarrierEntry.h>
+
+#include <limits>
 
 #include <algorithm>
 #include <sstream>
@@ -50,15 +53,51 @@ namespace
       return skew;
    }
 
-   // f'c formatted in display units, as Pset_ConcreteElementGeneral.StrengthClass.
-   // The trailing newline reproduces the exporter it replaces (see devdocs/MappingTablesDesign.md, export findings)
+   // f'c formatted in display units, as Pset_ConcreteElementGeneral.StrengthClass
    std::string strength_class(std::shared_ptr<WBFL::EAF::Broker> pBroker, Float64 fc)
    {
       USES_CONVERSION;
       GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
-      std::ostringstream os;
-      os << T2A(::FormatDimension(fc, pDisplayUnits->GetStressUnit())) << std::endl;
-      return os.str();
+      return std::string(T2A(::FormatDimension(fc, pDisplayUnits->GetStressUnit())));
+   }
+
+   // perimeter and area of the plan outline of the deck slab
+   std::pair<Float64, Float64> slab_outline(std::shared_ptr<WBFL::EAF::Broker> pBroker)
+   {
+      GET_IFACE2(pBroker, IBridge, pBridge);
+      CComPtr<IPoint2dCollection> points;
+      pBridge->GetSlabPerimeter(50/*points along each edge*/, pgsTypes::pcGlobal, &points);
+
+      IndexType nPoints;
+      points->get_Count(&nPoints);
+      std::vector<std::pair<Float64, Float64>> xy;
+      for (IndexType i = 0; i < nPoints; i++)
+      {
+         CComPtr<IPoint2d> point;
+         points->get_Item(i, &point);
+         Float64 x, y;
+         point->Location(&x, &y);
+         xy.emplace_back(x, y);
+      }
+
+      Float64 perimeter = 0, area = 0;
+      for (size_t i = 0; i < xy.size(); i++)
+      {
+         const auto& [x1, y1] = xy[i];
+         const auto& [x2, y2] = xy[(i + 1) % xy.size()]; // closed outline
+         perimeter += sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+         area += x1 * y2 - x2 * y1;
+      }
+      return { perimeter, fabs(area) / 2 };
+   }
+
+   // the exterior barrier of the railing system on one side of the bridge, or nullptr
+   const TrafficBarrierEntry* exterior_barrier(const ExportContext& c)
+   {
+      GET_IFACE2(c.broker, IBridgeDescription, pIBridgeDesc);
+      const auto* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+      const auto* pRailing = (c.barrier_side == pgsTypes::tboLeft ? pBridgeDesc->GetLeftRailingSystem() : pBridgeDesc->GetRightRailingSystem());
+      return pRailing->GetExteriorRailing();
    }
 
    // the released segment mid-span point of interest, where cambers are reported
@@ -230,6 +269,14 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(deck_fc(c)); } },
       { .name = "deck.strength_class", .element = ElementKind::Deck, .kind = ValueKind::Text, .description = "deck concrete strength class",
         .get = [](const ExportContext& c) { return ExportValue(strength_class(c.broker, deck_fc(c))); } },
+      { .name = "deck.length", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "deck length (bridge length)", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridge, pBridge); return ExportValue(pBridge->GetLength()); } },
+      { .name = "deck.depth", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "deck gross depth (input)", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridgeDescription, pIBridgeDesc); return ExportValue(pIBridgeDesc->GetBridgeDescription()->GetDeckDescription()->GrossDepth); } },
+      { .name = "deck.perimeter", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "perimeter of the deck plan outline", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c) { return ExportValue(slab_outline(c.broker).first); } },
+      { .name = "deck.gross_area", .element = ElementKind::Deck, .kind = ValueKind::Area, .description = "area of the deck plan outline", .display_unit = DU::BigArea,
+        .get = [](const ExportContext& c) { return ExportValue(slab_outline(c.broker).second); } },
       { .name = "deck.max_aggregate_size", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "deck concrete maximum aggregate size", .display_unit = DU::Deflection,
         .get = [](const ExportContext& c) { return ExportValue(deck_max_aggregate_size(c)); } },
 
@@ -240,6 +287,39 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(deck_fc(c)); } },
       { .name = "barrier.strength_class", .element = ElementKind::Barrier, .kind = ValueKind::Text, .description = "barrier concrete strength class",
         .get = [](const ExportContext& c) { return ExportValue(strength_class(c.broker, deck_fc(c))); } },
+      { .name = "barrier.type", .element = ElementKind::Barrier, .kind = ValueKind::Text, .description = "exterior barrier (traffic barrier library entry)",
+        .get = [](const ExportContext& c)
+         {
+            USES_CONVERSION;
+            const auto* pBarrier = exterior_barrier(c);
+            return pBarrier ? ExportValue(std::string(T2A(pBarrier->GetName().c_str()))) : ExportValue::NoValue();
+         } },
+      { .name = "barrier.height", .element = ElementKind::Barrier, .kind = ValueKind::Length, .description = "exterior barrier height above the top of the deck (from its shape)", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c)
+         {
+            const auto* pBarrier = exterior_barrier(c);
+            if (!pBarrier)
+               return ExportValue::NoValue();
+
+            CComPtr<IPoint2dCollection> points;
+            pBarrier->GetBarrierPoints(&points);
+            IndexType nPoints;
+            points->get_Count(&nPoints);
+            if (nPoints == 0)
+               return ExportValue::NoValue();
+
+            // the shape's origin is the top of the deck at its edge. The shape can extend below it, along the edge of the deck
+            Float64 ymax = std::numeric_limits<Float64>::lowest();
+            for (IndexType i = 0; i < nPoints; i++)
+            {
+               CComPtr<IPoint2d> point;
+               points->get_Item(i, &point);
+               Float64 y;
+               point->get_Y(&y);
+               ymax = std::max(ymax, y);
+            }
+            return ExportValue(ymax);
+         } },
       { .name = "barrier.max_aggregate_size", .element = ElementKind::Barrier, .kind = ValueKind::Length, .description = "barrier concrete maximum aggregate size", .display_unit = DU::Deflection,
         .get = [](const ExportContext& c) { return ExportValue(deck_max_aggregate_size(c)); } },
 

@@ -490,15 +490,14 @@ Each stage keeps the export identical to the baseline:
 M4 then moves the design-value IDS onto the table.
 
 ### Export findings
-Recorded while making the table reproduce today's export. They're fixed after the standard table matches the baseline, one reviewed baseline change each:
-- `Pset_ConcreteElementGeneral.StrengthClass` ends with a newline (`std::endl`), e.g. `"5.000 KSI
-"`.
-- `PEnum_ProjectType` has "MODIFICAITON" for "MODIFICATION".
-- `Qto_SlabBaseQuantities` is written with 0.0 for every quantity instead of the values or no value.
-- `usBrPset_MASH` has placeholder values ("Unknown", `BarrierHeight` 0.01 m).
-- `usBrPset_Roadway` is created but never attached to the bridge (`Create_usBrPset_Roadway`'s result is discarded), so it's an orphan in the file. The standard table doesn't declare it; declaring it for the bridge would attach it.
-- The girder-only export (`ModelElements::GirderOnly`) writes no usBridge project property sets, and doesn't add the usBridge classification system, but classifies the girder. The engine reproduces this with a condition filter on the project's property sets.
-- A concrete material is shared by name ("Precast Concrete, f'c = ..."), so a deck and a girder with the same f'c share one material. It's called "Precast Concrete", and it has the maximum aggregate size of whichever element created it first.
+Found while making the table reproduce the exporter it replaces. **Fixed 2026-09-29**, after the standard table matched the baseline, as one reviewed baseline change (`export_baseline/` updated, every difference checked):
+- `Pset_ConcreteElementGeneral.StrengthClass` ended with a newline (`std::endl`). Now `"5.000 KSI"`.
+- `PEnum_ProjectType` had "MODIFICAITON". Now "MODIFICATION".
+- `Qto_SlabBaseQuantities` had 0.0 for all ten quantities. Now `Length` (bridge length), `Depth` (gross depth), and `Perimeter` and `GrossArea` (from the slab plan outline). `Width`, `NetArea`, the volumes, and the weights are left out, because PGSuper doesn't supply them directly and quantity values can't be empty.
+- `usBrPset_MASH` had placeholder values ("Unknown", `BarrierHeight` 0.01 m). Now `BarrierType` is the exterior barrier's library entry name, and `BarrierHeight` its height above the top of the deck (from its shape, whose origin is the top of the deck at its edge). `MASHTestingLevel` and `GuardrailType` have no value. Each barrier gets its own property sets, since the values depend on the side.
+- Concrete materials were shared by name ("Precast Concrete, f'c = ..."), so the deck and barriers could share a girder material, with the aggregate size of whichever element came first. Now girders are "Precast Concrete, f'c = ..." (as the design-value IDS expects), and the deck and barriers "Cast-in-Place Concrete, f'c = ...". A concrete with the same strength but another maximum aggregate size gets its own material, with the size in its name.
+- `usBrPset_Roadway` was created but never attached to the bridge. Now it's declared for the bridge (placeholders, as its code intended).
+- The girder-only export classified the girder without writing the usBridge classification system. Now it writes the system when classifying. The girder-only export can't be run from the command line, so this isn't covered by the validation.
 
 ## Code layout
 

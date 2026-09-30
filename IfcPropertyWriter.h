@@ -57,6 +57,9 @@ public:
    // IfcPropertyEnumeration instances already written, by name and values, so each is written once
    std::map<std::string, uint32_t> enumerations;
 
+   // maximum aggregate size of each concrete material written, by name (see GetConcreteMaterial)
+   std::map<std::string, Float64> concrete_aggregate_sizes;
+
    // IfcClassification instances written by WriteClassificationSystems, by name
    std::map<std::string, uint32_t> classification_systems;
 

@@ -1864,10 +1864,11 @@ void CreatePrecastSegmentMaterials(hierarchy_helper<Schema>& file, std::shared_p
    const pgsPointOfInterest& poiMS = vPoi.front();
 
    Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
+   Float64 max_agg_size = pMaterials->GetSegmentMaxAggrSize(segmentKey);
 
    ExportContext context{ pBroker, &options };
    context.segment = segmentKey;
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, ElementKind::Girder, context, "Precast Concrete", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Girder, context, "Precast Concrete", SEGMENT_BORDER_COLOR);
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for each segment but we still need the list
@@ -2361,8 +2362,9 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    auto fc = pMaterials->GetDeckFc28();
+   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
    ExportContext context{ pBroker, &options };
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, ElementKind::Deck, context, "Slab Concrete", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Deck, context, "Slab Concrete", SEGMENT_BORDER_COLOR);
 
    if (options.classify)
    {
@@ -3315,15 +3317,22 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    // PGSuper assumes barriers are same material as deck
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    auto fc = pMaterials->GetDeckFc28();
+   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
    ExportContext context{ pBroker, &options };
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, ElementKind::Barrier, context, "Barrier", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Barrier, context, "Barrier", SEGMENT_BORDER_COLOR);
 
    if (options.classify)
    {
       Classify<Schema>(file, ElementKind::Barrier, left_barrier, options);
       Classify<Schema>(file, ElementKind::Barrier, right_barrier, options);
 
-      WritePropertySets<Schema>(file, ElementKind::Barrier, barriers, context);
+      // each barrier has its own property sets, because their values depend on the side (e.g. the barrier type)
+      for (auto [barrier, side] : { std::make_pair(left_barrier, pgsTypes::tboLeft), std::make_pair(right_barrier, pgsTypes::tboRight) })
+      {
+         ExportContext barrier_context(context);
+         barrier_context.barrier_side = side;
+         WritePropertySets<Schema>(file, ElementKind::Barrier, barrier, barrier_context);
+      }
    }
 
 
@@ -3755,6 +3764,9 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
 
    if (options.model_elements == CIfcExportOptions::ModelElements::GirderOnly)
    {
+      if (options.classify)
+         WriteClassificationSystems<Schema>(file); // the source of the girder's classification
+
       CreateGirder<Schema>(file, pBroker, options, rebar_batch);
    }
    else

@@ -1,5 +1,5 @@
 {
-  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The property sets reproduce the exporter's property sets as of 2026-09-29, including known issues (see \"Export findings\" in the design note). The types of properties without a value are placeholders until they are checked against bSDD. The reinforcing bar property sets whose values come from the rebar detailing (usBrPset_ACI_ReinforcingBarType, usBrPset_ACI_ReinforcingBar, usBrPset_ACI_ReinforcingCover, usBrPset_ACI_BarShape) and the bar count quantity stay in code (design note, M3 stage 3).",
+  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The property sets reproduce the exporter's property sets as of 2026-09-29, with the export findings of the design note fixed. The types of properties without a value are placeholders until they are checked against bSDD. The reinforcing bar property sets whose values come from the rebar detailing (usBrPset_ACI_ReinforcingBarType, usBrPset_ACI_ReinforcingBar, usBrPset_ACI_ReinforcingCover, usBrPset_ACI_BarShape) and the bar count quantity stay in code (design note, M3 stage 3).",
   "format": "PGSuperIfcMapping",
   "version": 1,
   "name": "Standard (TPF/usBridge)",
@@ -12,7 +12,7 @@
     {
       "name": "Pset_ProjectCommon", "applies_to": "project", "condition": "always",
       "properties": [
-        {"name": "ProjectType", "type": "IfcLabel", "value": "NEWBUILD", "enumeration": {"name": "PEnum_ProjectType", "values": ["MODIFICAITON", "NEWBUILD", "OPERATIONMAINTENANCE", "RENOVATION", "REPAIR"]}}
+        {"name": "ProjectType", "type": "IfcLabel", "value": "NEWBUILD", "enumeration": {"name": "PEnum_ProjectType", "values": ["MODIFICATION", "NEWBUILD", "OPERATIONMAINTENANCE", "RENOVATION", "REPAIR"]}}
       ]
     },
     {
@@ -86,6 +86,21 @@
         {"name": "FeatureType", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "FeatureLocation", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "FeatureName", "type": "IfcLabel", "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_Roadway", "applies_to": "bridge", "uri": "bsdd",
+      "properties": [
+        {"name": "AnnualAverageDailyTraffic", "type": "IfcInteger", "uri": "bsdd"},
+        {"name": "AnnualAverageDailyTruckTraffic", "type": "IfcInteger", "uri": "bsdd"},
+        {"name": "DesignAnnualAverageDailyTraffic", "type": "IfcInteger", "uri": "bsdd"},
+        {"name": "DesignAnnualAverageDailyTruckTraffic", "type": "IfcInteger", "uri": "bsdd"},
+        {"name": "DesignTrafficYear", "type": "IfcInteger", "uri": "bsdd"},
+        {"name": "MinimumHorizontalClearanceLeft", "type": "IfcPositiveLengthMeasure", "uri": "bsdd"},
+        {"name": "MinimumHorizontalClearanceRight", "type": "IfcPositiveLengthMeasure", "uri": "bsdd"},
+        {"name": "RoadwayMinimumVerticalClearance", "type": "IfcPositiveLengthMeasure", "uri": "bsdd"},
+        {"name": "RoadwayName", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "RoadwayType", "type": "IfcLabel", "uri": "bsdd"}
       ]
     },
     {
@@ -163,10 +178,10 @@
     {
       "name": "usBrPset_MASH", "applies_to": "barrier", "uri": "bsdd",
       "properties": [
-        {"name": "MASHTestingLevel", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd"},
-        {"name": "GuardrailType", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd"},
-        {"name": "BarrierType", "type": "IfcLabel", "value": "Unknown", "uri": "bsdd"},
-        {"name": "BarrierHeight", "type": "IfcPositiveLengthMeasure", "value": 0.01, "uri": "bsdd"}
+        {"name": "MASHTestingLevel", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "GuardrailType", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "BarrierType", "type": "IfcLabel", "target": "barrier.type", "uri": "bsdd"},
+        {"name": "BarrierHeight", "type": "IfcPositiveLengthMeasure", "target": "barrier.height", "uri": "bsdd"}
       ]
     },
     {
@@ -383,18 +398,12 @@
     },
     {
       "name": "Qto_SlabBaseQuantities", "applies_to": "deck", "method": "BaseQuantities",
-      "comment": "Placeholders: every quantity is 0 (see the export findings in the design note)",
+      "comment": "Width, NetArea, the volumes, and the weights are left out: PGSuper doesn't supply them directly",
       "quantities": [
-        {"name": "Width", "type": "IfcQuantityLength", "value": 0.0},
-        {"name": "Length", "type": "IfcQuantityLength", "value": 0.0},
-        {"name": "Depth", "type": "IfcQuantityLength", "value": 0.0},
-        {"name": "Perimeter", "type": "IfcQuantityLength", "value": 0.0},
-        {"name": "GrossArea", "type": "IfcQuantityArea", "value": 0.0},
-        {"name": "NetArea", "type": "IfcQuantityArea", "value": 0.0},
-        {"name": "GrossVolume", "type": "IfcQuantityVolume", "value": 0.0},
-        {"name": "NetVolume", "type": "IfcQuantityVolume", "value": 0.0},
-        {"name": "GrossWeight", "type": "IfcQuantityWeight", "value": 0.0},
-        {"name": "NetWeight", "type": "IfcQuantityWeight", "value": 0.0}
+        {"name": "Length", "type": "IfcQuantityLength", "target": "deck.length"},
+        {"name": "Depth", "type": "IfcQuantityLength", "target": "deck.depth"},
+        {"name": "Perimeter", "type": "IfcQuantityLength", "target": "deck.perimeter"},
+        {"name": "GrossArea", "type": "IfcQuantityArea", "target": "deck.gross_area"}
       ]
     }
   ],

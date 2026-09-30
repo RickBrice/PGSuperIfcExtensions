@@ -203,27 +203,40 @@ typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, st
    return rebar_material;
 }
 
-// The concrete material with strength fc, created the first time it's needed. Its material properties are the ones the
-// mapping table declares for the role of the element that creates it (e.g. Pset_MaterialConcrete of a girder)
+// The concrete material with strength fc and maximum aggregate size, created the first time it's needed. Girders are precast
+// ("Precast Concrete, f'c = ..."), the deck and barriers cast in place ("Cast-in-Place Concrete, f'c = ..."). A concrete with the
+// same strength but another aggregate size gets its own material, with the size in its name. The material properties are the
+// ones the mapping table declares for the role of the element that creates it (e.g. Pset_MaterialConcrete of a girder)
 template <typename Schema>
-typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, ElementKind role, const ExportContext& context, const std::string& styleName, COLORREF color)
+typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, ElementKind role, const ExportContext& context, const std::string& styleName, COLORREF color)
 {
    USES_CONVERSION;
 
    GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
    std::ostringstream os;
-   os << "Precast Concrete, f'c = " << T2A((LPCTSTR)(::FormatDimension(fc, pDisplayUnits->GetStressUnit())));
-
+   os << (role == ElementKind::Girder ? "Precast Concrete" : "Cast-in-Place Concrete") << ", f'c = " << T2A((LPCTSTR)(::FormatDimension(fc, pDisplayUnits->GetStressUnit())));
    auto name = os.str();
 
-   // search to see if an IfcMaterial for this kind of strand has already been created
-   auto materials = file.instances_by_type<typename Schema::IfcMaterial>();
-   for (auto& material : materials)
+   auto& aggregate_sizes = CIfcExportSession::Current().concrete_aggregate_sizes;
+   auto found = aggregate_sizes.find(name);
+   if (found != aggregate_sizes.end() && !IsEqual(found->second, max_agg_size))
    {
-      if (material.Name() == name)
-         return material;
+      os << ", max aggregate size = " << T2A((LPCTSTR)(::FormatDimension(max_agg_size, pDisplayUnits->GetComponentDimUnit())));
+      name = os.str();
+      found = aggregate_sizes.find(name);
    }
+
+   if (found != aggregate_sizes.end())
+   {
+      // the material was created before
+      for (auto& material : file.instances_by_type<typename Schema::IfcMaterial>())
+      {
+         if (material.Name() == name)
+            return material;
+      }
+   }
+   aggregate_sizes[name] = max_agg_size;
 
 
    // if we got this far, the material was not previously created
