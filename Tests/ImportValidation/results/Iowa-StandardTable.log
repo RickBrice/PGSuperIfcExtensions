@@ -1,51 +1,51 @@
-[Info] [2026-09-29 18:26:56] Starting IFC import from file
-[Info] [2026-09-29 18:26:56] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json, chosen by the standard table installed with the IFC extension
-[Info] [2026-09-29 18:27:00] Initializing units and precision from IFC file.
-[Info] [2026-09-29 18:27:00] Importing alignment data from IFC file...
-[Info] [2026-09-29 18:27:00] Importing from bridge IFC file.
-[Info] [2026-09-29 18:27:00] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
-[Info] [2026-09-29 18:27:00] Expected Pier 1 #679=IfcBridgePart('0pyGw5cdLBju4mkNqayzKu',$,'Abutment 1',$,$,#2616,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-09-29 18:27:00] Expected Pier 2 #2786=IfcBridgePart('1UYyVXuwj99uHgd4PvNEY_',$,'Abutment 2',$,$,#20246,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-09-29 18:27:01] Expected Pier 3 #3357=IfcBridgePart('3e9_ctlvr45xIz5UO_ym6j',$,'Pier 1',$,$,#13660,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-09-29 18:27:01] Expected Pier 4 #4395=IfcBridgePart('3C_4h4D8nBvhIMFgPGIP4w',$,'Pier 2',$,$,#17575,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-09-29 18:27:06] The girder designation (e.g. "Span 1, Girder 2") of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
-[Info] [2026-09-29 18:27:06] Abutment 1 orientation NORMAL (from CL bearing line)
-[Info] [2026-09-29 18:27:06] Pier 2 orientation NORMAL (from CL bearing line)
-[Info] [2026-09-29 18:27:06] Pier 3 orientation NORMAL (from CL bearing line)
-[Info] [2026-09-29 18:27:06] Abutment 4 orientation NORMAL (from CL bearing line)
-[Info] [2026-09-29 18:27:06] Uniform girder spacing 6.694 ft, measured normal to the alignment at the pier lines
-[Info] [2026-09-29 18:27:06] The girder type name of Beam 1 Span 1 wasn't found. Locations tried: type attribute Name; usBrPset_PrecastConcreteBeam.ShapeName.
-[Info] [2026-09-29 18:27:06] Hint: properties of Beam 1 Span 1 that may hold the girder type name: IaDOT_PPCB.2_Type = "BTB45"; classification 2407-0562845 Name = "Beam, PPC, BTB45". They aren't used. To use one, add it to the locations of girder.type_names in the mapping table.
-[Info] [2026-09-29 18:27:06] Girder type of Beam 1 Span 1 could not be determined. No similar girder in the library. Using Unknown_Girder_Type
-[Info] [2026-09-29 18:27:06] The girder concrete strength at release, f'ci of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.ReleaseStrength.
-[Info] [2026-09-29 18:27:06] The girder concrete strength, f'c of Beam 1 Span 1 wasn't found. Locations tried: Pset_MaterialConcrete.CompressiveStrength (material).
-[Info] [2026-09-29 18:27:06] Abutment 1 ahead face: end distance 8.00002 in, bearing offset 1.17855e-08 in (from the CL bearings)
-[Info] [2026-09-29 18:27:06] Pier 2 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-09-29 18:27:06] Pier 2 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-09-29 18:27:06] Pier 3 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-09-29 18:27:06] Pier 3 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-09-29 18:27:06] Abutment 4 back face: end distance 8.00002 in, bearing offset -5.23895e-09 in (from the CL bearings)
-[Info] [2026-09-29 18:27:06] The bearing fixed along the girder of Bearing 1 wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
-[Info] [2026-09-29 18:27:06] Hint: properties of Bearing 1 that may hold the bearing fixed along the girder: Bearing Item - ItemTypes.3_Fixity = "Fixed". They aren't used. To use one, add it to the locations of bearing.fixed_x in the mapping table.
-[Info] [2026-09-29 18:27:06] Bearings at Abutment 1 ahead face: rectangular, 3.000 in x 28.500 in, height 3.000 in
-[Info] [2026-09-29 18:27:06] Bearings at Pier 2 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-09-29 18:27:06] Bearings at Pier 2 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-09-29 18:27:06] Bearings at Pier 3 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-09-29 18:27:06] Bearings at Pier 3 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-09-29 18:27:06] Bearings at Abutment 4 back face: rectangular, 3.000 in x 28.500 in, height 3.000 in
-[Info] [2026-09-29 18:27:07] Hint: 21 elements may be haunches, e.g. IfcSlab #5361 (Name "Haunch_S3B7", ObjectType "Haunch"). They aren't used. To measure them with the deck, add a "haunch" element role to the mapping table.
-[Info] [2026-09-29 18:27:07] Deck gross depth 8.470 in (from deck geometry)
-[Info] [2026-09-29 18:27:07] Left overhang edge depth 10.059 in (from deck geometry)
-[Info] [2026-09-29 18:27:07] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-09-29 18:27:07] Right overhang edge depth 9.942 in (from deck geometry)
-[Info] [2026-09-29 18:27:07] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-09-29 18:27:07] The haunches are not part of the deck geometry. The default haunch shape and fillet are used.
-[Info] [2026-09-29 18:27:07] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-09-29 18:27:07] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
-[Info] [2026-09-29 18:27:07] The bearing fixed along the girder also wasn't found for 41 more elements.
-[Info] [2026-09-29 18:27:07] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 20 more elements.
-[Info] [2026-09-29 18:27:07] The girder concrete strength, f'c also wasn't found for 20 more elements.
-[Info] [2026-09-29 18:27:07] The girder concrete strength at release, f'ci also wasn't found for 20 more elements.
-[Info] [2026-09-29 18:27:07] Done IFC import from file
+[Info] [2026-09-29 18:43:30] Starting IFC import from file
+[Info] [2026-09-29 18:43:30] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json, chosen by the standard table installed with the IFC extension
+[Info] [2026-09-29 18:43:34] Initializing units and precision from IFC file.
+[Info] [2026-09-29 18:43:34] Importing alignment data from IFC file...
+[Info] [2026-09-29 18:43:34] Importing from bridge IFC file.
+[Info] [2026-09-29 18:43:34] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
+[Info] [2026-09-29 18:43:34] Expected Pier 1 #679=IfcBridgePart('0pyGw5cdLBju4mkNqayzKu',$,'Abutment 1',$,$,#2616,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-29 18:43:34] Expected Pier 2 #2786=IfcBridgePart('1UYyVXuwj99uHgd4PvNEY_',$,'Abutment 2',$,$,#20246,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-29 18:43:35] Expected Pier 3 #3357=IfcBridgePart('3e9_ctlvr45xIz5UO_ym6j',$,'Pier 1',$,$,#13660,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-29 18:43:35] Expected Pier 4 #4395=IfcBridgePart('3C_4h4D8nBvhIMFgPGIP4w',$,'Pier 2',$,$,#17575,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-29 18:43:40] The girder designation (e.g. "Span 1, Girder 2") of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
+[Info] [2026-09-29 18:43:40] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-29 18:43:40] Pier 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-29 18:43:40] Pier 3 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-29 18:43:40] Abutment 4 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-29 18:43:40] Uniform girder spacing 6.694 ft, measured normal to the alignment at the pier lines
+[Info] [2026-09-29 18:43:40] The girder type name of Beam 1 Span 1 wasn't found. Locations tried: type attribute Name; usBrPset_PrecastConcreteBeam.ShapeName.
+[Info] [2026-09-29 18:43:40] Hint: properties of Beam 1 Span 1 that may hold the girder type name: IaDOT_PPCB.2_Type = "BTB45"; classification 2407-0562845 Name = "Beam, PPC, BTB45". They aren't used. To use one, add it to the locations of girder.type_names in the mapping table.
+[Info] [2026-09-29 18:43:40] Girder type of Beam 1 Span 1 could not be determined. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-29 18:43:40] The girder concrete strength at release, f'ci of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.ReleaseStrength.
+[Info] [2026-09-29 18:43:40] The girder concrete strength, f'c of Beam 1 Span 1 wasn't found. Locations tried: Pset_MaterialConcrete.CompressiveStrength (material).
+[Info] [2026-09-29 18:43:40] Abutment 1 ahead face: end distance 8.00002 in, bearing offset 1.17855e-08 in (from the CL bearings)
+[Info] [2026-09-29 18:43:40] Pier 2 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-29 18:43:40] Pier 2 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-29 18:43:40] Pier 3 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-29 18:43:40] Pier 3 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-09-29 18:43:40] Abutment 4 back face: end distance 8.00002 in, bearing offset -5.23895e-09 in (from the CL bearings)
+[Info] [2026-09-29 18:43:40] The bearing fixed along the girder of Bearing 1 wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
+[Info] [2026-09-29 18:43:40] Hint: properties of Bearing 1 that may hold the bearing fixed along the girder: Bearing Item - ItemTypes.3_Fixity = "Fixed". They aren't used. To use one, add it to the locations of bearing.fixed_x in the mapping table.
+[Info] [2026-09-29 18:43:40] Bearings at Abutment 1 ahead face: rectangular, 3.000 in x 28.500 in, height 3.000 in
+[Info] [2026-09-29 18:43:40] Bearings at Pier 2 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-09-29 18:43:40] Bearings at Pier 2 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-09-29 18:43:40] Bearings at Pier 3 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-09-29 18:43:40] Bearings at Pier 3 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-09-29 18:43:40] Bearings at Abutment 4 back face: rectangular, 3.000 in x 28.500 in, height 3.000 in
+[Info] [2026-09-29 18:43:41] Hint: 21 elements may be haunches, e.g. IfcSlab #5361 (Name "Haunch_S3B7", ObjectType "Haunch"). They aren't used. To measure them with the deck, add a "haunch" element role to the mapping table.
+[Info] [2026-09-29 18:43:41] Deck gross depth 8.470 in (from deck geometry)
+[Info] [2026-09-29 18:43:41] Left overhang edge depth 10.059 in (from deck geometry)
+[Info] [2026-09-29 18:43:41] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-29 18:43:41] Right overhang edge depth 9.942 in (from deck geometry)
+[Info] [2026-09-29 18:43:41] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-29 18:43:41] The haunches are not part of the deck geometry. The default haunch shape and fillet are used.
+[Info] [2026-09-29 18:43:41] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-29 18:43:41] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-09-29 18:43:41] The bearing fixed along the girder also wasn't found for 41 more elements.
+[Info] [2026-09-29 18:43:41] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 20 more elements.
+[Info] [2026-09-29 18:43:41] The girder concrete strength, f'c also wasn't found for 20 more elements.
+[Info] [2026-09-29 18:43:41] The girder concrete strength at release, f'ci also wasn't found for 20 more elements.
+[Info] [2026-09-29 18:43:41] Done IFC import from file
 IFC import succeeded
 Project saved to D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\Iowa-StandardTable.pgs

@@ -1,45 +1,45 @@
-[Info] [2026-09-29 18:26:11] Starting IFC import from file
-[Info] [2026-09-29 18:26:11] IFC mapping table "PennDOT" (version 1): D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\mappings\PennDOT.json, chosen by the command line (/IfcMapping)
-[Info] [2026-09-29 18:26:11] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json, chosen by the standard table installed with the IFC extension
-[Info] [2026-09-29 18:26:11] Initializing units and precision from IFC file.
-[Info] [2026-09-29 18:26:11] IFC model does not contain an IfcMapConversion. Map conversion will be computed for this model.
-[Info] [2026-09-29 18:26:11] Importing alignment data from IFC file...
-[Info] [2026-09-29 18:26:11] Importing from bridge IFC file.
-[Info] [2026-09-29 18:26:11] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
-[Info] [2026-09-29 18:26:11] Expected Pier 1 #24=IfcBridgePart('1d9RH4z8fBLecnKnmtEis7',$,'Abutment1','',$,#27,$,$,.ELEMENT.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-09-29 18:26:11] Expected Pier 2 #32=IfcBridgePart('2FCI8sjAn9ER9R5W0DnDWU',$,'Abutment2','',$,#35,$,$,.COMPLEX.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-09-29 18:26:12] The girder designation (e.g. "Span 1, Girder 2") of Beam1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
-[Info] [2026-09-29 18:26:12] Beam designation: Beam1 is not expected.
-[Info] [2026-09-29 18:26:12] Beam designation: Beam2 is not expected.
-[Info] [2026-09-29 18:26:12] Beam designation: Beam3 is not expected.
-[Info] [2026-09-29 18:26:12] Beam designation: Beam4 is not expected.
-[Info] [2026-09-29 18:26:12] Beam designation: Beam5 is not expected.
-[Info] [2026-09-29 18:26:12] Abutment 1 orientation NORMAL (from CL bearing line)
-[Info] [2026-09-29 18:26:12] Abutment 2 orientation NORMAL (from CL bearing line)
-[Info] [2026-09-29 18:26:12] Uniform girder spacing 6.500 ft, measured normal to the alignment at the pier lines
-[Info] [2026-09-29 18:26:12] Girder type of Beam1 ("PA Bulb-Tee 33/31.25") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
-[Info] [2026-09-29 18:26:12] f'ci of Beam1 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'c of Beam1 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'ci of Beam2 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'c of Beam2 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'ci of Beam3 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'c of Beam3 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'ci of Beam4 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'c of Beam4 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'ci of Beam5 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] f'c of Beam5 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-09-29 18:26:12] Abutment 1 ahead face: end distance 12 in, bearing offset -3.47928e-12 in (from the CL bearings)
-[Info] [2026-09-29 18:26:12] Abutment 2 back face: end distance 12 in, bearing offset -1.76724e-09 in (from the CL bearings)
-[Info] [2026-09-29 18:26:12] Bearings: the same bearing everywhere, rectangular, 12.000 in x 31.500 in, height 0.750 in, fixed
-[Info] [2026-09-29 18:26:12] Deck gross depth 8.000 in (from deck geometry)
-[Info] [2026-09-29 18:26:12] Left overhang edge depth 10.019 in (from deck geometry)
-[Info] [2026-09-29 18:26:12] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-09-29 18:26:12] Right overhang edge depth 10.020 in (from deck geometry)
-[Info] [2026-09-29 18:26:12] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-09-29 18:26:12] Haunch shape: square (from deck geometry)
-[Info] [2026-09-29 18:26:12] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-09-29 18:26:12] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
-[Info] [2026-09-29 18:26:12] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 4 more elements.
-[Info] [2026-09-29 18:26:12] Done IFC import from file
+[Info] [2026-09-29 18:42:45] Starting IFC import from file
+[Info] [2026-09-29 18:42:45] IFC mapping table "PennDOT" (version 1): D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\mappings\PennDOT.json, chosen by the command line (/IfcMapping)
+[Info] [2026-09-29 18:42:45] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json, chosen by the standard table installed with the IFC extension
+[Info] [2026-09-29 18:42:45] Initializing units and precision from IFC file.
+[Info] [2026-09-29 18:42:45] IFC model does not contain an IfcMapConversion. Map conversion will be computed for this model.
+[Info] [2026-09-29 18:42:45] Importing alignment data from IFC file...
+[Info] [2026-09-29 18:42:45] Importing from bridge IFC file.
+[Info] [2026-09-29 18:42:45] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
+[Info] [2026-09-29 18:42:45] Expected Pier 1 #24=IfcBridgePart('1d9RH4z8fBLecnKnmtEis7',$,'Abutment1','',$,#27,$,$,.ELEMENT.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-29 18:42:45] Expected Pier 2 #32=IfcBridgePart('2FCI8sjAn9ER9R5W0DnDWU',$,'Abutment2','',$,#35,$,$,.COMPLEX.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-09-29 18:42:46] The girder designation (e.g. "Span 1, Girder 2") of Beam1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
+[Info] [2026-09-29 18:42:46] Beam designation: Beam1 is not expected.
+[Info] [2026-09-29 18:42:46] Beam designation: Beam2 is not expected.
+[Info] [2026-09-29 18:42:46] Beam designation: Beam3 is not expected.
+[Info] [2026-09-29 18:42:46] Beam designation: Beam4 is not expected.
+[Info] [2026-09-29 18:42:46] Beam designation: Beam5 is not expected.
+[Info] [2026-09-29 18:42:46] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-29 18:42:46] Abutment 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-09-29 18:42:46] Uniform girder spacing 6.500 ft, measured normal to the alignment at the pier lines
+[Info] [2026-09-29 18:42:46] Girder type of Beam1 ("PA Bulb-Tee 33/31.25") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-09-29 18:42:46] f'ci of Beam1 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'c of Beam1 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'ci of Beam2 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'c of Beam2 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'ci of Beam3 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'c of Beam3 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'ci of Beam4 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'c of Beam4 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'ci of Beam5 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] f'c of Beam5 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-09-29 18:42:46] Abutment 1 ahead face: end distance 12 in, bearing offset -3.47928e-12 in (from the CL bearings)
+[Info] [2026-09-29 18:42:46] Abutment 2 back face: end distance 12 in, bearing offset -1.76724e-09 in (from the CL bearings)
+[Info] [2026-09-29 18:42:46] Bearings: the same bearing everywhere, rectangular, 12.000 in x 31.500 in, height 0.750 in, fixed
+[Info] [2026-09-29 18:42:46] Deck gross depth 8.000 in (from deck geometry)
+[Info] [2026-09-29 18:42:46] Left overhang edge depth 10.019 in (from deck geometry)
+[Info] [2026-09-29 18:42:46] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-29 18:42:46] Right overhang edge depth 10.020 in (from deck geometry)
+[Info] [2026-09-29 18:42:46] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-09-29 18:42:46] Haunch shape: square (from deck geometry)
+[Info] [2026-09-29 18:42:46] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-09-29 18:42:46] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-09-29 18:42:46] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 4 more elements.
+[Info] [2026-09-29 18:42:46] Done IFC import from file
 IFC import succeeded
 Project saved to D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PennDOT.pgs
