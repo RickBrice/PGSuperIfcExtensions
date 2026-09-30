@@ -57,6 +57,7 @@ Every pset and property the importer reads today, and what happens to it:
 | `girder.type_names` | `IfcBeamType.Name`, `ObjectType`, text properties named "...Type" or "...Shape...", non-usBridge classification names | `GetGirderTypeNames`, `IfcBridgeImporter.cpp:730` | standard table: `IfcBeamType.Name`, `usBrPset_PrecastConcreteBeam.ShapeName`. Agency names go in agency tables; the guesses become log hints (G3) |
 | `bearing.fixed_x`, `bearing.fixed_y` | `Pset_BearingCommon.DisplacementAccommodated` (boolean list), else any text property named "...Fixity" | `get_bearing_fixity`, `Piers.cpp:307` | standard table: `DisplacementAccommodated`. Iowa and PennDOT "Fixity" go in agency tables; "...Fixity" becomes a log hint |
 | `girder.assembly_place`, `girder.casting_method` | `Pset_ConcreteElementGeneral.AssemblyPlace`/`CastingMethod`, or classification `GirderPrestressedConcrete` (`HasValidGirdersByTPF`, not called today) | `IfcBridgeImporter.cpp:386` | standard table |
+| `girder.designation` | `IfcBeam` `Pset_PrecastConcreteElementGeneral.DesignLocationNumber`, else parsed from `Name` | `get_girder_key`, `Utilities.h` | standard table; the `Name` parsing stays in code. (Found while implementing M1; missed in the first draft) |
 | haunch selector | `IfcSlab`/`IfcBuildingElementPart` with "haunch" in `ObjectType` or `Name` | `DeckSlab.cpp:269` | agency tables (Iowa: `IfcSlab.USERDEFINED` with ObjectType "Haunch"); "haunch" in a name becomes a log hint. Haunches in the deck solid, or parts aggregated under the deck, stay in code |
 
 These stay in code:
@@ -81,6 +82,8 @@ These stay in code:
 ## Element registry
 
 One identity per PGSuper item that becomes an IFC element. Tables use it (`applies_to`), and so will GlobalId persistence (R1).
+
+**Status (M1):** the import engine doesn't need the registry, so it's built with R1 and the export engine (M3). M1 has only `ElementKind`, in `IfcTargets.h`, with a `Haunch` role added.
 
 ```cpp
 enum class ElementKind { Project, Site, Bridge, BridgePart, Pier, Foundation, Alignment, Referent,
@@ -129,6 +132,11 @@ struct TargetDef
 - The getter applies export options (`include_camber`, ...), reading `CIfcExportOptions` from the context. Tables don't know about export options.
 - Setters write into `CBridgeDescription2` through the `ImportContext`. They never read template values ("keep import code independent of template values").
 
+**Status (M1):**
+- `TargetDef` has only the name, element, value kind, and a description for messages. Getters and setters come with the export engine (M3), when there are enough targets to justify them. Import code sets the values it reads.
+- `TargetValue` has no list alternative. `ReadAll` returns one reading per value instead.
+- `ValueKind` also has `Force`.
+
 ### Vocabulary for M1–M2 (import)
 
 | Target | Element | Kind | Import setter | Export getter |
@@ -136,10 +144,11 @@ struct TargetDef
 | `bridge.number_of_spans` | Bridge | Count | cross check against the modeled substructure; on a mismatch, log an error and use the model (G4) | `IBridge::GetSpanCount` |
 | `girder.fc` | Girder | Stress | `Segment.Material.Concrete.Fc` | `IMaterials::GetSegmentFc28` |
 | `girder.fci` | Girder | Stress | `Segment.Material.Concrete.Fci` | `GetSegmentFc` at release |
+| `girder.designation` | Girder | Text | girder key cross check in `get_girder_layout` (location wins) | the girder label |
 | `girder.type_names` | Girder | TextList (collect all) | candidate names for `GetGirderLibraryEntry` | `GetGirderName` |
 | `girder.assembly_place`, `girder.casting_method` | Girder | Text | precast check | "FACTORY", "PRECAST" |
 | `bearing.fixed_x`, `bearing.fixed_y` | Bearing | Boolean | `CBearingData2::FixedX/FixedY` | from support fixity (Phase 2 boundary conditions) |
-| `deck.gross_depth` | Deck | Length | cross check against geometry (D1: geometry wins, conflict reported) | `GetGrossSlabDepth` |
+| `deck.gross_depth` | Deck | Length | cross check against geometry (D1: geometry wins, conflict reported). M2 | `GetGrossSlabDepth` |
 
 M3 adds the export-only targets behind today's psets: `girder.fc_lifting`, `girder.fc_hauling`, `girder.jacking_stress`, `girder.camber_at_release`, `girder.camber_after_losses`, `girder.screed_camber`, `girder.camber_ratio`, `girder.batter`, `girder.span`, `girder.slope`, `girder.roll`, `girder.bunk_point`, `girder.family_name`, `girder.design_location`, `bridge.length`, `bridge.roadway_width`, `bridge.start_station`, `bridge.end_station`, `bridge.max_skew`, `pier.substructure_type`, `material.max_aggregate_size`, strand and rebar material targets, and so on. The full list comes from walking `PropertySets.h` in M3.
 
@@ -235,7 +244,7 @@ A target not listed in `targets` is imported from its bound properties (except t
   "name": "Iowa DOT",
   "extends": "standard",
   "elements": {
-    "haunch": { "entity": "IfcSlab", "predefined_type": "USERDEFINED", "attribute": { "name": "ObjectType", "value": "Haunch" } }
+    "haunch": { "entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": { "ObjectType": "Haunch" } }
   },
   "targets": {
     "girder.fc": [ { "property": { "pset": "IaDOT_PPCB", "name": "5_Final Concrete Strength, Fc" }, "unit": "ksi" } ],
@@ -258,6 +267,17 @@ PennDOT is the same with:
 - `_Deck."Minimum Thickness (in)"`
 
 The values in `map` (e.g. every value `3_Fixity` actually takes) are taken from the models when the tables are written in M1–M2.
+
+### General rules
+
+- **Unknown keys are errors.** A misspelled key (e.g. `"unti"`) would otherwise be ignored without notice. Any object may have a `"comment"`.
+- **Element roles:**
+  - A selector has `entity` (subtypes included), and optionally `predefined_type` (from the type object if there is one), `attributes` (`{ "ObjectType": "Haunch" }`, exact, ignoring case), and `classification` (a reference identification).
+  - `any_of` lists alternative selectors.
+  - The loader checks entity and attribute names against the IFC schema.
+  - Roles the importer uses in M1: `girder` (together with superstructure containment, G1), `deck`, `haunch`, `bearing`.
+- **Target lists:** a target's locations are a list, or `{ "mode": "replace", "locations": [...] }` to replace the base table's locations instead of going before them.
+- **Not in M1:** quantity locations (`quantity: {qto, name}`), and the `quantity_sets`, `classifications`, and `attributes` export sections. They come with the export engine (M3).
 
 ### Location reference
 
@@ -367,17 +387,22 @@ public:
 struct TargetReading
 {
    TargetValue value;
-   std::string table;       // "Iowa DOT"
-   std::string location;    // "IaDOT_PPCB.6_Concrete Release Strength, Fci (ksi)"
-   std::string raw;         // "6.8" as found, for the report
+   const MappingLocation* location; // where it was found, and in which table
+   std::string raw;                 // "6.8" as found, for the report
 };
 ```
+
+As built in M1, the reader also:
+- selects the elements that play a role (`Select`, `Matches`)
+- reports targets that weren't found (`ReportNotFound`). Only the first element is logged in full, with hints; the others are counted and summarized at the end of the import ("... also wasn't found for 19 more elements"), so the log stays readable.
+
+`CIfcImporter::GetTargetReader()` gives import code the reader for the current import, as `GetUnits()` does for units. The table is loaded before the model is read, so a table problem stops the import before any work is done.
 
 - Import code calls `Read("girder.fci", beam)` in place of the hard-coded `GetMeasureProperty(..., "Pset_PrecastConcreteElementGeneral", "ReleaseStrength")`. Where the value is set stays in import code for M1. Setters in `TargetDef` come in when there are enough targets to justify it.
 - A value that is found but can't be parsed or converted is logged with its location, and the next location is tried.
 - **Hints (G3):** when no location gives a value, `CIfcTargetHints` looks for likely properties on the element and logs them as suggestions, with their values. Hints never set data. Each target can have a hint rule in code (girder type, bearing fixity, haunch elements to start with); targets without one just log "not found".
 - Each reading goes to the import log now ("f'ci = 6.8 ksi from IaDOT_PPCB.6_Concrete Release Strength, Fci (Iowa DOT)"), and to the structured import report and BCF later (R2, Phase 0.5).
-- Performance: psets are indexed once per object (name → properties) instead of walking `IsDefinedBy` for every lookup.
+- Performance: M1 walks `IsDefinedBy` for each lookup, as the importer did before. Indexing psets once per object waits until there are enough targets for it to matter.
 
 **M1 acceptance:**
 - The standard table reproduces today's reads of standard locations.
@@ -386,7 +411,7 @@ struct TargetReading
 - Without those tables, the Iowa and PennDOT import logs show hints naming `IaDOT_PPCB.2_Type`, `3_Fixity`, `_PS Concrete Beams.Type`, and so on. `run_validation.py` checks this with one extra run of each model using only the standard table.
 - The import log names the table file and the source of each value.
 - A `NumberOfSpans` mismatch is logged as an error and the model is used (G4).
-- Table loading errors have tests: a missing file, invalid JSON, an unknown target, an unknown unit.
+- Table loading errors were checked by hand in M1 with broken tables: a missing file, invalid JSON, a table with 7 problems (misspelled key, unknown target, unknown unit, unit on a boolean, bad map value, unknown entity, unknown attribute), an unsupported version, and an `extends` cycle. They become automated tests in Phase 8.
 
 ## Export engine (M3, outline)
 
@@ -399,10 +424,11 @@ struct TargetReading
 
 | File | Contents |
 |---|---|
-| `IfcElementRegistry.h/.cpp` | `ElementKind`, `ElementId`, `CIfcElementRegistry` |
-| `IfcTargets.h/.cpp` | `ValueKind`, `TargetValue`, `TargetDef`, the target list |
+| `IfcElementRegistry.h/.cpp` | `ElementId`, `CIfcElementRegistry` (with R1 and M3) |
+| `IfcTargets.h/.cpp` | `ElementKind`, `ValueKind`, `TargetValue`, `TargetDef`, the target list |
 | `IfcMappingTable.h/.cpp` | finding table files, JSON load (nlohmann-json, already in vcpkg), the `extends` merge, validation, error messages |
 | `IfcTargetReader.h/.cpp` | import engine |
 | `IfcTargetHints.h/.cpp` | hint rules for targets that weren't found (G3) |
 | `MappingTables/Standard.json` | standard table, installed next to the DLL (post-build copy for development builds) |
 | `Tests/ImportValidation/mappings/Iowa.json`, `PennDOT.json` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |
+| `Tests/ImportValidation/models.json` | `PennDOT-StandardTable` and `Iowa-StandardTable` runs with `expect_log`: text the log must contain (the hints) |

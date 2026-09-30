@@ -10,6 +10,18 @@
     <ClCompile Include="IfcImportUnits.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IfcMappingTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcTargetHints.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcTargetReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcTargets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcImporterException.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -103,6 +115,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcImportUnits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcMappingTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcTargetHints.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcTargetReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcTargets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcImporterException.h">

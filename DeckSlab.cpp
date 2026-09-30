@@ -23,6 +23,9 @@
 #include "DeckSlab.h"
 #include "Geometry.h"
 #include "BeamSpacing.h"
+#include "IfcImporter.h"
+#include "IfcTargetReader.h"
+#include "IfcTargetHints.h"
 
 #include <map>
 #include <numeric>
@@ -41,16 +44,21 @@
 #undef min // undef our version of min in MathEx.h so std::min is used correctly in this file
 
 
-// returns the id of the IfcSlab... assumes there is only one
 int get_slab_id(ifcopenshell::file& file)
 {
-   auto slabs = file.instances_by_type<IfcSchema::IfcSlab>();
-   auto it = std::find_if(slabs.begin(), slabs.end(), [](const auto& slab) {return slab.PredefinedType() == IfcSchema::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
-   if (it == slabs.end())
-      return 0; // no slabs
+   // the first element selected by the deck element role of the mapping table
+   auto decks = CIfcImporter::GetTargetReader().Select(ElementKind::Deck, file);
+   if (decks.empty())
+      return 0; // no deck
 
-   auto slab = *it;
-   return slab.id();
+   if (1 < decks.size())
+   {
+      std::ostringstream os;
+      os << decks.size() << " elements are selected as the deck (" << CIfcImporter::GetTargetReader().GetTable().GetSelector(ElementKind::Deck)->Describe() << "). The first one, #" << decks.front().id() << ", is used.";
+      WBFL::System::Logger::Warning(os.str());
+   }
+
+   return decks.front().id();
 }
 
 using EdgeProfile = std::vector<std::pair<double, double>>; // (station, offset) along a deck edge, sorted by station
@@ -243,15 +251,8 @@ std::optional<Mesh> get_deck_mesh(std::shared_ptr<WBFL::EAF::Broker> pBroker, if
 
 namespace
 {
-   bool contains_haunch(const std::string& text)
-   {
-      std::string lower(text);
-      std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) {return (char)std::tolower(c); });
-      return lower.find("haunch") != std::string::npos;
-   }
-
    // Haunches that are modeled as elements separate from the deck slab: parts aggregated under the deck
-   // and slabs or building element parts identified as haunches by their ObjectType or Name
+   // and the elements selected by the haunch element role of the mapping table
    std::set<int> get_haunch_ids(ifcopenshell::file& file, int slab_id)
    {
       std::set<int> ids;
@@ -266,16 +267,22 @@ namespace
          }
       }
 
-      auto is_haunch = [](const auto& element) {return (element.ObjectType() && contains_haunch(*element.ObjectType())) || (element.Name() && contains_haunch(*element.Name())); };
-      for (auto& slab : file.instances_by_type<IfcSchema::IfcSlab>())
+      bool bSelected = false;
+      for (auto& haunch : CIfcImporter::GetTargetReader().Select(ElementKind::Haunch, file))
       {
-         if (slab.id() != slab_id && is_haunch(slab))
-            ids.insert(slab.id());
+         if (haunch.id() != slab_id)
+         {
+            ids.insert(haunch.id());
+            bSelected = true;
+         }
       }
-      for (auto& part : file.instances_by_type<IfcSchema::IfcBuildingElementPart>())
+
+      if (!bSelected)
       {
-         if (is_haunch(part))
-            ids.insert(part.id());
+         // elements named like haunches are only hints for the mapping table author (devdocs/MappingTablesDesign.md, G3)
+         std::set<int> excluded(ids);
+         excluded.insert(slab_id);
+         CIfcTargetHints::LogHaunchHints(file, excluded);
       }
 
       return ids;

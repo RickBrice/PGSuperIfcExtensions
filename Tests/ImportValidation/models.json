@@ -23,11 +23,23 @@
     },
     {
       "name": "PennDOT",
-      "ifc": "models/PennDOT_Rearick_Rd_323010451_STR1.ifc"
+      "ifc": "models/PennDOT_Rearick_Rd_323010451_STR1.ifc",
+      "mapping": "mappings/PennDOT.json"
+    },
+    {
+      "name": "PennDOT-StandardTable",
+      "ifc": "models/PennDOT_Rearick_Rd_323010451_STR1.ifc",
+      "expect_log": [ "_PS Concrete Beams.Type = \"PA Bulb-Tee 33/31.25\"", "_Bearing Assembly.Fixity = \"Fixed\"" ]
     },
     {
       "name": "Iowa",
-      "ifc": "models/Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip"
+      "ifc": "models/Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip",
+      "mapping": "mappings/Iowa.json"
+    },
+    {
+      "name": "Iowa-StandardTable",
+      "ifc": "models/Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip",
+      "expect_log": [ "IaDOT_PPCB.2_Type = \"BTB45\"", "Bearing Item - ItemTypes.3_Fixity = \"Fixed\"", "elements may be haunches" ]
     }
   ]
 }

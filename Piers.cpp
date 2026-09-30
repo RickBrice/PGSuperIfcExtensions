@@ -24,6 +24,7 @@
 #include "Properties.h"
 #include "Geometry.h"
 #include "IfcImporter.h"
+#include "IfcTargetReader.h"
 
 #include <psgLib\GirderLabel.h>
 #include <IFace/Alignment.h>
@@ -178,7 +179,7 @@ namespace
    std::vector<BearingGeometry> get_bearing_geometry(ifcopenshell::file& file)
    {
       std::set<int> bearing_ids;
-      for (auto& bearing : file.instances_by_type<IfcSchema::IfcBearing>())
+      for (auto& bearing : CIfcImporter::GetTargetReader().Select(ElementKind::Bearing, file))
          bearing_ids.insert(bearing.id());
 
       std::vector<BearingGeometry> bearings;
@@ -302,59 +303,26 @@ void locate_bearings(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::f
 
 namespace
 {
-   // fixity of a bearing (fixed longitudinally, fixed transversely) from Pset_BearingCommon.DisplacementAccommodated,
-   // or from a text property named Fixity (e.g. "Fixed" or "Expansion") that some authoring tools use
+   // fixity of a bearing (fixed along the girder, fixed across the girder) from the locations of bearing.fixed_x and
+   // bearing.fixed_y in the mapping table. When only one is found, it's used for both (e.g. a single "Fixity" property)
    std::optional<std::pair<bool, bool>> get_bearing_fixity(ifcopenshell::file& file, int bearing_id)
    {
       auto bearing = file.instance_by_id(bearing_id).as<IfcSchema::IfcBearing>();
       if (!bearing)
          return std::nullopt;
 
-      auto lower = [](std::string s) {std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) {return (char)std::tolower(c); }); return s; };
-
-      std::optional<std::pair<bool, bool>> fixity;
-      for (auto& rel : bearing.IsDefinedBy())
+      const auto& reader = CIfcImporter::GetTargetReader();
+      auto fixed_x = reader.Read("bearing.fixed_x", bearing);
+      auto fixed_y = reader.Read("bearing.fixed_y", bearing);
+      if (!fixed_x && !fixed_y)
       {
-         auto pset = rel.RelatingPropertyDefinition().as<IfcSchema::IfcPropertySet>();
-         if (!pset)
-            continue;
-
-         for (auto& property : pset.HasProperties())
-         {
-            std::string name = lower(property.Name());
-            if (pset.Name() == std::string("Pset_BearingCommon") && name == "displacementaccommodated")
-            {
-               if (auto list = property.as<IfcSchema::IfcPropertyListValue>(); list && list.ListValues())
-               {
-                  std::vector<bool> accommodated;
-                  for (auto& value : *list.ListValues())
-                  {
-                     if (auto b = value.as<IfcSchema::IfcBoolean>())
-                        accommodated.push_back((bool)b);
-                  }
-                  if (2 <= accommodated.size())
-                     return std::make_pair(!accommodated[0], !accommodated[1]); // the standard property set wins
-               }
-            }
-            else if (!fixity && name.ends_with("fixity"))
-            {
-               auto value = property.as<IfcSchema::IfcPropertySingleValue>();
-               if (!value || !value.NominalValue())
-                  continue;
-               std::string text;
-               if (auto label = value.NominalValue().as<IfcSchema::IfcLabel>())
-                  text = lower(label);
-               else if (auto t = value.NominalValue().as<IfcSchema::IfcText>())
-                  text = lower(t);
-
-               if (text.find("fixed") != std::string::npos)
-                  fixity = std::make_pair(true, true);
-               else if (text.find("expansion") != std::string::npos || text.find("free") != std::string::npos)
-                  fixity = std::make_pair(false, false);
-            }
-         }
+         reader.ReportNotFound("bearing.fixed_x", bearing, bearing.Name().value_or("unnamed bearing"));
+         return std::nullopt;
       }
-      return fixity;
+
+      bool x = std::get<bool>((fixed_x ? fixed_x : fixed_y)->value);
+      bool y = std::get<bool>((fixed_y ? fixed_y : fixed_x)->value);
+      return std::make_pair(x, y);
    }
 
    bool same_bearing(const CBearingData2& a, const CBearingData2& b)

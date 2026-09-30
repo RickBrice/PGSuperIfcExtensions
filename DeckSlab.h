@@ -29,7 +29,10 @@ namespace WBFL { namespace EAF { class Broker; }; };
 #include "BeamSpacing.h"
 #include <psgLib/BridgeDescription2.h>
 
-// Geometry of the deck slab (IfcSlab.FLOOR), or nullopt if it can't be processed
+// Id of the deck slab (the first element selected by the deck element role of the mapping table), or 0 if there isn't one
+int get_slab_id(ifcopenshell::file& file);
+
+// Geometry of the deck slab, or nullopt if it can't be processed
 std::optional<Mesh> get_deck_mesh(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
 
 // Geometry of the deck slab and the haunches that are separate elements, in one mesh: parts aggregated under the deck,

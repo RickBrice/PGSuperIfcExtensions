@@ -101,47 +101,6 @@ static CGirderKey girder_key_from_string(const std::string& input) {
    return CGirderKey(spanIndex, girderIndex );
 }
 
-static CGirderKey get_girder_key(IfcSchema::IfcBeam beam)
-{
-   CGirderKey girder_key;
-   auto design_location_number = GetProperty<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_PrecastConcreteElementGeneral", "DesignLocationNumber");
-   if (design_location_number)
-   {
-      girder_key = girder_key_from_string(*design_location_number);
-      if (girder_key == CGirderKey())
-      {
-         WBFL::System::Logger::Info("DesignLocationNumber property not found in Pset_PrecastConcreteElementGeneral, or the property was not formatted as expected");
-      }
-   }
-   else
-   {
-      WBFL::System::Logger::Info("Pset_PrecastConcreteElementGeneral not found.");
-   }
-
-   if (girder_key == CGirderKey())
-   {
-      if (beam.Name())
-      {
-         girder_key = girder_key_from_string(*(beam.Name()));
-         if (girder_key == CGirderKey())
-         {
-            WBFL::System::Logger::Info("IfcBeam::Name was not formatted as expected");
-         }
-      }
-      else
-      {
-         WBFL::System::Logger::Info("IfcBeam::Name attribute not found");
-      }
-   }
-
-   if (girder_key == CGirderKey())
-   {
-      WBFL::System::Logger::Info("Could not determine girder key from IfcBeam");
-   }
-
-   return girder_key;
-}
-
 template <typename T>
 constexpr T deg2rad(T deg) {
    return deg * std::numbers::pi_v<T> / 180.;

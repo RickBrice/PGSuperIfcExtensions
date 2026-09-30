@@ -41,7 +41,14 @@ public:
    // log is written to log_file instead of being displayed.
    bool interactive = true;
    CString log_file;
+
+   // Mapping table given on the command line (/IfcMapping). When empty, the installed standard table is used.
+   // The BridgeLink configuration setting comes later (devdocs/MappingTablesDesign.md, M6)
+   CString mapping_file;
 };
+
+class CIfcMappingTable;
+class CIfcTargetReader;
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -77,12 +84,17 @@ public:
    // Converts property values to system units. See CIfcImportUnits
    static const CIfcImportUnits& GetUnits() { return m_Units; }
 
+   // Reads target values through the mapping table of the current import. See CIfcTargetReader
+   static const CIfcTargetReader& GetTargetReader();
+
 
 private:
    std::shared_ptr<WBFL::EAF::Broker> m_pBroker;
    CIfcImportOptions m_Options;
    static Float64 m_Precision;
    static CIfcImportUnits m_Units;
+   static std::unique_ptr<CIfcMappingTable> m_pMappingTable;
+   static std::unique_ptr<CIfcTargetReader> m_pTargetReader;
    WBFL::Units::Length m_LengthUnit{ 1.0, _T("m") };
    WBFL::Units::Angle m_AngleUnit{ 1.0, _T("rad") };
    std::ostringstream m_LogStream;
@@ -93,5 +105,6 @@ private:
    ImportResult ImportBridge(ifcopenshell::file& file, bool bDeriveAlignmentFromDeck);
 
    void InitUnits(ifcopenshell::file& file);
+   void LoadMappingTable();
 };
 

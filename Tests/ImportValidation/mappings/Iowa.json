@@ -1,0 +1,21 @@
+{
+  "comment": "Iowa DOT mapping table for the ADCMS pilot model (US 59 over IA 92). First version (M1): the girder type, bearing fixity, and haunch elements the importer found by guessing names before mapping tables. f'c, f'ci, and deck thickness follow in M2.",
+  "format": "PGSuperIfcMapping",
+  "version": 1,
+  "name": "Iowa DOT",
+  "extends": "standard",
+  "elements": {
+    "haunch": { "entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": { "ObjectType": "Haunch" } }
+  },
+  "targets": {
+    "girder.type_names": [
+      { "property": { "pset": "IaDOT_PPCB", "name": "2_Type" } }
+    ],
+    "bearing.fixed_x": [
+      { "property": { "pset": "Bearing Item - ItemTypes", "name": "3_Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+    ],
+    "bearing.fixed_y": [
+      { "property": { "pset": "Bearing Item - ItemTypes", "name": "3_Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+    ]
+  }
+}

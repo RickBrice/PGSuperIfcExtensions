@@ -26,6 +26,7 @@
 #include "IfcImporterException.h"
 #include "USBridge_Classifications.h"
 #include "Utilities.h"
+#include "IfcTargetReader.h"
 
 #include "BeamSpacing.h"
 #include "DeckSlab.h"
@@ -65,19 +66,24 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
 
    auto nPiers = get_pier_count(file);
 
-   SpanIndexType nSpans = INVALID_INDEX;
-   auto value = GetProperty<IfcSchema, IfcSchema::IfcInteger>(bridge, "usBrPset_BridgeGeometry", "NumberOfSpans");
-   if (value)
+   // The number of spans is from the modeled substructure. A number of spans property is only a cross check;
+   // when it disagrees, the model is used and the conflict is reported (devdocs/MappingTablesDesign.md, G4)
+   SpanIndexType nSpans = nPiers - 1;
+   const auto& reader = CIfcImporter::GetTargetReader();
+   if (auto reading = reader.Read("bridge.number_of_spans", bridge))
    {
-      nSpans = (SpanIndexType)(int64_t)(*value);
-      if (nSpans != nPiers - 1)
-         IFC_THROW(_T("Number of spans modeled does not match number of spans in usBrPset_BridgeGeometry property set"));
+      auto nSpansProperty = std::get<Int64>(reading->value);
+      if (nSpansProperty != (Int64)nSpans)
+      {
+         std::ostringstream os;
+         os << "The number of spans is " << nSpansProperty << " (" << reading->Source() << "), but the model has " << nPiers
+            << " abutments and piers, so " << nSpans << " spans. The modeled substructure is used.";
+         WBFL::System::Logger::Error(os.str());
+      }
    }
    else
    {
-      WBFL::System::Logger::Info(_T("NumberOfSpans property not found in usBrPset_BridgeGeometry property set"));
-      nSpans = nPiers - 1; // derive number of spans from nPiers so we don't rely on custom property set
-      //IFC_THROW(_T("usBridge_NumberOfSpans property not found in usBrPset_BridgeGeometry property set"));
+      reader.ReportNotFound("bridge.number_of_spans", bridge, "the bridge");
    }
 
    // Get the existing bridge description. We are going to modify the bridge description with
@@ -296,33 +302,24 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
 
       const auto& girder = layout[girder_key.groupIndex][girder_key.girderIndex];
       auto beam = file.instance_by_id(girder.beam_id).as<IfcSchema::IfcBeam>();
+      auto beam_name = beam.Name().value_or("unnamed beam");
 
-      auto fci = GetMeasureProperty<IfcSchema::IfcPressureMeasure>(CIfcImporter::GetUnits(), beam, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength");
-      if (fci)
+      const auto& reader = CIfcImporter::GetTargetReader();
+      for (auto [target, label, pStrength] : { std::make_tuple("girder.fci", "f'ci", &pGirder->GetSegment(0)->Material.Concrete.Fci),
+                                               std::make_tuple("girder.fc", "f'c", &pGirder->GetSegment(0)->Material.Concrete.Fc) })
       {
-         pGirder->GetSegment(0)->Material.Concrete.Fci = *fci;
-      }
-      else
-      {
-         WBFL::System::Logger::Info(_T("ReleaseStrength property in Pset_PrecastConcreteElementGeneral property set not found"));
-      }
-
-      auto material = GetMaterial<IfcSchema>(beam);
-      if (material)
-      {
-         auto fc = GetMaterialMeasureProperty<IfcSchema::IfcPressureMeasure>(CIfcImporter::GetUnits(), material, "Pset_MaterialConcrete", "CompressiveStrength");
-         if (fc)
+         if (auto reading = reader.Read(target, beam))
          {
-            pGirder->GetSegment(0)->Material.Concrete.Fc = *fc;
+            *pStrength = std::get<Float64>(reading->value);
+
+            std::ostringstream os;
+            os << label << " of " << beam_name << " = " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(*pStrength, WBFL::Units::Measure::KSI) << " ksi, " << reading->Source();
+            WBFL::System::Logger::Info(os.str());
          }
          else
          {
-            WBFL::System::Logger::Info(_T("CompressiveStrength property in Pset_MaterialConcrete property set not found"));
+            reader.ReportNotFound(target, beam, beam_name);
          }
-      }
-      else
-      {
-         WBFL::System::Logger::Info(_T("Materials are not associated with the beam"));
       }
    }
 }
@@ -383,15 +380,16 @@ bool CIfcBridgeImporter::HasValidGirdersByTPF(ifcopenshell::file& file, IfcSchem
       if (predefined_type.value_or(IfcSchema::IfcBeamTypeEnum::IfcBeamType_NOTDEFINED) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
       {
          // beams must be classified as precast girders
-         auto assembly_place = GetPropertyEnum<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "AssemblyPlace");
-         auto casting_method = GetPropertyEnum<IfcSchema, IfcSchema::IfcLabel>(beam, "Pset_ConcreteElementGeneral", "CastingMethod");
+         const auto& reader = CIfcImporter::GetTargetReader();
+         auto assembly_place = reader.Read("girder.assembly_place", beam);
+         auto casting_method = reader.Read("girder.casting_method", beam);
 
          // level 1 check - if there is an assembly_place and casting_method, use that for the determination
          // otherwise use the more specific usBridge classification
          if (assembly_place && casting_method)
          {
-            bool is_factory_assembled = (std::string(*assembly_place) == std::string("FACTORY"));
-            bool is_precast = (std::string(*casting_method) == std::string("PRECAST"));
+            bool is_factory_assembled = (std::get<std::string>(assembly_place->value) == std::string("FACTORY"));
+            bool is_precast = (std::get<std::string>(casting_method->value) == std::string("PRECAST"));
 
             if (!is_factory_assembled || !is_precast)
             {
@@ -511,10 +509,8 @@ IfcSchema::IfcBridge CIfcBridgeImporter::GetBridge(ifcopenshell::file& file)
 
 void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout, const std::vector<Float64>& pier_stations)
 {
-   auto slabs = file.instances_by_type<IfcSchema::IfcSlab>();
-   auto it = std::find_if(slabs.begin(), slabs.end(), [](const auto& slab) {return slab.PredefinedType() == IfcSchema::IfcSlabTypeEnum::IfcSlabType_FLOOR; });
-   if (it == slabs.end())
-      return; // no slabs
+   if (get_slab_id(file) == 0)
+      return; // no deck
 
    auto deck = get_deck_mesh(m_Importer.GetBroker(), file);
    if (!deck)
@@ -719,64 +715,20 @@ namespace
       return (double)longest / (double)std::max(a.size(), b.size());
    }
 
-   // true if a property or classification name suggests it holds the girder type (e.g. "Type", "2_Type", "ShapeName")
-   bool is_girder_type_property(const std::string& name)
-   {
-      auto n = normalize_girder_name(name);
-      return n.ends_with("TYPE") || n.find("SHAPE") != std::string::npos;
-   }
 }
 
 std::vector<std::string> CIfcBridgeImporter::GetGirderTypeNames(IfcSchema::IfcBeam beam)
 {
-   // Collect the names that might identify the girder type, most authoritative first.
-   // Models that don't follow the TPF/usBridge conventions put the girder type in all sorts of places
+   // The names that identify the girder type, from the locations of girder.type_names in the mapping table, in table order
    std::vector<std::string> names;
-   auto add = [&names](const std::string& name)
-      {
-         // skip empty names and generic words that say nothing about the girder type
-         static const std::set<std::string> generic{ "", "NULL", "BEAM", "GIRDER", "NOTDEFINED", "USERDEFINED" };
-         if (generic.find(normalize_girder_name(name)) == generic.end() && std::find(names.begin(), names.end(), name) == names.end())
-            names.push_back(name);
-      };
-
-   auto type = GetType<IfcSchema::IfcBeamType>(beam);
-   if (type && type.Name())
-      add(*type.Name());
-
-   if (beam.ObjectType())
-      add(*beam.ObjectType());
-
-   // text valued properties with names like Type, 2_Type, or ShapeName
-   for (auto& rel : beam.IsDefinedBy())
+   for (const auto& reading : CIfcImporter::GetTargetReader().ReadAll("girder.type_names", beam))
    {
-      auto pset = rel.RelatingPropertyDefinition().as<IfcSchema::IfcPropertySet>();
-      if (!pset)
-         continue;
-
-      for (auto& property : pset.HasProperties())
-      {
-         auto value = property.as<IfcSchema::IfcPropertySingleValue>();
-         if (!value || !is_girder_type_property(value.Name()) || !value.NominalValue())
-            continue;
-
-         if (auto label = value.NominalValue().as<IfcSchema::IfcLabel>())
-            add(label);
-         else if (auto text = value.NominalValue().as<IfcSchema::IfcText>())
-            add(text);
-      }
+      // skip generic words that say nothing about the girder type
+      static const std::set<std::string> generic{ "", "NULL", "BEAM", "GIRDER", "NOTDEFINED", "USERDEFINED" };
+      const auto& name = std::get<std::string>(reading.value);
+      if (generic.find(normalize_girder_name(name)) == generic.end())
+         names.push_back(name);
    }
-
-   // classification references (e.g. "Beam, PPC, BTB45")
-   for (auto& rel : beam.HasAssociations())
-   {
-      auto rel_classification = rel.as<IfcSchema::IfcRelAssociatesClassification>();
-      auto reference = rel_classification ? rel_classification.RelatingClassification().as<IfcSchema::IfcClassificationReference>() : IfcSchema::IfcClassificationReference{};
-      // usBridge classifications (e.g. usBridge_GirderPrecastConcrete) identify the kind of element, not the girder type
-      if (reference && reference.Name() && !reference.Identification().value_or("").starts_with("usBridge_"))
-         add(*reference.Name());
-   }
-
    return names;
 }
 
@@ -788,6 +740,9 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
    auto found = m_GirderMatches.find(girder_type_names);
    if (found != m_GirderMatches.end())
       return found->second;
+
+   if (girder_type_names.empty())
+      CIfcImporter::GetTargetReader().ReportNotFound("girder.type_names", beam, beam.Name().value_or("unnamed beam"));
 
    GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
    GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);

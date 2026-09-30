@@ -30,12 +30,13 @@ CLASS
    Command line parser for batch IFC import and export.
 
    Import an IFC model into a new PGSuper project:
-   BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>]
+   BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>] [/IfcMapping=<table.json>]
 
    The template file is opened by the application as a new project. The IFC model
    is then imported into that project and the project is saved.
    /IfcOut defaults to the IFC file name with a .pgs extension.
    /IfcLog defaults to the output file name with a .log extension.
+   /IfcMapping defaults to the standard mapping table installed with the extension.
 
    Export a PGSuper project to an IFC model:
    BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>]
@@ -65,6 +66,7 @@ public:
    CString m_strIfcFile; // IFC file to import or export
    CString m_strOutFile; // PGSuper project file created by an import
    CString m_strLogFile;
+   CString m_strMappingFile; // import option, see CIfcImportOptions::mapping_file
    bool m_bDisplayUnitsForProperties; // export option, see CIfcExportOptions::display_units_for_properties
 
 private:

@@ -130,6 +130,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <PostBuildEvent>
       <Command>xcopy /Y /I "$(ProjectDir)vcpkg_installed\x64-windows\x64-windows\share\proj" "$(OutDir)proj\"
 xcopy /Y /D "$(ProjectDir)IfcExtensions.Manifest.PGSuper" "$(OutDir)"
+xcopy /Y /I "$(ProjectDir)MappingTables" "$(OutDir)MappingTables\"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\plugin\$(Configuration)\ifcopenshell.plugin.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell.parse.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell_parse_schema_ifc4x3_add2.dll" "$(OutDir)"
@@ -139,7 +140,7 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)
 xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying proj.db, IfcExtensions.Manifest.PGSuper, and IfcOpenShell DLLs along side EXE</Message>
+      <Message>Copying proj.db, IfcExtensions.Manifest.PGSuper, the IFC mapping tables, and IfcOpenShell DLLs along side EXE</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -200,6 +201,7 @@ xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(
     <PostBuildEvent>
       <Command>xcopy /Y /I "$(ProjectDir)vcpkg_installed\x64-windows\x64-windows\share\proj" "$(OutDir)proj\"
 xcopy /Y /D "$(ProjectDir)IfcExtensions.Manifest.PGSuper" "$(OutDir)"
+xcopy /Y /I "$(ProjectDir)MappingTables" "$(OutDir)MappingTables\"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\plugin\$(Configuration)\ifcopenshell.plugin.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell.parse.dll" "$(OutDir)"
 xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcparse\$(Configuration)\ifcopenshell_parse_schema_ifc4x3_add2.dll" "$(OutDir)"
@@ -209,7 +211,7 @@ xcopy /Y "$(IFCOPENSHELL_DIR)\_build-vs2026-$(Platform)\ifcgeom\$(Configuration)
 xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Copying proj.db, IfcExtensions.Manifest.PGSuper, and IfcOpenShell DLLs along side EXE</Message>
+      <Message>Copying proj.db, IfcExtensions.Manifest.PGSuper, the IFC mapping tables, and IfcOpenShell DLLs along side EXE</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <!-- buildingSMART IDS schema binding (CodeSynthesis xsd-cxx). See Schema\ids-binding.xsd
@@ -259,6 +261,10 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="IfcCommandLineInfo.cpp" />
     <ClCompile Include="IfcImporterException.cpp" />
     <ClCompile Include="IfcImportUnits.cpp" />
+    <ClCompile Include="IfcMappingTable.cpp" />
+    <ClCompile Include="IfcTargetHints.cpp" />
+    <ClCompile Include="IfcTargetReader.cpp" />
+    <ClCompile Include="IfcTargets.cpp" />
     <ClCompile Include="IfcExtensions.cpp" />
     <ClCompile Include="IfcExtensionAgent.cpp" />
     <ClCompile Include="GeoReferencingPage.cpp" />
@@ -322,6 +328,10 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="IfcCommandLineInfo.h" />
     <ClInclude Include="IfcImporterException.h" />
     <ClInclude Include="IfcImportUnits.h" />
+    <ClInclude Include="IfcMappingTable.h" />
+    <ClInclude Include="IfcTargetHints.h" />
+    <ClInclude Include="IfcTargetReader.h" />
+    <ClInclude Include="IfcTargets.h" />
     <ClInclude Include="IfcExtensions.h" />
     <ClInclude Include="IfcExtensionAgent.h" />
     <ClInclude Include="GeoReferencingPage.h" />

@@ -292,6 +292,7 @@ void CIfcExtensionAgent::ImportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
    CIfcImportOptions options;
    options.interactive = false;
    options.log_file = ifcCmdInfo.m_strLogFile;
+   options.mapping_file = ifcCmdInfo.m_strMappingFile;
    CString strIfcFile(ifcCmdInfo.m_strIfcFile);
    HRESULT hr = CIfcImporter(EAFGetBroker()).ImportFromIFC(strIfcFile, options);
 

@@ -27,11 +27,32 @@
 #include "IfcBridgeImporter.h"
 #include "Units.h"
 #include "ImportResults.h"
+#include "IfcMappingTable.h"
+#include "IfcTargetReader.h"
 
 #include <EAF/AutoProgress.h>
 
 Float64 CIfcImporter::m_Precision = 0.001;
 CIfcImportUnits CIfcImporter::m_Units;
+std::unique_ptr<CIfcMappingTable> CIfcImporter::m_pMappingTable;
+std::unique_ptr<CIfcTargetReader> CIfcImporter::m_pTargetReader;
+
+const CIfcTargetReader& CIfcImporter::GetTargetReader()
+{
+   ASSERT(m_pTargetReader); // only available during an import
+   return *m_pTargetReader;
+}
+
+void CIfcImporter::LoadMappingTable()
+{
+   m_pTargetReader.reset();
+   m_pMappingTable.reset();
+
+   std::filesystem::path path(m_Options.mapping_file.GetString());
+   m_pMappingTable = CIfcMappingTable::Load(path, path.empty() ? MappingTableSource::InstalledStandard : MappingTableSource::CommandLine);
+   m_pMappingTable->LogFiles();
+   m_pTargetReader = std::make_unique<CIfcTargetReader>(*m_pMappingTable, m_Units);
+}
 
 CIfcImporter::CIfcImporter(std::shared_ptr<WBFL::EAF::Broker> pBroker) :
    m_pBroker(pBroker)
@@ -120,6 +141,9 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
       WBFL::System::Logger::Info(_T("Starting IFC import from file"));
 
+      // The mapping table first, so a table problem is reported before the model is read
+      LoadMappingTable();
+
       std::unique_ptr<ifcopenshell::file> pFile = nullptr;
 
       GET_IFACE(IEAFProgress, pProgress);
@@ -181,6 +205,14 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
        WBFL::System::Logger::Info(os.str().c_str());
        hr = E_FAIL;
     }
+    catch (const CIfcMappingTableException& e)
+    {
+       // the table can't be used. Don't fall back to another table, the results would differ without notice
+       std::ostringstream os;
+       os << "IFC import failed:\n" << e.what();
+       WBFL::System::Logger::Error(os.str().c_str());
+       hr = E_FAIL;
+    }
     catch (const std::exception& e)
     {
        // IfcOpenShell reports errors by throwing std::exception (e.g. the geometry iterator)
@@ -196,6 +228,9 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
        hr = E_FAIL;
     }
 
+    if (m_pTargetReader)
+       m_pTargetReader->LogNotFoundSummary();
+
     WBFL::System::Logger::Info(_T("Done IFC import from file"));
 
     if (m_Options.interactive)
@@ -210,6 +245,9 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
     }
 
     WBFL::System::Logger::SetOutput(m_pOldLogStream);
+
+    m_pTargetReader.reset();
+    m_pMappingTable.reset();
 
    return hr;
 }

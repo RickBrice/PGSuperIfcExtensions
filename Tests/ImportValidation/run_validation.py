@@ -7,6 +7,10 @@ For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
    otherwise report which values the import set (inventory).
 
+A model can name a "mapping" table (/IfcMapping); without one, the standard table installed with the
+extension is used. "expect_log" lists text the import log must contain (e.g. mapping table hints);
+the summary reports any that is missing.
+
 Reports, logs, and imported projects are written to results/, replacing the previous results, so
 the change from one run to the next shows up as a difference in the repository. summary.md has the
 score of every run. Exported IFC files and unzipped models are written to results/ but not tracked.
@@ -98,14 +102,29 @@ def unpack(path):
     return target
 
 
-def import_ifc(exe, ifc, template, pgs):
-    """imports ifc into a new project pgs. Returns (ok, message)"""
-    ok, message = run_bridgelink(exe, [quote(f"/IfcImport={ifc}"), quote(template), quote(f"/IfcOut={pgs}")])
+def import_ifc(exe, ifc, template, pgs, mapping=None):
+    """imports ifc into a new project pgs, with a mapping table if given. Returns (ok, message)"""
+    arguments = [quote(f"/IfcImport={ifc}"), quote(template), quote(f"/IfcOut={pgs}")]
+    if mapping:
+        arguments.append(quote(f"/IfcMapping={mapping}"))
+    ok, message = run_bridgelink(exe, arguments)
     if not ok or not pgs.exists():
         return False, f"import failed: {message}"
     if "IFC import succeeded" not in read_log(pgs.with_suffix(".log")):
         message += ", import reported errors - see log"
     return True, message
+
+
+def check_log(model, pgs):
+    """message about the text of the model's "expect_log" that is missing from the import log"""
+    expected = model.get("expect_log", [])
+    if not expected:
+        return ""
+    log = read_log(pgs.with_suffix(".log"))
+    missing = [text for text in expected if text not in log]
+    if missing:
+        return ", log check failed: missing " + "; ".join(f'"{text}"' for text in missing)
+    return f", log check: {len(expected)} of {len(expected)} found"
 
 
 def round_trip(model, config, exe):
@@ -143,9 +162,11 @@ def ifc_model(model, config, exe):
     """import -> compare (or inventory) for an IFC model. Returns summary rows."""
     run = model["name"]
     pgs = RESULTS / f"{run}.pgs"
-    ok, message = import_ifc(exe, unpack(config["base"] / model["ifc"]), config["template"], pgs)
+    mapping = (config["base"] / model["mapping"]).resolve() if "mapping" in model else None
+    ok, message = import_ifc(exe, unpack(config["base"] / model["ifc"]), config["template"], pgs, mapping)
     if not ok:
         return [(run, message, None)]
+    message += check_log(model, pgs)
 
     expected_file = HERE / "expected" / f"{run}.json"
     if expected_file.exists():

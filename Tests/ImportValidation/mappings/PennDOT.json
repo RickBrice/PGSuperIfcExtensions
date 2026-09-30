@@ -1,0 +1,18 @@
+{
+  "comment": "PennDOT mapping table for the Rearick Road Bridge #1 model (OpenBridge). First version (M1): the girder type and bearing fixity the importer found by guessing names before mapping tables. f'c, f'ci, and deck thickness follow in M2.",
+  "format": "PGSuperIfcMapping",
+  "version": 1,
+  "name": "PennDOT",
+  "extends": "standard",
+  "targets": {
+    "girder.type_names": [
+      { "property": { "pset": "_PS Concrete Beams", "name": "Type" } }
+    ],
+    "bearing.fixed_x": [
+      { "property": { "pset": "_Bearing Assembly", "name": "Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+    ],
+    "bearing.fixed_y": [
+      { "property": { "pset": "_Bearing Assembly", "name": "Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+    ]
+  }
+}

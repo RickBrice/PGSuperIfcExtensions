@@ -21,13 +21,17 @@ python run_validation.py --configuration "WSDOT (Local)"   # run with another PG
 - **`pgs` models (round trip):** the project is exported to IFC once for each `property_units` mode (`Display`, `System`), the IFC is imported into a new project, and the result is compared to the original project.
 - **`ifc` models:** the IFC is imported. If `expected/<name>.json` exists, the result is compared to it. Otherwise the report is an inventory of which values the import set and which are still template defaults.
 
+Two optional entries apply to any model:
+- **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the standard table installed with the extension is used. See `devdocs/MappingTablesDesign.md`.
+- **`expect_log`:** text the import log must contain. The summary reports any text that is missing. The `-StandardTable` runs use it to check that the import suggests the agency properties (hints) when the agency table isn't used.
+
 An expected file lists values in SI (PGSuper system units) by the keys that `pgs_extract.py` produces, e.g. `{"values": {"pier[1].station": 16.4592, "group[0].girder_count": 5}}`. Only the listed values are compared.
 
 | Model | Source |
 |---|---|
 | `PGSuper_Import_Model.pgs` | PGSuper project: 3 spans, 4/5/4 WF girders, curved alignment |
-| `PennDOT_Rearick_Rd_323010451_STR1.ifc` | PennDOT Rearick Road Bridge #1, from OpenBridge (Quadri): single span, no alignment |
-| `Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip` | Iowa DOT ADCMS pilot, US 59 over IA 92: 3 spans, no alignment |
+| `PennDOT_Rearick_Rd_323010451_STR1.ifc` | PennDOT Rearick Road Bridge #1, from OpenBridge (Quadri): single span, no alignment. Mapping table `mappings/PennDOT.json` |
+| `Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip` | Iowa DOT ADCMS pilot, US 59 over IA 92: 3 spans, no alignment. Mapping table `mappings/Iowa.json` |
 
 ## Scripts
 

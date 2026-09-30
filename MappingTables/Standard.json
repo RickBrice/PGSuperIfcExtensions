@@ -1,0 +1,75 @@
+{
+  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The export property set declarations are completed with the export engine (M3); only the property sets the importer reads are declared here.",
+  "format": "PGSuperIfcMapping",
+  "version": 1,
+  "name": "Standard (TPF/usBridge)",
+  "elements": {
+    "girder": { "entity": "IfcBeam", "predefined_type": "BEAM" },
+    "deck": { "entity": "IfcSlab", "predefined_type": "FLOOR" },
+    "bearing": { "entity": "IfcBearing" }
+  },
+  "property_sets": [
+    {
+      "name": "usBrPset_BridgeGeometry",
+      "applies_to": "bridge",
+      "properties": [
+        { "name": "NumberOfSpans", "type": "IfcInteger", "target": "bridge.number_of_spans", "uri": "bsdd" }
+      ]
+    },
+    {
+      "name": "Pset_PrecastConcreteElementGeneral",
+      "applies_to": "girder",
+      "properties": [
+        { "name": "FormStrippingStrength", "type": "IfcPressureMeasure", "target": "girder.fci", "import": false },
+        { "name": "LiftingStrength", "type": "IfcPressureMeasure", "target": "girder.fci", "import": false },
+        { "name": "ReleaseStrength", "type": "IfcPressureMeasure", "target": "girder.fci" },
+        { "name": "DesignLocationNumber", "type": "IfcLabel", "target": "girder.designation" }
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral",
+      "applies_to": "girder",
+      "properties": [
+        { "name": "AssemblyPlace", "type": "IfcLabel", "target": "girder.assembly_place" },
+        { "name": "CastingMethod", "type": "IfcLabel", "target": "girder.casting_method" }
+      ]
+    },
+    {
+      "name": "Pset_MaterialConcrete",
+      "applies_to": "girder",
+      "attach": "material",
+      "properties": [
+        { "name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "girder.fc" },
+        { "name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure" }
+      ]
+    },
+    {
+      "name": "usBrPset_PrecastConcreteBeam",
+      "applies_to": "girder",
+      "properties": [
+        { "name": "ShapeName", "type": "IfcLabel", "target": "girder.type_names", "uri": "bsdd" }
+      ]
+    },
+    {
+      "name": "Pset_BearingCommon",
+      "applies_to": "bearing",
+      "properties": [
+        { "name": "DisplacementAccommodated", "type": "IfcBoolean", "comment": "a list: [0] along the girder, [1] across. Read by the locations of bearing.fixed_x and bearing.fixed_y" }
+      ]
+    }
+  ],
+  "targets": {
+    "girder.type_names": [
+      { "type_attribute": "Name" },
+      { "property": { "pset": "usBrPset_PrecastConcreteBeam", "name": "ShapeName" } }
+    ],
+    "bearing.fixed_x": [
+      { "property": { "pset": "Pset_BearingCommon", "name": "DisplacementAccommodated" }, "list_index": 0,
+        "map": { "true": false, "false": true }, "comment": "displacement accommodated means not fixed" }
+    ],
+    "bearing.fixed_y": [
+      { "property": { "pset": "Pset_BearingCommon", "name": "DisplacementAccommodated" }, "list_index": 1,
+        "map": { "true": false, "false": true } }
+    ]
+  }
+}

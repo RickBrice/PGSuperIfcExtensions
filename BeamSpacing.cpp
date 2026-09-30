@@ -24,6 +24,8 @@
 #include "Geometry.h"
 #include "Utilities.h"
 #include "Piers.h"
+#include "IfcImporter.h"
+#include "IfcTargetReader.h"
 
 #include <ifcgeom/abstract_mapping.h>
 #include <ifcgeom/iterator.h>
@@ -35,18 +37,19 @@
 #include <psgLib/GirderLabel.h>
 #include <IFace/Alignment.h>
 
-// gets all the IfcBeams
-// This needs to be updated so we get only the superstructure beams
+// gets the girders: the IfcBeams contained in the superstructure that are selected by the girder element role of the mapping table.
+// Containment is a prescribed structure, so it stays in code (devdocs/MappingTablesDesign.md, G1)
 std::set<int> get_beam_ids(ifcopenshell::file& file)
 {
    auto superstructure = GetBridgePart(file, IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+   const auto& reader = CIfcImporter::GetTargetReader();
 
    // lambda function to filter beams that are contained in the superstructure
-   auto filter = [&superstructure](auto beam) {
+   auto filter = [&superstructure, &reader](auto beam) {
          auto related_elements = beam.ContainedInStructure();
          for (auto& related_element : related_elements)
          {
-            if (related_element.RelatingStructure() == superstructure && GetPredefinedType<IfcSchema::IfcBeam, IfcSchema::IfcBeamType, IfcSchema::IfcBeamTypeEnum::Value>(beam) == IfcSchema::IfcBeamTypeEnum::IfcBeamType_BEAM)
+            if (related_element.RelatingStructure() == superstructure && reader.Matches(ElementKind::Girder, beam))
                return true;
          }
          return false; // not in the superstructure's spatial structure
@@ -75,6 +78,32 @@ std::set<int> get_beam_ids(ifcopenshell::file& file)
 #endif
 
    return beam_ids;
+}
+
+namespace
+{
+   // The girder a beam is designated as, from girder.designation in the mapping table, else from the beam's Name.
+   // Returns an invalid key if the beam isn't designated
+   CGirderKey get_girder_key(IfcSchema::IfcBeam beam)
+   {
+      const auto& reader = CIfcImporter::GetTargetReader();
+      if (auto reading = reader.Read("girder.designation", beam))
+      {
+         auto girder_key = girder_key_from_string(std::get<std::string>(reading->value));
+         if (girder_key != CGirderKey())
+            return girder_key;
+      }
+      else
+      {
+         reader.ReportNotFound("girder.designation", beam, beam.Name().value_or("unnamed beam"));
+      }
+
+      // names like "Span 1, Girder 2" or "Beam 7 Span 3"
+      if (beam.Name())
+         return girder_key_from_string(*beam.Name());
+
+      return CGirderKey();
+   }
 }
 
 // Locates the girders from the IfcBeam geometry
