@@ -550,7 +550,7 @@ Found while making the table reproduce the exporter it replaces. **Fixed 2026-09
   A property the IDS types differently from the standard table is reported, and the standard table's type is kept.
 - **Standalone (`/IfcTableExtends=none`):** the table has everything the IDS has. The round trip check uses it.
 - **Checking the result:** the generated table is loaded and validated like any other table, and the log says "The generated table is valid." or gives the table's error.
-- **Style:** the table is written like `Standard.json` (`FormatMappingTable`).
+- **Style:** the table is written like `Standard.json` (`FormatMappingTable`), with entity and type names in the schema's spelling (`IfcSlab`, `IfcReal`) rather than the IDS's upper case (`IfcSpelling`).
 - **In the editor (M7 stage 3):** Table > Generate from IDS and Table > Write as General IDS do the same as the two commands.
 
 The agency IDS is never changed (A4). Manual assignments live in the binding file, so regenerating the table after the IDS changes keeps them. Binding file:

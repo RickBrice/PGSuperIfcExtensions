@@ -1092,6 +1092,12 @@ const TableUnit* FindTableUnit(std::string_view name)
    return found == units.end() ? nullptr : &(*found);
 }
 
+std::string IfcSpelling(const std::string& name)
+{
+   const auto* declaration = find_declaration(name);
+   return declaration ? std::string(declaration->name()) : name;
+}
+
 bool IsExportQuantityType(const std::string& type)
 {
    return type == "IFCQUANTITYLENGTH" || type == "IFCQUANTITYAREA" || type == "IFCQUANTITYVOLUME" || type == "IFCQUANTITYWEIGHT" || type == "IFCQUANTITYCOUNT";

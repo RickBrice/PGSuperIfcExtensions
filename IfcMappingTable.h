@@ -154,6 +154,10 @@ struct PropertySetDeclaration
    std::vector<PropertyDeclaration> properties;
 };
 
+// The IFC schema's spelling of an entity or type name, e.g. "IFCREAL" -> "IfcReal", "IFCSLAB" -> "IfcSlab" (as tables are
+// written; the loader accepts any case). The name as it is if the schema doesn't have it
+std::string IfcSpelling(const std::string& name);
+
 // True if the IFC value type can be written by the exporter (e.g. "IFCLABEL", "IFCPRESSUREMEASURE")
 bool IsExportValueType(const std::string& type);
 

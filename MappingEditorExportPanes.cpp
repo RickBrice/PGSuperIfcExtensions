@@ -42,20 +42,10 @@ namespace
       _T("IfcVolumeMeasure"), _T("IfcMassMeasure"), _T("IfcForceMeasure"), _T("IfcDate") };
    const TCHAR* const QUANTITY_TYPES[] = { _T("IfcQuantityLength"), _T("IfcQuantityArea"), _T("IfcQuantityVolume"), _T("IfcQuantityWeight"), _T("IfcQuantityCount") };
 
-   // "IFCLABEL" (as the loader keeps it) -> "IfcLabel" (as tables are written), for the types the editor knows
+   // "IFCLABEL" (as the loader keeps it) -> "IfcLabel" (as tables are written)
    std::string type_spelling(const std::string& type)
    {
-      CString upper = Utf8ToCString(type);
-      for (auto list : { std::begin(VALUE_TYPES), std::begin(QUANTITY_TYPES) })
-      {
-         auto end = (list == std::begin(VALUE_TYPES)) ? std::end(VALUE_TYPES) : std::end(QUANTITY_TYPES);
-         for (auto it = list; it != end; it++)
-         {
-            if (upper.CompareNoCase(*it) == 0)
-               return CStringToUtf8(*it);
-         }
-      }
-      return type;
+      return IfcSpelling(type);
    }
 
    const char* section_key(MappingNode::Kind kind)

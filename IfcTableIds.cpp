@@ -422,18 +422,7 @@ namespace
    {
       json p;
       p["name"] = property.name;
-      if (bQuantity)
-      {
-         // IfcQuantityLength, ... as the table writes them
-         static const std::map<std::string, std::string> names{ { "IFCQUANTITYLENGTH", "IfcQuantityLength" }, { "IFCQUANTITYAREA", "IfcQuantityArea" },
-            { "IFCQUANTITYVOLUME", "IfcQuantityVolume" }, { "IFCQUANTITYWEIGHT", "IfcQuantityWeight" }, { "IFCQUANTITYCOUNT", "IfcQuantityCount" } };
-         auto found = names.find(property.type);
-         p["type"] = found == names.end() ? property.type : found->second;
-      }
-      else
-      {
-         p["type"] = property.type;
-      }
+      p["type"] = IfcSpelling(property.type); // IfcReal, IfcQuantityLength, ... as tables are written
       if (property.target)
          p["target"] = std::string(property.target->name);
       if (property.value)
@@ -583,7 +572,7 @@ IdsToTableResult GenerateTableFromIds(const std::filesystem::path& ids_path, con
 
       // the selector, when it isn't the standard table's
       json selector;
-      selector["entity"] = entity;
+      selector["entity"] = IfcSpelling(entity); // an IDS has IFCSLAB, a table IfcSlab
       if (!predefined.empty())
          selector["predefined_type"] = predefined;
       if (!attributes.empty())
@@ -643,7 +632,7 @@ IdsToTableResult GenerateTableFromIds(const std::filesystem::path& ids_path, con
 
          json property;
          property["name"] = *name;
-         property["type"] = bQuantity ? quantity_type : type;
+         property["type"] = IfcSpelling(bQuantity ? quantity_type : type);
 
          bool bValue = false;
          if (p.value())
