@@ -585,6 +585,11 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 | `IdsBuilder.h` | IDS document helpers (facets, restrictions, writing) shared by the design-value IDS and M5 |
 | `IfcTableIds.h/.cpp` | table -> general IDS writer and general IDS -> table generator (M5) |
 | `MappingTableDlg.h/.cpp` | Options > IFC Mapping Table dialog (M6); the setting itself is `CIfcMappingTable::GetTableSetting`/`SetTableSetting` |
+| `IfcTableFormat.h/.cpp` | `FormatMappingTable`: writes a table in the style of `Standard.json` (the editor, `/IfcFormatTable`) |
+| `MappingEditorDoc.h/.cpp` | mapping table editor (M7): the BridgeLink application plugin, doc template, and document (the table's JSON) |
+| `MappingEditorViews.h/.cpp` | editor frame, section tree, and the view that hosts the panes |
+| `MappingEditorPanes.h/.cpp` | editor panes (table, selector, target locations, read-only sections) and the location dialog |
+| `IfcExtensions.Manifest.BridgeLink` | registers the editor with BridgeLink (copied next to the DLL by the post-build step) |
 | `MappingTables/Standard.json` | standard table, installed next to the DLL (post-build copy for development builds) |
 | `Tests/ImportValidation/mappings/Iowa.json`, `PennDOT.json` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |
 | `Tests/ImportValidation/models.json` | `PennDOT-StandardTable` and `Iowa-StandardTable` runs with `expect_log`: text the log must contain (the hints) |

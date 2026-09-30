@@ -44,3 +44,7 @@ DEFINE_GUID(CLSID_PGSuperIfcProjectImporter,
 // {577F6678-6DD6-4003-ACA2-6406039B690F}
 DEFINE_GUID(CLSID_PGSuperIfcExtensionAgent,
    0x577f6678, 0x6dd6, 0x4003, 0xac, 0xa2, 0x64, 0x06, 0x03, 0x9b, 0x69, 0x0f);
+
+// {86E8FD61-9E37-41CA-B62B-E2984F0B890B} the mapping table editor, a BridgeLink application (IfcExtensions.Manifest.BridgeLink)
+DEFINE_GUID(CLSID_IfcMappingTableEditor,
+   0x86e8fd61, 0x9e37, 0x41ca, 0xb6, 0x2b, 0xe2, 0x98, 0x4f, 0x0b, 0x89, 0x0b);

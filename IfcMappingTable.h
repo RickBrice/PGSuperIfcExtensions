@@ -48,7 +48,8 @@ enum class MappingTableSource
    CommandLine,          // /IfcMapping=<file>
    ConfigurationSetting, // the mapping table setting (Options > IFC Mapping Table, registry)
    InstalledStandard,    // the standard table installed with the extension
-   Extends               // named by the "extends" of another table
+   Extends,              // named by the "extends" of another table
+   Editor                // the table being edited in the mapping table editor
 };
 
 // How a table file was chosen, for logs and messages (e.g. "the command line (/IfcMapping)")
@@ -64,6 +65,9 @@ struct TableUnit
 
 // The unit with the given name, or nullptr
 const TableUnit* FindTableUnit(std::string_view name);
+
+// All units a table can state
+const std::vector<TableUnit>& GetTableUnits();
 
 // Where the properties of a location are looked for
 enum class PropertyOwner
@@ -205,8 +209,10 @@ class CIfcMappingTable
 {
 public:
    // Loads a table and the tables it extends. An empty path loads the installed standard table.
+   // text: the JSON of the selected table, instead of reading it from path (e.g. a table being edited). path still
+   // names it in messages and locates a relative "extends".
    // Throws CIfcMappingTableException with a message for users and support staff if a table can't be found, read, or used.
-   static std::unique_ptr<CIfcMappingTable> Load(const std::filesystem::path& path, MappingTableSource source);
+   static std::unique_ptr<CIfcMappingTable> Load(const std::filesystem::path& path, MappingTableSource source, const std::string* text = nullptr);
 
    // Loads the table an import or export uses, first found wins: command_line_file (/IfcMapping=, if not empty),
    // the mapping table setting, the installed standard table. Throws CIfcMappingTableException like Load

@@ -52,6 +52,7 @@ CIfcCommandLineInfo::CIfcCommandLineInfo() :
    m_bIfcExport(false),
    m_bTableToIds(false),
    m_bIdsToTable(false),
+   m_bFormatTable(false),
    m_bTableExtendsStandard(true),
    m_bDisplayUnitsForProperties(true)
 {
@@ -127,6 +128,13 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
          m_bCommandLineMode = TRUE;
          bMyParameter = true;
       }
+      else if (GetKeyValue(strParam, _T("IfcFormatTable"), strValue))
+      {
+         m_strFormatTableFile = strValue;
+         m_bFormatTable = true;
+         m_bCommandLineMode = TRUE;
+         bMyParameter = true;
+      }
       else if (GetKeyValue(strParam, _T("IfcTable"), strValue))
       {
          m_strTableFile = strValue;
@@ -154,10 +162,22 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
       CEAFCommandLineInfo::ParseParam(lpszParam, bFlag, bLast);
    }
 
-   if (bLast && 1 < (int)m_bIfcImport + (int)m_bIfcExport + (int)m_bTableToIds + (int)m_bIdsToTable)
+   if (bLast && 1 < (int)m_bIfcImport + (int)m_bIfcExport + (int)m_bTableToIds + (int)m_bIdsToTable + (int)m_bFormatTable)
    {
       m_bError = TRUE; // one at a time
       return;
+   }
+
+   if (bLast && m_bFormatTable)
+   {
+      if (m_strFormatTableFile.IsEmpty() || m_strFileName.IsEmpty() || m_strTableFile.IsEmpty())
+      {
+         m_bError = TRUE;
+         return;
+      }
+
+      if (m_strLogFile.IsEmpty())
+         m_strLogFile = m_strTableFile + _T(".log");
    }
 
    if (bLast && (m_bTableToIds || m_bIdsToTable))

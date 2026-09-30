@@ -43,6 +43,18 @@
     <ClCompile Include="MappingTableDlg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IfcTableFormat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MappingEditorDoc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MappingEditorPanes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MappingEditorViews.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Georeferencing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -160,6 +172,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MappingTableDlg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcTableFormat.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingEditorDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingEditorPanes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingEditorViews.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EditGeoreferencing.h">
@@ -291,6 +315,7 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="IfcExtensions.Manifest.PGSuper" />
+    <None Include="IfcExtensions.Manifest.BridgeLink" />
     <None Include="Schema\ids.xsd">
       <Filter>IDS Schema</Filter>
     </None>

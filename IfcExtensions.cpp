@@ -48,6 +48,7 @@ const GUID IID_IEAFStatusCenter = { 0x77977e9b, 0xb074, 0x401f, { 0x89, 0x94, 0x
 #include "PGSuperDataExporter.h"
 #include "PGSuperProjectImporter.h"
 #include "IfcExtensionAgent.h"
+#include "MappingEditorDoc.h"
 
 #include <IFace\EditByUI.h>
 #include <IFace\Project.h>
@@ -72,6 +73,7 @@ EAF_BEGIN_OBJECT_MAP(ObjectMap)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcExporter, CPGSuperDataExporter)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcProjectImporter, CPGSuperProjectImporter)
    EAF_OBJECT_ENTRY(CLSID_PGSuperIfcExtensionAgent, CIfcExtensionAgent)
+   EAF_OBJECT_ENTRY(CLSID_IfcMappingTableEditor, CMappingEditorPlugin)
 EAF_END_OBJECT_MAP()
 
 class CIFCExtensionsApp : public CWinApp

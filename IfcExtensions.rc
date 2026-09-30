@@ -85,6 +85,40 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Menu
+//
+
+IDR_MAPPING_EDITOR MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&New\tCtrl+N",                ID_FILE_NEW
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_OPEN
+        MENUITEM "&Close",                      ID_FILE_CLOSE
+        MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
+        MENUITEM "Save &As...",                 ID_FILE_SAVE_AS
+        MENUITEM SEPARATOR
+        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Table"
+    BEGIN
+        MENUITEM "&Validate",                   ID_MAPPING_VALIDATE
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About...",                   ID_APP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // Bitmap
 //
 
@@ -210,6 +244,112 @@ BEGIN
     EDITTEXT        IDC_MAPPING_STATUS,7,88,316,106,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
     DEFPUSHBUTTON   "OK",IDOK,219,201,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,273,201,50,14
+END
+
+IDD_MAPPING_TABLE_PANE DIALOGEX 0, 0, 360, 230
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Name:",IDC_STATIC,7,9,60,8
+    EDITTEXT        IDC_TABLE_NAME,70,7,283,14,ES_AUTOHSCROLL
+    LTEXT           "Extends:",IDC_STATIC,7,29,60,8
+    COMBOBOX        IDC_TABLE_EXTENDS,70,27,262,80,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_TABLE_EXTENDS_BROWSE,335,27,18,14
+    LTEXT           """standard"" is the standard table installed with the IFC extension. A file name is relative to this table's folder. (none) makes a table that stands alone.",IDC_STATIC,70,44,283,18
+    LTEXT           "Comment:",IDC_STATIC,7,68,60,8
+    EDITTEXT        IDC_TABLE_COMMENT,70,66,283,70,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    EDITTEXT        IDC_TABLE_INFO,7,144,346,80,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+END
+
+IDD_MAPPING_SELECTOR_PANE DIALOGEX 0, 0, 360, 230
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "",IDC_SELECTOR_HEADER,7,7,346,20
+    CONTROL         "Use the base table's selector",IDC_SELECTOR_INHERITED,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,32,346,10
+    CONTROL         "Define the selector in this table",IDC_SELECTOR_DEFINED,"Button",BS_AUTORADIOBUTTON,7,46,346,10
+    LTEXT           "Entity:",IDC_STATIC,19,64,70,8
+    EDITTEXT        IDC_SELECTOR_ENTITY,92,62,150,14,ES_AUTOHSCROLL | WS_GROUP
+    LTEXT           "Subtypes included, e.g. IfcSlab",IDC_STATIC,248,64,105,8
+    LTEXT           "Predefined type:",IDC_STATIC,19,82,70,8
+    EDITTEXT        IDC_SELECTOR_PREDEFINED,92,80,150,14,ES_AUTOHSCROLL | ES_UPPERCASE
+    LTEXT           "Empty: any",IDC_STATIC,248,82,105,8
+    LTEXT           "Classification:",IDC_STATIC,19,100,70,8
+    EDITTEXT        IDC_SELECTOR_CLASSIFICATION,92,98,150,14,ES_AUTOHSCROLL
+    LTEXT           "Identification, empty: any",IDC_STATIC,248,100,105,8
+    LTEXT           "Attributes:",IDC_STATIC,19,118,70,8
+    EDITTEXT        IDC_SELECTOR_ATTRIBUTES,92,116,261,50,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    LTEXT           "One per line: Name=Value (exact, ignoring case), e.g. ObjectType=Haunch",IDC_STATIC,92,168,261,8
+    LTEXT           "",IDC_SELECTOR_NOTE,7,184,346,40
+END
+
+IDD_MAPPING_TARGET_PANE DIALOGEX 0, 0, 360, 260
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "",IDC_TARGET_HEADER,7,7,346,28
+    LTEXT           "Locations in this table, in the order they're tried:",IDC_STATIC,7,40,290,8
+    CONTROL         "",IDC_LOCATIONS,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,51,290,90
+    PUSHBUTTON      "Add...",IDC_LOCATION_ADD,303,51,50,14
+    PUSHBUTTON      "Edit...",IDC_LOCATION_EDIT,303,68,50,14
+    PUSHBUTTON      "Remove",IDC_LOCATION_REMOVE,303,85,50,14
+    PUSHBUTTON      "Move Up",IDC_LOCATION_UP,303,106,50,14
+    PUSHBUTTON      "Move Down",IDC_LOCATION_DOWN,303,123,50,14
+    CONTROL         "Replace the base table's locations (otherwise they're tried after these)",IDC_REPLACE_BASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,146,346,10
+    LTEXT           "Base table locations:",IDC_STATIC,7,162,290,8
+    CONTROL         "",IDC_BASE_LOCATIONS,"SysListView32",LVS_REPORT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,173,346,80
+END
+
+IDD_MAPPING_INFO_PANE DIALOGEX 0, 0, 360, 230
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_INFO_TEXT,7,7,346,216,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
+END
+
+IDD_MAPPING_LOCATION DIALOGEX 0, 0, 330, 320
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Location"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Where the value is",IDC_STATIC,7,7,316,120
+    CONTROL         "Property",IDC_LOC_PROPERTY,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,14,20,70,10
+    CONTROL         "Attribute",IDC_LOC_ATTRIBUTE,"Button",BS_AUTORADIOBUTTON,88,20,70,10
+    CONTROL         "Type attribute",IDC_LOC_TYPE_ATTRIBUTE,"Button",BS_AUTORADIOBUTTON,162,20,70,10
+    CONTROL         "Classification",IDC_LOC_CLASSIFICATION,"Button",BS_AUTORADIOBUTTON,236,20,80,10
+    LTEXT           "Property set:",IDC_STATIC,14,38,75,8
+    EDITTEXT        IDC_LOC_PSET,92,36,224,14,ES_AUTOHSCROLL | WS_GROUP
+    LTEXT           "Property or attribute:",IDC_STATIC,14,56,75,8
+    EDITTEXT        IDC_LOC_NAME,92,54,224,14,ES_AUTOHSCROLL
+    LTEXT           "Property sets of:",IDC_STATIC,14,74,75,8
+    COMBOBOX        IDC_LOC_ON,92,72,140,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Classification system:",IDC_STATIC,14,92,75,8
+    EDITTEXT        IDC_LOC_SYSTEM,92,90,100,14,ES_AUTOHSCROLL
+    LTEXT           "Identification:",IDC_STATIC,198,92,48,8
+    EDITTEXT        IDC_LOC_IDENTIFICATION,248,90,68,14,ES_AUTOHSCROLL
+    LTEXT           "Read:",IDC_STATIC,14,110,75,8
+    COMBOBOX        IDC_LOC_FIELD,92,108,100,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Reading the value",IDC_STATIC,7,132,316,138
+    LTEXT           "Unit of a plain number:",IDC_STATIC,14,146,75,8
+    COMBOBOX        IDC_LOC_UNIT,92,144,80,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Parse text as:",IDC_STATIC,14,164,75,8
+    COMBOBOX        IDC_LOC_PARSE,92,162,70,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Regex:",IDC_STATIC,168,164,24,8
+    EDITTEXT        IDC_LOC_REGEX,194,162,80,14,ES_AUTOHSCROLL
+    LTEXT           "Group:",IDC_STATIC,278,164,22,8
+    EDITTEXT        IDC_LOC_GROUP,300,162,16,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "List index:",IDC_STATIC,14,182,75,8
+    EDITTEXT        IDC_LOC_LIST_INDEX,92,180,40,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Empty: the whole value",IDC_STATIC,138,182,120,8
+    LTEXT           "Value types:",IDC_STATIC,14,200,75,8
+    EDITTEXT        IDC_LOC_VALUE_TYPES,92,198,224,14,ES_AUTOHSCROLL | ES_UPPERCASE
+    LTEXT           "Map:",IDC_STATIC,14,218,75,8
+    EDITTEXT        IDC_LOC_MAP,92,216,224,38,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    LTEXT           "One per line: model value = target value",IDC_STATIC,92,256,224,8
+    LTEXT           "Comment:",IDC_STATIC,7,278,50,8
+    EDITTEXT        IDC_LOC_COMMENT,60,276,263,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,219,299,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,273,299,50,14
 END
 
 IDD_GEOREFERENCING DIALOGEX 0, 0, 316, 235
@@ -351,6 +491,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_BSI                 ICON                    "IfcProjectImporter.ico"
+IDR_MAPPING_EDITOR      ICON                    "IfcProjectImporter.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -362,6 +503,8 @@ STRINGTABLE
 BEGIN
     ID_EDIT_GEOREFERENCING  "Edit Georeferencing\nEdit Georeferencing"
     ID_OPTIONS_IFC_MAPPING_TABLE "Choose the mapping table used by IFC imports and exports\nIFC Mapping Table"
+    ID_MAPPING_VALIDATE     "Check the table the way IFC imports and exports do\nValidate"
+    IDR_MAPPING_EDITOR      "\nIfcMapping\nIFC Mapping Table\nIFC Mapping Tables (*.json)\n.json\nPGSuperIfc.MappingTable\nIFC Mapping Table"
 END
 
 #endif    // English (United States) resources

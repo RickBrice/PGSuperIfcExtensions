@@ -36,6 +36,7 @@
 #include "IdsExporter.h"
 #include "IfcTableIds.h"
 #include "MappingTableDlg.h"
+#include "IfcTableFormat.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -293,7 +294,7 @@ BOOL CIfcExtensionAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
    // Re-parse the parameters with our own command line information object
    CIfcCommandLineInfo ifcCmdInfo;
    EAFGetApp()->ParseCommandLine(ifcCmdInfo);
-   if (!ifcCmdInfo.m_bIfcImport && !ifcCmdInfo.m_bIfcExport && !ifcCmdInfo.m_bTableToIds && !ifcCmdInfo.m_bIdsToTable)
+   if (!ifcCmdInfo.m_bIfcImport && !ifcCmdInfo.m_bIfcExport && !ifcCmdInfo.m_bTableToIds && !ifcCmdInfo.m_bIdsToTable && !ifcCmdInfo.m_bFormatTable)
       return FALSE; // not our command line
 
    if (ifcCmdInfo.m_bError)
@@ -311,8 +312,10 @@ BOOL CIfcExtensionAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
       ExportFromCommandLine(ifcCmdInfo);
    else if (ifcCmdInfo.m_bTableToIds)
       TableToIdsFromCommandLine(ifcCmdInfo);
-   else
+   else if (ifcCmdInfo.m_bIdsToTable)
       IdsToTableFromCommandLine(ifcCmdInfo);
+   else
+      FormatTableFromCommandLine(ifcCmdInfo);
 
    return TRUE;
 }
@@ -413,6 +416,34 @@ void CIfcExtensionAgent::TableToIdsFromCommandLine(const CIfcCommandLineInfo& if
    catch (const std::exception& e)
    {
       log << "IDS not written:" << std::endl << e.what() << std::endl;
+   }
+}
+
+void CIfcExtensionAgent::FormatTableFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo)
+{
+   std::ofstream log(ifcCmdInfo.m_strLogFile.GetString());
+   try
+   {
+      std::filesystem::path in_path(ifcCmdInfo.m_strFormatTableFile.GetString());
+      std::filesystem::path out_path(ifcCmdInfo.m_strTableFile.GetString());
+
+      std::ifstream in(in_path, std::ios::binary);
+      if (!in)
+         throw std::runtime_error("The mapping table can't be read: " + PathToString(in_path));
+      std::stringstream content;
+      content << in.rdbuf();
+      auto table = nlohmann::ordered_json::parse(content.str()); // throws with the line and column
+
+      std::ofstream out(out_path, std::ios::binary);
+      if (!out)
+         throw std::runtime_error("The mapping table can't be written: " + PathToString(out_path));
+      out << FormatMappingTable(table);
+
+      log << "Mapping table " << PathToString(in_path) << " written as " << PathToString(out_path) << std::endl;
+   }
+   catch (const std::exception& e)
+   {
+      log << "Mapping table not written:" << std::endl << e.what() << std::endl;
    }
 }
 

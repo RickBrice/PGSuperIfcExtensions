@@ -1,0 +1,10 @@
+{
+   "Component": {
+      "Name": "IFC Mapping Table Editor",
+      "CLSID": "{86E8FD61-9E37-41CA-B62B-E2984F0B890B}",
+      "dll": "PGSuperIfcExtensions.dll",
+      "Categories": {
+         "CATID": "{1D069A0E-7436-4275-A129-C84ADC22DE68}"
+      }
+   }
+}

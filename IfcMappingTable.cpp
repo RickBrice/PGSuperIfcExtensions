@@ -90,6 +90,7 @@ namespace
       case MappingTableSource::ConfigurationSetting: return "the mapping table setting (Options > IFC Mapping Table)";
       case MappingTableSource::InstalledStandard: return "the standard table installed with the IFC extension";
       case MappingTableSource::Extends: return "\"extends\" in another table";
+      case MappingTableSource::Editor: return "the mapping table editor";
       }
       ASSERT(false);
       return "";
@@ -128,6 +129,9 @@ namespace
          {
          case MappingTableSource::CommandLine:
             os << "Correct the table, or give a different table with /IfcMapping=<file>.";
+            break;
+         case MappingTableSource::Editor:
+            os << "Correct the table in the editor.";
             break;
          case MappingTableSource::ConfigurationSetting:
             os << "Correct the table, or choose a different table with Options > IFC Mapping Table (choose the standard table to go back to it).";
@@ -991,27 +995,35 @@ namespace
       }
    };
 
-   MappingTableFile load_file(const std::filesystem::path& path, MappingTableSource source, const LoadContext& context)
+   // text: the file's content if it's already in memory, else nullptr to read the file
+   MappingTableFile load_file(const std::filesystem::path& path, MappingTableSource source, const LoadContext& context, const std::string* text)
    {
-      std::error_code ec;
-      if (!std::filesystem::exists(path, ec))
-         fail(path, source, context, "The file was not found.", true);
-
-      FILE* fp = nullptr;
-      errno_t err = _wfopen_s(&fp, path.c_str(), L"rb");
-      if (err != 0 || fp == nullptr)
-      {
-         char buffer[256];
-         strerror_s(buffer, err);
-         fail(path, source, context, std::string("The file can't be read: ") + buffer, true);
-      }
-
       std::string content;
-      char buffer[4096];
-      size_t count;
-      while ((count = fread(buffer, 1, sizeof(buffer), fp)) != 0)
-         content.append(buffer, count);
-      fclose(fp);
+      if (text)
+      {
+         content = *text;
+      }
+      else
+      {
+         std::error_code ec;
+         if (!std::filesystem::exists(path, ec))
+            fail(path, source, context, "The file was not found.", true);
+
+         FILE* fp = nullptr;
+         errno_t err = _wfopen_s(&fp, path.c_str(), L"rb");
+         if (err != 0 || fp == nullptr)
+         {
+            char buffer[256];
+            strerror_s(buffer, err);
+            fail(path, source, context, std::string("The file can't be read: ") + buffer, true);
+         }
+
+         char buffer[4096];
+         size_t count;
+         while ((count = fread(buffer, 1, sizeof(buffer), fp)) != 0)
+            content.append(buffer, count);
+         fclose(fp);
+      }
 
       json j;
       try
@@ -1049,10 +1061,10 @@ namespace
    }
 }
 
-const TableUnit* FindTableUnit(std::string_view name)
+const std::vector<TableUnit>& GetTableUnits()
 {
    using namespace WBFL::Units;
-   static const TableUnit units[] = {
+   static const std::vector<TableUnit> units{
       { "Pa", ValueKind::Stress, [](Float64 v) {return ConvertToSysUnits(v, Measure::Pa); } },
       { "kPa", ValueKind::Stress, [](Float64 v) {return ConvertToSysUnits(v, Measure::kPa); } },
       { "MPa", ValueKind::Stress, [](Float64 v) {return ConvertToSysUnits(v, Measure::MPa); } },
@@ -1070,9 +1082,14 @@ const TableUnit* FindTableUnit(std::string_view name)
       { "lbf", ValueKind::Force, [](Float64 v) {return ConvertToSysUnits(v, Measure::Pound); } },
       { "kip", ValueKind::Force, [](Float64 v) {return ConvertToSysUnits(v, Measure::Kip); } },
    };
+   return units;
+}
 
-   auto found = std::find_if(std::begin(units), std::end(units), [name](const auto& unit) {return unit.name == name; });
-   return found == std::end(units) ? nullptr : found;
+const TableUnit* FindTableUnit(std::string_view name)
+{
+   const auto& units = GetTableUnits();
+   auto found = std::find_if(units.begin(), units.end(), [name](const auto& unit) {return unit.name == name; });
+   return found == units.end() ? nullptr : &(*found);
 }
 
 bool IsExportQuantityType(const std::string& type)
@@ -1207,7 +1224,7 @@ std::filesystem::path CIfcMappingTable::GetStandardTablePath()
    return path.parent_path() / L"MappingTables" / L"Standard.json";
 }
 
-std::unique_ptr<CIfcMappingTable> CIfcMappingTable::Load(const std::filesystem::path& selected_path, MappingTableSource source)
+std::unique_ptr<CIfcMappingTable> CIfcMappingTable::Load(const std::filesystem::path& selected_path, MappingTableSource source, const std::string* text)
 {
    auto table = std::make_unique<CIfcMappingTable>();
 
@@ -1222,7 +1239,8 @@ std::unique_ptr<CIfcMappingTable> CIfcMappingTable::Load(const std::filesystem::
 
    while (true)
    {
-      auto file = load_file(path, source, context);
+      auto file = load_file(path, source, context, text);
+      text = nullptr; // the tables it extends are read from their files
       auto extends = file.extends;
       table->m_Files.push_back(std::move(file));
 

@@ -99,16 +99,64 @@
 #define IDC_MAPPING_FILE                282
 #define IDC_MAPPING_BROWSE              283
 #define IDC_MAPPING_STATUS              284
+#define IDR_MAPPING_EDITOR              285
+#define IDD_MAPPING_TABLE_PANE          286
+#define IDD_MAPPING_SELECTOR_PANE       287
+#define IDD_MAPPING_TARGET_PANE         288
+#define IDD_MAPPING_INFO_PANE           289
+#define IDD_MAPPING_LOCATION            290
+#define IDC_TABLE_NAME                  292
+#define IDC_TABLE_EXTENDS               293
+#define IDC_TABLE_EXTENDS_BROWSE        294
+#define IDC_TABLE_COMMENT               295
+#define IDC_TABLE_INFO                  296
+#define IDC_SELECTOR_HEADER             297
+#define IDC_SELECTOR_INHERITED          298
+#define IDC_SELECTOR_DEFINED            299
+#define IDC_SELECTOR_ENTITY             300
+#define IDC_SELECTOR_PREDEFINED         301
+#define IDC_SELECTOR_CLASSIFICATION     302
+#define IDC_SELECTOR_ATTRIBUTES         303
+#define IDC_SELECTOR_NOTE               304
+#define IDC_TARGET_HEADER               305
+#define IDC_LOCATIONS                   306
+#define IDC_LOCATION_ADD                307
+#define IDC_LOCATION_EDIT               308
+#define IDC_LOCATION_REMOVE             309
+#define IDC_LOCATION_UP                 310
+#define IDC_LOCATION_DOWN               311
+#define IDC_REPLACE_BASE                312
+#define IDC_BASE_LOCATIONS              313
+#define IDC_INFO_TEXT                   314
+#define IDC_LOC_PROPERTY                315
+#define IDC_LOC_ATTRIBUTE               316
+#define IDC_LOC_TYPE_ATTRIBUTE          317
+#define IDC_LOC_CLASSIFICATION          318
+#define IDC_LOC_PSET                    319
+#define IDC_LOC_NAME                    320
+#define IDC_LOC_ON                      321
+#define IDC_LOC_SYSTEM                  322
+#define IDC_LOC_IDENTIFICATION          323
+#define IDC_LOC_FIELD                   324
+#define IDC_LOC_UNIT                    325
+#define IDC_LOC_PARSE                   326
+#define IDC_LOC_REGEX                   327
+#define IDC_LOC_GROUP                   328
+#define IDC_LOC_LIST_INDEX              329
+#define IDC_LOC_VALUE_TYPES             330
+#define IDC_LOC_MAP                     331
+#define IDC_LOC_COMMENT                 332
 #define ID_EDIT_GEOREFERENCING          32771
 #define ID_OPTIONS_IFC_MAPPING_TABLE    32772
+#define ID_MAPPING_VALIDATE             32773
 
 // Next default values for new objects
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        285
-#define _APS_NEXT_COMMAND_VALUE         32773
-#define _APS_NEXT_CONTROL_VALUE         285
+#define _APS_NEXT_RESOURCE_VALUE        333
+#define _APS_NEXT_COMMAND_VALUE         32774
+#define _APS_NEXT_CONTROL_VALUE         333
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

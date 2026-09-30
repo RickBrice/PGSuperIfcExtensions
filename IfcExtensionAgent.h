@@ -108,6 +108,7 @@ public:
    void ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
    void TableToIdsFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
    void IdsToTableFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
+   void FormatTableFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
 
    DECLARE_MESSAGE_MAP()
 
