@@ -50,6 +50,9 @@ CIfcCommandLineInfo::CIfcCommandLineInfo() :
    CEAFCommandLineInfo(),
    m_bIfcImport(false),
    m_bIfcExport(false),
+   m_bTableToIds(false),
+   m_bIdsToTable(false),
+   m_bTableExtendsStandard(true),
    m_bDisplayUnitsForProperties(true)
 {
 }
@@ -110,6 +113,40 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
          m_strIdsFile = strValue;
          bMyParameter = true;
       }
+      else if (GetKeyValue(strParam, _T("IfcTableToIds"), strValue))
+      {
+         m_strToolIdsFile = strValue;
+         m_bTableToIds = true;
+         m_bCommandLineMode = TRUE; // batch run - the application shuts down when we are done
+         bMyParameter = true;
+      }
+      else if (GetKeyValue(strParam, _T("IfcIdsToTable"), strValue))
+      {
+         m_strToolIdsFile = strValue;
+         m_bIdsToTable = true;
+         m_bCommandLineMode = TRUE;
+         bMyParameter = true;
+      }
+      else if (GetKeyValue(strParam, _T("IfcTable"), strValue))
+      {
+         m_strTableFile = strValue;
+         bMyParameter = true;
+      }
+      else if (GetKeyValue(strParam, _T("IfcBinding"), strValue))
+      {
+         m_strBindingFile = strValue;
+         bMyParameter = true;
+      }
+      else if (GetKeyValue(strParam, _T("IfcTableExtends"), strValue))
+      {
+         if (strValue.CompareNoCase(_T("standard")) == 0)
+            m_bTableExtendsStandard = true;
+         else if (strValue.CompareNoCase(_T("none")) == 0)
+            m_bTableExtendsStandard = false;
+         else
+            m_bError = TRUE;
+         bMyParameter = true;
+      }
    }
 
    if (!bMyParameter)
@@ -117,10 +154,23 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
       CEAFCommandLineInfo::ParseParam(lpszParam, bFlag, bLast);
    }
 
-   if (bLast && m_bIfcImport && m_bIfcExport)
+   if (bLast && 1 < (int)m_bIfcImport + (int)m_bIfcExport + (int)m_bTableToIds + (int)m_bIdsToTable)
    {
-      m_bError = TRUE; // one or the other
+      m_bError = TRUE; // one at a time
       return;
+   }
+
+   if (bLast && (m_bTableToIds || m_bIdsToTable))
+   {
+      // the template starts the application; /IfcIdsToTable needs the table to write
+      if (m_strToolIdsFile.IsEmpty() || m_strFileName.IsEmpty() || (m_bIdsToTable && m_strTableFile.IsEmpty()))
+      {
+         m_bError = TRUE;
+         return;
+      }
+
+      if (m_strLogFile.IsEmpty())
+         m_strLogFile = (m_bIdsToTable ? m_strTableFile : m_strToolIdsFile) + _T(".log");
    }
 
    if (bLast && m_bIfcExport)

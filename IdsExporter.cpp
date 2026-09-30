@@ -44,14 +44,8 @@
 #include "stdafx.h"
 #include "IdsExporter.h"
 #include "BeamLabels.h"
+#include "IdsBuilder.h"
 #include "IfcMappingTable.h"
-
-#include "Schema/ids-binding.hxx"
-
-#include <xercesc/dom/DOMDocument.hpp>
-#include <xercesc/dom/DOMElement.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/util/XMLString.hpp>
 
 #include <IFace/Tools.h>
 #include <IFace/Project.h>
@@ -92,20 +86,9 @@
 
 namespace
 {
-   const char* const IDS_NAMESPACE = "http://standards.buildingsmart.org/IDS";
-   const char* const IDS_SCHEMA_LOCATION = "http://standards.buildingsmart.org/IDS/1.0/ids.xsd";
-   const char* const XS_NAMESPACE = "http://www.w3.org/2001/XMLSchema";
+   using namespace ids_builder;
 
    // ---- small formatting / conversion helpers ------------------------------------
-
-   std::string ToUtf8(LPCTSTR s)
-   {
-      if (s == nullptr) return std::string();
-      CW2A conv(s, CP_UTF8);
-      return std::string((LPCSTR)conv);
-   }
-
-   std::string ToUtf8(const CString& s) { return ToUtf8((LPCTSTR)s); }
 
    // Full-precision plain-decimal text for an <ids:value> number (SI base unit).
    std::string FormatValue(double v)
@@ -163,16 +146,6 @@ namespace
       return os.str();
    }
 
-   xml_schema::date Today()
-   {
-      std::time_t t = std::time(nullptr);
-      std::tm lt{};
-      localtime_s(&lt, &t);
-      return xml_schema::date(lt.tm_year + 1900,
-                              static_cast<unsigned short>(lt.tm_mon + 1),
-                              static_cast<unsigned short>(lt.tm_mday));
-   }
-
    // The IDS schema restricts <ids:author> to an e-mail-like pattern ([^@]+@[^\.]+\..+).
    bool LooksLikeEmail(const CString& s)
    {
@@ -184,54 +157,6 @@ namespace
 
    // ---- IDS tree building -------------------------------------------------------
 
-   IDS::idsValue SimpleValue(const std::string& text)
-   {
-      IDS::idsValue v;
-      v.simpleValue(text);
-      return v;
-   }
-
-   // Xerces-C++ requires initialization before any DOM/serialization use. Initialize()
-   // is reference counted, so pairing it with Terminate() is safe whether or not the
-   // host has already initialized the library.
-   struct XercesGuard
-   {
-      XercesGuard() { xercesc::XMLPlatformUtils::Initialize(); }
-      ~XercesGuard() { xercesc::XMLPlatformUtils::Terminate(); }
-      XercesGuard(const XercesGuard&) = delete;
-      XercesGuard& operator=(const XercesGuard&) = delete;
-   };
-
-   // RAII helper for a transcoded XMLCh* string.
-   struct XStr
-   {
-      XMLCh* p;
-      explicit XStr(const char* s) : p(xercesc::XMLString::transcode(s)) {}
-      ~XStr() { xercesc::XMLString::release(&p); }
-      operator const XMLCh* () const { return p; }
-      XStr(const XStr&) = delete;
-      XStr& operator=(const XStr&) = delete;
-   };
-
-   // <ids:value><xs:restriction base="..."><xs:<facet> value="..."/></xs:restriction></ids:value>
-   IDS::idsValue RestrictionValue(const char* base, const char* facet, const std::string& facetValue)
-   {
-      IDS::idsValue v;
-      xercesc::DOMDocument& doc = v.dom_document();
-
-      XStr xsNs(XS_NAMESPACE);
-
-      xercesc::DOMElement* restriction = doc.createElementNS(xsNs, XStr("xs:restriction"));
-      restriction->setAttribute(XStr("base"), XStr(base));
-
-      xercesc::DOMElement* facetElem = doc.createElementNS(xsNs, XStr(facet));
-      facetElem->setAttribute(XStr("value"), XStr(facetValue.c_str()));
-      restriction->appendChild(facetElem);
-
-      v.any(restriction);
-      return v;
-   }
-
    IDS::idsValue MinInclusiveValue(const std::string& valueText) { return RestrictionValue("xs:double", "xs:minInclusive", valueText); }
 
    // A pinned numeric value, honoring Exact vs. Minimum matching.
@@ -242,22 +167,7 @@ namespace
       return MinInclusiveValue(FormatValue(value_SI));
    }
 
-   enum class Card { Required, Optional };
-
-   const char* CardText(Card c) { return c == Card::Optional ? "optional" : "required"; }
-
    // ---- requirement-facet factories --------------------------------------------
-
-   IDS::property PropertyReq(const std::string& pset, const std::string& baseName, const char* ifcDataType,
-                             std::optional<IDS::idsValue> value, Card card, const std::string& instruction = {})
-   {
-      IDS::property p(SimpleValue(pset), SimpleValue(baseName));
-      if (ifcDataType) p.dataType(IDS::upperCaseName(ifcDataType));
-      p.cardinality(IDS::conditionalCardinality(CardText(card)));
-      if (!instruction.empty()) p.instructions(instruction);
-      if (value) p.value(std::move(*value));
-      return p;
-   }
 
    IDS::property NumProperty(const CIdsExportOptions& options, const std::string& pset, const std::string& baseName,
                              const char* ifcDataType, double value_SI, const std::string& instruction = {})
@@ -275,65 +185,7 @@ namespace
       return PropertyReq(pset, baseName, ifcDataType, std::nullopt, card);
    }
 
-   IDS::classification ClassificationReq(const std::string& system, const std::string& code)
-   {
-      IDS::classification c(SimpleValue(system));
-      c.value(SimpleValue(code));           // matches IfcClassificationReference.Identification
-      c.cardinality(IDS::conditionalCardinality("required"));
-      return c;
-   }
-
-   IDS::material MaterialReq(const std::string& nameOrCategory)
-   {
-      IDS::material m;
-      m.value(SimpleValue(nameOrCategory)); // matched against IfcMaterial.Name and .Category
-      m.cardinality(IDS::conditionalCardinality("required"));
-      return m;
-   }
-
-   IDS::attribute AttributeReq(const std::string& name, std::optional<IDS::idsValue> value, const std::string& instruction = {})
-   {
-      IDS::attribute a(SimpleValue(name));
-      a.cardinality(IDS::conditionalCardinality("required"));
-      if (!instruction.empty()) a.instructions(instruction);
-      if (value) a.value(std::move(*value));
-      return a;
-   }
-
    // ---- applicability / specification scaffolding ------------------------------
-
-   IDS::applicabilityType MakeApplicability(const char* ifcClass, const char* predefinedType, const std::string& minOccurs)
-   {
-      IDS::entityType entity(SimpleValue(ifcClass));
-      if (predefinedType) entity.predefinedType(SimpleValue(predefinedType));
-
-      IDS::applicabilityType applicability;
-      applicability.entity(entity);
-      applicability.minOccurs(minOccurs);
-      applicability.maxOccurs(std::string("unbounded"));
-      return applicability;
-   }
-
-   void AddAttr(IDS::applicabilityType& applicability, const std::string& name, IDS::idsValue value)
-   {
-      IDS::attributeType attribute(SimpleValue(name));
-      attribute.value(std::move(value));
-      applicability.attribute().push_back(attribute);
-   }
-
-   IDS::specificationType MakeSpec(IDS::applicabilityType applicability, const std::string& name,
-                                   const std::string& identifier, const std::string& description,
-                                   IDS::requirements requirements)
-   {
-      IDS::ifcVersion ifcVersion;
-      ifcVersion.push_back(IDS::ifcVersion_item("IFC4X3_ADD2"));
-
-      IDS::specificationType spec(applicability, name, ifcVersion);
-      if (!identifier.empty())  spec.identifier(identifier);
-      if (!description.empty()) spec.description(description);
-      spec.requirements(std::move(requirements));
-      return spec;
-   }
 
    // ---- gathered design values -------------------------------------------------
 

@@ -263,6 +263,12 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="IfcImportUnits.cpp" />
     <ClCompile Include="IfcMappingTable.cpp" />
     <ClCompile Include="IfcPropertyWriter.cpp" />
+    <ClCompile Include="IfcTableIds.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ConformanceMode>
+      <ConformanceMode Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ConformanceMode>
+    </ClCompile>
     <ClCompile Include="IfcTargetHints.cpp" />
     <ClCompile Include="IfcTargetReader.cpp" />
     <ClCompile Include="IfcTargets.cpp" />
@@ -331,6 +337,8 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="IfcImportUnits.h" />
     <ClInclude Include="IfcMappingTable.h" />
     <ClInclude Include="IfcPropertyWriter.h" />
+    <ClInclude Include="IdsBuilder.h" />
+    <ClInclude Include="IfcTableIds.h" />
     <ClInclude Include="IfcTargetHints.h" />
     <ClInclude Include="IfcTargetReader.h" />
     <ClInclude Include="IfcTargets.h" />

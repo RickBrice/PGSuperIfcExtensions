@@ -23,6 +23,11 @@ python run_validation.py --configuration "WSDOT (Local)"   # run with another PG
 
 For the round trips, the export is also checked against `export_baseline/`: the property sets, quantity sets, and classifications of the IFC (`compare_export.py`) and the design-value IDS written with it (`/IfcIds`, `compare_ids.py`). The summary says "same as baseline" or how many lines differ, with the details in `results/<run>.export-diff.txt` and `results/<run>.ids-diff.txt`. After an intended change to the export, review the differences and run with `--update-export-baseline`.
 
+After the models, the last row ("Standard table <-> IDS") checks the standard table's round trip through a general IDS with `check_table_ids.py`. The row isn't run when `--models` is given. The script:
+- writes `results/Standard.ids` (`/IfcTableToIds`)
+- generates `results/Standard-from-ids.json` from it (`/IfcIdsToTable`, `/IfcTableExtends=none`)
+- compares what the two tables declare, with any differences in `results/Standard-from-ids.diff.txt`
+
 Two optional entries apply to any model:
 - **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the standard table installed with the extension is used. See `devdocs/MappingTablesDesign.md`.
 - **`expect_log`:** text the import log must contain. The summary reports any text that is missing. The `-StandardTable` runs use it to check that the import suggests the agency properties (hints) when the agency table isn't used.
@@ -41,6 +46,8 @@ An expected file lists values in SI (PGSuper system units) by the keys that `pgs
 - `compare_bridge.py`: compares a project to expected values with a tolerance for each kind of value, and writes a Markdown report in US units.
   - A *default match* equals the expected value only because the import template has the same value, so it doesn't show the importer set it.
   - Values measured differently (e.g. girder spacing along vs normal to the pier) are *not comparable*.
+- `check_table_ids.py`: the standard table <-> general IDS round trip (can also run alone).
+- `compare_export.py`, `compare_ids.py`: reduce an export or an IDS to the lines compared with `export_baseline/`.
 - `run_validation.py`: runs BridgeLink and the comparison for each model. `--configuration` switches the PGSuper configuration for the run, then switches back to the current one.
 
 Exact girder name matches need a configuration whose library has the girders, e.g. `WSDOT (Local)` for the WF girders in the PGSuper model. The committed results use the `Regression` configuration.

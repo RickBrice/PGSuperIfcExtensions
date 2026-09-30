@@ -510,6 +510,69 @@ Found while making the table reproduce the exporter it replaces. **Fixed 2026-09
 - `usBrPset_Roadway` was created but never attached to the bridge. Now it's declared for the bridge (placeholders, as its code intended).
 - The girder-only export classified the girder without writing the usBridge classification system. Now it writes the system when classifying. The girder-only export can't be run from the command line, so this isn't covered by the validation.
 
+## Tables and general IDS (M5)
+**Done 2026-09-29.** A general IDS says what an export must contain, with no design values. It is not the design-value IDS (M4), which pins values to single elements of one model and is not an input here.
+
+### Table -> general IDS
+`/IfcTableToIds=<out.ids> <template.pgt> [/IfcMapping=<table.json>]` writes the table (the standard table if none is given) as a general IDS, with `WriteTableAsIds` (`IfcTableIds.cpp`):
+- **Specifications:** one for each element role that has requirements. It applies to the role's elements through the role's selector (entity, predefined type, and attribute values), which the table now has for every role (`elements`).
+- **Requirements:**
+  - Properties and quantities with a target are required.
+  - Constants are required with their value.
+  - Placeholders are optional.
+  - Classifications are required.
+- **PGSuper instructions:** a general IDS can't say everything a table does, so the writer puts the rest in the facet's `instructions`, e.g. `PGSuper: target=girder.fci; attach=type; condition=quantities; set=quantities; method=...; pset_uri=...; enumeration=PEnum_...; enumeration_values=A|B`.
+  - Specifications get `PGSuper: role=girder`.
+  - Classifications get `name=`.
+  - Other tools ignore the instructions. The generator reads them back.
+- **Not written:** material property sets. IDS property facets check an element's own property sets and its type's, not its material's. The log lists each one left out.
+
+### General IDS -> table
+`/IfcIdsToTable=<in.ids> <template.pgt> /IfcTable=<out.json> [/IfcBinding=<binding.json>] [/IfcTableExtends=standard|none] [/IfcLog=<file.log>]` generates a table with `GenerateTableFromIds`:
+- **Element role of a specification:**
+  - the `role=` instruction
+  - else the binding file
+  - else the standard table's role with the same selector
+  - A specification with no role is reported, with a binding entry to fill in.
+- **Target of a property facet:**
+  - the `target=` instruction
+  - else the binding file (which can also give the unit, e.g. ksi for a unitless number)
+  - else the standard table's property with the same property set and name (e.g. an agency's `ReleaseStrength` gets `girder.fci`)
+  - A facet with no target is reported, with a binding entry. It's still declared, so the export writes the property without a value.
+- **Classifications:** each one the IDS requires is declared, and its system is added.
+- **Targets:** a facet bound with a unit gets a `targets` entry, so the import reads it too.
+- **Extending (the default):** the table extends the standard table and has only what differs from it:
+  - element roles with another selector
+  - new property sets and quantity sets
+  - standard sets that have more properties (the standard set with the new properties added)
+  - new classifications
+
+  A property the IDS types differently from the standard table is reported, and the standard table's type is kept.
+- **Standalone (`/IfcTableExtends=none`):** the table has everything the IDS has. The round trip check uses it.
+- **Checking the result:** the generated table is loaded and validated like any other table, and the log says "The generated table is valid." or gives the table's error.
+
+The agency IDS is never changed (A4). Manual assignments live in the binding file, so regenerating the table after the IDS changes keeps them. Binding file:
+```json
+{
+  "format": "PGSuperIfcBinding", "version": 1,
+  "specifications": [
+    { "specification": "Prestressed girders", "role": "girder",
+      "properties": [ { "pset": "IaDOT_PPCB", "name": "5_Final Concrete Strength, Fc", "target": "girder.fc", "unit": "ksi" } ] }
+  ]
+}
+```
+`specification` matches the IDS specification's name or identifier.
+
+### Validation
+- **Round trip:** `check_table_ids.py` (also the last row of `run_validation.py`) writes the standard table as a general IDS, generates a standalone table from it, and compares what the two tables declare for every role. They're the same: 272 declarations, material property sets not compared.
+  - Without PGSuper instructions, the roles and targets all come back through the standard table.
+- **Binding:** tested with a hand-written agency-style IDS and binding file. The IDS has a girder property set with a bound strength and an unbound fabricator, `ReleaseStrength`, a haunch specification bound by role, an agency classification, and a specification with no role.
+  - The generated table extends the standard table.
+  - It reports the unbound facet and the specification with no role.
+  - It leaves out `ReleaseStrength`, which the standard table already exports.
+  - It is valid.
+- **Still to do:** a test with a real agency IDS.
+
 ## Code layout
 
 | File | Contents |
@@ -519,6 +582,8 @@ Found while making the table reproduce the exporter it replaces. **Fixed 2026-09
 | `IfcMappingTable.h/.cpp` | finding table files, JSON load (nlohmann-json, already in vcpkg), the `extends` merge, validation, error messages |
 | `IfcTargetReader.h/.cpp` | import engine |
 | `IfcTargetHints.h/.cpp` | hint rules for targets that weren't found (G3) |
+| `IdsBuilder.h` | IDS document helpers (facets, restrictions, writing) shared by the design-value IDS and M5 |
+| `IfcTableIds.h/.cpp` | table -> general IDS writer and general IDS -> table generator (M5) |
 | `MappingTables/Standard.json` | standard table, installed next to the DLL (post-build copy for development builds) |
 | `Tests/ImportValidation/mappings/Iowa.json`, `PennDOT.json` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |
 | `Tests/ImportValidation/models.json` | `PennDOT-StandardTable` and `Iowa-StandardTable` runs with `expect_log`: text the log must contain (the hints) |

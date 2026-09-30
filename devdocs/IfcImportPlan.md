@@ -377,6 +377,7 @@ The reverse also works: a table can be written out as a general-purpose IDS (app
 - **M4:** the design-value IDS exporter takes its property locations from the table (values and per-element pinning unchanged).
   - **Done 2026-09-29:** requirements and classifications from the table; `/IfcIds=` on the command line; `run_validation.py` checks every round-trip IDS against a baseline recorded before M4 (all the same). See [MappingTablesDesign.md](MappingTablesDesign.md), "Design-value IDS (M4)".
 - **M5:** general IDS → table generator (instructions tag, standard-table matching, unbound report) and table → general IDS writer. Test by writing the standard table out as a general IDS and generating it back, and with an agency IDS. The design-value IDS is not an input.
+  - **Done 2026-09-29:** `/IfcTableToIds` and `/IfcIdsToTable` (with a binding file, and `/IfcTableExtends`). The table has a selector for every element role. The round trip of the standard table through a general IDS is the same (272 declarations, `check_table_ids.py`, a `run_validation.py` row). The binding path was tested with a hand-written agency-style IDS. A test with a real agency IDS is still to do. See [MappingTablesDesign.md](MappingTablesDesign.md), "Tables and general IDS (M5)".
 - **M6:** the IFC page in the BridgeLink configuration wizard (mapping file in the registry) and `/IfcMapping=` (A1, A2).
 - **M7:** the mapping table editor (R3).
 - **Validation:** `Tests/ImportValidation` gets export checks as well:

@@ -34,6 +34,7 @@
 #include "IfcImporter.h"
 #include "IfcExporter.h"
 #include "IdsExporter.h"
+#include "IfcTableIds.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -266,7 +267,7 @@ BOOL CIfcExtensionAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
    // Re-parse the parameters with our own command line information object
    CIfcCommandLineInfo ifcCmdInfo;
    EAFGetApp()->ParseCommandLine(ifcCmdInfo);
-   if (!ifcCmdInfo.m_bIfcImport && !ifcCmdInfo.m_bIfcExport)
+   if (!ifcCmdInfo.m_bIfcImport && !ifcCmdInfo.m_bIfcExport && !ifcCmdInfo.m_bTableToIds && !ifcCmdInfo.m_bIdsToTable)
       return FALSE; // not our command line
 
    if (ifcCmdInfo.m_bError)
@@ -280,8 +281,12 @@ BOOL CIfcExtensionAgent::ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo)
 
    if (ifcCmdInfo.m_bIfcImport)
       ImportFromCommandLine(ifcCmdInfo);
-   else
+   else if (ifcCmdInfo.m_bIfcExport)
       ExportFromCommandLine(ifcCmdInfo);
+   else if (ifcCmdInfo.m_bTableToIds)
+      TableToIdsFromCommandLine(ifcCmdInfo);
+   else
+      IdsToTableFromCommandLine(ifcCmdInfo);
 
    return TRUE;
 }
@@ -356,5 +361,73 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       if (!strIdsError.IsEmpty())
          log << _T("IDS export failed: ") << strIdsError.GetString() << std::endl;
       log << (bIdsResult ? _T("IDS export succeeded: ") : _T("IDS export failed: ")) << ifcCmdInfo.m_strIdsFile.GetString() << std::endl;
+   }
+}
+
+void CIfcExtensionAgent::TableToIdsFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo)
+{
+   std::ofstream log(ifcCmdInfo.m_strLogFile.GetString());
+   try
+   {
+      std::filesystem::path table_path(ifcCmdInfo.m_strMappingFile.GetString());
+      auto table = CIfcMappingTable::Load(table_path, table_path.empty() ? MappingTableSource::InstalledStandard : MappingTableSource::CommandLine);
+      for (const auto& file : table->GetFiles())
+         log << "IFC mapping table \"" << file.name << "\" (version " << file.version << "): " << PathToString(file.path) << std::endl;
+
+      std::ofstream ids(ifcCmdInfo.m_strToolIdsFile.GetString(), std::ios::binary);
+      if (!ids)
+         throw std::runtime_error("The IDS file can't be written: " + PathToString(std::filesystem::path(ifcCmdInfo.m_strToolIdsFile.GetString())));
+
+      std::vector<std::string> notes;
+      WriteTableAsIds(*table, ids, notes);
+      for (const auto& note : notes)
+         log << "Note: " << note << std::endl;
+      log << "IDS written: " << PathToString(std::filesystem::path(ifcCmdInfo.m_strToolIdsFile.GetString())) << std::endl;
+   }
+   catch (const std::exception& e)
+   {
+      log << "IDS not written:" << std::endl << e.what() << std::endl;
+   }
+}
+
+void CIfcExtensionAgent::IdsToTableFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo)
+{
+   std::ofstream log(ifcCmdInfo.m_strLogFile.GetString());
+   try
+   {
+      // targets come from the standard table where the IDS and the binding file don't say
+      auto standard = CIfcMappingTable::Load(std::filesystem::path(), MappingTableSource::InstalledStandard);
+
+      std::filesystem::path ids_path(ifcCmdInfo.m_strToolIdsFile.GetString());
+      std::filesystem::path table_path(ifcCmdInfo.m_strTableFile.GetString());
+      std::filesystem::path binding_path(ifcCmdInfo.m_strBindingFile.GetString());
+      auto result = GenerateTableFromIds(ids_path, binding_path, *standard, "", ifcCmdInfo.m_bTableExtendsStandard);
+
+      {
+         std::ofstream table(table_path, std::ios::binary);
+         if (!table)
+            throw std::runtime_error("The mapping table can't be written: " + PathToString(table_path));
+         table << result.table_json << std::endl;
+      }
+
+      log << "Mapping table generated from " << PathToString(ids_path) << (binding_path.empty() ? std::string() : " with the binding file " + PathToString(binding_path)) << ": " << PathToString(table_path) << std::endl;
+      log << result.bound << " property facets with a target, " << result.unbound << " without" << std::endl;
+      for (const auto& line : result.report)
+         log << line << std::endl;
+
+      // the generated table must be one the importer and exporter accept
+      try
+      {
+         CIfcMappingTable::Load(table_path, MappingTableSource::CommandLine);
+         log << "The generated table is valid." << std::endl;
+      }
+      catch (const CIfcMappingTableException& e)
+      {
+         log << "The generated table isn't valid:" << std::endl << e.what() << std::endl;
+      }
+   }
+   catch (const std::exception& e)
+   {
+      log << "Mapping table not generated:" << std::endl << e.what() << std::endl;
    }
 }

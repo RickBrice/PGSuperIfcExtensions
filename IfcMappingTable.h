@@ -214,6 +214,9 @@ public:
    // The selector for an element role, or nullptr if no table defines it
    const ElementSelector* GetSelector(ElementKind role) const;
 
+   // The selectors of all element roles the tables define
+   const std::map<ElementKind, ElementSelector>& GetSelectors() const { return m_Selectors; }
+
    // The property sets exported for an element role and owner, in table order. An extending table's property set
    // replaces the base table's property set with the same name, element role, and attach, or removes it
    std::vector<const PropertySetDeclaration*> GetPropertySets(ElementKind role, PropertyOwner attach) const;

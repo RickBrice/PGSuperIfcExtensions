@@ -105,6 +105,8 @@ public:
    BOOL ProcessCommandLineOptions(CEAFCommandLineInfo& cmdInfo) override;
    void ImportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
    void ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
+   void TableToIdsFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
+   void IdsToTableFromCommandLine(const CIfcCommandLineInfo& ifcCmdInfo);
 
    DECLARE_MESSAGE_MAP()
 

@@ -18,6 +18,9 @@ written with each round-trip export (/IfcIds) is compared with export_baseline/<
 way (see compare_ids.py). --update-export-baseline saves the current exports and IDS files as the
 baseline instead (after an intended change to the export).
 
+The standard table's round trip through a general IDS (/IfcTableToIds, /IfcIdsToTable; see
+check_table_ids.py) runs after the models, as the "Standard table <-> IDS" row, unless --models is given.
+
 Reports, logs, and imported projects are written to results/, replacing the previous results, so
 the change from one run to the next shows up as a difference in the repository. summary.md has the
 score of every run. Exported IFC files and unzipped models are written to results/ but not tracked.
@@ -44,6 +47,7 @@ from pathlib import Path
 import compare_bridge
 import compare_export
 import compare_ids
+import check_table_ids
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
@@ -279,6 +283,10 @@ def main():
         for model in models:
             print(f"Running {model['name']}...", flush=True)
             summary += round_trip(model, config, exe) if "pgs" in model else ifc_model(model, config, exe)
+        if not args.models:
+            print("Running the standard table <-> IDS round trip...", flush=True)
+            ok, message = check_table_ids.check(exe)
+            summary.append(("Standard table <-> IDS", ("OK: " if ok else "FAILED: ") + message, None))
     finally:
         if original_configuration:
             set_configuration(exe, *original_configuration)
