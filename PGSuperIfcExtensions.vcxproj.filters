@@ -49,6 +49,9 @@
     <ClCompile Include="MappingEditorDoc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MappingEditorExportPanes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="MappingEditorPanes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -178,6 +181,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MappingEditorDoc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingEditorExportPanes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingEditorUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MappingEditorPanes.h">

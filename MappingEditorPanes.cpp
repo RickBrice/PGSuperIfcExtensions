@@ -28,49 +28,15 @@
 #include "MappingEditorPanes.h"
 #include "MappingEditorDoc.h"
 #include "IfcMappingTable.h"
+#include "MappingEditorUtil.h"
+#include "MappingEditorExportPanes.h"
 
 #include <sstream>
 
-using ordered_json = nlohmann::ordered_json;
+using namespace mapping_editor;
 
 namespace
 {
-   CString GetText(CWnd* pWnd, int nID)
-   {
-      CString text;
-      pWnd->GetDlgItemText(nID, text);
-      return text;
-   }
-
-   // Multi-line edit controls need CR LF
-   CString ToWindowsLines(CString text)
-   {
-      text.Replace(_T("\r\n"), _T("\n"));
-      text.Replace(_T("\n"), _T("\r\n"));
-      return text;
-   }
-
-   std::string string_value(const ordered_json& j, const char* key)
-   {
-      return (j.is_object() && j.contains(key) && j[key].is_string()) ? j[key].get<std::string>() : std::string();
-   }
-
-   // Sets a text member, or removes it when the text is empty. Returns true if the object changed
-   bool set_or_erase(ordered_json& j, const char* key, const std::string& value)
-   {
-      if (value.empty())
-      {
-         if (!j.contains(key))
-            return false;
-         j.erase(key);
-         return true;
-      }
-      if (j.contains(key) && j[key] == value)
-         return false;
-      j[key] = value;
-      return true;
-   }
-
    const char* value_kind_name(ValueKind kind)
    {
       switch (kind)
@@ -130,11 +96,6 @@ namespace
       return j;
    }
 
-   // A one-line JSON value, as the table file shows it
-   std::string inline_json(const ordered_json& j)
-   {
-      return j.dump(-1, ' ', false);
-   }
 }
 
 CString DescribeLocation(const ordered_json& location)
@@ -199,51 +160,10 @@ CString DescribeLocationReading(const ordered_json& location)
 /////////////////////////////////////////////////////////////////////////////
 // CreateMappingPane
 
-namespace
-{
-   CString section_text(const ordered_json& table, const char* key, const CString& intro)
-   {
-      CString text(intro);
-      text += _T("\n\n");
-      if (!table.contains(key) || !table[key].is_array() || table[key].empty())
-      {
-         text += _T("This table has none.");
-         return text;
-      }
-
-      std::ostringstream os;
-      for (const auto& item : table[key])
-      {
-         if (item.is_object() && (item.contains("properties") || item.contains("quantities")))
-         {
-            const char* items_key = item.contains("properties") ? "properties" : "quantities";
-            os << string_value(item, "name") << "   applies to " << inline_json(item.value("applies_to", ordered_json())) <<
-               (item.contains("attach") ? ", attach " + string_value(item, "attach") : "") <<
-               (item.contains("condition") ? ", condition " + string_value(item, "condition") : "") <<
-               (item.value("remove", false) ? ", removed" : "") << std::endl;
-            for (const auto& p : item[items_key])
-            {
-               os << "      " << string_value(p, "name") << "   " << string_value(p, "type");
-               if (p.contains("target")) os << "   target " << string_value(p, "target");
-               if (p.contains("value")) os << "   value " << inline_json(p["value"]);
-               if (p.contains("import") && p["import"] == false) os << "   export only";
-               os << std::endl;
-            }
-         }
-         else
-         {
-            os << inline_json(item) << std::endl;
-         }
-      }
-      text += Utf8ToCString(os.str());
-      return text;
-   }
-}
-
 std::unique_ptr<CMappingPane> CreateMappingPane(const MappingNode& node, CMappingEditorDoc* pDoc)
 {
-   const auto& table = pDoc->GetTable();
-   const CString later(_T("Editing this section comes in a later stage of the editor; this is what the table has. A table that extends another table has only its own additions and changes here."));
+   if (auto pane = CreateExportPane(node, pDoc))
+      return pane;
 
    switch (node.kind)
    {
@@ -267,17 +187,8 @@ std::unique_ptr<CMappingPane> CreateMappingPane(const MappingNode& node, CMappin
    case MappingNode::Kind::TargetGroup:
       return std::make_unique<CInfoPane>(pDoc, Utf8ToCString("The targets of the " + node.key + " elements. Select a target to see or change its locations."));
 
-   case MappingNode::Kind::PropertySets:
-      return std::make_unique<CInfoPane>(pDoc, section_text(table, "property_sets", _T("Property sets exported for each element role, and the targets bound to their properties. ") + later));
-
-   case MappingNode::Kind::QuantitySets:
-      return std::make_unique<CInfoPane>(pDoc, section_text(table, "quantity_sets", _T("Quantity sets exported for each element role. ") + later));
-
-   case MappingNode::Kind::ClassificationSystems:
-      return std::make_unique<CInfoPane>(pDoc, section_text(table, "classification_systems", _T("Classification systems written to the project. ") + later));
-
-   case MappingNode::Kind::Classifications:
-      return std::make_unique<CInfoPane>(pDoc, section_text(table, "classifications", _T("Classification references of each element role. ") + later));
+   default:
+      break;
    }
    return nullptr;
 }

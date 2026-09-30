@@ -280,6 +280,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="MappingTableDlg.cpp" />
     <ClCompile Include="IfcTableFormat.cpp" />
     <ClCompile Include="MappingEditorDoc.cpp" />
+    <ClCompile Include="MappingEditorExportPanes.cpp" />
     <ClCompile Include="MappingEditorPanes.cpp" />
     <ClCompile Include="MappingEditorViews.cpp" />
     <ClCompile Include="Georeferencing.cpp" />
@@ -356,6 +357,8 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="MappingTableDlg.h" />
     <ClInclude Include="IfcTableFormat.h" />
     <ClInclude Include="MappingEditorDoc.h" />
+    <ClInclude Include="MappingEditorExportPanes.h" />
+    <ClInclude Include="MappingEditorUtil.h" />
     <ClInclude Include="MappingEditorPanes.h" />
     <ClInclude Include="MappingEditorViews.h" />
     <ClInclude Include="EditGeoreferencing.h" />

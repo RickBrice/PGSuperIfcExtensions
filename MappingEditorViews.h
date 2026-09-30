@@ -35,11 +35,32 @@ class CMappingPane;
 // An item of the tree
 struct MappingNode
 {
-   enum class Kind { Table, Roles, Role, Targets, TargetGroup, Target, PropertySets, QuantitySets, ClassificationSystems, Classifications };
+   enum class Kind
+   {
+      Table, Roles, Role, Targets, TargetGroup, Target,
+      PropertySets, PropertySetGroup, PropertySet,
+      QuantitySets, QuantitySetGroup, QuantitySet,
+      ClassificationSystems, ClassificationSystem,
+      Classifications, ClassificationGroup, Classification
+   };
    Kind kind = Kind::Table;
-   std::string key; // Role: role name; TargetGroup: element role name; Target: target name
+   // Role: role name; TargetGroup, PropertySetGroup, QuantitySetGroup, ClassificationGroup: element role name; Target: target name.
+   // This table's entry (index >= 0): the role of the group it's listed in (an entry can apply to several roles).
+   // A base table's entry (index < 0): its identity (BaseSetKey, BaseClassificationKey, or the system name)
+   std::string key;
+   int index = -1; // this table's entry: its index in the section's JSON list
 
-   bool operator==(const MappingNode& other) const { return kind == other.kind && key == other.key; }
+   bool operator==(const MappingNode& other) const { return kind == other.kind && key == other.key && index == other.index; }
+
+   // A node to select: the key is ignored when it's empty (e.g. a new entry, selected wherever it's listed first)
+   bool Matches(const MappingNode& target) const { return kind == target.kind && index == target.index && (target.key.empty() || key == target.key); }
+};
+
+// UpdateAllViews hint object for CMappingEditorDoc::HINT_SELECT
+class CMappingSelectHint : public CObject
+{
+public:
+   MappingNode node;
 };
 
 class CMappingTreeView : public CTreeView
@@ -64,13 +85,18 @@ private:
    std::vector<MappingNode> m_Nodes; // item data is the index
    bool m_bBuilding = false;
    bool m_bInSelChange = false; // a pane may commit an edit (and change the table) while the selection changes
+   std::optional<MappingNode> m_PendingSelect; // selected after the next (posted) rebuild
+
+   // Adds the export sections (property sets, quantity sets, classification systems, classifications)
+   void AddExportSections();
 
    // (Re)builds the tree and selects the node that was selected
    void Build();
    HTREEITEM Add(HTREEITEM hParent, const CString& label, MappingNode node, bool bBold);
 };
 
-class CMappingDetailView : public CView
+// Hosts the pane of the selected node. It scrolls when the pane is bigger than the view
+class CMappingDetailView : public CScrollView
 {
 protected:
    CMappingDetailView() = default;
@@ -84,6 +110,7 @@ public:
 
 protected:
    void OnDraw(CDC* pDC) override;
+   void OnInitialUpdate() override;
    void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) override;
    BOOL PreTranslateMessage(MSG* pMsg) override;
 
@@ -93,6 +120,7 @@ protected:
 
 private:
    std::unique_ptr<CMappingPane> m_pPane;
+   CSize m_PaneSize{ 0, 0 }; // the pane's size as designed (its dialog template)
    void SizePane();
 };
 

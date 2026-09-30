@@ -169,6 +169,13 @@ void CMappingEditorDoc::TableChanged(bool bStructure)
    UpdateAllViews(nullptr, bStructure ? HINT_STRUCTURE : HINT_CONTENT);
 }
 
+void CMappingEditorDoc::SelectNode(const MappingNode& node)
+{
+   CMappingSelectHint hint;
+   hint.node = node;
+   UpdateAllViews(nullptr, HINT_SELECT, &hint);
+}
+
 std::filesystem::path CMappingEditorDoc::GetTablePath() const
 {
    CString strPath = GetPathName();

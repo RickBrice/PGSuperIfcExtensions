@@ -28,7 +28,11 @@
 #include "MappingEditorViews.h"
 #include "MappingEditorDoc.h"
 #include "MappingEditorPanes.h"
+#include "MappingEditorExportPanes.h"
+#include "MappingEditorUtil.h"
 #include "IfcTargets.h"
+
+using namespace mapping_editor;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMappingEditorFrame
@@ -94,11 +98,44 @@ void CMappingTreeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
       else
          Build();
    }
+   else if (lHint == CMappingEditorDoc::HINT_SELECT && pHint)
+   {
+      // the pane that asked is replaced, so not while its handler runs
+      m_PendingSelect = ((CMappingSelectHint*)pHint)->node;
+      PostMessage(WM_MAPPING_REBUILD);
+   }
 }
 
 LRESULT CMappingTreeView::OnRebuild(WPARAM wParam, LPARAM lParam)
 {
    Build();
+
+   if (m_PendingSelect)
+   {
+      MappingNode target = *m_PendingSelect;
+      m_PendingSelect.reset();
+
+      CTreeCtrl& tree = GetTreeCtrl();
+      std::vector<HTREEITEM> stack{ tree.GetRootItem() };
+      while (!stack.empty())
+      {
+         HTREEITEM hItem = stack.back();
+         stack.pop_back();
+         for (; hItem; hItem = tree.GetNextSiblingItem(hItem))
+         {
+            if (m_Nodes[tree.GetItemData(hItem)].Matches(target))
+            {
+               tree.EnsureVisible(hItem);
+               tree.SelectItem(hItem); // shows its pane
+               if (tree.GetSelectedItem() == hItem)
+                  GetParentFrame()->SetFocus();
+               return 0;
+            }
+            if (HTREEITEM hChild = tree.GetChildItem(hItem))
+               stack.push_back(hChild);
+         }
+      }
+   }
    return 0;
 }
 
@@ -166,18 +203,7 @@ void CMappingTreeView::Build()
       Add(group->second, Utf8ToCString(name), { MappingNode::Kind::Target, name }, targets.is_object() && targets.contains(name));
    }
 
-   auto count_label = [&table](const char* key, LPCTSTR label)
-   {
-      CString text(label);
-      if (table.contains(key) && table[key].is_array())
-         text.AppendFormat(_T(" (%d)"), (int)table[key].size());
-      return text;
-   };
-   auto has = [&table](const char* key) {return table.contains(key) && table[key].is_array() && !table[key].empty(); };
-   Add(TVI_ROOT, count_label("property_sets", _T("Property sets")), { MappingNode::Kind::PropertySets, "" }, has("property_sets"));
-   Add(TVI_ROOT, count_label("quantity_sets", _T("Quantity sets")), { MappingNode::Kind::QuantitySets, "" }, has("quantity_sets"));
-   Add(TVI_ROOT, count_label("classification_systems", _T("Classification systems")), { MappingNode::Kind::ClassificationSystems, "" }, has("classification_systems"));
-   Add(TVI_ROOT, count_label("classifications", _T("Classifications")), { MappingNode::Kind::Classifications, "" }, has("classifications"));
+   AddExportSections();
 
    // restore
    HTREEITEM hSelect = nullptr;
@@ -212,9 +238,143 @@ void CMappingTreeView::Build()
       tree.SelectItem(hSelect);
       m_bBuilding = false;
    }
-   else
+   else if (!selected)
    {
-      tree.SelectItem(tree.GetRootItem()); // shows the table pane
+      tree.SelectItem(tree.GetRootItem()); // a new tree: show the table pane
+   }
+   else if (!m_PendingSelect)
+   {
+      // the selected item is gone (e.g. its entry no longer applies to that role). Its pane may be the one that changed
+      // the table, so it's replaced after its handler returns
+      m_PendingSelect = MappingNode{ MappingNode::Kind::Table, "" };
+      PostMessage(WM_MAPPING_REBUILD);
+   }
+}
+
+void CMappingTreeView::AddExportSections()
+{
+   const auto& table = GetDocument()->GetTable();
+   CMappingEditorDoc* pDoc = GetDocument();
+   auto section = [&table](const char* key) { return (table.contains(key) && table[key].is_array()) ? table[key] : ordered_json::array(); };
+   auto kind_of = [](const char* name) { ElementKind kind = ElementKind::Bridge; GetElementKind(name, kind); return kind; };
+
+   // property sets and quantity sets, by element role
+   for (bool bQuantities : { false, true })
+   {
+      const char* key = bQuantities ? "quantity_sets" : "property_sets";
+      auto sets = section(key);
+      auto header_kind = bQuantities ? MappingNode::Kind::QuantitySets : MappingNode::Kind::PropertySets;
+      auto group_kind = bQuantities ? MappingNode::Kind::QuantitySetGroup : MappingNode::Kind::PropertySetGroup;
+      auto item_kind = bQuantities ? MappingNode::Kind::QuantitySet : MappingNode::Kind::PropertySet;
+
+      CString header = bQuantities ? _T("Quantity sets") : _T("Property sets");
+      if (!sets.empty())
+         header.AppendFormat(_T(" (%d in this table)"), (int)sets.size());
+      HTREEITEM hHeader = Add(TVI_ROOT, header, { header_kind, "" }, !sets.empty());
+
+      // entries without a valid element role, so they can still be selected and corrected
+      for (int i = 0; i < (int)sets.size(); i++)
+      {
+         bool bRole = false;
+         for (const auto& role : roles_of(sets[i]))
+         {
+            ElementKind kind;
+            bRole |= GetElementKind(role, kind);
+         }
+         if (!bRole)
+            Add(hHeader, Utf8ToCString(string_value(sets[i], "name") + " (no element role)"), { item_kind, "", i }, true);
+      }
+
+      for (const auto& role : all_roles())
+      {
+         std::vector<int> own;
+         for (int i = 0; i < (int)sets.size(); i++)
+         {
+            auto roles = roles_of(sets[i]);
+            if (std::find(roles.begin(), roles.end(), role) != roles.end())
+               own.push_back(i);
+         }
+         auto base = GetBaseSets(pDoc, bQuantities, kind_of(role.c_str()));
+         if (own.empty() && base.empty())
+            continue;
+
+         HTREEITEM hGroup = Add(hHeader, Utf8ToCString(role), { group_kind, role }, !own.empty());
+         for (int i : own)
+         {
+            const auto& set = sets[i];
+            std::string label = string_value(set, "name");
+            auto attach = string_value(set, "attach");
+            if (!attach.empty() && attach != "occurrence")
+               label += " [" + attach + "]";
+            if (set.value("remove", false))
+               label += " (left out)";
+            Add(hGroup, Utf8ToCString(label), { item_kind, role, i }, true);
+         }
+         for (const auto* pset : base)
+         {
+            std::string label = pset->name;
+            if (pset->attach != PropertyOwner::Occurrence)
+               label += std::string(" [") + OwnerName(pset->attach) + "]";
+            Add(hGroup, Utf8ToCString(label), { item_kind, BaseSetKey(*pset) }, false);
+         }
+      }
+   }
+
+   // classification systems
+   {
+      auto systems = section("classification_systems");
+      CString header(_T("Classification systems"));
+      if (!systems.empty())
+         header.AppendFormat(_T(" (%d in this table)"), (int)systems.size());
+      HTREEITEM hHeader = Add(TVI_ROOT, header, { MappingNode::Kind::ClassificationSystems, "" }, !systems.empty());
+      for (int i = 0; i < (int)systems.size(); i++)
+         Add(hHeader, Utf8ToCString(string_value(systems[i], "name")), { MappingNode::Kind::ClassificationSystem, "", i }, true);
+      for (const auto* system : GetBaseSystems(pDoc))
+         Add(hHeader, Utf8ToCString(system->name), { MappingNode::Kind::ClassificationSystem, system->name }, false);
+   }
+
+   // classifications, by element role
+   {
+      auto classifications = section("classifications");
+      CString header(_T("Classifications"));
+      if (!classifications.empty())
+         header.AppendFormat(_T(" (%d in this table)"), (int)classifications.size());
+      HTREEITEM hHeader = Add(TVI_ROOT, header, { MappingNode::Kind::Classifications, "" }, !classifications.empty());
+      for (int i = 0; i < (int)classifications.size(); i++)
+      {
+         bool bRole = false;
+         for (const auto& role : roles_of(classifications[i]))
+         {
+            ElementKind kind;
+            bRole |= GetElementKind(role, kind);
+         }
+         if (!bRole)
+            Add(hHeader, Utf8ToCString(string_value(classifications[i], "identification") + " (no element role)"), { MappingNode::Kind::Classification, "", i }, true);
+      }
+      for (const auto& role : all_roles())
+      {
+         std::vector<int> own;
+         for (int i = 0; i < (int)classifications.size(); i++)
+         {
+            auto roles = roles_of(classifications[i]);
+            if (std::find(roles.begin(), roles.end(), role) != roles.end())
+               own.push_back(i);
+         }
+         auto base = GetBaseClassifications(pDoc, kind_of(role.c_str()));
+         if (own.empty() && base.empty())
+            continue;
+
+         HTREEITEM hGroup = Add(hHeader, Utf8ToCString(role), { MappingNode::Kind::ClassificationGroup, role }, !own.empty());
+         for (int i : own)
+         {
+            std::string label = string_value(classifications[i], "identification");
+            if (classifications[i].value("remove", false))
+               label += " (left out)";
+            Add(hGroup, Utf8ToCString(label), { MappingNode::Kind::Classification, role, i }, true);
+         }
+         for (const auto* c : base)
+            Add(hGroup, Utf8ToCString(c->identification), { MappingNode::Kind::Classification, BaseClassificationKey(*c) }, false);
+      }
    }
 }
 
@@ -238,9 +398,9 @@ void CMappingTreeView::OnSelChanged(NMHDR* pNMHDR, LRESULT* pResult)
 /////////////////////////////////////////////////////////////////////////////
 // CMappingDetailView
 
-IMPLEMENT_DYNCREATE(CMappingDetailView, CView)
+IMPLEMENT_DYNCREATE(CMappingDetailView, CScrollView)
 
-BEGIN_MESSAGE_MAP(CMappingDetailView, CView)
+BEGIN_MESSAGE_MAP(CMappingDetailView, CScrollView)
    ON_WM_SIZE()
    ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
@@ -252,6 +412,12 @@ CMappingEditorDoc* CMappingDetailView::GetDocument() const
 
 void CMappingDetailView::OnDraw(CDC* pDC)
 {
+}
+
+void CMappingDetailView::OnInitialUpdate()
+{
+   SetScrollSizes(MM_TEXT, CSize(1, 1));
+   CScrollView::OnInitialUpdate();
 }
 
 BOOL CMappingDetailView::OnEraseBkgnd(CDC* pDC)
@@ -279,21 +445,28 @@ void CMappingDetailView::ShowNode(MappingNode node)
       m_pPane.reset();
    }
 
+   ScrollToPosition(CPoint(0, 0));
    m_pPane = CreateMappingPane(node, GetDocument());
    if (m_pPane && m_pPane->CreatePane(this))
    {
+      CRect rect;
+      m_pPane->GetWindowRect(&rect); // the dialog template's size
+      m_PaneSize = rect.Size();
+      SetScrollSizes(MM_TEXT, m_PaneSize);
       SizePane();
       m_pPane->ShowWindow(SW_SHOW);
    }
    else
    {
       m_pPane.reset();
+      m_PaneSize = CSize(0, 0);
+      SetScrollSizes(MM_TEXT, CSize(1, 1));
    }
 }
 
 void CMappingDetailView::OnSize(UINT nType, int cx, int cy)
 {
-   CView::OnSize(nType, cx, cy);
+   CScrollView::OnSize(nType, cx, cy);
    SizePane();
 }
 
@@ -301,9 +474,11 @@ void CMappingDetailView::SizePane()
 {
    if (m_pPane && m_pPane->GetSafeHwnd())
    {
+      // fills the view, and is at least its designed size (the view scrolls)
       CRect rect;
       GetClientRect(&rect);
-      m_pPane->SetWindowPos(nullptr, 0, 0, rect.Width(), rect.Height(), SWP_NOZORDER | SWP_NOACTIVATE);
+      CPoint scroll = GetScrollPosition();
+      m_pPane->SetWindowPos(nullptr, -scroll.x, -scroll.y, std::max(rect.Width(), (int)m_PaneSize.cx), std::max(rect.Height(), (int)m_PaneSize.cy), SWP_NOZORDER | SWP_NOACTIVATE);
    }
 }
 
@@ -312,5 +487,5 @@ BOOL CMappingDetailView::PreTranslateMessage(MSG* pMsg)
    // tab between the pane's controls
    if (m_pPane && m_pPane->GetSafeHwnd() && m_pPane->IsDialogMessage(pMsg))
       return TRUE;
-   return CView::PreTranslateMessage(pMsg);
+   return CScrollView::PreTranslateMessage(pMsg);
 }

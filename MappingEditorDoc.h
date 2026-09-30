@@ -86,6 +86,8 @@ public:
    DECLARE_DYNAMIC(CMappingEditorDocTemplate)
 };
 
+struct MappingNode;
+
 class CMappingEditorDoc : public CEAFDocument
 {
 protected:
@@ -96,11 +98,15 @@ public:
    // UpdateAllViews hints
    static constexpr LPARAM HINT_STRUCTURE = 1; // what the table defines changed (tree labels)
    static constexpr LPARAM HINT_CONTENT = 2;   // values changed
+   static constexpr LPARAM HINT_SELECT = 3;    // select a tree node (CMappingSelectHint), after the tree is rebuilt
 
    nlohmann::ordered_json& GetTable() { return m_Table; }
 
    // Called by the panes after they change the table
    void TableChanged(bool bStructure);
+
+   // Selects a tree node and shows its pane, once the current message is handled (so a pane can ask for it and be replaced)
+   void SelectNode(const MappingNode& node);
 
    // The tables named by "extends" (nullptr if none, or if they can't be loaded; see GetBaseTableError)
    const CIfcMappingTable* GetBaseTable() const { return m_pBase.get(); }

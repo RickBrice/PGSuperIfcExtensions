@@ -146,6 +146,63 @@
 #define IDC_LOC_VALUE_TYPES             330
 #define IDC_LOC_MAP                     331
 #define IDC_LOC_COMMENT                 332
+#define IDD_MAPPING_SECTION_PANE        333
+#define IDD_MAPPING_BASE_ITEM_PANE      334
+#define IDD_MAPPING_SET_PANE            335
+#define IDD_MAPPING_PROPERTY            336
+#define IDD_MAPPING_SYSTEM_PANE         337
+#define IDD_MAPPING_CLASSIFICATION_PANE 338
+#define IDC_SECTION_TEXT                340
+#define IDC_SECTION_ADD                 341
+#define IDC_BASE_TEXT                   342
+#define IDC_BASE_CHANGE                 343
+#define IDC_BASE_LEAVE_OUT              344
+#define IDC_SET_NAME                    345
+#define IDC_SET_ROLES                   346
+#define IDC_SET_ATTACH_LABEL            347
+#define IDC_SET_ATTACH                  348
+#define IDC_SET_METHOD                  349
+#define IDC_SET_CONDITION               350
+#define IDC_SET_URI                     351
+#define IDC_SET_SHARED                  352
+#define IDC_SET_COMMENT                 353
+#define IDC_SET_PROPERTIES              354
+#define IDC_PROP_ADD                    355
+#define IDC_PROP_EDIT                   356
+#define IDC_PROP_REMOVE                 357
+#define IDC_PROP_UP                     358
+#define IDC_PROP_DOWN                   359
+#define IDC_SET_DELETE                  360
+#define IDC_SET_NOTE                    361
+#define IDC_PROP_NAME                   362
+#define IDC_PROP_TYPE                   363
+#define IDC_PROP_NONE                   364
+#define IDC_PROP_BIND_TARGET            365
+#define IDC_PROP_BIND_VALUE             366
+#define IDC_PROP_TARGET                 367
+#define IDC_PROP_VALUE                  368
+#define IDC_PROP_IMPORT                 369
+#define IDC_PROP_URI                    370
+#define IDC_PROP_ENUM_NAME              371
+#define IDC_PROP_ENUM_VALUES            372
+#define IDC_PROP_COMMENT                373
+#define IDC_SYS_NAME                    374
+#define IDC_SYS_SOURCE                  375
+#define IDC_SYS_EDITION                 376
+#define IDC_SYS_DATE                    377
+#define IDC_SYS_SPEC                    378
+#define IDC_SYS_COMMENT                 379
+#define IDC_SYS_DELETE                  380
+#define IDC_CLS_ROLES                   381
+#define IDC_CLS_CONDITION               382
+#define IDC_CLS_SYSTEM                  383
+#define IDC_CLS_IDENTIFICATION          384
+#define IDC_CLS_NAME                    385
+#define IDC_CLS_LOCATION                386
+#define IDC_CLS_COMMENT                 387
+#define IDC_CLS_NOTE                    388
+#define IDC_CLS_DELETE                  389
+#define IDC_SET_ITEMS_LABEL             390
 #define ID_EDIT_GEOREFERENCING          32771
 #define ID_OPTIONS_IFC_MAPPING_TABLE    32772
 #define ID_MAPPING_VALIDATE             32773
@@ -154,9 +211,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        333
+#define _APS_NEXT_RESOURCE_VALUE        391
 #define _APS_NEXT_COMMAND_VALUE         32774
-#define _APS_NEXT_CONTROL_VALUE         333
+#define _APS_NEXT_CONTROL_VALUE         391
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
