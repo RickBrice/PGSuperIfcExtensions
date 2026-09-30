@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**136 of 260 values set by the import**, 124 are template defaults
+**178 of 260 values set by the import**, 82 are template defaults
 
-## template default (124)
+## template default (82)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -50,68 +50,26 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[3].ahead.bearing_offset_measure` | NormalToPier | NormalToPier |
 | `group[0].piers` | 0-1 | 0-1 |
 | `group[0].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[0].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[0].fci` | 5.000 ksi | 5.000 ksi |
 | `group[0].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[1].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[1].fci` | 5.000 ksi | 5.000 ksi |
 | `group[0].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[2].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[2].fci` | 5.000 ksi | 5.000 ksi |
 | `group[0].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[3].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[3].fci` | 5.000 ksi | 5.000 ksi |
 | `group[0].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[4].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[4].fci` | 5.000 ksi | 5.000 ksi |
 | `group[0].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[5].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[5].fci` | 5.000 ksi | 5.000 ksi |
 | `group[0].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[6].fc` | 6.000 ksi | 6.000 ksi |
-| `group[0].girder[6].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[0].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[0].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[1].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[1].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[2].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[2].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[3].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[3].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[4].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[4].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[5].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[5].fci` | 5.000 ksi | 5.000 ksi |
 | `group[1].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[6].fc` | 6.000 ksi | 6.000 ksi |
-| `group[1].girder[6].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[0].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[0].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[1].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[1].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[2].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[2].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[3].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[3].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[4].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[4].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[5].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[5].fci` | 5.000 ksi | 5.000 ksi |
 | `group[2].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[6].fc` | 6.000 ksi | 6.000 ksi |
-| `group[2].girder[6].fci` | 5.000 ksi | 5.000 ksi |
 | `deck.type` | 0 | 0 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
@@ -136,7 +94,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `at[6].profile.elevation` | 0.000 ft | 0.000 ft |
 | `at[6].profile.grade` | 0.0000 % | 0.0000 % |
 
-## set by the import (136)
+## set by the import (178)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -198,50 +156,92 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `group[0].girder_count` | 5 | 7 |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[0].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[0].fci` | 5.000 ksi | 4.500 ksi |
 | `group[0].girder[1].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[1].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[1].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[1].fci` | 5.000 ksi | 4.500 ksi |
 | `group[0].girder[2].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[2].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[2].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[2].fci` | 5.000 ksi | 4.500 ksi |
 | `group[0].girder[3].slab_offset_start` | 11.000 in | 8.663 in |
 | `group[0].girder[3].slab_offset_end` | 11.000 in | 10.267 in |
+| `group[0].girder[3].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[3].fci` | 5.000 ksi | 4.500 ksi |
 | `group[0].girder[4].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[4].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[4].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[4].fci` | 5.000 ksi | 4.500 ksi |
 | `group[0].girder[5].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[5].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[5].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[5].fci` | 5.000 ksi | 4.500 ksi |
 | `group[0].girder[6].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[6].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[6].fc` | 6.000 ksi | 5.000 ksi |
+| `group[0].girder[6].fci` | 5.000 ksi | 4.500 ksi |
 | `group[1].piers` | 0-1 | 1-2 |
 | `group[1].girder_count` | 5 | 7 |
 | `group[1].girder[0].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[0].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[0].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[0].fci` | 5.000 ksi | 8.500 ksi |
 | `group[1].girder[1].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[1].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[1].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[1].fci` | 5.000 ksi | 8.500 ksi |
 | `group[1].girder[2].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[2].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[2].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[2].fci` | 5.000 ksi | 8.500 ksi |
 | `group[1].girder[3].slab_offset_start` | 11.000 in | 10.449 in |
 | `group[1].girder[3].slab_offset_end` | 11.000 in | 10.318 in |
+| `group[1].girder[3].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[3].fci` | 5.000 ksi | 8.500 ksi |
 | `group[1].girder[4].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[4].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[4].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[4].fci` | 5.000 ksi | 8.500 ksi |
 | `group[1].girder[5].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[5].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[5].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[5].fci` | 5.000 ksi | 8.500 ksi |
 | `group[1].girder[6].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[6].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[6].fc` | 6.000 ksi | 10.000 ksi |
+| `group[1].girder[6].fci` | 5.000 ksi | 8.500 ksi |
 | `group[2].piers` | 0-1 | 2-3 |
 | `group[2].girder_count` | 5 | 7 |
 | `group[2].girder[0].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[0].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[0].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[0].fci` | 5.000 ksi | 4.500 ksi |
 | `group[2].girder[1].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[1].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[1].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[1].fci` | 5.000 ksi | 4.500 ksi |
 | `group[2].girder[2].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[2].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[2].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[2].fci` | 5.000 ksi | 4.500 ksi |
 | `group[2].girder[3].slab_offset_start` | 11.000 in | 10.456 in |
 | `group[2].girder[3].slab_offset_end` | 11.000 in | 8.596 in |
+| `group[2].girder[3].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[3].fci` | 5.000 ksi | 4.500 ksi |
 | `group[2].girder[4].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[4].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[4].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[4].fci` | 5.000 ksi | 4.500 ksi |
 | `group[2].girder[5].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[5].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[5].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[5].fci` | 5.000 ksi | 4.500 ksi |
 | `group[2].girder[6].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[6].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[6].fc` | 6.000 ksi | 5.000 ksi |
+| `group[2].girder[6].fci` | 5.000 ksi | 4.500 ksi |
 | `deck.gross_depth` | 7.500 in | 8.470 in |
 | `deck.left_overhang_edge_depth` | 7.000 in | 10.059 in |
 | `deck.right_overhang_edge_depth` | 7.000 in | 9.942 in |
