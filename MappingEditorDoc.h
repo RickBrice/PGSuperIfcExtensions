@@ -34,7 +34,6 @@
 *****************************************************************************/
 
 #include <EAF\EAFDocument.h>
-#include <EAF\EAFStatusBar.h>
 #include <EAF\EAFDocTemplate.h>
 #include <EAF\ComponentObject.h>
 #include <EAF\PluginApp.h>
@@ -50,14 +49,6 @@
 // UTF-8 (the table's text) <-> the UI's text
 CString Utf8ToCString(const std::string& text);
 std::string CStringToUtf8(const CString& text);
-
-// The editor's status bar. It must have the AutoSave indicator: the data recovery handler writes to it
-// (CEAFStatusBar::AutoSaveSaving), and the default status bar doesn't have one
-class CMappingEditorStatusBar : public CEAFStatusBar
-{
-protected:
-   void GetStatusIndicators(const UINT** lppIDArray, int* pnIDCount) override;
-};
 
 // Table > Generate from IDS: the IDS, the binding file, and whether the table extends the standard table
 class CMappingFromIdsDlg : public CDialog
@@ -157,7 +148,6 @@ public:
    BOOL OpenTheDocument(LPCTSTR lpszPathName) override;
    BOOL SaveTheDocument(LPCTSTR lpszPathName) override;
 
-   void DoIntegrateWithUI(BOOL bIntegrate) override;
    void LoadDocumentSettings() override;
    void SaveDocumentSettings() override;
    BOOL GetStatusBarMessageString(UINT nID, CString& rMessage) const override;

@@ -50,24 +50,6 @@ std::string CStringToUtf8(const CString& text)
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// CMappingEditorStatusBar
-
-void CMappingEditorStatusBar::GetStatusIndicators(const UINT** lppIDArray, int* pnIDCount)
-{
-   static UINT indicators[] =
-   {
-      ID_SEPARATOR, // status line
-      EAFID_INDICATOR_AUTOSAVE_ON,
-      EAFID_INDICATOR_MODIFIED,
-      ID_INDICATOR_CAPS,
-      ID_INDICATOR_NUM,
-      ID_INDICATOR_SCRL,
-   };
-   *lppIDArray = indicators;
-   *pnIDCount = sizeof(indicators) / sizeof(UINT);
-}
-
-/////////////////////////////////////////////////////////////////////////////
 // CMappingFromIdsDlg
 
 BEGIN_MESSAGE_MAP(CMappingFromIdsDlg, CDialog)
@@ -441,23 +423,6 @@ BOOL CMappingEditorDoc::SaveTheDocument(LPCTSTR lpszPathName)
 
    file << FormatMappingTable(m_Table);
    return file.good() ? TRUE : FALSE;
-}
-
-void CMappingEditorDoc::DoIntegrateWithUI(BOOL bIntegrate)
-{
-   __super::DoIntegrateWithUI(bIntegrate);
-
-   CEAFMainFrame* pFrame = EAFGetMainFrame();
-   if (bIntegrate)
-   {
-      auto pStatusBar = new CMappingEditorStatusBar;
-      pStatusBar->Create(pFrame);
-      pFrame->SetStatusBar(pStatusBar); // the frame owns it
-   }
-   else
-   {
-      pFrame->SetStatusBar(nullptr); // back to the default status bar
-   }
 }
 
 void CMappingEditorDoc::LoadDocumentSettings()
