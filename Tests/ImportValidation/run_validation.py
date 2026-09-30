@@ -11,6 +11,11 @@ A model can name a "mapping" table (/IfcMapping); without one, the standard tabl
 extension is used. "expect_log" lists text the import log must contain (e.g. mapping table hints);
 the summary reports any that is missing.
 
+The table-driven content of each round-trip export (property sets, quantity sets, classifications,
+element names; see compare_export.py) is compared with export_baseline/<run>.txt.gz, and the summary
+reports any difference, with the details in results/<run>.export-diff.txt. --update-export-baseline
+saves the current exports as the baseline instead (after an intended change to the export).
+
 Reports, logs, and imported projects are written to results/, replacing the previous results, so
 the change from one run to the next shows up as a difference in the repository. summary.md has the
 score of every run. Exported IFC files and unzipped models are written to results/ but not tracked.
@@ -35,9 +40,11 @@ import zipfile
 from pathlib import Path
 
 import compare_bridge
+import compare_export
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
+EXPORT_BASELINE = HERE / "export_baseline"
 TIMEOUT = 600  # seconds for one BridgeLink run
 PGSUPER_OPTIONS_KEY = r"Software\Washington State Department of Transportation\PGSuper\Options"
 
@@ -127,6 +134,24 @@ def check_log(model, pgs):
     return f", log check: {len(expected)} of {len(expected)} found"
 
 
+def check_export(run, ifc, update_baseline):
+    """compares the export's listing with its baseline, or saves it as the baseline. Returns a message for the summary"""
+    current = compare_export.listing(ifc)
+    baseline_file = EXPORT_BASELINE / f"{run}.txt.gz"
+    diff_file = RESULTS / f"{run}.export-diff.txt"
+    diff_file.unlink(missing_ok=True)
+    if update_baseline or not baseline_file.exists():
+        EXPORT_BASELINE.mkdir(exist_ok=True)
+        compare_export.save(current, baseline_file)
+        return ", export baseline saved"
+    baseline = compare_export.listing(baseline_file)
+    n = compare_export.count_differences(baseline, current)
+    if n == 0:
+        return ", export same as baseline"
+    diff_file.write_text("\n".join(compare_export.compare(baseline, current, limit=5000)) + "\n", encoding="utf-8")
+    return f", export differs from baseline: {n} lines (see {diff_file.name})"
+
+
 def round_trip(model, config, exe):
     """export -> import -> compare for a PGSuper project. Returns summary rows."""
     rows = []
@@ -144,8 +169,10 @@ def round_trip(model, config, exe):
         if not ok or not ifc.exists():
             rows.append((run, f"export failed: {message}", None))
             continue
+        export_message = check_export(run, ifc, config["update_export_baseline"])
 
         ok, message = import_ifc(exe, ifc, config["template"], pgs)
+        message += export_message
         if not ok:
             rows.append((run, message, None))
             continue
@@ -195,12 +222,14 @@ def main():
     parser.add_argument("--configuration", help='PGSuper configuration for the run, "server" or "server:publisher"')
     parser.add_argument("--bridgelink", help=r"BridgeLink.exe (default: %%ARPDIR%%\BridgeLink\RegFreeCOM\x64\Release\BridgeLink.exe)")
     parser.add_argument("--config-file", default=str(HERE / "models.json"))
+    parser.add_argument("--update-export-baseline", action="store_true", help="save the round-trip exports as the export baseline")
     args = parser.parse_args()
 
     config_file = Path(args.config_file).resolve()
     config = json.loads(config_file.read_text(encoding="utf-8"))
     config["base"] = config_file.parent
     config["template"] = (config["base"] / config["template"]).resolve()
+    config["update_export_baseline"] = args.update_export_baseline
     models = [m for m in config["models"] if not args.models or m["name"] in args.models]
 
     exe = args.bridgelink

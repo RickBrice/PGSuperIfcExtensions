@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "IfcMappingTable.h"
+#include "bSDD.h"
 
 #include <nlohmann/json.hpp>
 
@@ -396,6 +397,37 @@ namespace
          return selector;
       }
 
+      // a bSDD URI ("bsdd" for the declaration's own name, "bsdd:Name" for another name), an explicit URI, or empty
+      static std::string ResolveUri(const std::string& uri, const std::string& name, const char* kind)
+      {
+         if (uri.empty())
+            return "";
+         if (uri == "bsdd")
+            return BSDD_URI + kind + "/" + name;
+         if (uri.starts_with("bsdd:"))
+            return BSDD_URI + kind + "/" + uri.substr(5);
+         return uri;
+      }
+
+      // a constant property value. The JSON type must fit the IFC value type
+      std::optional<TargetValue> GetConstant(const json& j, const std::string& path, const std::string& type)
+      {
+         bool bText = (type == "IFCLABEL" || type == "IFCTEXT" || type == "IFCIDENTIFIER");
+         bool bBoolean = (type == "IFCBOOLEAN");
+         bool bInteger = (type == "IFCINTEGER" || type == "IFCCOUNTMEASURE");
+         if (bText && j.is_string())
+            return j.get<std::string>();
+         if (bBoolean && j.is_boolean())
+            return j.get<bool>();
+         if (bInteger && j.is_number_integer())
+            return (Int64)j.get<int64_t>();
+         if (!bText && !bBoolean && !bInteger && j.is_number())
+            return (Float64)j.get<double>();
+
+         Error(path, "doesn't fit the property's type " + type);
+         return std::nullopt;
+      }
+
       void ParsePropertySets(const json& j)
       {
          if (!j.is_array())
@@ -414,16 +446,34 @@ namespace
                continue;
             }
 
-            CheckKeys(jpset, path, { "name", "applies_to", "attach", "uri", "shared", "properties" });
+            CheckKeys(jpset, path, { "name", "applies_to", "attach", "condition", "uri", "shared", "remove", "properties" });
 
             PropertySetDeclaration pset;
             pset.name = GetString(jpset, "name", path, true).value_or("");
             bool bRole = GetRole(jpset, "applies_to", path, pset.applies_to);
             GetOwner(jpset, "attach", path, pset.attach);
-            pset.uri = GetString(jpset, "uri", path, false).value_or("");
+            pset.uri = ResolveUri(GetString(jpset, "uri", path, false).value_or(""), pset.name, "class");
             pset.shared = GetBool(jpset, "shared", path).value_or(false);
+            pset.remove = GetBool(jpset, "remove", path).value_or(false);
 
-            if (!jpset.contains("properties") || !jpset["properties"].is_array())
+            auto condition = GetString(jpset, "condition", path, false).value_or("classify");
+            if (condition == "classify")
+               pset.condition = PropertySetDeclaration::Condition::Classify;
+            else if (condition == "quantities")
+               pset.condition = PropertySetDeclaration::Condition::Quantities;
+            else if (condition == "always")
+               pset.condition = PropertySetDeclaration::Condition::Always;
+            else
+               Error(Path(path, "condition"), "must be \"classify\", \"quantities\", or \"always\"");
+
+            if (pset.remove)
+            {
+               // only the key is needed to remove a property set
+               m_File.property_sets.push_back(pset);
+               continue;
+            }
+
+            if (!jpset.contains("properties") || !jpset["properties"].is_array() || jpset["properties"].empty())
             {
                Error(Path(path, "properties"), "missing, or not a list of properties");
                continue;
@@ -440,7 +490,7 @@ namespace
                   continue;
                }
 
-               CheckKeys(jproperty, property_path, { "name", "type", "target", "import", "uri", "enumeration" });
+               CheckKeys(jproperty, property_path, { "name", "type", "target", "value", "import", "uri", "enumeration" });
 
                PropertyDeclaration property;
                property.name = GetString(jproperty, "name", property_path, true).value_or("");
@@ -472,8 +522,20 @@ namespace
                   }
                }
 
+               if (jproperty.contains("value"))
+               {
+                  if (property.target)
+                     Error(Path(property_path, "value"), "a property can have a target or a value, not both");
+                  else if (!property.type.empty())
+                     property.value = GetConstant(jproperty["value"], Path(property_path, "value"), property.type);
+               }
+
+               // a property without a value only declares the property, so any value type will do
+               if ((property.target || property.value) && !property.type.empty() && !IsExportValueType(property.type))
+                  Error(Path(property_path, "type"), "\"" + property.type + "\" isn't a value type the exporter can write");
+
                property.import = GetBool(jproperty, "import", property_path).value_or(true);
-               property.uri = GetString(jproperty, "uri", property_path, false).value_or("");
+               property.uri = ResolveUri(GetString(jproperty, "uri", property_path, false).value_or(""), property.name, "prop");
 
                if (jproperty.contains("enumeration"))
                {
@@ -487,10 +549,17 @@ namespace
                   {
                      CheckKeys(jenum, enum_path, { "name", "values" });
                      property.enumeration_name = GetString(jenum, "name", enum_path, true).value_or("");
-                     if (!jenum.contains("values") || !jenum["values"].is_array() || !std::all_of(jenum["values"].begin(), jenum["values"].end(), [](const auto& v) {return v.is_string(); }))
+                     if (!jenum.contains("values") || !jenum["values"].is_array() || jenum["values"].empty() || !std::all_of(jenum["values"].begin(), jenum["values"].end(), [](const auto& v) {return v.is_string(); }))
                         Error(Path(enum_path, "values"), "missing, or not a list of text values");
                      else
                         property.enumeration_values = jenum["values"].get<std::vector<std::string>>();
+
+                     if (property.target && property.target->kind != ValueKind::Text)
+                        Error(Path(property_path, "target"), "an enumerated property needs a text target");
+
+                     if (property.value && std::holds_alternative<std::string>(*property.value) &&
+                        std::find(property.enumeration_values.begin(), property.enumeration_values.end(), std::get<std::string>(*property.value)) == property.enumeration_values.end())
+                        Error(Path(property_path, "value"), "isn't one of the enumeration values");
                   }
                }
 
@@ -860,6 +929,18 @@ const TableUnit* FindTableUnit(std::string_view name)
    return found == std::end(units) ? nullptr : found;
 }
 
+bool IsExportValueType(const std::string& type)
+{
+   // the value types CIfcPropertyWriter can create (see CreateIfcValue in IfcPropertyWriter.h)
+   static const std::set<std::string> types{
+      "IFCLABEL", "IFCTEXT", "IFCIDENTIFIER", "IFCBOOLEAN", "IFCINTEGER", "IFCREAL", "IFCCOUNTMEASURE",
+      "IFCPRESSUREMEASURE", "IFCLENGTHMEASURE", "IFCPOSITIVELENGTHMEASURE", "IFCNONNEGATIVELENGTHMEASURE",
+      "IFCPLANEANGLEMEASURE", "IFCPOSITIVEPLANEANGLEMEASURE", "IFCRATIOMEASURE", "IFCPOSITIVERATIOMEASURE",
+      "IFCAREAMEASURE", "IFCVOLUMEMEASURE", "IFCMASSMEASURE", "IFCFORCEMEASURE",
+   };
+   return types.find(type) != types.end();
+}
+
 std::string MappingLocation::Describe() const
 {
    std::ostringstream os;
@@ -1031,6 +1112,37 @@ void CIfcMappingTable::Merge()
       for (const auto& [role, selector] : file.elements)
          m_Selectors.emplace(role, selector);
    }
+
+   // export property sets: from the base table up, an extending table's property set replaces or removes the one
+   // with the same name, element role, and attach, in place. Others are added at the end
+   auto same = [](const PropertySetDeclaration* a, const PropertySetDeclaration& b) {return a->name == b.name && a->applies_to == b.applies_to && a->attach == b.attach; };
+   for (auto file = m_Files.rbegin(); file != m_Files.rend(); file++)
+   {
+      for (const auto& pset : file->property_sets)
+      {
+         auto found = std::find_if(m_PropertySets.begin(), m_PropertySets.end(), [&](const auto* p) {return same(p, pset); });
+         if (pset.remove)
+         {
+            if (found != m_PropertySets.end())
+               m_PropertySets.erase(found);
+         }
+         else if (found != m_PropertySets.end())
+         {
+            *found = &pset;
+         }
+         else
+         {
+            m_PropertySets.push_back(&pset);
+         }
+      }
+   }
+}
+
+std::vector<const PropertySetDeclaration*> CIfcMappingTable::GetPropertySets(ElementKind role, PropertyOwner attach) const
+{
+   std::vector<const PropertySetDeclaration*> psets;
+   std::copy_if(m_PropertySets.begin(), m_PropertySets.end(), std::back_inserter(psets), [role, attach](const auto* pset) {return pset->applies_to == role && pset->attach == attach; });
+   return psets;
 }
 
 const std::vector<MappingLocation>& CIfcMappingTable::GetLocations(const TargetDef& target) const

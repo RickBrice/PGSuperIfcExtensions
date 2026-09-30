@@ -111,27 +111,42 @@ struct ElementSelector
    std::string Describe() const;
 };
 
-// A property of a property set declared for export. When it has a target, it's also an import location (unless import is false)
+// A property of a property set declared for export. When it has a target, it's also an import location (unless import is false).
+// A property with neither a target nor a value is written without a value
 struct PropertyDeclaration
 {
    std::string name;
    std::string type; // IFC value type, upper case (e.g. "IFCPRESSUREMEASURE")
    const TargetDef* target = nullptr;
+   std::optional<TargetValue> value; // a constant, written as it is
    bool import = true;
-   std::string uri; // "bsdd", an explicit URI, or empty
+   std::string uri; // the property's Specification: a bSDD property URI, an explicit URI, or empty
    std::string enumeration_name;
    std::vector<std::string> enumeration_values;
 };
 
 struct PropertySetDeclaration
 {
+   // the export option that includes the property set
+   enum class Condition
+   {
+      Classify,   // usBridge classification (CIfcExportOptions::classify), the default
+      Quantities, // quantities (CIfcExportOptions::include_quantities)
+      Always
+   };
+
    std::string name;
    ElementKind applies_to = ElementKind::Bridge;
    PropertyOwner attach = PropertyOwner::Occurrence;
-   std::string uri;
+   Condition condition = Condition::Classify;
+   std::string uri; // the property set's Description: a bSDD class URI, an explicit URI, or empty
    bool shared = false;
+   bool remove = false; // an extending table removes the base table's property set with the same name, element role, and attach
    std::vector<PropertyDeclaration> properties;
 };
+
+// True if the IFC value type can be written by the exporter (e.g. "IFCLABEL", "IFCPRESSUREMEASURE")
+bool IsExportValueType(const std::string& type);
 
 // One table file
 struct MappingTableFile
@@ -170,6 +185,10 @@ public:
    // The selector for an element role, or nullptr if no table defines it
    const ElementSelector* GetSelector(ElementKind role) const;
 
+   // The property sets exported for an element role and owner, in table order. An extending table's property set
+   // replaces the base table's property set with the same name, element role, and attach, or removes it
+   std::vector<const PropertySetDeclaration*> GetPropertySets(ElementKind role, PropertyOwner attach) const;
+
    // The table files, the selected table first
    const std::vector<MappingTableFile>& GetFiles() const { return m_Files; }
 
@@ -180,6 +199,7 @@ private:
    std::vector<MappingTableFile> m_Files; // the selected table first, then the tables it extends
    std::map<std::string, std::vector<MappingLocation>, std::less<>> m_Locations; // merged import locations
    std::map<ElementKind, ElementSelector> m_Selectors; // merged selectors
+   std::vector<const PropertySetDeclaration*> m_PropertySets; // merged export property sets, in table order
 
    void Merge();
 };

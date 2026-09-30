@@ -118,10 +118,22 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       ifc_options.segment_global_ids = &segment_global_ids;
 
    CIfcExporter ifc_builder;
-   bool bIfcResult = ifc_builder.BuildModel(pBroker, ifc_options, ifc_path);
+   bool bIfcResult = false;
+   CString strError;
+   try
+   {
+      bIfcResult = ifc_builder.BuildModel(pBroker, ifc_options, ifc_path);
+   }
+   catch (const std::exception& e)
+   {
+      // e.g. the mapping table can't be used (CIfcMappingTableException). The message says what to do
+      strError = e.what();
+   }
 
    CString strMsg;
    strMsg.Format(_T("Model export %s for %s"), (bIfcResult ? _T("successful") : _T("failed")), ifc_path);
+   if (!strError.IsEmpty())
+      strMsg += _T("\n\n") + strError;
 
    // 5. Build the IDS from the same model, pinned to the just-written beam GlobalIds.
    if (bExportIds && bIfcResult)

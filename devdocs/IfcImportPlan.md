@@ -124,7 +124,10 @@ Mapping tables are JSON files ([MappingTablesDesign.md](MappingTablesDesign.md))
 - The editor uses the extension's table code (`CIfcMappingTable`, `CIfcTargetReader`, `CIfcTargetHints`, `IfcTargets`), so the editor and the importer can't disagree about the format. The code may move to a library that the extension and the editor both link.
 - The configuration wizard page (M6) could open the editor for the selected table.
 
-**Open questions:** (1) a BridgeLink application (like PGSLibraryEditor) or a stand-alone program? (2) does the editor need to open tables on a web server or catalog server, or only files? (3) which platforms and UI technology (MFC, as the rest of BridgeLink)?
+**Decided (2026-09-29):**
+- **R3.1 Form:** a BridgeLink application, like PGSLibraryEditor.
+- **R3.2 Storage:** files only for now. No web or catalog servers.
+- **R3.3 UI:** MFC, as the rest of BridgeLink. Objective Grid may be used where a grid is warranted, e.g. the ordered location list of a target, map entries, or the properties of an export property set.
 
 ## Decisions (2026-09-24)
 Answers to the open questions (`IFC_Import_Open_Questions.docx`). The IDs are used in the rest of this plan.

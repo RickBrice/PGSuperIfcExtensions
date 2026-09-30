@@ -13,6 +13,9 @@
     <ClCompile Include="IfcMappingTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IfcPropertyWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcTargetHints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -118,6 +121,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcMappingTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcPropertyWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcTargetHints.h">

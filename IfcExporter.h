@@ -129,6 +129,10 @@ public:
    // GlobalId here, keyed by CSegmentKey, so a co-exported IDS can pin its specifications
    // by GlobalId. Not owned; must outlive the BuildModel call.
    std::map<CSegmentKey, std::string>* segment_global_ids = nullptr;
+
+   // Mapping table for the property sets (/IfcMapping). When empty, the installed standard table is used.
+   // See devdocs/MappingTablesDesign.md
+   CString mapping_file;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -139,9 +143,15 @@ public:
     CIfcExporter(void);
     ~CIfcExporter(void);
 
+    // Throws CIfcMappingTableException if the mapping table can't be used
     bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath);
 
+    // The mapping table files of the last BuildModel, the selected table first, e.g. for the export log
+    const std::vector<std::string>& GetMappingTableFiles() const { return m_MappingTableFiles; }
+
 private:
+    std::vector<std::string> m_MappingTableFiles;
+
     template <typename Schema>
     bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath);
 };

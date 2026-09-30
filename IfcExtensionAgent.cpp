@@ -311,12 +311,14 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
    // Export it with the default export options
    CIfcExportOptions options;
    options.display_units_for_properties = ifcCmdInfo.m_bDisplayUnitsForProperties;
+   options.mapping_file = ifcCmdInfo.m_strMappingFile;
 
    bool bResult = false;
    CString strError;
+   CIfcExporter exporter;
    try
    {
-      bResult = CIfcExporter().BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile);
+      bResult = exporter.BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile);
    }
    catch (const std::exception& e)
    {
@@ -325,6 +327,8 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
 
    std::wofstream log(ifcCmdInfo.m_strLogFile.GetString());
    log << _T("Exported ") << ifcCmdInfo.m_strFileName.GetString() << _T(" with property values in ") << (options.display_units_for_properties ? _T("display units") : _T("system units")) << std::endl;
+   for (const auto& table_file : exporter.GetMappingTableFiles())
+      log << _T("IFC mapping table ") << CString(table_file.c_str()).GetString() << std::endl;
    if (!strError.IsEmpty())
       log << _T("IFC export failed: ") << strError.GetString() << std::endl;
    log << (bResult ? _T("IFC export succeeded: ") : _T("IFC export failed: ")) << ifcCmdInfo.m_strIfcFile.GetString() << std::endl;

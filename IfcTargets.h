@@ -24,10 +24,17 @@
 // Targets are the PGSuper data items that mapping tables bind to IFC locations.
 // The list is fixed in code. Tables refer to targets by name. See devdocs/MappingTablesDesign.md
 
+#include <functional>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
+
+#include <PsgLib\Keys.h>
+
+namespace WBFL { namespace EAF { class Broker; }; };
+class CIfcExportOptions;
 
 // The kind of PGSuper item a target belongs to. Mapping table element roles (e.g. "girder") use these names
 enum class ElementKind
@@ -41,6 +48,7 @@ enum class ElementKind
    Alignment,
    Referent,
    Girder,
+   ClosureJoint,
    Deck,
    Haunch,
    Bearing,
@@ -64,12 +72,58 @@ enum class ValueKind
 // A target value. Numbers are in PGSuper system units (SI)
 using TargetValue = std::variant<Float64, Int64, bool, std::string>;
 
+// The PGSuper display unit of an exported number, when properties are exported in display units
+enum class ExportUnit
+{
+   None,       // written as it is, without a unit
+   SpanLength, // e.g. ft
+   Deflection, // e.g. in
+   Stress,     // e.g. ksi
+   Angle       // degrees
+};
+
+// The element whose target values are exported. The exporter fills in the keys the element's targets need
+struct ExportContext
+{
+   std::shared_ptr<WBFL::EAF::Broker> broker;
+   const CIfcExportOptions* options = nullptr;
+   CSegmentKey segment;                 // Girder, ClosureJoint
+   PierIndexType pier = INVALID_INDEX;  // Pier, Foundation
+};
+
+// The value a target's getter gives the exporter
+struct ExportValue
+{
+   enum class State
+   {
+      Value,   // write the value
+      NoValue, // write the property without a value
+      Absent   // leave the property out
+   };
+
+   State state = State::NoValue;
+   TargetValue value;
+
+   ExportValue() = default;
+   ExportValue(const TargetValue& v) : state(State::Value), value(v) {}
+   ExportValue(Float64 v) : state(State::Value), value(v) {}
+   ExportValue(Int64 v) : state(State::Value), value(v) {}
+   ExportValue(const std::string& v) : state(State::Value), value(v) {}
+   static ExportValue NoValue() { return ExportValue(); }
+   static ExportValue Absent() { ExportValue v; v.state = State::Absent; return v; }
+};
+
+using ExportGetter = std::function<ExportValue(const ExportContext&)>;
+
 struct TargetDef
 {
    std::string_view name;  // e.g. "girder.fci"
    ElementKind element;    // the element the target belongs to
    ValueKind kind;
    std::string_view description; // for messages
+   ExportUnit display_unit = ExportUnit::None; // export: the display unit of a number
+   Float64 display_round = 0; // export: rounding increment in display units (0: none)
+   ExportGetter get; // export: the value for an element. Empty for import-only targets
 };
 
 // All targets

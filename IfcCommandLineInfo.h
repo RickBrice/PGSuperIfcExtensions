@@ -39,12 +39,13 @@ CLASS
    /IfcMapping defaults to the standard mapping table installed with the extension.
 
    Export a PGSuper project to an IFC model:
-   BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>]
+   BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.json>]
 
    The project is exported with the default export options.
    /IfcPropertyUnits=Display (default) exports property values in display units with their units,
    /IfcPropertyUnits=System exports property values in system units using the project units.
    /IfcLog defaults to the IFC file name with a .export.log extension.
+   /IfcMapping defaults to the standard mapping table installed with the extension.
 
    Put /IfcImport or /IfcExport first. PGSuper builds before the Test and TxDOT agent command line
    fix claim (and reject) any command line whose first parameter is not a flag.
@@ -66,7 +67,7 @@ public:
    CString m_strIfcFile; // IFC file to import or export
    CString m_strOutFile; // PGSuper project file created by an import
    CString m_strLogFile;
-   CString m_strMappingFile; // import option, see CIfcImportOptions::mapping_file
+   CString m_strMappingFile; // import and export option, see CIfcImportOptions::mapping_file and CIfcExportOptions::mapping_file
    bool m_bDisplayUnitsForProperties; // export option, see CIfcExportOptions::display_units_for_properties
 
 private:

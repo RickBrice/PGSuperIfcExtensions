@@ -415,12 +415,70 @@ As built in M1, the reader also:
 - A `NumberOfSpans` mismatch is logged as an error and the model is used (G4).
 - Table loading errors were checked by hand in M1 with broken tables: a missing file, invalid JSON, a table with 7 problems (misspelled key, unknown target, unknown unit, unit on a boolean, bad map value, unknown entity, unknown attribute), an unsupported version, and an `extends` cycle. They become automated tests in Phase 8.
 
-## Export engine (M3, outline)
+## Export engine (M3)
 
-- For each registry element and each pset whose `applies_to` matches: evaluate the bound targets' getters, convert to display or system units (the `display_units_for_properties` rule), and write.
-- Shared psets are created once and related to every matching element in one `IfcRelDefinesByProperties`.
-- **Check before removing hard-coded definitions:** the standard table must reproduce today's export exactly. A script diffs psets (names, values, units, descriptions) between the old and new exports for all `Tests/ImportValidation` projects, in both property-unit modes. The round trip must still have 0 mismatches.
-- **IDS (M4):** `IdsExporter` asks the table for the pset, property, and data type of each design value. Pinning and values stay as they are.
+### Checking against today's export
+- `Tests/ImportValidation/compare_export.py` reduces an IFC file to a canonical listing, one line per property:
+  - It covers property sets on occurrences, types, and materials, quantity sets, classifications, and `ObjectType`.
+  - Elements are keyed by entity, `Name`, and their order among elements with the same entity and name, because GlobalIds change on every export.
+  - The property sets of an element are sorted, so the order of relationships doesn't matter.
+- `export_baseline/<run>.txt.gz` holds the listings of today's exports: the five round-trip runs, in both property-unit modes where the run has them. They were recorded from the exporter before M3 (commit `7df3af4`).
+- `run_validation.py` compares every round-trip export with its baseline and reports "export same as baseline" or the number of differing lines in the summary. The details go in `results/<run>.export-diff.txt`. `--update-export-baseline` records a new baseline after an intended change.
+- The standard table reproduces the baseline exactly, quirks included. Fixes to the export come afterwards, as separate, reviewed changes to the baseline (see "Export findings").
+
+### Engine
+```cpp
+template <typename Schema>
+class CIfcPropertyWriter
+{
+public:
+   CIfcPropertyWriter(hierarchy_helper<Schema>& file, const CIfcMappingTable& table, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options);
+
+   // the role's property sets and quantity sets that attach to occurrences, related to all of the objects
+   void Write(ElementKind role, const std::vector<typename Schema::IfcObjectDefinition>& objects, const ExportContext& context);
+
+   // the role's property sets that attach to type objects (IfcTypeObject.HasPropertySets)
+   std::vector<typename Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const ExportContext& context);
+
+   // the role's material properties (IfcMaterialProperties) for a material the role created
+   void WriteMaterial(ElementKind role, typename Schema::IfcMaterial material, const ExportContext& context);
+};
+```
+- **The exporter decides which elements get which role, and when.** It calls the writer where it calls the `Create_*` functions today. The geometry, the spatial structure, element creation, and the order elements are created in stay in code (A5).
+- **Context:** `ExportContext` carries the PGSuper keys of the element (segment key, pier index, and so on). A target's getter reads its value through the broker. The element registry (R1) replaces the keys later.
+- **Getters** return a value in system units, "no value" (the property is written without a value), or "absent" (the property is left out, e.g. `VehicularLiveLoad` without a design live load).
+- **Units:** each numeric target names its PGSuper display unit (span length, deflection, stress, angle, ...), and optionally a rounding increment in display units. With `display_units_for_properties` and US units, the value is converted and rounded, and the property gets an `IfcConversionBasedUnit`. Otherwise the value is in system units with no property unit, as today. Numbers in the table are constants written as they are.
+- **Constants:** `"value"` gives a property a fixed value (e.g. `SurfaceFinish = "Raked"`, `AssemblyPlace = "SITE"` on the deck).
+- **Enumerations:** a property with an `enumeration` is written as an `IfcPropertyEnumeratedValue`. Each `IfcPropertyEnumeration` is created once and reused.
+- **Conditions:** export options that include or leave out whole groups of property sets are named on the property set as `"condition"`:
+  - `"classify"` (the default) for usBridge classification (`options.classify`)
+  - `"quantities"` for quantity sets (`options.include_quantities`)
+  - `"always"`
+
+  Options that change a value (e.g. `include_camber`) stay in the getters.
+- **Sharing:** a property set is created once for all the objects of one `Write` call (e.g. both barriers). Type property sets are created once and given to every type. Material properties are written when the element that uses the material creates it, as today.
+- **Classifications and names:** classification references per role come from the table (`classifications`). Element `Name` and `ObjectType` stay in code for now. The names are tied to IDS pinning (`BeamLabels.h`) and to the importer's designation parsing, so changing them needs a decision of its own.
+
+### Stages
+Each stage keeps the export identical to the baseline:
+1. The engine and getters. Property sets of the project, bridge, bridge parts, piers, foundations, deck slab, barriers, girders (occurrences and types), closure joints, and concrete materials.
+   - **Done 2026-09-29:** `IfcPropertyWriter.h/.cpp` (`CIfcExportSession`, `WritePropertySets`, `CreateTypePropertySets`, `WriteMaterialProperties`), 34 export targets with getters in `IfcTargets.cpp`, and 36 property set declarations in `Standard.json`. All five round-trip exports are the same as the baseline, and the import scores are unchanged. The export log names the table files, and `/IfcMapping` works for the export too.
+2. Quantity sets and classifications.
+3. Reinforcement and tendons: shared property sets, `Pset_MaterialSteel`, debonding, `usBrPset_ACI_*` bar properties, and group quantities. Bar shapes have a different set of dimensions per shape code, so this stage may leave the bar shape property sets in code. That's decided when the stage starts.
+4. Remove the replaced `Create_*` functions.
+
+M4 then moves the design-value IDS onto the table.
+
+### Export findings
+Recorded while making the table reproduce today's export. They're fixed after the standard table matches the baseline, one reviewed baseline change each:
+- `Pset_ConcreteElementGeneral.StrengthClass` ends with a newline (`std::endl`), e.g. `"5.000 KSI
+"`.
+- `PEnum_ProjectType` has "MODIFICAITON" for "MODIFICATION".
+- `Qto_SlabBaseQuantities` is written with 0.0 for every quantity instead of the values or no value.
+- `usBrPset_MASH` has placeholder values ("Unknown", `BarrierHeight` 0.01 m).
+- `usBrPset_Roadway` is created but never attached to the bridge (`Create_usBrPset_Roadway`'s result is discarded), so it's an orphan in the file. The standard table doesn't declare it; declaring it for the bridge would attach it.
+- The girder-only export (`ModelElements::GirderOnly`) writes no usBridge project property sets, and doesn't add the usBridge classification system, but classifies the girder. The engine reproduces this with a condition filter on the project's property sets.
+- A concrete material is shared by name ("Precast Concrete, f'c = ..."), so a deck and a girder with the same f'c share one material. It's called "Precast Concrete", and it has the maximum aggregate size of whichever element created it first.
 
 ## Code layout
 

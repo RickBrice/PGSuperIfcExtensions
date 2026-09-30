@@ -262,6 +262,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="IfcImporterException.cpp" />
     <ClCompile Include="IfcImportUnits.cpp" />
     <ClCompile Include="IfcMappingTable.cpp" />
+    <ClCompile Include="IfcPropertyWriter.cpp" />
     <ClCompile Include="IfcTargetHints.cpp" />
     <ClCompile Include="IfcTargetReader.cpp" />
     <ClCompile Include="IfcTargets.cpp" />
@@ -329,6 +330,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="IfcImporterException.h" />
     <ClInclude Include="IfcImportUnits.h" />
     <ClInclude Include="IfcMappingTable.h" />
+    <ClInclude Include="IfcPropertyWriter.h" />
     <ClInclude Include="IfcTargetHints.h" />
     <ClInclude Include="IfcTargetReader.h" />
     <ClInclude Include="IfcTargets.h" />

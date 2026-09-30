@@ -1972,9 +1972,10 @@ void CreatePrecastSegmentMaterials(hierarchy_helper<Schema>& file, std::shared_p
    const pgsPointOfInterest& poiMS = vPoi.front();
 
    Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
-   Float64 max_agg_size = pMaterials->GetSegmentMaxAggrSize(segmentKey);
 
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Precast Concrete", SEGMENT_BORDER_COLOR);
+   ExportContext context{ pBroker, &options };
+   context.segment = segmentKey;
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, ElementKind::Girder, context, "Precast Concrete", SEGMENT_BORDER_COLOR);
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for each segment but we still need the list
@@ -2470,18 +2471,14 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    auto fc = pMaterials->GetDeckFc28();
-   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Slab Concrete", SEGMENT_BORDER_COLOR);
+   ExportContext context{ pBroker, &options };
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, ElementKind::Deck, context, "Slab Concrete", SEGMENT_BORDER_COLOR);
 
    if (options.classify)
    {
       Classify_usBridge_Slab(file, slab);
 
-      AddPropertySet(file,slab,Create_Pset_ConcreteElementGeneral<Schema>(file,pBroker,"SITE","INSITU",fc));
-      AddPropertySet(file,slab,Create_usBrPset_Common<Schema>(file));
-      AddPropertySet(file,slab,Create_usBrPset_PayItemQuantities<Schema>(file));
-      AddPropertySet(file,slab,Create_usBrPset_SlabCommon<Schema>(file,pBroker,options));
-      AddPropertySet(file,slab,Create_usBrPset_RoadwaySlab<Schema>(file,pBroker,options));
+      WritePropertySets<Schema>(file, ElementKind::Deck, slab, context);
       AddQto(file,slab,Create_Qto_SlabBaseQuantatities<Schema>(file));
    }
 
@@ -2721,8 +2718,9 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
          else
             Classify_usBridge_Pier<Schema>(file, pier);
 
-         AddPropertySet(file,pier,Create_usBrPset_Common<Schema>(file));
-         AddPropertySet(file,pier,Create_usBrPset_SubstructureCommon<Schema>(file,pBroker,options,pierIdx));
+         ExportContext context{ pBroker, &options };
+         context.pier = pierIdx;
+         WritePropertySets<Schema>(file, ElementKind::Pier, pier, context);
       }
 
       std::ostringstream os;
@@ -2736,7 +2734,9 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
       {
          Classify_usBridge_Foundation<Schema>(file, foundation);
 
-         AddPropertySet(file,foundation,Create_usBrPset_Common<Schema>(file));
+         ExportContext context{ pBroker, &options };
+         context.pier = pierIdx;
+         WritePropertySets<Schema>(file, ElementKind::Foundation, foundation, context);
       }
 
       std::vector<typename Schema::IfcObjectDefinition> list_of_foundations;
@@ -3243,19 +3243,11 @@ typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, st
    {
       Classify_usBridge_PrecastGirderElement(file, beam);
 
-      AddPropertySet(file,beam,Create_Pset_BeamCommon(file, pBroker, options, segmentKey));
-
-      // this propery is attached to the IfcBeamType, but the StrengthClass property is beam specific
-      // so add an override property here
-      GET_IFACE2(pBroker, IMaterials, pMaterials);
-      Float64 fc = pMaterials->GetSegmentFc28(segmentKey);
-      
-      AddPropertySet(file,beam,Create_Pset_ConcreteElementGeneral(file, pBroker, std::nullopt, std::nullopt, fc));
-      AddPropertySet(file,beam,Create_Pset_PrecastConcreteElementGeneral<Schema>(file, pBroker, options, segmentKey));
-
-      AddPropertySet(file,beam,Create_usBrPset_Common(file));
-      AddPropertySet(file,beam,Create_usBrPset_PayItemQuantities(file));
-      AddPropertySet(file,beam,Create_usBrPset_PrecastConcreteBeam<Schema>(file, pBroker, options, segmentKey));
+      // Pset_ConcreteElementGeneral is attached to the IfcBeamType, but the StrengthClass property is beam
+      // specific, so the beam gets its own Pset_ConcreteElementGeneral with it
+      ExportContext context{ pBroker, &options };
+      context.segment = segmentKey;
+      WritePropertySets<Schema>(file, ElementKind::Girder, beam, context);
    }
 
    return beam;
@@ -3271,8 +3263,7 @@ void CreateGirder(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    auto beam_type_name = pIBridgeDesc->GetGirder(options.girderKey)->GetGirderName();
 
-   std::vector<typename Schema::IfcPropertySetDefinition> property_sets;
-   property_sets.push_back(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt));
+   auto property_sets = CreateTypePropertySets<Schema>(file, ElementKind::Girder, ExportContext{ pBroker, &options });
 
    std::vector<typename Schema::IfcObjectDefinition> beam_object_definitions;
    auto beam_type = file.create<typename Schema::IfcBeamType>().initialize(
@@ -3360,8 +3351,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    {
       Classify_usBridge_Superstructure<Schema>(file, superstructure);
 
-      AddPropertySet(file,superstructure,Create_usBrPset_Common(file));
-      AddPropertySet(file,superstructure,Create_usBrPset_BridgePartCommon(file));
+      WritePropertySets<Schema>(file, ElementKind::BridgePart, superstructure, ExportContext{ pBroker, &options });
    }
 
    auto substructure = file.create<typename Schema::IfcBridgePart>().initialize(ifcopenshell::global_id(), {}, std::string("Substructure"), std::nullopt, std::nullopt, {}, {}, std::nullopt,
@@ -3374,8 +3364,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    {
       Classify_usBridge_Substructure<Schema>(file, substructure);
 
-      AddPropertySet(file,substructure,Create_usBrPset_Common(file));
-      AddPropertySet(file,substructure,Create_usBrPset_BridgePartCommon(file));
+      WritePropertySets<Schema>(file, ElementKind::BridgePart, substructure, ExportContext{ pBroker, &options });
    }
 
    auto deck = file.create<typename Schema::IfcBridgePart>().initialize(ifcopenshell::global_id(), {}, std::string("Deck"), std::nullopt, std::nullopt, {}, {}, std::nullopt,
@@ -3388,8 +3377,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    {
       Classify_usBridge_Deck<Schema>(file, deck);
 
-      AddPropertySet(file,deck,Create_usBrPset_Common(file));
-      AddPropertySet(file,deck,Create_usBrPset_BridgePartCommon(file));
+      WritePropertySets<Schema>(file, ElementKind::BridgePart, deck, ExportContext{ pBroker, &options });
    }
 
    file.addRelatedObject<typename Schema::IfcRelAggregates>(superstructure, deck);
@@ -3448,20 +3436,15 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    // PGSuper assumes barriers are same material as deck
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    auto fc = pMaterials->GetDeckFc28();
-   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, "Barrier", SEGMENT_BORDER_COLOR);
+   ExportContext context{ pBroker, &options };
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, ElementKind::Barrier, context, "Barrier", SEGMENT_BORDER_COLOR);
 
    if (options.classify)
    {
       Classify_usBridge_Barrier(file, left_barrier);
       Classify_usBridge_Barrier(file, right_barrier);
 
-      AddPropertySet(file,barriers,Create_usBrPset_MASH(file));
-      
-      AddPropertySet(file,barriers,Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", fc));
-      AddPropertySet(file,barriers,Create_usBrPset_Common(file));
-
-      AddPropertySet(file,barriers,Create_usBrPset_PayItemQuantities(file));
+      WritePropertySets<Schema>(file, ElementKind::Barrier, barriers, context);
    }
 
 
@@ -3489,8 +3472,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    // define the common properties of the precast girder type
    // specifically, precast concrete is defined by Pset_ConcreteElementGeneral with AssemblyPlace=FACTORY, CastingMethod=PRECAST
-   std::vector<typename Schema::IfcPropertySetDefinition> property_sets;
-   property_sets.push_back(Create_Pset_ConcreteElementGeneral(file, pBroker, "FACTORY", "PRECAST", std::nullopt));
+   auto property_sets = CreateTypePropertySets<Schema>(file, ElementKind::Girder, ExportContext{ pBroker, &options });
 
    GET_IFACE2(pBroker, IDocumentType, pDocType);
    bool bIsPGSplice = pDocType->IsPGSpliceDocument();
@@ -3647,9 +3629,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
                   std::vector<typename Schema::IfcObjectDefinition> related_segments;
                   related_segments.push_back(closure_joint);
 
-                  // Pset_ConcreteElementGeneral
-                  auto pset_concrete_element_general = Create_Pset_ConcreteElementGeneral(file, pBroker, "SITE", "INSITU", std::nullopt);
-                  file.create<typename Schema::IfcRelDefinesByProperties>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, related_segments, pset_concrete_element_general);
+                  WritePropertySets<Schema>(file, ElementKind::ClosureJoint, related_segments, ExportContext{ pBroker, &options });
 
                   list_of_girder_segments.push_back(closure_joint);
                }
@@ -3682,16 +3662,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    {
       Classify_usBridge_GirderBridge<Schema>(file, bridge);
 
-      AddPropertySet(file,bridge,Create_usBrPset_Common(file));
-      AddPropertySet(file,bridge,Create_usBrPset_BridgeGeometry<Schema>(file, pBroker, options));
-      AddPropertySet(file,bridge,Create_usBrPset_BridgeIdentification<Schema>(file, pBroker));
-      AddPropertySet(file,bridge,Create_usBrPset_DesignLoading<Schema>(file, pBroker));
-      AddPropertySet(file,bridge,Create_usBrPset_FeatureIdentification<Schema>(file, pBroker));
-      Create_usBrPset_HydraulicData<Schema>(file, pBroker, bridge);
-      Create_usBrPset_NavigableWaterway<Schema>(file, pBroker, bridge);
-      AddPropertySet(file, bridge, Create_usBrPset_PayItemQuantities<Schema>(file));
-      Create_usBrPset_Railroad<Schema>(file, pBroker, bridge);
-      Create_usBrPset_Roadway<Schema>(file, pBroker, bridge);
+      WritePropertySets<Schema>(file, ElementKind::Bridge, bridge, ExportContext{ pBroker, &options });
    }
  }
 
@@ -3880,6 +3851,12 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Exporting IFC model"));
 
+   // the mapping table for the property sets. Throws CIfcMappingTableException if it can't be used
+   CIfcExportSession session(options);
+   m_MappingTableFiles.clear();
+   for (const auto& table_file : session.GetTable().GetFiles())
+      m_MappingTableFiles.push_back("\"" + table_file.name + "\" (version " + std::to_string(table_file.version) + "): " + PathToString(table_file.path));
+
    hierarchy_helper<Schema> file;
    InitializeFile<Schema>(file, pBroker, strFilePath); // creates project and site
 
@@ -3890,7 +3867,8 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    RebarRelationshipBatch<Schema> rebar_batch;
 
    auto project = file.getSingle<typename Schema::IfcProject>();
-   AddPropertySet(file,project,Create_Pset_ProjectCommon<Schema>(file));
+   ExportContext project_context{ pBroker, &options };
+   WritePropertySets<Schema>(file, ElementKind::Project, project, project_context, PropertySetDeclaration::Condition::Always);
 
    CreateSiteLocalPlacement<Schema>(file, pBroker);
    CreateGeoreferencing<Schema>(file, pBroker);
@@ -3910,8 +3888,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
          Classify_usBridge_BridgeProject<Schema>(file, project);
          Classify_usBridge_BridgeSite<Schema>(file, site);
 
-         AddPropertySet(file, project, Create_usBrPset_ProjectCommon<Schema>(file));
-         AddPropertySet(file, project, Create_usBrPset_ProjectLocation<Schema>(file));
+         WritePropertySets<Schema>(file, ElementKind::Project, project, project_context, PropertySetDeclaration::Condition::Classify);
       }
 
       CreateAlignment<Schema>(file, pBroker, options); // creates alignment and aggregates with project, references into site spatial structure

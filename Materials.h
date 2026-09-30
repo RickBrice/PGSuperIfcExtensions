@@ -22,6 +22,7 @@
 #pragma once
 
 #include "PGSuperColors.h"
+#include "IfcPropertyWriter.h"
 
 std::string GetStrandMaterialName(const WBFL::Materials::PsStrand* pStrand)
 {
@@ -204,8 +205,10 @@ typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, st
    return rebar_material;
 }
 
+// The concrete material with strength fc, created the first time it's needed. Its material properties are the ones the
+// mapping table declares for the role of the element that creates it (e.g. Pset_MaterialConcrete of a girder)
 template <typename Schema>
-typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, const std::string& styleName, COLORREF color)
+typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, ElementKind role, const ExportContext& context, const std::string& styleName, COLORREF color)
 {
    USES_CONVERSION;
 
@@ -229,23 +232,7 @@ typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file,
    // create it now
    auto concrete_material = file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("concrete")/*category*/);
 
-
-   typename Schema::IfcConversionBasedUnit stress_unit;
-   typename Schema::IfcConversionBasedUnit displacement_unit;
-   if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
-   {
-      stress_unit = GetStressUnit<Schema>(file, pBroker);
-      displacement_unit = GetDisplacementUnit<Schema>(file, pBroker);
-
-      fc = WBFL::Units::ConvertFromSysUnits(fc, pDisplayUnits->GetStressUnit().UnitOfMeasure);
-      max_agg_size = WBFL::Units::ConvertFromSysUnits(max_agg_size, pDisplayUnits->GetDeflectionUnit().UnitOfMeasure);
-   }
-
-   // Pset_MaterialConcrete
-   std::vector<typename Schema::IfcProperty> material_concrete_properties;
-   material_concrete_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("CompressiveStrength"), std::nullopt, file.create<typename Schema::IfcPressureMeasure>().initialize(fc), stress_unit));
-   material_concrete_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("MaxAggregateSize"), std::nullopt, file.create<typename Schema::IfcPositiveLengthMeasure>().initialize(max_agg_size), displacement_unit));
-   auto pset_material_concrete = file.create<typename Schema::IfcMaterialProperties>().initialize(std::string("Pset_MaterialConcrete"), std::nullopt/*description*/, material_concrete_properties, concrete_material);
+   WriteMaterialProperties<Schema>(file, role, concrete_material, context);
 
 
    if (!options.classify)
