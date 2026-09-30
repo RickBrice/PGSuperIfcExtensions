@@ -131,6 +131,7 @@ class CMappingEditorFrame : public CMDIChildWnd
 
 public:
    CMappingDetailView* GetDetailView();
+   void ActivateFrame(int nCmdShow = -1) override;
 
 protected:
    BOOL OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pContext) override;

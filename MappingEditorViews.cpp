@@ -56,6 +56,12 @@ BOOL CMappingEditorFrame::OnCreateClient(LPCREATESTRUCT lpcs, CCreateContext* pC
    return TRUE;
 }
 
+void CMappingEditorFrame::ActivateFrame(int nCmdShow)
+{
+   // the editor opens maximized; -1 is the framework's first-show default
+   CMDIChildWnd::ActivateFrame(nCmdShow == -1 ? SW_SHOWMAXIMIZED : nCmdShow);
+}
+
 CMappingDetailView* CMappingEditorFrame::GetDetailView()
 {
    return (CMappingDetailView*)m_Splitter.GetPane(0, 1);
