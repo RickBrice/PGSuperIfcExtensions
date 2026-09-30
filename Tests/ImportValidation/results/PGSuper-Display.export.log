@@ -1,3 +1,4 @@
 Exported D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\models\PGSuper_Import_Model.pgs with property values in display units
 IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.json
 IFC export succeeded: D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Display.ifc
+IDS export succeeded: D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Display.ids
