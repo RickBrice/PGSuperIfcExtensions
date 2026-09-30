@@ -103,6 +103,29 @@ When the import finds missing data or has to make an assumption, the user can ha
 
 **Decided:** C1–C5 (see Decisions). Test with Blender/Bonsai (C4).
 
+### R3: Mapping table editor
+Requested 2026-09-29. Not scheduled yet; it follows the import and export engines (M1–M3), so the table format is settled first.
+
+Mapping tables are JSON files ([MappingTablesDesign.md](MappingTablesDesign.md)). Agency staff who write them shouldn't have to edit JSON by hand or look up IFC property names in a text editor. A user interface creates and edits tables.
+
+**Form:** an independent BridgeLink application, like the PGSuper Library Editor (PGSLibraryEditor), so tables can be written without opening a bridge project. It edits one table file at a time.
+
+**What it does:**
+- **Create and open tables:** new table (name, and the table it extends, normally the standard table), open, save, save as. It writes the same JSON the importer reads, and keeps `comment`s.
+- **Targets:** lists every target (`GetTargetDefs`) with its description, value kind, and the element it belongs to. For each target it shows the locations from the table and from the tables it extends, in the order the importer tries them, and which table each came from. Locations can be added, removed, reordered, and edited: property set and property, attribute, classification; `on`; `unit` (only the units that fit the target); `parse`; `list_index`; `map`.
+- **Element roles:** edit the selectors (entity, predefined type, attributes, classification, alternatives).
+- **Export property sets** (after M3): the property sets written for each element role, their properties, IFC types, and bound targets.
+- **Pick from a model:** open an IFC model and select an element (or an element role), then browse its property sets, properties, and values, and add one as a location with a click. It shows the hints the importer would give (`CIfcTargetHints`), since they point at the likely properties.
+- **Validate:** runs the same loader and validation as the importer (`CIfcMappingTable`), and shows every problem with its JSON path. A table that the editor accepts is a table the importer accepts.
+- **Try it on a model:** reads every target from the elements of a model with the table (`CIfcTargetReader`), and shows each value, in SI and display units, with the location it came from and the targets that weren't found. This is the import log's information without running an import.
+- **IDS** (after M5): generate a table from an agency IDS and a binding file, and write a table out as a general IDS.
+
+**Design notes:**
+- The editor uses the extension's table code (`CIfcMappingTable`, `CIfcTargetReader`, `CIfcTargetHints`, `IfcTargets`), so the editor and the importer can't disagree about the format. The code may move to a library that the extension and the editor both link.
+- The configuration wizard page (M6) could open the editor for the selected table.
+
+**Open questions:** (1) a BridgeLink application (like PGSLibraryEditor) or a stand-alone program? (2) does the editor need to open tables on a web server or catalog server, or only files? (3) which platforms and UI technology (MFC, as the rest of BridgeLink)?
+
 ## Decisions (2026-09-24)
 Answers to the open questions (`IFC_Import_Open_Questions.docx`). The IDs are used in the rest of this plan.
 
@@ -344,10 +367,13 @@ The reverse also works: a table can be written out as a general-purpose IDS (app
 - **M1:** import engine plus a standard table that reproduces today's import. The validation results must not change. Add the sources to the import log.
   - **Done 2026-09-29:** `CIfcMappingTable` (load, `extends` merge, validation with error messages), `CIfcTargetReader`, `CIfcTargetHints`, `MappingTables/Standard.json`, `/IfcMapping=`. f'c, f'ci, girder type names and designation, bearing fixity, and `NumberOfSpans` (G4) are read through the table; girders, the deck, haunches, and bearings are selected by table element roles. First Iowa and PennDOT tables (girder type, fixity, haunches) in `Tests/ImportValidation/mappings`. Validation scores unchanged for all runs; the new `-StandardTable` runs check the hints. The element registry moves to R1/M3 (not needed for import). See [MappingTablesDesign.md](MappingTablesDesign.md).
 - **M2:** Iowa and PennDOT tables (f'c, f'ci, girder type, deck thickness). The validation inventories should show these values move from template default to set by the import.
+  - **Done 2026-09-29:** f'c and f'ci are now set by the import for every girder: PennDOT 49 -> 59 of 102 values set by the import (8.0/6.8 ksi from text values), Iowa 136 -> 178 of 260 (5.0/4.5 ksi, and 10.0/8.5 ksi in span 2, from unitless numbers). New target `deck.gross_depth`: a cross check against the measured depth (D1, conflicts over 1/8 in are logged), used when the depth can't be measured. Both models agree with their geometry (PennDOT 8 in, Iowa 8.5 in vs 8.47 in measured). Round trips unchanged.
+  - **Finding for M3:** the exporter writes `Qto_SlabBaseQuantities` with 0.0 for every quantity (e.g. `Depth`) instead of the values or no value. The standard table doesn't bind `Depth` for that reason.
 - **M3:** export engine for property sets, quantity sets, classifications, and element names/ObjectType (A5). The standard table reproduces today's export (IFC diff plus round trip). Then remove the hard-coded definitions.
 - **M4:** the design-value IDS exporter takes its property locations from the table (values and per-element pinning unchanged).
 - **M5:** general IDS → table generator (instructions tag, standard-table matching, unbound report) and table → general IDS writer. Test by writing the standard table out as a general IDS and generating it back, and with an agency IDS. The design-value IDS is not an input.
 - **M6:** the IFC page in the BridgeLink configuration wizard (mapping file in the registry) and `/IfcMapping=` (A1, A2).
+- **M7:** the mapping table editor (R3).
 - **Validation:** `Tests/ImportValidation` gets export checks as well:
   - run ifctester with the design-value IDS against the exported model (the exported values match the design)
   - run ifctester with a general IDS written from the table (the exported structure matches the table)

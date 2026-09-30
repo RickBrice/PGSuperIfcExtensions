@@ -24,6 +24,8 @@ Status: **reviewed 2026-09-29.** The questions of the first draft are answered (
 6. **Selection.** The active table comes from the setting on the configuration wizard page, or from `/IfcMapping=` (A1, A2).
 7. **IDS.** The design-value IDS takes its property locations from the same table (M4).
 
+Until the mapping table editor exists (requirement R3 in the plan, step M7), tables are written by hand.
+
 Tables contain only names the user specifies (G3). The importer doesn't guess where data is. When a value isn't found, it only suggests likely properties in the log, to help whoever writes the table.
 
 ## Decisions (2026-09-29)
@@ -148,7 +150,7 @@ struct TargetDef
 | `girder.type_names` | Girder | TextList (collect all) | candidate names for `GetGirderLibraryEntry` | `GetGirderName` |
 | `girder.assembly_place`, `girder.casting_method` | Girder | Text | precast check | "FACTORY", "PRECAST" |
 | `bearing.fixed_x`, `bearing.fixed_y` | Bearing | Boolean | `CBearingData2::FixedX/FixedY` | from support fixity (Phase 2 boundary conditions) |
-| `deck.gross_depth` | Deck | Length | cross check against geometry (D1: geometry wins, conflict reported). M2 | `GetGrossSlabDepth` |
+| `deck.gross_depth` | Deck | Length | cross check against the measured depth (D1: geometry wins, a conflict over 1/8 in is logged); used when the depth can't be measured. Agency tables only: the standard location `Qto_SlabBaseQuantities.Depth` is exported as a 0.0 placeholder today (fix in M3) | `GetGrossSlabDepth` |
 
 M3 adds the export-only targets behind today's psets: `girder.fc_lifting`, `girder.fc_hauling`, `girder.jacking_stress`, `girder.camber_at_release`, `girder.camber_after_losses`, `girder.screed_camber`, `girder.camber_ratio`, `girder.batter`, `girder.span`, `girder.slope`, `girder.roll`, `girder.bunk_point`, `girder.family_name`, `girder.design_location`, `bridge.length`, `bridge.roadway_width`, `bridge.start_station`, `bridge.end_station`, `bridge.max_skew`, `pier.substructure_type`, `material.max_aggregate_size`, strand and rebar material targets, and so on. The full list comes from walking `PropertySets.h` in M3.
 
@@ -289,7 +291,7 @@ The values in `map` (e.g. every value `3_Fixity` actually takes) are taken from 
 | `classification: {system?, identification?}` + `field` | a classification reference and the field to read (`Identification` or `Name`) |
 | `quantity: {qto, name}` | an `IfcElementQuantity` quantity |
 | `value_types` | accepted IFC value types (default: any compatible with the target kind) |
-| `unit` | the unit of a model value that has no unit of its own: a plain number or text (G6). A unit in the model always wins |
+| `unit` | the unit of a model value that has no unit of its own: a plain number or text (G6). A unit in the model always wins. Messages show it in brackets, e.g. `_PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi]` |
 | `parse` | text → value: `number`, `feet_inches` (`8'-6"`, `8.5"`), or `{ "regex": "...", "group": 1 }` |
 | `list_index` | an element of a list value |
 | `map` | maps a model value to the target value. Text matches exactly, ignoring case |

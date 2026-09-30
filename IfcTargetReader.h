@@ -42,7 +42,7 @@ struct TargetReading
    const MappingLocation* location = nullptr;
    std::string raw; // the value as found in the model
 
-   // e.g. "\"6.8\" from IaDOT_PPCB.6_Concrete Release Strength, Fci (ksi) in mapping table \"Iowa DOT\""
+   // e.g. "\"6.8\" from IaDOT_PPCB.6_Concrete Release Strength, Fci [ksi] in mapping table \"Iowa DOT\""
    std::string Source() const;
 };
 

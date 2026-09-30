@@ -1,18 +1,27 @@
 {
-  "comment": "PennDOT mapping table for the Rearick Road Bridge #1 model (OpenBridge). First version (M1): the girder type and bearing fixity the importer found by guessing names before mapping tables. f'c, f'ci, and deck thickness follow in M2.",
+  "comment": "PennDOT mapping table for the Rearick Road Bridge #1 model (OpenBridge). The values are text; the unit is in the property name.",
   "format": "PGSuperIfcMapping",
   "version": 1,
   "name": "PennDOT",
   "extends": "standard",
   "targets": {
     "girder.type_names": [
-      { "property": { "pset": "_PS Concrete Beams", "name": "Type" } }
+      {"property": {"pset": "_PS Concrete Beams", "name": "Type"}}
+    ],
+    "girder.fc": [
+      {"property": {"pset": "_PS Concrete Beams", "name": "Concrete Strength at 28 days (ksi)"}, "unit": "ksi"}
+    ],
+    "girder.fci": [
+      {"property": {"pset": "_PS Concrete Beams", "name": "Concrete Strength at Strand Release (ksi)"}, "unit": "ksi"}
     ],
     "bearing.fixed_x": [
-      { "property": { "pset": "_Bearing Assembly", "name": "Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+      {"property": {"pset": "_Bearing Assembly", "name": "Fixity"}, "map": {"Fixed": true, "Expansion": false}}
     ],
     "bearing.fixed_y": [
-      { "property": { "pset": "_Bearing Assembly", "name": "Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+      {"property": {"pset": "_Bearing Assembly", "name": "Fixity"}, "map": {"Fixed": true, "Expansion": false}}
+    ],
+    "deck.gross_depth": [
+      {"property": {"pset": "_Deck", "name": "Minimum Thickness (in)"}, "unit": "in"}
     ]
   }
 }

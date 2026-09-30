@@ -543,10 +543,37 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
          WBFL::System::Logger::Info(os.str().c_str());
       };
 
+   // A deck depth property is a cross check: geometry wins and a conflict is reported (D1).
+   // The property is used when the depth can't be measured from the geometry
+   auto deck_slab = file.instance_by_id(get_slab_id(file)).as<IfcSchema::IfcObject>();
+   const auto& reader = CIfcImporter::GetTargetReader();
+   auto depth_reading = reader.Read("deck.gross_depth", deck_slab);
    if (section.gross_depth)
    {
       pDeck->GrossDepth = *section.gross_depth;
       log_length(_T("Deck gross depth"), *section.gross_depth);
+
+      if (depth_reading)
+      {
+         Float64 property_depth = std::get<Float64>(depth_reading->value);
+         const Float64 tolerance = WBFL::Units::ConvertToSysUnits(1.0 / 8.0, WBFL::Units::Measure::Inch);
+         if (tolerance < fabs(property_depth - *section.gross_depth))
+         {
+            std::ostringstream os;
+            os << std::fixed << std::setprecision(3) << "The deck gross depth is " << WBFL::Units::ConvertFromSysUnits(property_depth, WBFL::Units::Measure::Inch)
+               << " in (" << depth_reading->Source() << "), but measures " << WBFL::Units::ConvertFromSysUnits(*section.gross_depth, WBFL::Units::Measure::Inch)
+               << " in from the deck geometry. The geometry is used.";
+            WBFL::System::Logger::Warning(os.str());
+         }
+      }
+   }
+   else if (depth_reading)
+   {
+      pDeck->GrossDepth = std::get<Float64>(depth_reading->value);
+      std::ostringstream os;
+      os << std::fixed << std::setprecision(3) << "Deck gross depth " << WBFL::Units::ConvertFromSysUnits(pDeck->GrossDepth, WBFL::Units::Measure::Inch)
+         << " in (" << depth_reading->Source() << "). It couldn't be measured from the deck geometry.";
+      WBFL::System::Logger::Info(os.str());
    }
    else
    {

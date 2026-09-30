@@ -94,7 +94,7 @@ struct MappingLocation
    std::string table;   // name of the table that defined the location
    std::string origin;  // file and JSON path, for messages
 
-   // e.g. "IaDOT_PPCB.5_Final Concrete Strength, Fc (ksi)"
+   // e.g. "IaDOT_PPCB.5_Final Concrete Strength, Fc [ksi]"
    std::string Describe() const;
 };
 

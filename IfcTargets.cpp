@@ -36,6 +36,7 @@ const std::vector<TargetDef>& GetTargetDefs()
       { "girder.fci", ElementKind::Girder, ValueKind::Stress, "girder concrete strength at release, f'ci" },
       { "girder.assembly_place", ElementKind::Girder, ValueKind::Text, "girder assembly place (e.g. FACTORY)" },
       { "girder.casting_method", ElementKind::Girder, ValueKind::Text, "girder casting method (e.g. PRECAST)" },
+      { "deck.gross_depth", ElementKind::Deck, ValueKind::Length, "deck gross depth" },
       { "bearing.fixed_x", ElementKind::Bearing, ValueKind::Boolean, "bearing fixed along the girder" },
       { "bearing.fixed_y", ElementKind::Bearing, ValueKind::Boolean, "bearing fixed across the girder" },
    };

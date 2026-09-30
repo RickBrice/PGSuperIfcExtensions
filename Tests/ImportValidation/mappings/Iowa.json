@@ -1,21 +1,30 @@
 {
-  "comment": "Iowa DOT mapping table for the ADCMS pilot model (US 59 over IA 92). First version (M1): the girder type, bearing fixity, and haunch elements the importer found by guessing names before mapping tables. f'c, f'ci, and deck thickness follow in M2.",
+  "comment": "Iowa DOT mapping table for the ADCMS pilot model (US 59 over IA 92). The IaDOT property values have no units: strengths are in ksi, and the deck thickness is text in inches (e.g. 8.5\").",
   "format": "PGSuperIfcMapping",
   "version": 1,
   "name": "Iowa DOT",
   "extends": "standard",
   "elements": {
-    "haunch": { "entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": { "ObjectType": "Haunch" } }
+    "haunch": {"entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "Haunch"}}
   },
   "targets": {
     "girder.type_names": [
-      { "property": { "pset": "IaDOT_PPCB", "name": "2_Type" } }
+      {"property": {"pset": "IaDOT_PPCB", "name": "2_Type"}}
+    ],
+    "girder.fc": [
+      {"property": {"pset": "IaDOT_PPCB", "name": "5_Final Concrete Strength, Fc"}, "unit": "ksi"}
+    ],
+    "girder.fci": [
+      {"property": {"pset": "IaDOT_PPCB", "name": "6_Concrete Release Strength, Fci"}, "unit": "ksi"}
     ],
     "bearing.fixed_x": [
-      { "property": { "pset": "Bearing Item - ItemTypes", "name": "3_Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+      {"property": {"pset": "Bearing Item - ItemTypes", "name": "3_Fixity"}, "map": {"Fixed": true, "Expansion": false}}
     ],
     "bearing.fixed_y": [
-      { "property": { "pset": "Bearing Item - ItemTypes", "name": "3_Fixity" }, "map": { "Fixed": true, "Expansion": false } }
+      {"property": {"pset": "Bearing Item - ItemTypes", "name": "3_Fixity"}, "map": {"Fixed": true, "Expansion": false}}
+    ],
+    "deck.gross_depth": [
+      {"property": {"pset": "IaDOT_Deck", "name": "3_Minimum Thickness"}, "parse": "feet_inches", "unit": "in"}
     ]
   }
 }

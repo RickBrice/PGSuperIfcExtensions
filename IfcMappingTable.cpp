@@ -892,7 +892,7 @@ std::string MappingLocation::Describe() const
       os << "[" << *list_index << "]";
 
    if (unit)
-      os << " (" << unit->name << ")";
+      os << " [" << unit->name << "]"; // brackets, because property names often have the unit in parentheses
 
    return os.str();
 }
