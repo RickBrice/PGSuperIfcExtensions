@@ -289,7 +289,7 @@ void WritePropertySets(hierarchy_helper<Schema>& file, ElementKind role, const s
 {
    for (const auto* pset : CIfcExportSession::Current().GetTable().GetPropertySets(role, PropertyOwner::Occurrence))
    {
-      if (!IncludePropertySet(*pset, *context.options) || (only && pset->condition != *only))
+      if (!IncludePropertySet(*pset, *context.options) || (only && pset->condition != *only) || pset->shared)
          continue;
 
       if (pset->quantities)
@@ -309,6 +309,31 @@ void WritePropertySets(hierarchy_helper<Schema>& file, ElementKind role, typenam
 {
    std::vector<typename Schema::IfcObjectDefinition> objects{ object };
    WritePropertySets<Schema>(file, role, objects, context, only);
+}
+
+// The shared property sets and quantity sets the mapping table declares for the element role ("shared": true). They have no
+// element-specific values, so they are created once and related to many elements, e.g. every bar through RebarRelationshipBatch.
+// WritePropertySets leaves them out
+template <typename Schema>
+std::vector<typename Schema::IfcPropertySetDefinition> CreateSharedPropertySets(hierarchy_helper<Schema>& file, ElementKind role, const ExportContext& context)
+{
+   std::vector<typename Schema::IfcPropertySetDefinition> property_sets;
+   for (const auto* pset : CIfcExportSession::Current().GetTable().GetPropertySets(role, PropertyOwner::Occurrence))
+   {
+      if (!pset->shared || !IncludePropertySet(*pset, *context.options))
+         continue;
+
+      if (pset->quantities)
+      {
+         if (auto qto = ifc_property_writer::create_quantity_set<Schema>(file, *pset, context))
+            property_sets.push_back(qto);
+      }
+      else if (auto property_set = ifc_property_writer::create_property_set<Schema>(file, *pset, context))
+      {
+         property_sets.push_back(property_set);
+      }
+   }
+   return property_sets;
 }
 
 // The property sets the mapping table declares for the element role that attach to type objects (IfcTypeObject.HasPropertySets)
@@ -370,10 +395,12 @@ void WriteClassificationSystems(hierarchy_helper<Schema>& file)
    }
 }
 
-// Classifies an object with the classification references the mapping table declares for its element role
+// The classification references the mapping table declares for an element role, created the first time they're needed.
+// For elements whose classification is batched (RebarRelationshipBatch::Classify); other elements use Classify
 template <typename Schema>
-void Classify(hierarchy_helper<Schema>& file, ElementKind role, typename Schema::IfcObjectDefinition object, const CIfcExportOptions& options)
+std::vector<typename Schema::IfcClassificationReference> GetClassificationReferences(hierarchy_helper<Schema>& file, ElementKind role, const CIfcExportOptions& options)
 {
+   std::vector<typename Schema::IfcClassificationReference> references;
    auto& session = CIfcExportSession::Current();
    for (const auto* classification : session.GetTable().GetClassifications(role))
    {
@@ -406,6 +433,15 @@ void Classify(hierarchy_helper<Schema>& file, ElementKind role, typename Schema:
          session.classification_references.emplace(key, reference.id());
       }
 
-      AssociateClassification<Schema>(file, reference, object);
+      references.push_back(reference);
    }
+   return references;
+}
+
+// Classifies an object with the classification references the mapping table declares for its element role
+template <typename Schema>
+void Classify(hierarchy_helper<Schema>& file, ElementKind role, typename Schema::IfcObjectDefinition object, const CIfcExportOptions& options)
+{
+   for (auto& reference : GetClassificationReferences<Schema>(file, role, options))
+      AssociateClassification<Schema>(file, reference, object);
 }

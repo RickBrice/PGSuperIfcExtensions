@@ -81,6 +81,26 @@ public:
       entry.second.push_back(occurrence);
    }
 
+   // occurrence -> each of the shared property sets and quantity sets (see CreateSharedPropertySets)
+   void Properties(const std::vector<typename Schema::IfcPropertySetDefinition>& definitions, typename Schema::IfcObjectDefinition occurrence)
+   {
+      for (const auto& definition : definitions)
+         Properties(definition, occurrence);
+   }
+
+   // occurrence -> each of the classification references (see GetClassificationReferences)
+   void Classify(const std::vector<typename Schema::IfcClassificationReference>& references, typename Schema::IfcObjectDefinition occurrence)
+   {
+      for (const auto& reference : references)
+      {
+         auto key = std::string("#") + std::to_string(reference.id());
+         auto found = m_Classifications.find(key);
+         if (found == m_Classifications.end())
+            found = m_Classifications.emplace(key, std::make_pair(reference, std::vector<typename Schema::IfcObjectDefinition>{})).first;
+         found->second.second.push_back(occurrence);
+      }
+   }
+
    // occurrence -> a usBridge bSDD classification (IfcRelAssociatesClassification).
    // The shared IfcClassificationReference is built on first use of each name and
    // mirrors Classify_ObjectDefinition() in USBridge_Classifications.h.

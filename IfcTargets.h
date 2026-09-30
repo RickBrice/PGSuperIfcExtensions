@@ -34,6 +34,7 @@
 #include <PsgLib\Keys.h>
 
 namespace WBFL { namespace EAF { class Broker; }; };
+namespace WBFL { namespace Materials { class PsStrand; class Rebar; }; };
 class CIfcExportOptions;
 
 // The kind of PGSuper item a target belongs to. Mapping table element roles (e.g. "girder") use these names
@@ -53,6 +54,10 @@ enum class ElementKind
    Girder,         // IfcBeam, one per segment
    GirderAssembly, // IfcElementAssembly.GIRDER of the segments of a spliced girder
    ClosureJoint,
+   Tendon,            // IfcTendon, a prestressing strand
+   TendonBundle,      // IfcElementAssembly of the strands of a segment, and its type
+   Rebar,             // IfcReinforcingBar
+   ReinforcementCage, // IfcElementAssembly of the reinforcing bars of a segment
    Deck,
    Haunch,
    Bearing,
@@ -96,8 +101,12 @@ struct ExportContext
 {
    std::shared_ptr<WBFL::EAF::Broker> broker;
    const CIfcExportOptions* options = nullptr;
-   CSegmentKey segment;                 // Girder, ClosureJoint
+   CSegmentKey segment;                 // Girder, ClosureJoint, Tendon
    PierIndexType pier = INVALID_INDEX;  // Pier, Foundation
+   const WBFL::Materials::PsStrand* strand = nullptr; // Tendon (and its material)
+   pgsTypes::StrandType strand_type = pgsTypes::Straight; // Tendon
+   StrandIndexType strand_index = INVALID_INDEX; // Tendon
+   const WBFL::Materials::Rebar* rebar = nullptr; // Rebar material
 };
 
 // The value a target's getter gives the exporter

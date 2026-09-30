@@ -354,6 +354,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="Referents.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="SteelSpecifications.h" />
     <ClInclude Include="Units.h" />
     <ClInclude Include="USBridge_Classifications.h" />
   </ItemGroup>

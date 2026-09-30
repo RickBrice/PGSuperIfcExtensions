@@ -473,6 +473,13 @@ Each stage keeps the export identical to the baseline:
      - The girder's property sets and quantity sets are written with one call, and their conditions decide which ones the options include.
      - All five round-trip exports are the same as the baseline.
 3. Reinforcement and tendons: shared property sets, `Pset_MaterialSteel`, debonding, `usBrPset_ACI_*` bar properties, and group quantities. Bar shapes have a different set of dimensions per shape code, so this stage may leave the bar shape property sets in code. That's decided when the stage starts.
+   - **Decided 2026-09-29:** only the property sets whose values PGSuper supplies for an element or material move to the table. The property sets whose values come from the rebar detailing code stay in code: `usBrPset_ACI_ReinforcingBarType` (bar marks), `usBrPset_ACI_ReinforcingBar` (element, use, position), `usBrPset_ACI_ReinforcingCover`, `usBrPset_ACI_BarShape` (a different set of dimensions per shape code), and the bar count quantity (`Qto_ReinforcingElementBaseQuantities.Count`).
+   - **Done 2026-09-29:**
+     - Roles `tendon`, `tendon_bundle`, `rebar`, and `reinforcement_cage`. `ExportContext` carries the strand (material, type, index) or the reinforcing bar material.
+     - `"shared": true` property sets are created once by `CreateSharedPropertySets` and registered for every strand or bar through `RebarRelationshipBatch`. `WritePropertySets` leaves them out. `GetClassificationReferences` gives the batch the table's classification references.
+     - In the table: the shared `usBrPset_Common`, `usBrPset_PayItemQuantities`, and `usBrPset_Reinforcing`; the tendon bundle type's property sets; `Pset_ElementComponentCommon` and `usBrPset_TendonDebonding` per strand; `Pset_MaterialSteel`, `usBrPset_ACI_TendonMaterial`, and `usBrPset_ACI_ReinforcingMaterial`; and the tendon, tendon bundle, reinforcing bar, and reinforcement cage classifications.
+     - All five round-trip exports are the same as the baseline, with unchanged export times.
+     - The round-trip models have no strands debonded at the ends. That path was checked separately: two PGSuper regression models with debonding (`PCI_BDM_Ex9.2.pgs`, `Debond_IBeam.pgs`), exported with the stage 2 build and the stage 3 build in both property-unit modes, give the same listings.
 4. Remove the replaced `Create_*` functions.
 
 M4 then moves the design-value IDS onto the table.

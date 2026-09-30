@@ -22,6 +22,7 @@
 #include "stdafx.h"
 #include "IfcTargets.h"
 #include "IfcExporter.h"
+#include "SteelSpecifications.h"
 
 #include <IFace/Bridge.h>
 #include <IFace/Project.h>
@@ -243,6 +244,77 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(deck_max_aggregate_size(c)); } },
 
       //
+      // Strands (IfcTendon) and their material
+      //
+      { .name = "tendon.fy", .element = ElementKind::Tendon, .kind = ValueKind::Stress, .description = "strand yield strength", .display_unit = DU::Stress,
+        .get = [](const ExportContext& c) { return ExportValue(c.strand->GetYieldStrength()); } },
+      { .name = "tendon.fpu", .element = ElementKind::Tendon, .kind = ValueKind::Stress, .description = "strand ultimate strength", .display_unit = DU::Stress,
+        .get = [](const ExportContext& c) { return ExportValue(c.strand->GetUltimateStrength()); } },
+      { .name = "tendon.grade", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand grade (e.g. ASTM A416 Grade 270)",
+        .get = [](const ExportContext& c)
+         {
+            // ASTM A416 is for low relaxation Grade 250 and 270 strand. PGSuper also has stress relieved strand and Grade 300
+            USES_CONVERSION;
+            return ExportValue(std::string("ASTM A416 Grade ") + T2A(WBFL::Materials::PsStrand::GetGrade(c.strand->GetGrade(), true/*US units*/).c_str()));
+         } },
+      { .name = "tendon.corrosion_treatment", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand corrosion treatment (NONE or EPOXYCOATED)",
+        .get = [](const ExportContext& c) { return ExportValue(std::string(c.strand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED")); } },
+      { .name = "tendon.status", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand status (TEMPORARY for temporary strands)",
+        .get = [](const ExportContext& c) { return c.strand_type == pgsTypes::Temporary ? ExportValue(std::string("TEMPORARY")) : ExportValue::Absent(); } },
+      { .name = "tendon.debond_start", .element = ElementKind::Tendon, .kind = ValueKind::Length, .description = "debond length at the start of a debonded strand", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c)
+         {
+            // only with usBridge classification, as in the exporter this replaces
+            if (!c.options->classify)
+               return ExportValue::Absent();
+            GET_IFACE2(c.broker, IStrandGeometry, pStrandGeom);
+            Float64 start, end;
+            return pStrandGeom->IsStrandDebonded(c.segment, c.strand_index, c.strand_type, nullptr, &start, &end) ? ExportValue(start) : ExportValue::Absent();
+         } },
+      { .name = "tendon.debond_end", .element = ElementKind::Tendon, .kind = ValueKind::Length, .description = "debond length at the end of a debonded strand", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c)
+         {
+            if (!c.options->classify)
+               return ExportValue::Absent();
+            GET_IFACE2(c.broker, IStrandGeometry, pStrandGeom);
+            Float64 start, end;
+            return pStrandGeom->IsStrandDebonded(c.segment, c.strand_index, c.strand_type, nullptr, &start, &end) ? ExportValue(end) : ExportValue::Absent();
+         } },
+      { .name = "tendon.debond_midspan_to_start", .element = ElementKind::Tendon, .kind = ValueKind::Length, .description = "debonded length from mid-span toward the start of a temporary strand", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c)
+         {
+            // assumes the WSDOT detail: temporary top strands are debonded except for their end 10 ft
+            if (c.strand_type != pgsTypes::Temporary)
+               return ExportValue::Absent();
+            GET_IFACE2(c.broker, IBridge, pBridge);
+            return ExportValue(pBridge->GetSegmentPlanLength(c.segment) / 2 - WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet));
+         } },
+      { .name = "tendon.debond_midspan_to_end", .element = ElementKind::Tendon, .kind = ValueKind::Length, .description = "debonded length from mid-span toward the end of a temporary strand", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c)
+         {
+            if (c.strand_type != pgsTypes::Temporary)
+               return ExportValue::Absent();
+            GET_IFACE2(c.broker, IBridge, pBridge);
+            return ExportValue(pBridge->GetSegmentPlanLength(c.segment) / 2 - WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet));
+         } },
+
+      //
+      // Reinforcing bar material
+      //
+      { .name = "rebar.fy", .element = ElementKind::Rebar, .kind = ValueKind::Stress, .description = "reinforcing bar yield strength", .display_unit = DU::Stress,
+        .get = [](const ExportContext& c) { return ExportValue(c.rebar->GetYieldStrength()); } },
+      { .name = "rebar.fu", .element = ElementKind::Rebar, .kind = ValueKind::Stress, .description = "reinforcing bar ultimate strength", .display_unit = DU::Stress,
+        .get = [](const ExportContext& c) { return ExportValue(c.rebar->GetUltimateStrength()); } },
+      { .name = "rebar.elongation", .element = ElementKind::Rebar, .kind = ValueKind::Ratio, .description = "reinforcing bar elongation at fracture",
+        .get = [](const ExportContext& c) { return ExportValue(c.rebar->GetElongation()); } },
+      { .name = "rebar.grade", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "reinforcing bar material (e.g. AASHTO M31 (A615) - Grade 60)",
+        .get = [](const ExportContext& c) { USES_CONVERSION; return ExportValue(std::string(T2A(WBFL::LRFD::RebarPool::GetMaterialName(c.rebar->GetType(), c.rebar->GetGrade()).c_str()))); } },
+      { .name = "rebar.specification", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "reinforcing bar specification (e.g. ASTM A615 (AASHTO M31))",
+        .get = [](const ExportContext& c) { return ExportValue(GetRebarSpecification(c.rebar)); } },
+      { .name = "rebar.specification_edition", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "edition of the reinforcing bar specification",
+        .get = [](const ExportContext& c) { return ExportValue(GetRebarSpecificationEdition(c.rebar)); } },
+
+      //
       // Bearings
       //
       { .name = "bearing.fixed_x", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "bearing fixed along the girder" },
@@ -277,6 +349,10 @@ namespace
          { ElementKind::Girder, "girder" },
          { ElementKind::GirderAssembly, "girder_assembly" },
          { ElementKind::ClosureJoint, "closure_joint" },
+         { ElementKind::Tendon, "tendon" },
+         { ElementKind::TendonBundle, "tendon_bundle" },
+         { ElementKind::Rebar, "rebar" },
+         { ElementKind::ReinforcementCage, "reinforcement_cage" },
          { ElementKind::Deck, "deck" },
          { ElementKind::Haunch, "haunch" },
          { ElementKind::Bearing, "bearing" },

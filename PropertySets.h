@@ -30,6 +30,7 @@
 #include "IfcExporter.h"
 #include "Properties.h"
 #include "bSDD.h"
+#include "SteelSpecifications.h"
 #include <PsgLib\BridgeDescription2.h>
 
 
@@ -791,32 +792,6 @@ typename Schema::IfcPropertySet Create_usBrPset_PrecastConcreteBeam(hierarchy_he
    return property_set;
 }
 
-
-inline std::string GetRebarSpecification(const WBFL::Materials::Rebar* pRebar)
-{
-   std::string spec;
-   switch (pRebar->GetType())
-   {
-   case WBFL::Materials::Rebar::Type::A615: spec = "ASTM A615 (AASHTO M31)"; break;
-   case WBFL::Materials::Rebar::Type::A706: spec = "ASTM A706"; break;
-   case WBFL::Materials::Rebar::Type::A1035: spec = "ASTM A1035"; break;
-   default: spec = "Unknown"; break;
-   }
-   return spec;
-}
-
-inline std::string GetRebarSpecificationEdition(const WBFL::Materials::Rebar* pRebar)
-{
-   std::string edition;
-   switch (pRebar->GetType())
-   {
-   case WBFL::Materials::Rebar::Type::A615: edition = "2026"; break;
-   case WBFL::Materials::Rebar::Type::A706: edition = "2026"; break;
-   case WBFL::Materials::Rebar::Type::A1035: edition = "2024"; break;
-   default: edition = "Unknown"; break;
-   }
-   return edition;
-}
 
 inline std::string GetStrandSpecification(const WBFL::Materials::PsStrand* pStrand)
 {

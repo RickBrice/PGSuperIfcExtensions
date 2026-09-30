@@ -128,13 +128,10 @@ typename Schema::IfcMaterial GetStrandMaterial(hierarchy_helper<Schema>& file,st
    auto strand_material = file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("steel")/*category*/);
 
 
-   // Pset_MaterialSteel
-   Create_Pset_MaterialSteel_Strand(file, pBroker, options, strand_material, pStrand);
-
-   if(options.classify)
-   {
-      Create_usBrPset_ACI_TendonMaterial(file, pBroker, options, strand_material, pStrand);
-   }
+   // material properties from the mapping table (Pset_MaterialSteel, usBrPset_ACI_TendonMaterial)
+   ExportContext context{ pBroker, &options };
+   context.strand = pStrand;
+   WriteMaterialProperties<Schema>(file, ElementKind::Tendon, strand_material, context);
 
    if (!options.classify)
    {
@@ -182,9 +179,10 @@ typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, st
 
 
 
-   // Pset_MaterialSteel
-   Create_Pset_MaterialSteel_ReinforcingBar(file, pBroker, options, rebar_material, pRebar);
-   Create_usBrPset_ACI_ReinforcingMaterial(file, pBroker, options, rebar_material, pRebar);
+   // material properties from the mapping table (Pset_MaterialSteel, usBrPset_ACI_ReinforcingMaterial)
+   ExportContext context{ pBroker, &options };
+   context.rebar = pRebar;
+   WriteMaterialProperties<Schema>(file, ElementKind::Rebar, rebar_material, context);
 
 
    if (!options.classify)

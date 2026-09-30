@@ -365,11 +365,9 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
       Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED /*PredefinedType*/);
 
 
-   if (options.classify)
-   {
-      AddPropertySet(file, tendon_assembly_type, Create_usBrPset_Common(file));
-      AddPropertySet(file, tendon_assembly_type, Create_usBrPset_PayItemQuantities(file));
-   }
+   auto bundle_type_property_sets = CreateTypePropertySets<Schema>(file, ElementKind::TendonBundle, ExportContext{ pBroker, &options });
+   if (!bundle_type_property_sets.empty())
+      tendon_assembly_type.setHasPropertySets(bundle_type_property_sets);
 
    auto tendon_assembly = file.create<typename Schema::IfcElementAssembly>().initialize(
       ifcopenshell::global_id(),
@@ -387,7 +385,7 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
 
    if (options.classify)
    {
-      Classify_usBridge_TendonBundle(file, tendon_assembly);
+      Classify<Schema>(file, ElementKind::TendonBundle, tendon_assembly, options);
    }
 
    file.addRelatedObject<typename Schema::IfcRelDefinesByType>(tendon_assembly_type, tendon_assembly); // relate the tendon assembly to its type
@@ -398,23 +396,12 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
    PoiList vHP;
    pPoi->GetPointsOfInterest(segmentKey, POI_HARPINGPOINT, &vHP);
 
-   // Strand-invariant property sets: build once, register every strand against
-   // these same instances via rebar_batch (see CreateLongitudinalRebars).
-   //
-   // GUARD: only property sets whose properties are identical for every strand
-   // may be shared this way. Create_usBrPset_Common / _PayItemQuantities emit
-   // value-less BSDD placeholder properties (every IfcValue is null), so one
-   // instance is correct for all strands. If either factory is ever changed to
-   // carry per-strand values, a single shared instance would silently attach one
-   // strand's values to all of them - move it back to a per-strand
-   // AddPropertySet call (as Create_usBrPset_TendonDebondingAtEnds already is).
-   typename Schema::IfcPropertySet shared_common_pset;
-   typename Schema::IfcPropertySet shared_pay_item_pset;
-   if (options.classify)
-   {
-      shared_common_pset = Create_usBrPset_Common<Schema>(file);
-      shared_pay_item_pset = Create_usBrPset_PayItemQuantities<Schema>(file);
-   }
+   // Strand-invariant property sets and quantity sets: the mapping table's "shared" sets for the role, built once,
+   // then every strand is registered against these same instances through rebar_batch (one IfcRelDefinesByProperties
+   // per set for the whole model) instead of one set and one relationship per strand. The table loader only accepts
+   // shared sets without targets, so their values are the same for all strands.
+   auto shared_property_sets = CreateSharedPropertySets<Schema>(file, ElementKind::Tendon, ExportContext{ pBroker, &options });
+   auto tendon_classifications = GetClassificationReferences<Schema>(file, ElementKind::Tendon, options);
 
    std::array<std::string, 3> strStrandType{ "Straight","Harped","Temporary" };
    for (int i = 0; i < 3; i++)
@@ -554,51 +541,16 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
          auto tendon_type = GetTendonType<Schema>(file, options, pStrand);
          rebar_batch.Type(tendon_type, strand);
 
-         if (options.classify)
-         {
-            rebar_batch.Classify(file, std::string("Tendon"), strand);
+         rebar_batch.Classify(tendon_classifications, strand);
+         rebar_batch.Properties(shared_property_sets, strand);
 
-            Float64 db_start, db_end;
-            bool bDebonded = pStrandGeom->IsStrandDebonded(segmentKey, strandIdx, strandType, nullptr, &db_start, &db_end);
-            if ( bDebonded )
-               AddPropertySet(file,strand,Create_usBrPset_TendonDebondingAtEnds(file, pBroker, options, db_start, db_end));
-
-            rebar_batch.Properties(shared_common_pset, strand);
-            rebar_batch.Properties(shared_pay_item_pset, strand);
-         }
-
-         // 6.3.4.9 Pset_ElementComponentCommon
-         std::vector<typename Schema::IfcProperty> element_component_common_properties;
-
-         if (strandType == pgsTypes::Temporary)
-         {
-            // 6.1.8.8 PEnum_ElementStatus
-            // This is the only PSet I could find with TEMPORARY so use it for temporary strands
-            std::vector<std::string> enum_values{ "DEMOLISH","EXISTING","NEW","TEMPORARY","OTHER","NOTKNOWN","UNSET" };
-            auto element_status_enum = createPropertyEnumeration<Schema>(file, "PEnum_ElementStatus", enum_values);
-            auto enum_value = createPropertyEnumeratedValue<Schema>(file, "Status", element_status_enum, "TEMPORARY");
-            element_component_common_properties.push_back(enum_value);
-
-            // assume WSDOT detail - temporary top strands are debonded for all but their end 10 ft.
-            double db_start = segment_length / 2 - WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet);
-            double db_end = segment_length / 2 - WBFL::Units::ConvertToSysUnits(10.0, WBFL::Units::Measure::Feet);
-            AddPropertySet(file,strand,Create_usBrPset_TendonDebondingInCenter(file, pBroker, options, db_start, db_end));
-         }
-
-         // 6.3.8.1 PEnum_ElementComponentCorrosionTreatment
-         std::vector<std::string> enum_values{ "EPOXYCOATED","GALVANISED","NONE","PAINTED","STAINLESS","NOTDEFINED" };
-         auto corrosion_treatment_enum_values = createPropertyEnumeration<Schema>(file, "PEnum_ElementComponentCorrosionTreatment", enum_values);
-         auto corrosion_treatment_type = createPropertyEnumeratedValue<Schema>(file, "CorrosionTreatment", corrosion_treatment_enum_values, pStrand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED");
-         element_component_common_properties.push_back(corrosion_treatment_type);
-
-         auto pset_element_component_common = file.create<typename Schema::IfcPropertySet>().initialize(ifcopenshell::global_id(), {}, std::string("Pset_ElementComponentCommon"), std::nullopt, element_component_common_properties);
-
-
-
-         std::vector<typename Schema::IfcObjectDefinition> related_strands;
-         related_strands.push_back(strand);
-
-         auto related_properties = file.create<typename Schema::IfcRelDefinesByProperties>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, related_strands, pset_element_component_common);
+         // the strand's own property sets from the mapping table (e.g. Pset_ElementComponentCommon, usBrPset_TendonDebonding)
+         ExportContext strand_context{ pBroker, &options };
+         strand_context.segment = segmentKey;
+         strand_context.strand = pStrand;
+         strand_context.strand_type = strandType;
+         strand_context.strand_index = strandIdx;
+         WritePropertySets<Schema>(file, ElementKind::Tendon, strand, strand_context);
 
       }
    }
@@ -650,30 +602,12 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
 
    auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
 
-   // Bar-invariant quantity/property sets: build once here, then register every
-   // bar against these same instances through rebar_batch (one IfcRelDefinesByProperties
-   // per set for the whole model) instead of one set + one relationship per bar.
-   //
-   // GUARD: only sets whose properties/quantities are identical for every bar may
-   // be shared this way. Create_usBrPset_Common / _PayItemQuantities / _Reinforcing
-   // emit value-less BSDD placeholder properties (every IfcValue is null) and
-   // Create_Qto_ReinforcingElementBaseQuantities currently returns {} (no-op), so
-   // one instance is correct for all bars. If any of these factories is changed to
-   // carry per-bar values (e.g. real EmbedmentAtStart, Length, Weight), a single
-   // shared instance would silently attach one bar's values to all ~7000 bars -
-   // move it back to a per-bar AddPropertySet/AddQto call (as
-   // Create_usBrPset_ACI_BarShape already is).
-   typename Schema::IfcElementQuantity shared_base_quantities;
-   typename Schema::IfcPropertySet shared_common_pset;
-   typename Schema::IfcPropertySet shared_pay_item_pset;
-   typename Schema::IfcPropertySet shared_reinforcing_pset;
-   if (options.classify)
-   {
-      shared_base_quantities = Create_Qto_ReinforcingElementBaseQuantities<Schema>(file);
-      shared_common_pset = Create_usBrPset_Common<Schema>(file);
-      shared_pay_item_pset = Create_usBrPset_PayItemQuantities<Schema>(file);
-      shared_reinforcing_pset = Create_usBrPset_Reinforcing<Schema>(file);
-   }
+   // Bar-invariant property sets and quantity sets: the mapping table's "shared" sets for the role, built once,
+   // then every bar is registered against these same instances through rebar_batch (one IfcRelDefinesByProperties
+   // per set for the whole model) instead of one set and one relationship per bar. The table loader only accepts
+   // shared sets without targets, so their values are the same for all bars.
+   auto shared_property_sets = CreateSharedPropertySets<Schema>(file, ElementKind::Rebar, ExportContext{ pBroker, &options });
+   auto rebar_classifications = GetClassificationReferences<Schema>(file, ElementKind::Rebar, options);
 
    CComPtr<IEnumRebarLayoutItems> enum_items;
    rebar_layout->get__EnumRebarLayoutItems(&enum_items);
@@ -823,11 +757,8 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
 
             if (options.classify)
             {
-               rebar_batch.Classify(file, std::string("ReinforcingBar"), rebar);
-               rebar_batch.Properties(shared_base_quantities, rebar);
-               rebar_batch.Properties(shared_common_pset, rebar);
-               rebar_batch.Properties(shared_pay_item_pset, rebar);
-               rebar_batch.Properties(shared_reinforcing_pset, rebar);
+               rebar_batch.Classify(rebar_classifications, rebar);
+               rebar_batch.Properties(shared_property_sets, rebar);
                if (bSkew)
                   AddPropertySet(file,rebar,Create_usBrPset_ACI_BarShape(file, pBroker, options, "STRAIGHT", gs_InsideBendRadius, { { "DimensionB", actual_bar_length } }));
             }
@@ -862,10 +793,8 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
 
             if (options.classify)
             {
-               rebar_batch.Classify(file, std::string("ReinforcingBar"), rebar);
-               rebar_batch.Properties(shared_common_pset, rebar);
-               rebar_batch.Properties(shared_pay_item_pset, rebar);
-               rebar_batch.Properties(shared_reinforcing_pset, rebar);
+               rebar_batch.Classify(rebar_classifications, rebar);
+               rebar_batch.Properties(shared_property_sets, rebar);
                AddQto(file, rebar, Create_Qto_ReinforcingElementGroupQuantities<Schema>(file, nBars));
                // No occurrence-level ACI_BarShape here: when !bSkew the type-level property
                // (added above where rebar_type is created) already covers every bar in the
@@ -916,29 +845,12 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
    auto segment_origin = file.addLocalPlacement(rebar_assembly.ObjectPlacement());
 
-   // Bar-invariant quantity/property sets: build once, register every stirrup
-   // against these same instances via rebar_batch (see CreateLongitudinalRebars).
-   //
-   // GUARD: only sets whose properties/quantities are identical for every stirrup
-   // may be shared this way. Create_usBrPset_Common / _PayItemQuantities /
-   // _Reinforcing emit value-less BSDD placeholder properties (every IfcValue is
-   // null) and Create_Qto_ReinforcingElementBaseQuantities currently returns {}
-   // (no-op), so one instance is correct for all stirrups. If any of these
-   // factories is changed to carry per-bar values, a single shared instance would
-   // silently attach one stirrup's values to all of them - move it back to a
-   // per-bar AddPropertySet/AddQto call (as Create_usBrPset_ACI_BarShape already
-   // is).
-   typename Schema::IfcElementQuantity shared_base_quantities;
-   typename Schema::IfcPropertySet shared_common_pset;
-   typename Schema::IfcPropertySet shared_pay_item_pset;
-   typename Schema::IfcPropertySet shared_reinforcing_pset;
-   if (options.classify)
-   {
-      shared_base_quantities = Create_Qto_ReinforcingElementBaseQuantities<Schema>(file);
-      shared_common_pset = Create_usBrPset_Common<Schema>(file);
-      shared_pay_item_pset = Create_usBrPset_PayItemQuantities<Schema>(file);
-      shared_reinforcing_pset = Create_usBrPset_Reinforcing<Schema>(file);
-   }
+   // Stirrup-invariant property sets and quantity sets: the mapping table's "shared" sets for the role, built once,
+   // then every stirrup is registered against these same instances through rebar_batch (one IfcRelDefinesByProperties
+   // per set for the whole model) instead of one set and one relationship per stirrup. The table loader only accepts
+   // shared sets without targets, so their values are the same for all stirrups.
+   auto shared_property_sets = CreateSharedPropertySets<Schema>(file, ElementKind::Rebar, ExportContext{ pBroker, &options });
+   auto rebar_classifications = GetClassificationReferences<Schema>(file, ElementKind::Rebar, options);
 
    // Assume the beam is constant depth
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
@@ -1304,12 +1216,9 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g2_rebar);
+            rebar_batch.Classify(rebar_classifications, g2_rebar);
 
-            rebar_batch.Properties(shared_base_quantities, g2_rebar);
-            rebar_batch.Properties(shared_common_pset, g2_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g2_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g2_rebar);
+            rebar_batch.Properties(shared_property_sets, g2_rebar);
 
             if (bSkew)
             {
@@ -1350,12 +1259,9 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g3_rebar);
+            rebar_batch.Classify(rebar_classifications, g3_rebar);
 
-            rebar_batch.Properties(shared_base_quantities, g3_rebar);
-            rebar_batch.Properties(shared_common_pset, g3_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g3_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g3_rebar);
+            rebar_batch.Properties(shared_property_sets, g3_rebar);
             if (bSkew)
                AddPropertySet(file,g3_rebar,Create_usBrPset_ACI_BarShape(file, pBroker, options, "STRAIGHT", gs_InsideBendRadius, { { "DimensionB", scaleY*g3_bar_length} }));
          }
@@ -1383,12 +1289,9 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g9_rebar);
+            rebar_batch.Classify(rebar_classifications, g9_rebar);
 
-            rebar_batch.Properties(shared_base_quantities, g9_rebar);
-            rebar_batch.Properties(shared_common_pset, g9_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g9_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g9_rebar);
+            rebar_batch.Properties(shared_property_sets, g9_rebar);
 
             if (bSkew)
             {
@@ -1429,12 +1332,9 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g10_rebar);
+            rebar_batch.Classify(rebar_classifications, g10_rebar);
 
-            rebar_batch.Properties(shared_base_quantities, g10_rebar);
-            rebar_batch.Properties(shared_common_pset, g10_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g10_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g10_rebar);
+            rebar_batch.Properties(shared_property_sets, g10_rebar);
 
             if (bSkew)
             {
@@ -1484,10 +1384,8 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          rebar_batch.Material(material, g2_rebar);
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g2_rebar);
-            rebar_batch.Properties(shared_common_pset, g2_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g2_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g2_rebar);
+            rebar_batch.Classify(rebar_classifications, g2_rebar);
+            rebar_batch.Properties(shared_property_sets, g2_rebar);
             AddQto(file, g2_rebar, Create_Qto_ReinforcingElementGroupQuantities<Schema>(file, nBars));
          }
 
@@ -1508,10 +1406,8 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          rebar_batch.Material(material, g3_rebar);
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g3_rebar);
-            rebar_batch.Properties(shared_common_pset, g3_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g3_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g3_rebar);
+            rebar_batch.Classify(rebar_classifications, g3_rebar);
+            rebar_batch.Properties(shared_property_sets, g3_rebar);
             AddQto(file, g3_rebar, Create_Qto_ReinforcingElementGroupQuantities<Schema>(file, nBars));
          }
 
@@ -1530,10 +1426,8 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          rebar_batch.Material(material, g9_rebar);
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g9_rebar);
-            rebar_batch.Properties(shared_common_pset, g9_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g9_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g9_rebar);
+            rebar_batch.Classify(rebar_classifications, g9_rebar);
+            rebar_batch.Properties(shared_property_sets, g9_rebar);
             AddQto(file, g9_rebar, Create_Qto_ReinforcingElementGroupQuantities<Schema>(file, nBars));
          }
 
@@ -1552,10 +1446,8 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          rebar_batch.Material(material, g10_rebar);
          if (options.classify)
          {
-            rebar_batch.Classify(file, std::string("ReinforcingBar"), g10_rebar);
-            rebar_batch.Properties(shared_common_pset, g10_rebar);
-            rebar_batch.Properties(shared_pay_item_pset, g10_rebar);
-            rebar_batch.Properties(shared_reinforcing_pset, g10_rebar);
+            rebar_batch.Classify(rebar_classifications, g10_rebar);
+            rebar_batch.Properties(shared_property_sets, g10_rebar);
             AddQto(file, g10_rebar, Create_Qto_ReinforcingElementGroupQuantities<Schema>(file, nBars));
          }
       }
@@ -2080,10 +1972,8 @@ void CreatePrecastSegmentReinforcing(hierarchy_helper<Schema>& file, std::shared
 
    if (options.classify)
    {
-      Classify_usBridge_ReinforcementCage<Schema>(file, rebar_assembly);
-
-      AddPropertySet(file, rebar_assembly, Create_usBrPset_Common<Schema>(file));
-      AddPropertySet(file, rebar_assembly, Create_usBrPset_PayItemQuantities<Schema>(file));
+      Classify<Schema>(file, ElementKind::ReinforcementCage, rebar_assembly, options);
+      WritePropertySets<Schema>(file, ElementKind::ReinforcementCage, rebar_assembly, ExportContext{ pBroker, &options });
    }
 
    CreateLongitudinalRebarRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_assembly, rebar_batch);
