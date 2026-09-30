@@ -489,6 +489,17 @@ Each stage keeps the export identical to the baseline:
 
 M4 then moves the design-value IDS onto the table.
 
+### Design-value IDS (M4)
+**Done 2026-09-29.** `CIdsExporter` loads the mapping table (`CIdsExportOptions::mapping_file`, the IFC export's table) and takes from it the property set, property, and data type of every requirement, and the classification references.
+- **Design values by target:** e.g. `girder.fci` gives `ReleaseStrength` (the location the importer reads, used in minimal mode) and, with the beam properties, `FormStrippingStrength` and `LiftingStrength`.
+  - Quantities are checked as the measure they hold (`IfcQuantityLength` -> `IFCLENGTHMEASURE`).
+  - A target the table doesn't export gives no requirement.
+- **Constant-valued checks** (`Pset_BeamCommon.Status`, `AssemblyPlace`, `CastingMethod`, the strand `UltimateStrain` and `Specification`): the value is taken from the table's declaration, found by property set and property name, and the requirement is left out if the table doesn't declare the property.
+- **Unchanged:** the values, the per-element pinning (by `Name` or `GlobalId`), and the specification names and identifiers.
+- **Command line:** `/IfcIds=<file.ids>` writes the design-value IDS with an `/IfcExport`, with the default IDS options (girders pinned by `Name`, so the IDS is the same from one export to the next).
+- **Validation:** `run_validation.py` writes the IDS with every round-trip export and compares it with `export_baseline/<run>.ids.txt` (`compare_ids.py`: facets sorted within each specification, the date left out). The baselines were recorded with the IDS exporter before M4; all five IDS files are the same.
+- **Also:** the IDS exporter's copies of the rebar specification strings are replaced by `SteelSpecifications.h`, and a table error stops the IDS with the table's message, both from the command line and the interactive export.
+
 ### Export findings
 Found while making the table reproduce the exporter it replaces. **Fixed 2026-09-29**, after the standard table matched the baseline, as one reviewed baseline change (`export_baseline/` updated, every difference checked):
 - `Pset_ConcreteElementGeneral.StrengthClass` ended with a newline (`std::endl`). Now `"5.000 KSI"`.

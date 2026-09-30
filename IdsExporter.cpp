@@ -44,6 +44,7 @@
 #include "stdafx.h"
 #include "IdsExporter.h"
 #include "BeamLabels.h"
+#include "IfcMappingTable.h"
 
 #include "Schema/ids-binding.hxx"
 
@@ -68,6 +69,7 @@
 #include <LRFD/RebarPool.h>
 #include <Materials/PsStrand.h>
 #include <Materials/Rebar.h>
+#include "SteelSpecifications.h"
 
 #include <MfcTools/Format.h>
 
@@ -180,30 +182,6 @@ namespace
       return 0 < dot && dot < s.GetLength() - 1;
    }
 
-   // Reproduce (locally - PropertySets.h is IFC-schema-templated and can't be included
-   // here) the specification strings the IFC exporter writes.
-   std::string RebarSpecification(const WBFL::Materials::Rebar* pRebar)
-   {
-      switch (pRebar->GetType())
-      {
-      case WBFL::Materials::Rebar::Type::A615:  return "ASTM A615 (AASHTO M31)";
-      case WBFL::Materials::Rebar::Type::A706:  return "ASTM A706";
-      case WBFL::Materials::Rebar::Type::A1035: return "ASTM A1035";
-      default:                                  return "Unknown";
-      }
-   }
-
-   std::string RebarSpecificationEdition(const WBFL::Materials::Rebar* pRebar)
-   {
-      switch (pRebar->GetType())
-      {
-      case WBFL::Materials::Rebar::Type::A615:  return "2026";
-      case WBFL::Materials::Rebar::Type::A706:  return "2026";
-      case WBFL::Materials::Rebar::Type::A1035: return "2024";
-      default:                                  return "Unknown";
-      }
-   }
-
    // ---- IDS tree building -------------------------------------------------------
 
    IDS::idsValue SimpleValue(const std::string& text)
@@ -297,9 +275,9 @@ namespace
       return PropertyReq(pset, baseName, ifcDataType, std::nullopt, card);
    }
 
-   IDS::classification ClassificationReq(const std::string& code)
+   IDS::classification ClassificationReq(const std::string& system, const std::string& code)
    {
-      IDS::classification c(SimpleValue("usBridge"));
+      IDS::classification c(SimpleValue(system));
       c.value(SimpleValue(code));           // matches IfcClassificationReference.Identification
       c.cardinality(IDS::conditionalCardinality("required"));
       return c;
@@ -517,9 +495,127 @@ namespace
       return sdv;
    }
 
+   // ---- property locations from the mapping table ---------------------------------
+   //
+   // The IDS checks the design values where the IFC export put them, so the property sets, properties,
+   // data types, and classifications come from the same mapping table (devdocs/MappingTablesDesign.md, M4).
+   // A requirement for a property the table doesn't export is left out.
+
+   struct Location
+   {
+      std::string pset;
+      std::string name;
+      std::string type;   // IFC data type of the value (e.g. IFCPRESSUREMEASURE)
+      bool primary;       // the location the importer reads the target from, else the first location
+      std::optional<TargetValue> value; // a constant value
+   };
+
+   // quantities are checked as the measure they hold
+   std::string DataType(const PropertyDeclaration& property)
+   {
+      if (property.type == "IFCQUANTITYLENGTH") return "IFCLENGTHMEASURE";
+      if (property.type == "IFCQUANTITYAREA") return "IFCAREAMEASURE";
+      if (property.type == "IFCQUANTITYVOLUME") return "IFCVOLUMEMEASURE";
+      if (property.type == "IFCQUANTITYWEIGHT") return "IFCMASSMEASURE";
+      if (property.type == "IFCQUANTITYCOUNT") return "IFCCOUNTMEASURE";
+      return property.type;
+   }
+
+   class CTableLocations
+   {
+   public:
+      CTableLocations(const CIfcMappingTable& table) : m_Table(table) {}
+
+      // where a target is exported for an element role
+      std::vector<Location> Target(ElementKind role, PropertyOwner attach, std::string_view target) const
+      {
+         auto exported = m_Table.GetExportedProperties(role, attach, target);
+         auto primary = std::find_if(exported.begin(), exported.end(), [](const auto& e) {return e.property->import; });
+         if (primary == exported.end())
+            primary = exported.begin();
+
+         std::vector<Location> locations;
+         for (auto it = exported.begin(); it != exported.end(); it++)
+            locations.push_back({ it->pset->name, it->property->name, DataType(*it->property), it == primary, it->property->value });
+         return locations;
+      }
+
+      // a property with a constant value, as the table declares it, or nullopt if the table doesn't export it
+      std::optional<Location> Constant(ElementKind role, PropertyOwner attach, const char* pset, const char* name) const
+      {
+         auto exported = m_Table.FindExportedProperty(role, attach, pset, name);
+         if (!exported || !exported->property->value)
+            return std::nullopt;
+         return Location{ exported->pset->name, exported->property->name, DataType(*exported->property), true, exported->property->value };
+      }
+
+      // the classification references of an element role: (classification system, identification)
+      std::vector<std::pair<std::string, std::string>> Classifications(ElementKind role) const
+      {
+         std::vector<std::pair<std::string, std::string>> classifications;
+         for (const auto* c : m_Table.GetClassifications(role))
+            classifications.emplace_back(c->system, c->identification);
+         return classifications;
+      }
+
+   private:
+      const CIfcMappingTable& m_Table;
+   };
+
+   std::string ConstantText(const Location& location)
+   {
+      return std::holds_alternative<std::string>(*location.value) ? std::get<std::string>(*location.value) : FormatTargetValue(*location.value);
+   }
+
+   double ConstantNumber(const Location& location)
+   {
+      const auto& v = *location.value;
+      return std::holds_alternative<Float64>(v) ? std::get<Float64>(v) : (std::holds_alternative<Int64>(v) ? (double)std::get<Int64>(v) : 0.0);
+   }
+
+   // adds the requirements of the table locations: all of them, or only the primary location or only the others
+   enum class Which { All, Primary, Others };
+   bool Selected(const Location& location, Which which)
+   {
+      return which == Which::All || (which == Which::Primary) == location.primary;
+   }
+
+   void AddNumbers(IDS::requirements& requirements, const CIdsExportOptions& options, const std::vector<Location>& locations, Which which, double value, const std::string& instruction = {})
+   {
+      for (const auto& l : locations)
+      {
+         if (Selected(l, which))
+            requirements.property().push_back(NumProperty(options, l.pset, l.name, l.type.c_str(), value, instruction));
+      }
+   }
+
+   void AddTexts(IDS::requirements& requirements, const std::vector<Location>& locations, const std::string& value)
+   {
+      for (const auto& l : locations)
+         requirements.property().push_back(PropertyReq(l.pset, l.name, l.type.c_str(), SimpleValue(value), Card::Required));
+   }
+
+   void AddPresence(IDS::requirements& requirements, const std::vector<Location>& locations, Card card = Card::Required)
+   {
+      for (const auto& l : locations)
+         requirements.property().push_back(PresenceProperty(l.pset, l.name, l.type.c_str(), card));
+   }
+
+   void AddConstant(IDS::requirements& requirements, const std::optional<Location>& location)
+   {
+      if (location)
+         requirements.property().push_back(PropertyReq(location->pset, location->name, location->type.c_str(), SimpleValue(ConstantText(*location)), Card::Required));
+   }
+
+   void AddClassifications(IDS::requirements& requirements, const CTableLocations& table, ElementKind role)
+   {
+      for (const auto& [system, identification] : table.Classifications(role))
+         requirements.classification().push_back(ClassificationReq(system, identification));
+   }
+
    // ---- per-segment spec builders ---------------------------------------------
 
-   IDS::specificationType BuildBeamSpec(const CIdsExportOptions& options, CIdsExportOptions::BeamId beamId,
+   IDS::specificationType BuildBeamSpec(const CIdsExportOptions& options, const CTableLocations& table, CIdsExportOptions::BeamId beamId,
                                         const SegmentDesignValues& sdv, const char* predefinedType)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCBEAM", predefinedType, "1");
@@ -539,66 +635,53 @@ namespace
 
       IDS::requirements requirements;
 
+      const auto G = ElementKind::Girder;
+      const auto O = PropertyOwner::Occurrence;
+
       // structural checks
-      requirements.classification().push_back(ClassificationReq("usBridge_GirderPrecastConcrete"));
+      AddClassifications(requirements, table, G);
       requirements.material().push_back(MaterialReq("concrete"));
 
-      // the two design strengths (kept even in minimal mode)
+      // the two design strengths (kept even in minimal mode): where the importer reads them
+      const double fciR = RoundToTenthKsi_SysUnits(sdv.fci);
+      const double fcR = RoundToTenthKsi_SysUnits(sdv.fc28);
       if (options.include_release_strength || options.include_beam_properties)
-         requirements.property().push_back(NumProperty(options, "Pset_PrecastConcreteElementGeneral", "ReleaseStrength",
-            "IFCPRESSUREMEASURE", RoundToTenthKsi_SysUnits(sdv.fci), StressInstruction("f'ci", RoundToTenthKsi_SysUnits(sdv.fci))));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.fci"), Which::Primary, fciR, StressInstruction("f'ci", fciR));
       if (options.include_transportation_strength || options.include_beam_properties)
-         requirements.property().push_back(NumProperty(options, "Pset_PrecastConcreteElementGeneral", "TransportationStrength",
-            "IFCPRESSUREMEASURE", RoundToTenthKsi_SysUnits(sdv.fc28), StressInstruction("f'c", RoundToTenthKsi_SysUnits(sdv.fc28))));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.fc"), Which::Primary, fcR, StressInstruction("f'c", fcR));
 
       if (options.include_beam_properties)
       {
-         const double fciR = RoundToTenthKsi_SysUnits(sdv.fci);
+         AddConstant(requirements, table.Constant(G, O, "Pset_BeamCommon", "Status"));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.span"), Which::All, sdv.span_length, LengthInstruction("Span", sdv.span_length));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.slope"), Which::All, sdv.slope_angle);
+         AddNumbers(requirements, options, table.Target(G, O, "girder.roll"), Which::All, sdv.roll_angle);
 
-         // Pset_BeamCommon
-         requirements.property().push_back(PropertyReq("Pset_BeamCommon", "Status", "IFCLABEL", SimpleValue("NEW"), Card::Required));
-         requirements.property().push_back(NumProperty(options, "Pset_BeamCommon", "Span", "IFCPOSITIVELENGTHMEASURE",
-            sdv.span_length, LengthInstruction("Span", sdv.span_length)));
-         requirements.property().push_back(NumProperty(options, "Pset_BeamCommon", "Slope", "IFCPLANEANGLEMEASURE", sdv.slope_angle));
-         requirements.property().push_back(NumProperty(options, "Pset_BeamCommon", "Roll", "IFCPLANEANGLEMEASURE", sdv.roll_angle));
+         // the strength class label is display-unit formatted, so presence only
+         AddPresence(requirements, table.Target(G, O, "girder.strength_class"));
 
-         // Pset_ConcreteElementGeneral (beam-level override) - the label is display-unit
-         // formatted, so presence only.
-         requirements.property().push_back(PresenceProperty("Pset_ConcreteElementGeneral", "StrengthClass", "IFCLABEL"));
+         // the other locations of f'ci (e.g. form stripping and lifting strengths)
+         AddNumbers(requirements, options, table.Target(G, O, "girder.fci"), Which::Others, fciR, StressInstruction("f'ci", fciR));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.jacking_stress"), Which::All, sdv.fpj, StressInstruction("fpj", sdv.fpj));
+         AddTexts(requirements, table.Target(G, O, "girder.family_name"), sdv.type_designation);
+         AddNumbers(requirements, options, table.Target(G, O, "girder.bunk_point"), Which::All, sdv.min_support_length, LengthInstruction("bunk point", sdv.min_support_length));
+         AddTexts(requirements, table.Target(G, O, "girder.designation"), sdv.design_location_number);
 
-         // Pset_PrecastConcreteElementGeneral
-         requirements.property().push_back(NumProperty(options, "Pset_PrecastConcreteElementGeneral", "FormStrippingStrength",
-            "IFCPRESSUREMEASURE", fciR, StressInstruction("f'ci", fciR)));
-         requirements.property().push_back(NumProperty(options, "Pset_PrecastConcreteElementGeneral", "LiftingStrength",
-            "IFCPRESSUREMEASURE", fciR, StressInstruction("f'ci", fciR)));
-         requirements.property().push_back(NumProperty(options, "Pset_PrecastConcreteElementGeneral", "InitialTension",
-            "IFCPRESSUREMEASURE", sdv.fpj, StressInstruction("fpj", sdv.fpj)));
-         requirements.property().push_back(StrProperty("Pset_PrecastConcreteElementGeneral", "TypeDesignation", sdv.type_designation));
-         requirements.property().push_back(NumProperty(options, "Pset_PrecastConcreteElementGeneral", "MinimumAllowableSupportLength",
-            "IFCPOSITIVELENGTHMEASURE", sdv.min_support_length, LengthInstruction("bunk point", sdv.min_support_length)));
-         requirements.property().push_back(StrProperty("Pset_PrecastConcreteElementGeneral", "DesignLocationNumber", sdv.design_location_number));
          // populated only when the IFC was exported with camber / batter -> optional
-         requirements.property().push_back(PresenceProperty("Pset_PrecastConcreteElementGeneral", "CamberAtMidspan", "IFCRATIOMEASURE", Card::Optional));
-         requirements.property().push_back(PresenceProperty("Pset_PrecastConcreteElementGeneral", "BatterAtStart", "IFCPLANEANGLEMEASURE", Card::Optional));
-         requirements.property().push_back(PresenceProperty("Pset_PrecastConcreteElementGeneral", "BatterAtEnd", "IFCPLANEANGLEMEASURE", Card::Optional));
+         AddPresence(requirements, table.Target(G, O, "girder.camber_ratio"), Card::Optional);
+         AddPresence(requirements, table.Target(G, O, "girder.batter"), Card::Optional);
 
-         // usBrPset_PrecastConcreteBeam
-         requirements.property().push_back(NumProperty(options, "usBrPset_PrecastConcreteBeam", "MidSpanCamberAtRelease",
-            "IFCLENGTHMEASURE", sdv.initial_camber, LengthInstruction("D at release", sdv.initial_camber)));
-         requirements.property().push_back(NumProperty(options, "usBrPset_PrecastConcreteBeam", "MidSpanCamberAfterLosses",
-            "IFCLENGTHMEASURE", sdv.final_camber, LengthInstruction("excess camber", sdv.final_camber)));
-         requirements.property().push_back(NumProperty(options, "usBrPset_PrecastConcreteBeam", "DeflectionShortTerm",
-            "IFCLENGTHMEASURE", sdv.screed_camber, LengthInstruction("screed camber", sdv.screed_camber)));
-         requirements.property().push_back(StrProperty("usBrPset_PrecastConcreteBeam", "ShapeName", sdv.shape_name));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.camber_at_release"), Which::All, sdv.initial_camber, LengthInstruction("D at release", sdv.initial_camber));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.camber_after_losses"), Which::All, sdv.final_camber, LengthInstruction("excess camber", sdv.final_camber));
+         AddNumbers(requirements, options, table.Target(G, O, "girder.screed_camber"), Which::All, sdv.screed_camber, LengthInstruction("screed camber", sdv.screed_camber));
+         AddTexts(requirements, table.Target(G, O, "girder.type_names"), sdv.shape_name);
       }
 
       if (options.include_quantities)
       {
          // IfcQuantity* values are not reliably unit-normalised by validators -> presence only.
-         requirements.property().push_back(PresenceProperty("Qto_BeamBaseQuantities", "Length", "IFCLENGTHMEASURE"));
-         requirements.property().push_back(PresenceProperty("Qto_BeamBaseQuantities", "CrossSectionArea", "IFCAREAMEASURE"));
-         requirements.property().push_back(PresenceProperty("Qto_BeamBaseQuantities", "OuterSurfaceArea", "IFCAREAMEASURE"));
-         requirements.property().push_back(PresenceProperty("Qto_BeamBaseQuantities", "GrossWeight", "IFCMASSMEASURE"));
+         for (const auto* target : { "girder.length", "girder.cross_section_area", "girder.outer_surface_area", "girder.gross_weight" })
+            AddPresence(requirements, table.Target(G, O, target));
       }
 
       std::string name = ToUtf8(options.specification_name_prefix);
@@ -615,12 +698,12 @@ namespace
    // a kind regardless of which segment it belongs to, so these apply to every matching
    // occurrence in the whole model - entity(+predefinedType) alone, no Name facet needed.
 
-   IDS::specificationType BuildGlobalTendonSpec()
+   IDS::specificationType BuildGlobalTendonSpec(const CTableLocations& table)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCTENDON", "STRAND", "1");
 
       IDS::requirements requirements;
-      requirements.classification().push_back(ClassificationReq("usBridge_Tendon"));
+      AddClassifications(requirements, table, ElementKind::Tendon);
       requirements.material().push_back(MaterialReq("steel"));
       // Exact jacking force/stress values are per (segment, strand type) and can't be
       // asserted without an unambiguous per-segment identifier on the IfcTendon
@@ -632,35 +715,35 @@ namespace
          "Every prestressing strand is a classified steel tendon with jacking data", std::move(requirements));
    }
 
-   IDS::specificationType BuildGlobalTendonBundleSpec()
+   IDS::specificationType BuildGlobalTendonBundleSpec(const CTableLocations& table)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCELEMENTASSEMBLY", "USERDEFINED", "1");
 
       IDS::requirements requirements;
-      requirements.classification().push_back(ClassificationReq("usBridge_TendonBundle"));
+      AddClassifications(requirements, table, ElementKind::TendonBundle);
 
       return MakeSpec(std::move(applicability), "Tendon bundle classification", "STRANDS",
          "Every strand bundle is a classified tendon bundle", std::move(requirements));
    }
 
-   IDS::specificationType BuildGlobalRebarSpec()
+   IDS::specificationType BuildGlobalRebarSpec(const CTableLocations& table)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCREINFORCINGBAR", nullptr, "0");
 
       IDS::requirements requirements;
-      requirements.classification().push_back(ClassificationReq("usBridge_ReinforcingBar"));
+      AddClassifications(requirements, table, ElementKind::Rebar);
       requirements.material().push_back(MaterialReq("steel"));
 
       return MakeSpec(std::move(applicability), "Reinforcing bar classification and material", "REBAR",
          "Every reinforcing bar is a classified steel bar", std::move(requirements));
    }
 
-   IDS::specificationType BuildGlobalCageSpec()
+   IDS::specificationType BuildGlobalCageSpec(const CTableLocations& table)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCELEMENTASSEMBLY", "REINFORCEMENT_UNIT", "0");
 
       IDS::requirements requirements;
-      requirements.classification().push_back(ClassificationReq("usBridge_ReinforcementCage"));
+      AddClassifications(requirements, table, ElementKind::ReinforcementCage);
 
       return MakeSpec(std::move(applicability), "Reinforcement cage classification", "CAGE",
          "Every reinforcement cage is classified", std::move(requirements));
@@ -668,62 +751,58 @@ namespace
 
    // ---- bridge-level (per distinct material / beam type) spec builders --------
 
-   IDS::specificationType BuildConcreteMaterialSpec(const CIdsExportOptions& options, const std::string& name,
+   IDS::specificationType BuildConcreteMaterialSpec(const CIdsExportOptions& options, const CTableLocations& table, const std::string& name,
                                                     const ConcreteMaterial& m)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCMATERIAL", nullptr, "1");
       AddAttr(applicability, "Name", SimpleValue(name));
 
       IDS::requirements requirements;
+      const auto G = ElementKind::Girder;
+      const auto M = PropertyOwner::Material;
       const double fcR = RoundToTenthKsi_SysUnits(m.fc28);
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialConcrete", "CompressiveStrength",
-         "IFCPRESSUREMEASURE", fcR, StressInstruction("f'c", fcR)));
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialConcrete", "MaxAggregateSize",
-         "IFCPOSITIVELENGTHMEASURE", m.max_agg_size, LengthInstruction("max aggregate", m.max_agg_size)));
+      AddNumbers(requirements, options, table.Target(G, M, "girder.fc"), Which::All, fcR, StressInstruction("f'c", fcR));
+      AddNumbers(requirements, options, table.Target(G, M, "girder.max_aggregate_size"), Which::All, m.max_agg_size, LengthInstruction("max aggregate", m.max_agg_size));
 
       return MakeSpec(std::move(applicability), "Concrete material - " + name, {},
          "Concrete compressive strength from PGSuper", std::move(requirements));
    }
 
-   IDS::specificationType BuildStrandMaterialSpec(const CIdsExportOptions& options, const std::string& name,
+   IDS::specificationType BuildStrandMaterialSpec(const CIdsExportOptions& options, const CTableLocations& table, const std::string& name,
                                                   const StrandMaterial& m)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCMATERIAL", nullptr, "1");
       AddAttr(applicability, "Name", SimpleValue(name));
 
       IDS::requirements requirements;
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialSteel", "YieldStress",
-         "IFCPRESSUREMEASURE", m.fy, StressInstruction("fpy", m.fy)));
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialSteel", "UltimateStress",
-         "IFCPRESSUREMEASURE", m.fpu, StressInstruction("fpu", m.fpu)));
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialSteel", "UltimateStrain",
-         "IFCPOSITIVERATIOMEASURE", 0.035)); // ASTM A416, hard-coded by the IFC exporter
-      requirements.property().push_back(StrProperty("Pset_MaterialSteel", "StructuralGrade", m.grade_label));
-      requirements.property().push_back(NumProperty(options, "usBrPset_ACI_TendonMaterial", "TendonGrade",
-         "IFCPRESSUREMEASURE", m.fpu, StressInstruction("fpu", m.fpu)));
-      requirements.property().push_back(StrProperty("usBrPset_ACI_TendonMaterial", "Specification", "ASTM A416 (AASHTO M203)"));
+      const auto T = ElementKind::Tendon;
+      const auto M = PropertyOwner::Material;
+      AddNumbers(requirements, options, table.Target(T, M, "tendon.fy"), Which::All, m.fy, StressInstruction("fpy", m.fy));
+      AddNumbers(requirements, options, table.Target(T, M, "tendon.fpu"), Which::All, m.fpu, StressInstruction("fpu", m.fpu));
+      if (auto strain = table.Constant(T, M, "Pset_MaterialSteel", "UltimateStrain"))
+         requirements.property().push_back(NumProperty(options, strain->pset, strain->name, strain->type.c_str(), ConstantNumber(*strain)));
+      AddTexts(requirements, table.Target(T, M, "tendon.grade"), m.grade_label);
+      AddConstant(requirements, table.Constant(T, M, "usBrPset_ACI_TendonMaterial", "Specification"));
 
       return MakeSpec(std::move(applicability), "Strand material - " + name, {},
          "Prestressing strand material properties from PGSuper", std::move(requirements));
    }
 
-   IDS::specificationType BuildRebarMaterialSpec(const CIdsExportOptions& options, const std::string& name,
+   IDS::specificationType BuildRebarMaterialSpec(const CIdsExportOptions& options, const CTableLocations& table, const std::string& name,
                                                  const RebarMaterial& m)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCMATERIAL", nullptr, "0");
       AddAttr(applicability, "Name", SimpleValue(name));
 
       IDS::requirements requirements;
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialSteel", "YieldStress",
-         "IFCPRESSUREMEASURE", m.fy, StressInstruction("fy", m.fy)));
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialSteel", "UltimateStress",
-         "IFCPRESSUREMEASURE", m.fpu, StressInstruction("fu", m.fpu)));
-      requirements.property().push_back(NumProperty(options, "Pset_MaterialSteel", "UltimateStrain", "IFCPOSITIVERATIOMEASURE", m.eu));
-      requirements.property().push_back(StrProperty("Pset_MaterialSteel", "StructuralGrade", name));
-      requirements.property().push_back(NumProperty(options, "usBrPset_ACI_ReinforcingMaterial", "ReinforcingGrade",
-         "IFCPRESSUREMEASURE", m.fy, StressInstruction("fy", m.fy)));
-      requirements.property().push_back(StrProperty("usBrPset_ACI_ReinforcingMaterial", "Specification", m.spec));
-      requirements.property().push_back(StrProperty("usBrPset_ACI_ReinforcingMaterial", "SpecificationVersion", m.edition));
+      const auto R = ElementKind::Rebar;
+      const auto M = PropertyOwner::Material;
+      AddNumbers(requirements, options, table.Target(R, M, "rebar.fy"), Which::All, m.fy, StressInstruction("fy", m.fy));
+      AddNumbers(requirements, options, table.Target(R, M, "rebar.fu"), Which::All, m.fpu, StressInstruction("fu", m.fpu));
+      AddNumbers(requirements, options, table.Target(R, M, "rebar.elongation"), Which::All, m.eu);
+      AddTexts(requirements, table.Target(R, M, "rebar.grade"), name);
+      AddTexts(requirements, table.Target(R, M, "rebar.specification"), m.spec);
+      AddTexts(requirements, table.Target(R, M, "rebar.specification_edition"), m.edition);
 
       return MakeSpec(std::move(applicability), "Reinforcing material - " + name, {},
          "Reinforcing steel material properties from PGSuper", std::move(requirements));
@@ -744,14 +823,14 @@ namespace
          "Nominal strand diameter and area from PGSuper", std::move(requirements));
    }
 
-   IDS::specificationType BuildBeamTypeSpec(const std::string& name)
+   IDS::specificationType BuildBeamTypeSpec(const CTableLocations& table, const std::string& name)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCBEAMTYPE", nullptr, "1");
       AddAttr(applicability, "Name", SimpleValue(name));
 
       IDS::requirements requirements;
-      requirements.property().push_back(StrProperty("Pset_ConcreteElementGeneral", "AssemblyPlace", "FACTORY"));
-      requirements.property().push_back(StrProperty("Pset_ConcreteElementGeneral", "CastingMethod", "PRECAST"));
+      AddConstant(requirements, table.Constant(ElementKind::Girder, PropertyOwner::Type, "Pset_ConcreteElementGeneral", "AssemblyPlace"));
+      AddConstant(requirements, table.Constant(ElementKind::Girder, PropertyOwner::Type, "Pset_ConcreteElementGeneral", "CastingMethod"));
 
       return MakeSpec(std::move(applicability), "Precast girder type - " + name, {},
          "Girder is factory-precast concrete", std::move(requirements));
@@ -774,6 +853,11 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
    try
    {
       XercesGuard xercesGuard;
+
+      // the property locations of the IFC export. Throws CIfcMappingTableException if the table can't be used
+      std::filesystem::path table_path(options.mapping_file.GetString());
+      auto pTable = CIfcMappingTable::Load(table_path, table_path.empty() ? MappingTableSource::InstalledStandard : MappingTableSource::CommandLine);
+      CTableLocations table(*pTable);
 
       GET_IFACE2(pBroker, IDocumentType, pDocType);
       GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
@@ -838,7 +922,7 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
                concreteMaterials[sdv.concrete_material_name] = ConcreteMaterial{ sdv.fc28, sdv.max_agg_size };
 
                specifications.specification().push_back(
-                  BuildBeamSpec(options, effectiveBeamId, sdv, predefinedType));
+                  BuildBeamSpec(options, table, effectiveBeamId, sdv, predefinedType));
 
                if (options.include_strands)
                {
@@ -865,7 +949,7 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
                      anyRebarAnywhere = true;
                      rebarMaterials[sdv.rebar_material_name] = RebarMaterial{
                         pRebar->GetYieldStrength(), pRebar->GetUltimateStrength(), pRebar->GetElongation(),
-                        RebarSpecification(pRebar), RebarSpecificationEdition(pRebar) };
+                        GetRebarSpecification(pRebar), GetRebarSpecificationEdition(pRebar) };
                   }
                }
             }
@@ -875,37 +959,37 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
       if (options.include_beam_properties)
       {
          for (const auto& name : beamTypeNames)
-            specifications.specification().push_back(BuildBeamTypeSpec(name));
+            specifications.specification().push_back(BuildBeamTypeSpec(table, name));
       }
 
       if (options.include_concrete_material)
       {
          for (const auto& [name, m] : concreteMaterials)
-            specifications.specification().push_back(BuildConcreteMaterialSpec(options, name, m));
+            specifications.specification().push_back(BuildConcreteMaterialSpec(options, table, name, m));
       }
 
       if (options.include_strands)
       {
          for (const auto& [name, m] : strandMaterials)
          {
-            specifications.specification().push_back(BuildStrandMaterialSpec(options, name, m));
+            specifications.specification().push_back(BuildStrandMaterialSpec(options, table, name, m));
             specifications.specification().push_back(BuildTendonTypeSpec(options, name, m));
          }
          if (anyStrandsAnywhere)
          {
-            specifications.specification().push_back(BuildGlobalTendonSpec());
-            specifications.specification().push_back(BuildGlobalTendonBundleSpec());
+            specifications.specification().push_back(BuildGlobalTendonSpec(table));
+            specifications.specification().push_back(BuildGlobalTendonBundleSpec(table));
          }
       }
 
       if (options.include_rebar)
       {
          for (const auto& [name, m] : rebarMaterials)
-            specifications.specification().push_back(BuildRebarMaterialSpec(options, name, m));
+            specifications.specification().push_back(BuildRebarMaterialSpec(options, table, name, m));
          if (anyRebarAnywhere)
          {
-            specifications.specification().push_back(BuildGlobalRebarSpec());
-            specifications.specification().push_back(BuildGlobalCageSpec());
+            specifications.specification().push_back(BuildGlobalRebarSpec(table));
+            specifications.specification().push_back(BuildGlobalCageSpec(table));
          }
       }
 
@@ -920,6 +1004,10 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
 
       IDS::ids_(os, document, map, "UTF-8");
       return os.good();
+   }
+   catch (const CIfcMappingTableException&)
+   {
+      throw; // the caller reports the message (e.g. what to do about a missing table)
    }
    catch (const xml_schema::exception&)
    {

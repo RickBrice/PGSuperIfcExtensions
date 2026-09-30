@@ -21,6 +21,8 @@ python run_validation.py --configuration "WSDOT (Local)"   # run with another PG
 - **`pgs` models (round trip):** the project is exported to IFC once for each `property_units` mode (`Display`, `System`), the IFC is imported into a new project, and the result is compared to the original project.
 - **`ifc` models:** the IFC is imported. If `expected/<name>.json` exists, the result is compared to it. Otherwise the report is an inventory of which values the import set and which are still template defaults.
 
+For the round trips, the export is also checked against `export_baseline/`: the property sets, quantity sets, and classifications of the IFC (`compare_export.py`) and the design-value IDS written with it (`/IfcIds`, `compare_ids.py`). The summary says "same as baseline" or how many lines differ, with the details in `results/<run>.export-diff.txt` and `results/<run>.ids-diff.txt`. After an intended change to the export, review the differences and run with `--update-export-baseline`.
+
 Two optional entries apply to any model:
 - **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the standard table installed with the extension is used. See `devdocs/MappingTablesDesign.md`.
 - **`expect_log`:** text the import log must contain. The summary reports any text that is missing. The `-StandardTable` runs use it to check that the import suggests the agency properties (hints) when the agency table isn't used.

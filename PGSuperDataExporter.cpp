@@ -146,12 +146,25 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       ids_options.title.Format(_T("%s - girder concrete strength requirements"), bridge_name);
       ids_options.global_id_by_segment = segment_global_ids;
 
+      ids_options.mapping_file = ifc_options.mapping_file; // the IDS checks the values where the IFC export put them
+
       CIdsExporter ids_builder;
-      bool bIdsResult = ids_builder.BuildSpecification(pBroker, ids_options, ids_path);
+      bool bIdsResult = false;
+      CString strIdsError;
+      try
+      {
+         bIdsResult = ids_builder.BuildSpecification(pBroker, ids_options, ids_path);
+      }
+      catch (const std::exception& e)
+      {
+         strIdsError = e.what(); // e.g. the mapping table can't be used
+      }
 
       CString idsMsg;
       idsMsg.Format(_T("\nIDS export %s for %s"), (bIdsResult ? _T("successful") : _T("failed")), ids_path);
       strMsg += idsMsg;
+      if (!strIdsError.IsEmpty())
+         strMsg += _T("\n\n") + strIdsError;
       if (!bIdsResult) bIfcResult = false; // reflect the overall outcome in the icon
    }
 

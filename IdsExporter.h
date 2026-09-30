@@ -95,6 +95,10 @@ public:
 
    // Prefix for each generated girder <specification> name, e.g. "Girder design values".
    CString specification_name_prefix = _T("Girder design values");
+
+   // Mapping table whose property locations the IDS uses, as the IFC export does (CIfcExportOptions::mapping_file).
+   // When empty, the installed standard table is used
+   CString mapping_file;
 };
 
 class CIdsExporter

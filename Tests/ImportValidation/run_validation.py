@@ -13,8 +13,10 @@ the summary reports any that is missing.
 
 The table-driven content of each round-trip export (property sets, quantity sets, classifications,
 element names; see compare_export.py) is compared with export_baseline/<run>.txt.gz, and the summary
-reports any difference, with the details in results/<run>.export-diff.txt. --update-export-baseline
-saves the current exports as the baseline instead (after an intended change to the export).
+reports any difference, with the details in results/<run>.export-diff.txt. The design-value IDS
+written with each round-trip export (/IfcIds) is compared with export_baseline/<run>.ids.txt the same
+way (see compare_ids.py). --update-export-baseline saves the current exports and IDS files as the
+baseline instead (after an intended change to the export).
 
 Reports, logs, and imported projects are written to results/, replacing the previous results, so
 the change from one run to the next shows up as a difference in the repository. summary.md has the
@@ -41,6 +43,7 @@ from pathlib import Path
 
 import compare_bridge
 import compare_export
+import compare_ids
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
@@ -152,6 +155,26 @@ def check_export(run, ifc, update_baseline):
     return f", export differs from baseline: {n} lines (see {diff_file.name})"
 
 
+def check_ids(run, ids, update_baseline):
+    """compares the design-value IDS with its baseline, or saves it as the baseline. Returns a message for the summary"""
+    if not ids.exists():
+        return ", IDS not written"
+    current = compare_ids.listing(ids)
+    baseline_file = EXPORT_BASELINE / f"{run}.ids.txt"
+    diff_file = RESULTS / f"{run}.ids-diff.txt"
+    diff_file.unlink(missing_ok=True)
+    if update_baseline or not baseline_file.exists():
+        EXPORT_BASELINE.mkdir(exist_ok=True)
+        compare_ids.save(current, baseline_file)
+        return ", IDS baseline saved"
+    baseline = compare_ids.listing(baseline_file)
+    n = compare_ids.count_differences(baseline, current)
+    if n == 0:
+        return ", IDS same as baseline"
+    diff_file.write_text("\n".join(compare_ids.compare(baseline, current, limit=5000)) + "\n", encoding="utf-8")
+    return f", IDS differs from baseline: {n} lines (see {diff_file.name})"
+
+
 def round_trip(model, config, exe):
     """export -> import -> compare for a PGSuper project. Returns summary rows."""
     rows = []
@@ -165,11 +188,13 @@ def round_trip(model, config, exe):
         ifc = RESULTS / f"{run}.ifc"
         pgs = RESULTS / f"{run}.pgs"
 
-        ok, message = run_bridgelink(exe, [quote(f"/IfcExport={ifc}"), quote(source), f"/IfcPropertyUnits={units}"])
+        ids = RESULTS / f"{run}.ids"
+        ids.unlink(missing_ok=True)
+        ok, message = run_bridgelink(exe, [quote(f"/IfcExport={ifc}"), quote(source), f"/IfcPropertyUnits={units}", quote(f"/IfcIds={ids}")])
         if not ok or not ifc.exists():
             rows.append((run, f"export failed: {message}", None))
             continue
-        export_message = check_export(run, ifc, config["update_export_baseline"])
+        export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
 
         ok, message = import_ifc(exe, ifc, config["template"], pgs)
         message += export_message

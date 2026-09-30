@@ -224,6 +224,20 @@ public:
    // The classification references of an element role, in table order
    std::vector<const ClassificationDeclaration*> GetClassifications(ElementKind role) const;
 
+   // A property (or quantity) the table exports, and its property set (or quantity set)
+   struct ExportedProperty
+   {
+      const PropertySetDeclaration* pset;
+      const PropertyDeclaration* property;
+   };
+
+   // The properties and quantities a target is exported to for an element role and owner, in table order
+   // (e.g. for the design-value IDS, which checks the values where the export put them)
+   std::vector<ExportedProperty> GetExportedProperties(ElementKind role, PropertyOwner attach, std::string_view target) const;
+
+   // A property the table exports for an element role and owner, by property set and property name, or nullopt
+   std::optional<ExportedProperty> FindExportedProperty(ElementKind role, PropertyOwner attach, std::string_view pset, std::string_view property) const;
+
    // The table files, the selected table first
    const std::vector<MappingTableFile>& GetFiles() const { return m_Files; }
 

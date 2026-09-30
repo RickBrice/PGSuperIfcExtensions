@@ -33,6 +33,7 @@
 #include "IfcCommandLineInfo.h"
 #include "IfcImporter.h"
 #include "IfcExporter.h"
+#include "IdsExporter.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -325,6 +326,24 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       strError = e.what();
    }
 
+   // the design-value IDS for the exported model, with the default options
+   bool bIdsResult = false;
+   CString strIdsError;
+   if (bResult && !ifcCmdInfo.m_strIdsFile.IsEmpty())
+   {
+      try
+      {
+         CIdsExportOptions ids_options;
+         ids_options.enabled = true;
+         ids_options.mapping_file = ifcCmdInfo.m_strMappingFile;
+         bIdsResult = CIdsExporter().BuildSpecification(EAFGetBroker(), ids_options, ifcCmdInfo.m_strIdsFile);
+      }
+      catch (const std::exception& e)
+      {
+         strIdsError = e.what();
+      }
+   }
+
    std::wofstream log(ifcCmdInfo.m_strLogFile.GetString());
    log << _T("Exported ") << ifcCmdInfo.m_strFileName.GetString() << _T(" with property values in ") << (options.display_units_for_properties ? _T("display units") : _T("system units")) << std::endl;
    for (const auto& table_file : exporter.GetMappingTableFiles())
@@ -332,4 +351,10 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
    if (!strError.IsEmpty())
       log << _T("IFC export failed: ") << strError.GetString() << std::endl;
    log << (bResult ? _T("IFC export succeeded: ") : _T("IFC export failed: ")) << ifcCmdInfo.m_strIfcFile.GetString() << std::endl;
+   if (!ifcCmdInfo.m_strIdsFile.IsEmpty())
+   {
+      if (!strIdsError.IsEmpty())
+         log << _T("IDS export failed: ") << strIdsError.GetString() << std::endl;
+      log << (bIdsResult ? _T("IDS export succeeded: ") : _T("IDS export failed: ")) << ifcCmdInfo.m_strIdsFile.GetString() << std::endl;
+   }
 }

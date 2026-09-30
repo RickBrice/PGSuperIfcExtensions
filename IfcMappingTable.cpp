@@ -1322,6 +1322,36 @@ std::vector<const ClassificationDeclaration*> CIfcMappingTable::GetClassificatio
    return classifications;
 }
 
+std::vector<CIfcMappingTable::ExportedProperty> CIfcMappingTable::GetExportedProperties(ElementKind role, PropertyOwner attach, std::string_view target) const
+{
+   std::vector<ExportedProperty> exported;
+   for (const auto* pset : GetPropertySets(role, attach))
+   {
+      for (const auto& property : pset->properties)
+      {
+         if (property.target && property.target->name == target)
+            exported.push_back({ pset, &property });
+      }
+   }
+   return exported;
+}
+
+std::optional<CIfcMappingTable::ExportedProperty> CIfcMappingTable::FindExportedProperty(ElementKind role, PropertyOwner attach, std::string_view pset_name, std::string_view property_name) const
+{
+   for (const auto* pset : GetPropertySets(role, attach))
+   {
+      if (pset->name != pset_name)
+         continue;
+
+      for (const auto& property : pset->properties)
+      {
+         if (property.name == property_name)
+            return ExportedProperty{ pset, &property };
+      }
+   }
+   return std::nullopt;
+}
+
 std::vector<const PropertySetDeclaration*> CIfcMappingTable::GetPropertySets(ElementKind role, PropertyOwner attach) const
 {
    std::vector<const PropertySetDeclaration*> psets;

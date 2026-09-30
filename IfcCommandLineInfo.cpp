@@ -105,6 +105,11 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
          m_strMappingFile = strValue;
          bMyParameter = true;
       }
+      else if (GetKeyValue(strParam, _T("IfcIds"), strValue))
+      {
+         m_strIdsFile = strValue;
+         bMyParameter = true;
+      }
    }
 
    if (!bMyParameter)
