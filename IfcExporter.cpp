@@ -2373,6 +2373,9 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
       WritePropertySets<Schema>(file, ElementKind::Deck, slab, context);
    }
 
+   RecordExportedElement<Schema>([&](auto& elements) { elements.slab = slab; });
+   CallExportHook<Schema>("OnDeck", [&](auto& hooks, auto& hook_context) { hooks.OnDeck(hook_context, slab); });
+
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for the deck slab
    std::vector<typename Schema::IfcDefinitionSelect> slabs;
@@ -2721,6 +2724,9 @@ std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<S
 
 
       list_of_piers.push_back(pier);
+
+      RecordExportedElement<Schema>([&](auto& elements) { elements.piers[pierIdx] = pier; });
+      CallExportHook<Schema>("OnPier", [&](auto& hooks, auto& hook_context) { hooks.OnPier(hook_context, pierIdx, pier); });
    }
 
    return list_of_piers;
@@ -3088,6 +3094,8 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
             file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(pier, bearing);
             bearings.push_back(bearing);
+
+            CallExportHook<Schema>("OnBearing", [&](auto& hooks, auto& hook_context) { hooks.OnBearing(hook_context, pierIdx, face, elevDetails.GirderKey, bearing); });
          }
       }
    }
@@ -3130,6 +3138,9 @@ typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, st
    context.segment = segmentKey;
    Classify<Schema>(file, ElementKind::Girder, beam, options);
    WritePropertySets<Schema>(file, ElementKind::Girder, beam, context);
+
+   RecordExportedElement<Schema>([&](auto& elements) { elements.segments[segmentKey] = beam; });
+   CallExportHook<Schema>("OnSegment", [&](auto& hooks, auto& hook_context) { hooks.OnSegment(hook_context, segmentKey, beam); });
 
    return beam;
 }
@@ -3263,6 +3274,15 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    file.addRelatedObject<typename Schema::IfcRelAggregates>(superstructure, deck);
 
+   RecordExportedElement<Schema>([&](auto& elements)
+      {
+         elements.bridge = bridge;
+         elements.superstructure = superstructure;
+         elements.substructure = substructure;
+         elements.deck_part = deck;
+      });
+   CallExportHook<Schema>("OnBridgeParts", [&](auto& hooks, auto& hook_context) { hooks.OnBridgeParts(hook_context); });
+
    // Create spatial structure of substructure
    // IfcBridgePart::SUBSTRUCTURE <-> IfcRelAggregates <-> IfcBridgePart::ABUTMENT, PIER
    auto list_of_piers = CreatePiers(file, pBroker, options);
@@ -3333,6 +3353,14 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
          barrier_context.barrier_side = side;
          WritePropertySets<Schema>(file, ElementKind::Barrier, barrier, barrier_context);
       }
+   }
+
+   for (const auto& barrier_side : { std::make_pair(left_barrier, pgsTypes::tboLeft), std::make_pair(right_barrier, pgsTypes::tboRight) })
+   {
+      auto barrier = barrier_side.first;
+      auto side = barrier_side.second;
+      RecordExportedElement<Schema>([&](auto& elements) { elements.barriers[side] = barrier; });
+      CallExportHook<Schema>("OnBarrier", [&](auto& hooks, auto& hook_context) { hooks.OnBarrier(hook_context, side, barrier); });
    }
 
 
@@ -3546,12 +3574,16 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       } // next girder
    } // next group
 
+   CallExportHook<Schema>("OnSuperstructureComplete", [&](auto& hooks, auto& hook_context) { hooks.OnSuperstructureComplete(hook_context); });
+
    if (options.classify)
    {
       Classify<Schema>(file, ElementKind::Bridge, bridge, options);
 
       WritePropertySets<Schema>(file, ElementKind::Bridge, bridge, ExportContext{ pBroker, &options });
    }
+
+   CallExportHook<Schema>("OnBridgeComplete", [&](auto& hooks, auto& hook_context) { hooks.OnBridgeComplete(hook_context); });
  }
 
   template <typename Schema>
@@ -3731,7 +3763,7 @@ void CreateGeoreferencing(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
 }
 
 template <typename Schema>
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension)
 {
    USES_CONVERSION;
 
@@ -3739,13 +3771,18 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Exporting IFC model"));
 
-   // the mapping table for the property sets. Throws CIfcMappingTableException if it can't be used
-   CIfcExportSession session(options);
    m_MappingTableFiles.clear();
+   m_ExtensionLog.clear();
+
+   // the file outlives the session, because an export extension's hooks can hold its elements until the session ends
+   hierarchy_helper<Schema> file;
+
+   // the mapping table for the property sets, and the export extension's targets, roles, and hooks.
+   // Throws CIfcMappingTableException if the table can't be used, CIfcExtensionException if the extension can't be used
+   CIfcExportSession session(options, extension);
    for (const auto& table_file : session.GetTable().GetFiles())
       m_MappingTableFiles.push_back("\"" + table_file.name + "\" (version " + std::to_string(table_file.version) + "): " + PathToString(table_file.path));
 
-   hierarchy_helper<Schema> file;
    InitializeFile<Schema>(file, pBroker, strFilePath); // creates project and site
 
    // Buffers the reinforcement relationships (aggregation, typing, material,
@@ -3760,6 +3797,15 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
 
    CreateSiteLocalPlacement<Schema>(file, pBroker);
    CreateGeoreferencing<Schema>(file, pBroker);
+
+   if constexpr (std::is_same_v<Schema, IfcExport::Schema>)
+      session.StartHooks(file, pBroker, options);
+   RecordExportedElement<Schema>([&](auto& elements)
+      {
+         elements.project = project;
+         elements.site = file.template getSingle<typename Schema::IfcSite>();
+      });
+   CallExportHook<Schema>("OnExportBegin", [&](auto& hooks, auto& hook_context) { hooks.OnExportBegin(hook_context); });
 
 
    if (options.model_elements == CIfcExportOptions::ModelElements::GirderOnly)
@@ -3794,12 +3840,16 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    // object, each with its complete member list set in a single write.
    rebar_batch.Flush(file);
 
+   CallExportHook<Schema>("OnModelComplete", [&](auto& hooks, auto& hook_context) { hooks.OnModelComplete(hook_context); });
+
    // Declare project units for values that rely on them (e.g. quantities without their own unit)
    AddUsedProjectUnits(file);
 
    std::ofstream ofs(T2A(strFilePath));
    ofs << file;
 
+   m_ExtensionLog = session.GetHookLog();
+   session.SetSucceeded();
    return true;
 }
 
@@ -3812,12 +3862,12 @@ CIfcExporter::~CIfcExporter(void)
 {
 }
 
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension)
 {
    bool bResult = false;
    switch (options.schema)
    {
-   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, options, strFilePath); break;
+   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, options, strFilePath, extension); break;
    default:
       CHECK(false); // is there a new typename Schema type
    }

@@ -35,6 +35,8 @@
 
 #include "IfcMappingTable.h"
 #include "IfcExporter.h"
+#include "IfcExtensionRegistry.h"
+#include "Include\IfcExport\IfcModelBuilder.h"
 #include "Properties.h"
 #include "Units.h"
 #include "USBridge_Classifications.h"
@@ -45,14 +47,26 @@ class CIfcExportSession
 {
 public:
    // Loads the mapping table for an export: options.mapping_file, or the installed standard table.
-   // Throws CIfcMappingTableException if the table can't be used
-   CIfcExportSession(const CIfcExportOptions& options);
+   // extension: the export extension (see Include\IfcExport\IfcModelBuilder.h), or nullptr. Its targets and element roles
+   // are available to the mapping table for the session.
+   // Throws CIfcMappingTableException if the table can't be used, CIfcExtensionException if the extension can't be used
+   CIfcExportSession(const CIfcExportOptions& options, IIfcExportExtension* extension = nullptr);
    ~CIfcExportSession();
 
    // The session of the export in progress
    static CIfcExportSession& Current();
 
    const CIfcMappingTable& GetTable() const { return *m_pTable; }
+
+   // Export extension hooks (devdocs/ExtensionsDesign.md). Call StartHooks once the file and project exist.
+   // CallHook does nothing without an extension. It turns an exception the hook throws into a CIfcExtensionException
+   // that names the extension and the hook
+   void StartHooks(IfcExport::File& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options);
+   bool HasHooks() const { return m_pHookContext != nullptr; }
+   void CallHook(const char* hook, const std::function<void(IfcExport::IHooks&, IfcExport::HookContext&)>& call);
+   IfcExport::ExportedElements& GetExportedElements() { return m_Elements; }
+   const std::vector<std::string>& GetHookLog() const { return m_HookLog; }
+   void SetSucceeded() { m_bSucceeded = true; } // for IIfcExportHooks::OnExportEnd
 
    // IfcPropertyEnumeration instances already written, by name and values, so each is written once
    std::map<std::string, uint32_t> enumerations;
@@ -68,9 +82,40 @@ public:
    std::map<std::string, uint32_t> classification_references;
 
 private:
+   std::unique_ptr<CIfcExtensionScope> m_pScope; // before the table, which can use the extension's targets and roles
    std::unique_ptr<CIfcMappingTable> m_pTable;
+   const CIfcExtensionContent* m_pExtensionContent = nullptr;
+   std::unique_ptr<IfcExport::IHooks> m_pHooks;
+   std::unique_ptr<IfcExport::IServices> m_pServices;
+   std::unique_ptr<IfcExport::HookContext> m_pHookContext;
+   IfcExport::ExportedElements m_Elements;
+   std::vector<std::string> m_HookLog;
+   bool m_bSucceeded = false;
    static CIfcExportSession* ms_pCurrent;
+
+   friend class CIfcExportServices;
 };
+
+// Calls an export extension hook during a model build, if there's an extension. call is a generic lambda
+// [&](auto& hooks, auto& context) {...}, so it only compiles for the schema extensions use
+template <typename Schema, typename Call>
+void CallExportHook(const char* hook, Call&& call)
+{
+   if constexpr (std::is_same_v<Schema, IfcExport::Schema>)
+      CIfcExportSession::Current().CallHook(hook, std::forward<Call>(call));
+}
+
+// Records an element the extension's hooks can use, if there's an extension. record is a generic lambda [&](auto& elements) {...}
+template <typename Schema, typename Record>
+void RecordExportedElement(Record&& record)
+{
+   if constexpr (std::is_same_v<Schema, IfcExport::Schema>)
+   {
+      auto& session = CIfcExportSession::Current();
+      if (session.HasHooks())
+         record(session.GetExportedElements());
+   }
+}
 
 // True if the export options include the property set
 bool IncludePropertySet(const PropertySetDeclaration& pset, const CIfcExportOptions& options);
@@ -137,6 +182,10 @@ namespace ifc_property_writer
       if (type == "IFCVOLUMEMEASURE") return file.template create<typename Schema::IfcVolumeMeasure>().initialize(v);
       if (type == "IFCMASSMEASURE") return file.template create<typename Schema::IfcMassMeasure>().initialize(v);
       if (type == "IFCFORCEMEASURE") return file.template create<typename Schema::IfcForceMeasure>().initialize(v);
+      if (type == "IFCTIMEMEASURE") return file.template create<typename Schema::IfcTimeMeasure>().initialize(v);
+      if (type == "IFCLINEARFORCEMEASURE") return file.template create<typename Schema::IfcLinearForceMeasure>().initialize(v);
+      if (type == "IFCMASSDENSITYMEASURE") return file.template create<typename Schema::IfcMassDensityMeasure>().initialize(v);
+      if (type == "IFCTORQUEMEASURE") return file.template create<typename Schema::IfcTorqueMeasure>().initialize(v);
       ASSERT(false); // the table loader only accepts the types above
       return {};
    }

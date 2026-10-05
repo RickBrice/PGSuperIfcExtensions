@@ -45,6 +45,7 @@ Tables contain only names the user specifies (G3). The importer doesn't guess wh
   - A table names a unit only for a model value that has no unit of its own: a plain number, or text. Iowa writes f'c as the plain number 5.0, meaning ksi.
   - Unit names come from a short, fixed list mapped to WBFL units (option (a)).
   - Tables contain no other numbers. Export rounding (e.g. `RoadwayWidth` to 0.1 ft in display units) stays in code.
+- **G7 Export extensions (proposed 2026-10-02):** tables still can't add targets. Another plug-in can, through the model builder interface ([ExtensionsDesign.md](ExtensionsDesign.md)): its targets and element roles have its prefix (e.g. `brdr.`), are export only, and exist only during its own exports. Its table says so with `"requires": ["<extension id>"]`, so the standard export command refuses it with a clear message. The standard table and export are unchanged.
 
 ## Where the data is today
 

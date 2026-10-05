@@ -53,6 +53,11 @@ namespace
       case ValueKind::Boolean: return "true or false";
       case ValueKind::Text: return "text";
       case ValueKind::TextList: return "text (every location's value is collected)";
+      case ValueKind::Time: return "time";
+      case ValueKind::LinearForce: return "linear force";
+      case ValueKind::MassDensity: return "mass density";
+      case ValueKind::Real: return "number";
+      case ValueKind::Moment: return "moment";
       }
       return "";
    }
