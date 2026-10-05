@@ -269,9 +269,11 @@ template <typename Schema>
 void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
 {
    using UnitType = typename Schema::IfcUnitEnum::Value;
+   using DerivedUnitType = typename Schema::IfcDerivedUnitEnum::Value;
    std::set<UnitType> used;
+   std::set<DerivedUnitType> used_derived;
 
-   auto use_measure = [&used](const std::string& measure)
+   auto use_measure = [&used, &used_derived](const std::string& measure)
       {
          static const std::map<std::string, UnitType> unit_types{
             {"IfcLengthMeasure", Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT},
@@ -291,6 +293,12 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
             {"IfcQuantityWeight", Schema::IfcUnitEnum::IfcUnit_MASSUNIT},
             {"IfcQuantityTime", Schema::IfcUnitEnum::IfcUnit_TIMEUNIT},
          };
+         // measures of derived units (e.g. values of export extension targets)
+         static const std::map<std::string, DerivedUnitType> derived_unit_types{
+            {"IfcLinearForceMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT},
+            {"IfcMassDensityMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT},
+            {"IfcTorqueMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_TORQUEUNIT},
+         };
          // measures without units don't need a project unit
          static const std::set<std::string> unitless{
             "IfcRatioMeasure",
@@ -302,8 +310,11 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
             "IfcDescriptiveMeasure",
          };
          auto found = unit_types.find(measure);
+         auto found_derived = derived_unit_types.find(measure);
          if (found != unit_types.end())
             used.insert(found->second);
+         else if (found_derived != derived_unit_types.end())
+            used_derived.insert(found_derived->second);
          else
             ASSERT(!measure.ends_with("Measure") || unitless.contains(measure)); // a measure type with units that isn't handled here - add it to unit_types
       };
@@ -336,9 +347,11 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
    {
       if (auto named_unit = unit.template as<typename Schema::IfcNamedUnit>())
          used.erase(named_unit.UnitType()); // already defined
+      else if (auto derived_unit = unit.template as<typename Schema::IfcDerivedUnit>())
+         used_derived.erase(derived_unit.UnitType());
    }
 
-   if (used.empty())
+   if (used.empty() && used_derived.empty())
       return;
 
    // PGSuper system units are SI (kg, m, Pa, etc)
@@ -357,6 +370,28 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
    {
       const auto& [prefix, name] = si_units.at(unit_type);
       units.push_back(file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name));
+   }
+
+   // derived units are products of SI units: N/m, kg/m^3, N m
+   auto element = [&file](UnitType unit_type, int64_t exponent)
+      {
+         const auto& [prefix, name] = si_units.at(unit_type);
+         auto si_unit = file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name);
+         return file.template create<typename Schema::IfcDerivedUnitElement>().initialize(si_unit, exponent);
+      };
+   for (auto unit_type : used_derived)
+   {
+      std::vector<typename Schema::IfcDerivedUnitElement> elements;
+      if (unit_type == Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT)
+         elements = { element(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1), element(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -1) };
+      else if (unit_type == Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT)
+         elements = { element(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, 1), element(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -3) };
+      else if (unit_type == Schema::IfcDerivedUnitEnum::IfcDerivedUnit_TORQUEUNIT)
+         elements = { element(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1), element(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, 1) };
+      else
+         ASSERT(false); // a derived unit type that isn't handled here
+
+      units.push_back(file.template create<typename Schema::IfcDerivedUnit>().initialize(elements, unit_type, std::nullopt, std::nullopt));
    }
    unit_assignment.setUnits(units);
 }

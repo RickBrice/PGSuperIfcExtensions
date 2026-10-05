@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "IfcMappingTable.h"
+#include "IfcExtensionRegistry.h"
 #include "bSDD.h"
 
 #include <nlohmann/json.hpp>
@@ -159,7 +160,7 @@ namespace
             return;
          }
 
-         CheckKeys(j, "", { "format", "version", "name", "extends", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
+         CheckKeys(j, "", { "format", "version", "name", "extends", "requires", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
 
          auto format = GetString(j, "format", "", true);
          if (format && *format != table_format)
@@ -181,6 +182,15 @@ namespace
 
          m_File.name = GetString(j, "name", "", true).value_or("");
          m_File.extends = GetString(j, "extends", "", false).value_or("");
+
+         if (j.contains("requires"))
+         {
+            // the export extensions whose targets and element roles the table uses (devdocs/ExtensionsDesign.md). Such a
+            // table only works with the export command of the plug-in that provides the extension
+            ParseRequires(j["requires"]);
+            if (!m_Errors.empty())
+               return; // the rest would only report the extension's targets and roles as unknown
+         }
 
          if (j.contains("elements"))
             ParseElements(j["elements"]);
@@ -339,6 +349,22 @@ namespace
             return false;
          }
          return true;
+      }
+
+      void ParseRequires(const json& j)
+      {
+         if (!j.is_array() || !std::all_of(j.begin(), j.end(), [](const auto& v) {return v.is_string(); }))
+         {
+            Error("requires", "must be a list of export extension names");
+            return;
+         }
+
+         const auto* pActive = GetActiveExtensionContent();
+         for (const auto& name : j.get<std::vector<std::string>>())
+         {
+            if (!pActive || pActive->id != name)
+               Error("requires", "the table needs the export extension \"" + name + "\". It belongs to the export command of the plug-in that provides it, and can't be used by this command");
+         }
       }
 
       void ParseElements(const json& j)
@@ -749,6 +775,12 @@ namespace
                continue;
             }
 
+            if (!target->provider.empty())
+            {
+               Error(path, "\"" + name + "\" is a target of the export extension \"" + std::string(target->provider) + "\". Its values are only exported, so it has no import locations");
+               continue;
+            }
+
             const json* jlocations = &value;
             auto locations_path = path;
             if (value.is_object())
@@ -1111,6 +1143,7 @@ bool IsExportValueType(const std::string& type)
       "IFCPRESSUREMEASURE", "IFCLENGTHMEASURE", "IFCPOSITIVELENGTHMEASURE", "IFCNONNEGATIVELENGTHMEASURE",
       "IFCPLANEANGLEMEASURE", "IFCPOSITIVEPLANEANGLEMEASURE", "IFCRATIOMEASURE", "IFCPOSITIVERATIOMEASURE",
       "IFCAREAMEASURE", "IFCVOLUMEMEASURE", "IFCMASSMEASURE", "IFCFORCEMEASURE",
+      "IFCTIMEMEASURE", "IFCLINEARFORCEMEASURE", "IFCMASSDENSITYMEASURE", "IFCTORQUEMEASURE",
    };
    return types.find(type) != types.end();
 }

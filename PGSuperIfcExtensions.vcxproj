@@ -43,6 +43,7 @@
     <Import Project="$(ARPDIR)\WBFL\WBFL.props" />
     <Import Project="$(ARPDIR)\PGSuper\PGSuper.props" />
     <Import Project="$(ARPDIR)\WBFL\XSD.props" />
+    <Import Project="Include\IfcExport\IfcExtensionSdk.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -51,6 +52,7 @@
     <Import Project="$(ARPDIR)\WBFL\WBFL.props" />
     <Import Project="$(ARPDIR)\PGSuper\PGSuper.props" />
     <Import Project="$(ARPDIR)\WBFL\XSD.props" />
+    <Import Project="Include\IfcExport\IfcExtensionSdk.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -264,6 +266,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="IfcImporterException.cpp" />
     <ClCompile Include="IfcImportUnits.cpp" />
     <ClCompile Include="IfcMappingTable.cpp" />
+    <ClCompile Include="IfcExtensionRegistry.cpp" />
     <ClCompile Include="IfcPropertyWriter.cpp" />
     <ClCompile Include="IfcTableIds.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -317,6 +320,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def" />
+    <None Include="Include\IfcExport\IfcExtensionSdk.props" />
     <None Include="IfcExtensions.Manifest.PGSuper" />
     <None Include="IfcExtensions.Manifest.BridgeLink" />
   </ItemGroup>
@@ -347,7 +351,11 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="IfcImporterException.h" />
     <ClInclude Include="IfcImportUnits.h" />
     <ClInclude Include="IfcMappingTable.h" />
+    <ClInclude Include="IfcExtensionRegistry.h" />
     <ClInclude Include="IfcPropertyWriter.h" />
+    <ClInclude Include="Include\IfcExport\IfcExportOptions.h" />
+    <ClInclude Include="Include\IfcExport\IfcExtensionTypes.h" />
+    <ClInclude Include="Include\IfcExport\IfcModelBuilder.h" />
     <ClInclude Include="IdsBuilder.h" />
     <ClInclude Include="IfcTableIds.h" />
     <ClInclude Include="IfcTargetHints.h" />

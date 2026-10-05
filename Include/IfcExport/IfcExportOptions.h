@@ -1,0 +1,136 @@
+///////////////////////////////////////////////////////////////////////
+// IFC Extension for PGSuper
+// Copyright © 1999-2026  Washington State Department of Transportation
+//                        Bridge and Structures Office
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the Alternate Route Open Source License as
+// published by the Washington State Department of Transportation,
+// Bridge and Structures Office.
+//
+// This program is distributed in the hope that it will be useful, but
+// distribution is AS IS, WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
+// the Alternate Route Open Source License for more details.
+//
+// You should have received a copy of the Alternate Route Open Source
+// License along with this program; if not, write to the Washington
+// State Department of Transportation, Bridge and Structures Office,
+// P.O. Box  47340, Olympia, WA 98503, USA or e-mail
+// Bridge_Support@wsdot.wa.gov
+///////////////////////////////////////////////////////////////////////
+#pragma once
+
+// The IFC export options. Part of the extension SDK (see IfcModelBuilder.h): export extensions pass them to IIfcModelBuilder
+
+#include <map>
+#include <string>
+#include <PsgLib\Keys.h>
+
+class CIfcExportOptions
+{
+public:
+   enum class Schema
+   {
+      Schema_4x3_add2
+   };
+
+   enum class ModelElements
+   {
+      AlignmentOnly,
+      AlignmentAndBridge,
+      GirderOnly
+   };
+
+   enum class AlignmentModel
+   {
+      Polyline, // IfcPolyline (3D wire)
+      GradientCurve // IfcGradientCurve
+   };
+
+   enum class Tangents
+   {
+      Polyline, // use IfcPolyline to model alignment tangents
+      Line // use IfcLine to model alignmenttangents
+   };
+
+   enum class Representations
+   {
+      Curve3dOnly,
+      Curve3dAndFootPrint
+   };
+
+   enum class SweepProfile
+   {
+      Polyline, // use IfcPolyline for sweep profile
+      IndexedPolyCurve // use IfcIndexedPolyCurve for sweep profile
+   };
+
+   enum class BeamPlacement
+   {
+      Linear,
+      Local
+   };
+
+   enum class BeamModel
+   {
+      SectionedSolidHorizontal,
+      PolygonalFaceSet,
+      FacetedBrep
+   };
+
+   // Individual: one IfcReinforcingBar per physical bar, per ACI 131 Article 7.3's
+   // 1:1 correspondence between a real bar and an IfcReinforcingBar. Each bar gets
+   // its own single-item IfcMappedItem shape representation.
+   //
+   // Mapped: identical bars (same mark, same zone/layout item) are grouped under a
+   // single IfcReinforcingBar whose shape representation holds one IfcMappedItem
+   // per physical bar location - fewer, denser entities instead of one per bar.
+   enum class RebarRepresentation
+   {
+      Individual,
+      Mapped
+   };
+
+   // IfcAnnotation::SURVEY points at CL Bearing/CL Girder, bearing seat elevation (bottom of bearing).
+   // Only for model_elements = ModelElements::AlignmentAndBridge
+   // Individual: one IfcAnnotation per point, linearly placed (Single Survey Point Linearly Placed)
+   // Set: one IfcAnnotation per pier with all the points in an IfcCartesianPointList3D (Set Of Survey Points)
+   enum class BearingSeatSurveyPoints
+   {
+      None,
+      Individual,
+      Set
+   };
+
+   Schema schema = Schema::Schema_4x3_add2;
+   ModelElements model_elements = ModelElements::AlignmentAndBridge;
+   CGirderKey girderKey = CGirderKey(0,0); // only valid for model_elements = ModelElements::GirderOnly
+   bool classify = true;
+   AlignmentModel alignment_model = AlignmentModel::GradientCurve;
+   Tangents tangents = Tangents::Line;
+   Representations representations = Representations::Curve3dOnly;
+   SweepProfile sweep_profile = SweepProfile::Polyline;
+   BearingSeatSurveyPoints bearing_seat_survey_points = BearingSeatSurveyPoints::Set;
+   bool include_rebar = true;
+   RebarRepresentation rebar_representation = RebarRepresentation::Mapped;
+   bool include_camber = true;
+   bool include_quantities = true;
+   bool display_units_for_properties = true; // if true, properties will be exported in display units. If false, properties will be exported in internal system units (which are typically metric for PGSuper)
+   BeamPlacement beam_placement = BeamPlacement::Linear;
+   BeamModel beam_model = BeamModel::SectionedSolidHorizontal;
+
+   // Sometimes when girders are installed at a very steep angle, the ends of the girders
+   // are battered so that the end faces are vertical when the beam is erected.
+   // PGSuper doesn't explicitly model batter, but we can export batter geometry.
+   bool batter_ends = false; // set to false because PGSuper doesn't support batter
+
+   // Optional sink. When non-null, BuildModel records each girder segment's IfcBeam
+   // GlobalId here, keyed by CSegmentKey, so a co-exported IDS can pin its specifications
+   // by GlobalId. Not owned; must outlive the BuildModel call.
+   std::map<CSegmentKey, std::string>* segment_global_ids = nullptr;
+
+   // Mapping table for the property sets (/IfcMapping). When empty, the mapping table setting
+   // (Options > IFC Mapping Table), else the installed standard table, is used (CIfcMappingTable::LoadActive)
+   CString mapping_file;
+};

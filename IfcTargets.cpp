@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "IfcTargets.h"
+#include "IfcExtensionRegistry.h"
 #include "IfcExporter.h"
 #include "SteelSpecifications.h"
 
@@ -407,7 +408,12 @@ const TargetDef* FindTargetDef(std::string_view name)
 {
    const auto& targets = GetTargetDefs();
    auto found = std::find_if(targets.begin(), targets.end(), [name](const auto& target) {return target.name == name; });
-   return found == targets.end() ? nullptr : &(*found);
+   if (found != targets.end())
+      return &(*found);
+
+   // a target of the export extension whose export is in progress
+   const auto* pExtension = GetActiveExtensionContent();
+   return pExtension ? pExtension->FindTarget(name) : nullptr;
 }
 
 namespace
@@ -449,6 +455,14 @@ std::string_view GetElementRoleName(ElementKind kind)
       if (k == kind)
          return name;
    }
+
+   // an element role of the export extension whose export is in progress
+   if (const auto* pExtension = GetActiveExtensionContent())
+   {
+      if (const auto* role = pExtension->FindRole(kind))
+         return role->name;
+   }
+
    ASSERT(false); // every kind should have a name
    return "";
 }
@@ -463,6 +477,15 @@ bool GetElementKind(std::string_view role_name, ElementKind& kind)
          return true;
       }
    }
+
+   if (const auto* pExtension = GetActiveExtensionContent())
+   {
+      if (const auto* role = pExtension->FindRole(role_name))
+      {
+         kind = role->kind;
+         return true;
+      }
+   }
    return false;
 }
 
@@ -473,12 +496,13 @@ ElementKind GetTargetElement(ElementKind role)
 
 bool HasUnit(ValueKind kind)
 {
-   return kind == ValueKind::Stress || kind == ValueKind::Length || kind == ValueKind::Angle || kind == ValueKind::Force || kind == ValueKind::Area || kind == ValueKind::Mass;
+   return kind == ValueKind::Stress || kind == ValueKind::Length || kind == ValueKind::Angle || kind == ValueKind::Force || kind == ValueKind::Area || kind == ValueKind::Mass ||
+      kind == ValueKind::Time || kind == ValueKind::LinearForce || kind == ValueKind::MassDensity || kind == ValueKind::Moment;
 }
 
 bool IsNumeric(ValueKind kind)
 {
-   return HasUnit(kind) || kind == ValueKind::Ratio || kind == ValueKind::Count;
+   return HasUnit(kind) || kind == ValueKind::Ratio || kind == ValueKind::Count || kind == ValueKind::Real;
 }
 
 std::string_view GetValueKindName(ValueKind kind)
@@ -496,6 +520,11 @@ std::string_view GetValueKindName(ValueKind kind)
    case ValueKind::Boolean: return "boolean";
    case ValueKind::Text: return "text";
    case ValueKind::TextList: return "text list";
+   case ValueKind::Time: return "time";
+   case ValueKind::LinearForce: return "linear force";
+   case ValueKind::MassDensity: return "mass density";
+   case ValueKind::Real: return "number";
+   case ValueKind::Moment: return "moment";
    }
    ASSERT(false);
    return "";

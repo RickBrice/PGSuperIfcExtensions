@@ -39,6 +39,7 @@
 #include <IFace\ExtendUI.h>
 #include "GeoReferencingPage.h"
 #include "GeoReferencing.h"
+#include "Include\IfcExport\IfcModelBuilder.h"
 
 class CIfcCommandLineInfo;
 
@@ -47,6 +48,7 @@ class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheri
    public WBFL::EAF::IAgentPersist,
    public WBFL::EAF::IAgentUIIntegration,
    public IGeoreferencing,
+   public IIfcModelBuilder,
    public IEditAlignmentCallback,
    public WBFL::EAF::ICommandCallback,
    public IEAFProcessCommandLine
@@ -78,6 +80,13 @@ public:
 public:
    void SetGeoreferencingData(const GeoreferencingData& data) override;
    const GeoreferencingData& GetGeoreferencingData() const override;
+
+// IIfcModelBuilder
+public:
+   int GetApiVersion() const override;
+   std::string GetBuildFingerprint() const override;
+   IfcBuildResult BuildModel(const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension) override;
+   IfcBuildResult WriteTableIds(const CString& strMappingTable, const CString& strIdsPath, IIfcExportExtension* extension) override;
 
 // IEditAlignmentCallback
 public:
