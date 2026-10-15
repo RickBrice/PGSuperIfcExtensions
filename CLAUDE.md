@@ -17,6 +17,7 @@ Project knowledge that isn't in the code or git history. The design notes are in
 ## Direction (2026-10-15)
 - **The standard is data, not code.** The current target is usBridge: the IDS files and `usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx` (IFC classes, predefined types, usBridge classification names, property sets with cardinality and enumerations, and the spatial hierarchy) in the user's OneDrive (BIM for Bridges\usBridge). They will change, and other standards must be usable too.
 - Strive first to minimize, then to eliminate, C++ changes and DLL rebuilds when a standard changes. Expect this to need PGSuper API improvements and documentation (data PGSuper exposes, with names, units, and meaning).
+- PGSuper/PGSplice are girder design programs, not IFC modeling tools, so some gaps are inevitable. Information PGSuper doesn't have can be added by the plugin and stored with the project, as georeferencing is. Not every usBridge requirement needs to be met.
 - Prefer solutions that move standard-specific content (property sets, names, classes, structure) into mapping tables or other data files over adding it to the C++.
 
 ## Design decisions to keep
