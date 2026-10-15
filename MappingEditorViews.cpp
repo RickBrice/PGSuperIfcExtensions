@@ -32,8 +32,45 @@
 #include "MappingEditorModelPane.h"
 #include "MappingEditorUtil.h"
 #include "IfcTargets.h"
+#include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
+
+#include <EAF\Help.h>
 
 using namespace mapping_editor;
+
+UINT GetMappingHelpID(const MappingNode& node)
+{
+   switch (node.kind)
+   {
+   case MappingNode::Kind::Table: return IDH_MAPPING_TABLE;
+   case MappingNode::Kind::Roles:
+   case MappingNode::Kind::Role: return IDH_MAPPING_ELEMENT_ROLES;
+   case MappingNode::Kind::Targets:
+   case MappingNode::Kind::TargetGroup:
+   case MappingNode::Kind::Target: return IDH_MAPPING_TARGETS;
+   case MappingNode::Kind::PropertySets:
+   case MappingNode::Kind::PropertySetGroup:
+   case MappingNode::Kind::PropertySet:
+   case MappingNode::Kind::QuantitySets:
+   case MappingNode::Kind::QuantitySetGroup:
+   case MappingNode::Kind::QuantitySet: return IDH_MAPPING_PROPERTY_SETS;
+   case MappingNode::Kind::ClassificationSystems:
+   case MappingNode::Kind::ClassificationSystem:
+   case MappingNode::Kind::Classifications:
+   case MappingNode::Kind::ClassificationGroup:
+   case MappingNode::Kind::Classification: return IDH_MAPPING_CLASSIFICATIONS;
+   case MappingNode::Kind::Model: return IDH_MAPPING_MODEL;
+   }
+   return IDH_MAPPING_EDITOR;
+}
+
+void ShowMappingHelp(UINT nHID)
+{
+   // the help window and the documents belong to the application's module state; panes and dialogs ask for help
+   // in the DLL's module state
+   AFX_MANAGE_STATE(AfxGetAppModuleState());
+   EAFHelp(MAPPING_EDITOR_DOCSET, nHID);
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // CMappingEditorFrame
@@ -77,7 +114,15 @@ static const UINT WM_MAPPING_REBUILD = WM_APP + 1;
 BEGIN_MESSAGE_MAP(CMappingTreeView, CTreeView)
    ON_NOTIFY_REFLECT(TVN_SELCHANGED, &CMappingTreeView::OnSelChanged)
    ON_MESSAGE(WM_MAPPING_REBUILD, &CMappingTreeView::OnRebuild)
+   ON_WM_HELPINFO()
 END_MESSAGE_MAP()
+
+BOOL CMappingTreeView::OnHelpInfo(HELPINFO* pHelpInfo)
+{
+   HTREEITEM hItem = GetTreeCtrl().GetSelectedItem();
+   ShowMappingHelp(hItem ? GetMappingHelpID(m_Nodes[GetTreeCtrl().GetItemData(hItem)]) : IDH_MAPPING_EDITOR);
+   return TRUE;
+}
 
 CMappingEditorDoc* CMappingTreeView::GetDocument() const
 {
@@ -98,6 +143,10 @@ void CMappingTreeView::OnInitialUpdate()
 
 void CMappingTreeView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 {
+   // the view's windows belong to the application's module state; updates can come from panes and commands
+   // that run in the DLL's module state
+   AFX_MANAGE_STATE(AfxGetAppModuleState());
+
    if (lHint == CMappingEditorDoc::HINT_STRUCTURE)
    {
       if (m_bInSelChange)
@@ -166,6 +215,7 @@ HTREEITEM CMappingTreeView::Add(HTREEITEM hParent, const CString& label, Mapping
 
 void CMappingTreeView::Build()
 {
+   AFX_MANAGE_STATE(AfxGetAppModuleState()); // see OnUpdate
    CTreeCtrl& tree = GetTreeCtrl();
    const auto& table = GetDocument()->GetTable();
 
@@ -455,30 +505,59 @@ void CMappingDetailView::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 
 void CMappingDetailView::ShowNode(MappingNode node)
 {
-   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   // MFC keeps a window handle map for each module state, and a window must be used in the state it was created in.
+   // This view was created by the framework in the application's module state. The panes are created in the DLL's
+   // module state, where their dialog templates are.
+   AFX_MANAGE_STATE(AfxGetAppModuleState());
 
    if (m_pPane)
    {
       // a field being edited is written to the table when it loses the focus
       SetFocus();
-      m_pPane->DestroyWindow();
-      m_pPane.reset();
+      {
+         AFX_MANAGE_STATE(AfxGetStaticModuleState());
+         m_pPane->DestroyWindow();
+         m_pPane.reset();
+      }
    }
 
+   // the tree selects its first item in its OnInitialUpdate, which can come before this view's OnInitialUpdate
+   if (m_nMapMode <= 0)
+      SetScrollSizes(MM_TEXT, CSize(1, 1));
    ScrollToPosition(CPoint(0, 0));
-   m_pPane = CreateMappingPane(node, GetDocument());
-   if (m_pPane && m_pPane->CreatePane(this))
+
+   bool bCreated = false;
    {
-      CRect rect;
-      m_pPane->GetWindowRect(&rect); // the dialog template's size
-      m_PaneSize = rect.Size();
+      AFX_MANAGE_STATE(AfxGetStaticModuleState());
+      m_pPane = CreateMappingPane(node, GetDocument());
+
+      // MFC validates the parent in the current module state, where this view isn't in the handle map.
+      // A temporary CWnd for this view in the DLL's module state is (CDialog::DoModal does the same).
+      CWnd* pParent = CWnd::FromHandle(GetSafeHwnd());
+      if (m_pPane)
+         m_pPane->SetHelpID(GetMappingHelpID(node));
+      if (m_pPane && m_pPane->CreatePane(pParent))
+      {
+         bCreated = true;
+         CRect rect;
+         m_pPane->GetWindowRect(&rect); // the dialog template's size
+         m_PaneSize = rect.Size();
+      }
+      else
+      {
+         m_pPane.reset();
+      }
+   }
+
+   if (bCreated)
+   {
       SetScrollSizes(MM_TEXT, m_PaneSize);
       SizePane();
+      AFX_MANAGE_STATE(AfxGetStaticModuleState());
       m_pPane->ShowWindow(SW_SHOW);
    }
    else
    {
-      m_pPane.reset();
       m_PaneSize = CSize(0, 0);
       SetScrollSizes(MM_TEXT, CSize(1, 1));
    }
@@ -498,6 +577,7 @@ void CMappingDetailView::SizePane()
       CRect rect;
       GetClientRect(&rect);
       CPoint scroll = GetScrollPosition();
+      AFX_MANAGE_STATE(AfxGetStaticModuleState()); // the pane's module state (see ShowNode)
       m_pPane->SetWindowPos(nullptr, -scroll.x, -scroll.y, std::max(rect.Width(), (int)m_PaneSize.cx), std::max(rect.Height(), (int)m_PaneSize.cy), SWP_NOZORDER | SWP_NOACTIVATE);
    }
 }
@@ -505,7 +585,11 @@ void CMappingDetailView::SizePane()
 BOOL CMappingDetailView::PreTranslateMessage(MSG* pMsg)
 {
    // tab between the pane's controls
-   if (m_pPane && m_pPane->GetSafeHwnd() && m_pPane->IsDialogMessage(pMsg))
-      return TRUE;
+   if (m_pPane && m_pPane->GetSafeHwnd())
+   {
+      AFX_MANAGE_STATE(AfxGetStaticModuleState()); // the pane's module state (see ShowNode)
+      if (m_pPane->IsDialogMessage(pMsg))
+         return TRUE;
+   }
    return CScrollView::PreTranslateMessage(pMsg);
 }

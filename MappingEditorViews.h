@@ -57,6 +57,13 @@ struct MappingNode
    bool Matches(const MappingNode& target) const { return kind == target.kind && index == target.index && (target.key.empty() || key == target.key); }
 };
 
+// The editor's documentation set (Documentation\MappingTableEditor) and the help topic of a tree node
+constexpr LPCTSTR MAPPING_EDITOR_DOCSET = _T("IfcMappingTableEditor");
+UINT GetMappingHelpID(const MappingNode& node);
+
+// Shows a help topic of the editor's documentation set
+void ShowMappingHelp(UINT nHID);
+
 // UpdateAllViews hint object for CMappingEditorDoc::HINT_SELECT
 class CMappingSelectHint : public CObject
 {
@@ -80,6 +87,7 @@ protected:
 
    afx_msg void OnSelChanged(NMHDR* pNMHDR, LRESULT* pResult);
    afx_msg LRESULT OnRebuild(WPARAM wParam, LPARAM lParam);
+   afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
    DECLARE_MESSAGE_MAP()
 
 private:

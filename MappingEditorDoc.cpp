@@ -35,6 +35,8 @@
 #include <EAF\EAFMainFrame.h>
 #include <EAF\EAFResources.h>
 #include <EAF\EAFUtilities.h>
+#include <EAF\Help.h>
+#include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
 
 #include <fstream>
 #include <sstream>
@@ -55,7 +57,14 @@ std::string CStringToUtf8(const CString& text)
 BEGIN_MESSAGE_MAP(CMappingFromIdsDlg, CDialog)
    ON_BN_CLICKED(IDC_FROMIDS_IDS_BROWSE, &CMappingFromIdsDlg::OnBrowseIds)
    ON_BN_CLICKED(IDC_FROMIDS_BINDING_BROWSE, &CMappingFromIdsDlg::OnBrowseBinding)
+   ON_WM_HELPINFO()
 END_MESSAGE_MAP()
+
+BOOL CMappingFromIdsDlg::OnHelpInfo(HELPINFO* pHelpInfo)
+{
+   ShowMappingHelp(IDH_MAPPING_IDS);
+   return TRUE;
+}
 
 void CMappingFromIdsDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -98,6 +107,8 @@ void CMappingFromIdsDlg::OnBrowseBinding()
 
 BOOL CMappingEditorPlugin::Init(CEAFApp* pParent)
 {
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   m_DocumentationImpl.Init(std::dynamic_pointer_cast<WBFL::EAF::IPluginApp>(shared_from_this()));
    return TRUE;
 }
 
@@ -132,26 +143,32 @@ CString CMappingEditorPlugin::GetName()
 
 CString CMappingEditorPlugin::GetDocumentationSetName()
 {
-   return GetName();
+   // the folder and URL of the documentation (Documentation\MappingTableEditor\BuildDocumentation.bat)
+   return MAPPING_EDITOR_DOCSET;
 }
 
 CString CMappingEditorPlugin::GetDocumentationURL()
 {
-   return CString(); // no online documentation yet
+   AFX_MANAGE_STATE(AfxGetStaticModuleState()); // the version comes from this DLL
+   return m_DocumentationImpl.GetDocumentationURL();
 }
 
 CString CMappingEditorPlugin::GetDocumentationMapFile()
 {
-   return CString();
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   return m_DocumentationImpl.GetDocumentationMapFile();
 }
 
 void CMappingEditorPlugin::LoadDocumentationMap()
 {
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   m_DocumentationImpl.LoadDocumentationMap();
 }
 
 std::pair<WBFL::EAF::HelpResult, CString> CMappingEditorPlugin::GetDocumentLocation(LPCTSTR lpszDocSetName, UINT nID)
 {
-   return { WBFL::EAF::HelpResult::DocSetNotFound, CString() };
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   return m_DocumentationImpl.GetDocumentLocation(lpszDocSetName, nID);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -187,11 +204,29 @@ BEGIN_MESSAGE_MAP(CMappingEditorDoc, CEAFDocument)
    ON_COMMAND(ID_MAPPING_FROM_IDS, &CMappingEditorDoc::OnGenerateFromIds)
    ON_COMMAND(ID_MAPPING_OPEN_MODEL, &CMappingEditorDoc::OnOpenModel)
    ON_COMMAND(ID_MAPPING_TRY_MODEL, &CMappingEditorDoc::OnTryModel)
+   ON_COMMAND(ID_MAPPING_HELP, &CMappingEditorDoc::OnHelp)
 END_MESSAGE_MAP()
 
 CMappingEditorDoc::CMappingEditorDoc()
 {
    EnableUIHints(FALSE);
+}
+
+void CMappingEditorDoc::LoadDocumentationMap()
+{
+   // the plugin loads the map (CMappingEditorPlugin::Init). CEAFDocument::LoadDocumentationMap would also load it,
+   // and assert when the documentation isn't installed
+}
+
+std::pair<WBFL::EAF::HelpResult, CString> CMappingEditorDoc::GetDocumentLocation(LPCTSTR lpszDocSetName, UINT nHID)
+{
+   auto pluginApp = ((CEAFDocTemplate*)GetDocTemplate())->GetPluginApp();
+   return pluginApp->GetDocumentLocation(lpszDocSetName, nHID);
+}
+
+void CMappingEditorDoc::OnHelp()
+{
+   ShowMappingHelp(IDH_MAPPING_EDITOR);
 }
 
 void CMappingEditorDoc::TableChanged(bool bStructure)
@@ -345,6 +380,7 @@ void CMappingEditorDoc::OnTryModel()
 
 void CMappingEditorDoc::CommitPendingEdit()
 {
+   AFX_MANAGE_STATE(AfxGetAppModuleState()); // the main frame belongs to the application's module state
    if (CWnd* pFrame = EAFGetMainFrame())
       pFrame->SetFocus();
 }
@@ -546,12 +582,15 @@ void CMappingEditorDoc::OnGenerateFromIds()
       // a new table, to be saved
       m_strPathName.Empty();
       SetTitle(_T("Untitled"));
-      for (POSITION pos = GetFirstViewPosition(); pos; )
       {
-         if (CFrameWnd* pFrame = GetNextView(pos)->GetParentFrame())
-            pFrame->OnUpdateFrameTitle(TRUE);
+         AFX_MANAGE_STATE(AfxGetAppModuleState()); // the frames belong to the application's module state
+         for (POSITION pos = GetFirstViewPosition(); pos; )
+         {
+            if (CFrameWnd* pFrame = GetNextView(pos)->GetParentFrame())
+               pFrame->OnUpdateFrameTitle(TRUE);
+         }
+         static_cast<CFrameWnd*>(EAFGetMainFrame())->OnUpdateFrameTitle(TRUE); // public in CFrameWnd, virtual
       }
-      static_cast<CFrameWnd*>(EAFGetMainFrame())->OnUpdateFrameTitle(TRUE); // public in CFrameWnd, virtual
       LoadBaseTable();
       SetModifiedFlag(TRUE);
       UpdateAllViews(nullptr, HINT_STRUCTURE);

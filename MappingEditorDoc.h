@@ -37,6 +37,7 @@
 #include <EAF\EAFDocTemplate.h>
 #include <EAF\ComponentObject.h>
 #include <EAF\PluginApp.h>
+#include <EAF\PluginAppDocumentationImpl.h>
 #include <nlohmann/json.hpp>
 
 #include "IfcMappingTable.h"
@@ -65,6 +66,7 @@ protected:
    void OnOK() override;
    afx_msg void OnBrowseIds();
    afx_msg void OnBrowseBinding();
+   afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
    DECLARE_MESSAGE_MAP()
 };
 
@@ -83,6 +85,9 @@ public:
    CString GetDocumentationMapFile() override;
    void LoadDocumentationMap() override;
    std::pair<WBFL::EAF::HelpResult, CString> GetDocumentLocation(LPCTSTR lpszDocSetName, UINT nID) override;
+
+private:
+   WBFL::EAF::PluginAppDocumentationImpl m_DocumentationImpl;
 };
 
 class CMappingEditorDocTemplate : public CEAFDocTemplate
@@ -111,6 +116,10 @@ public:
    static constexpr LPARAM HINT_SELECT = 3;    // select a tree node (CMappingSelectHint), after the tree is rebuilt
 
    nlohmann::ordered_json& GetTable() { return m_Table; }
+
+   // Help topics come from the plugin's documentation map (IfcMappingTableEditor.dm)
+   void LoadDocumentationMap() override;
+   std::pair<WBFL::EAF::HelpResult, CString> GetDocumentLocation(LPCTSTR lpszDocSetName, UINT nHID) override;
 
    // Called by the panes after they change the table
    void TableChanged(bool bStructure);
@@ -164,6 +173,7 @@ protected:
    afx_msg void OnGenerateFromIds();
    afx_msg void OnOpenModel();
    afx_msg void OnTryModel();
+   afx_msg void OnHelp();
    DECLARE_MESSAGE_MAP()
 
 private:

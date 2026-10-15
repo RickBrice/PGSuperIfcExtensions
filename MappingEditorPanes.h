@@ -38,9 +38,16 @@ public:
 
    BOOL CreatePane(CWnd* pParent) { return Create(m_nIDTemplate, pParent); }
 
+   // the help topic F1 shows (IfcMappingTableEditor.hh)
+   void SetHelpID(UINT nHID) { m_nHelpID = nHID; }
+
 protected:
    UINT m_nIDTemplate;
+   UINT m_nHelpID = 100; // IDH_MAPPING_EDITOR
    CMappingEditorDoc* m_pDoc;
+
+   afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+   DECLARE_MESSAGE_MAP()
 
    // Enter and Esc don't close a pane
    void OnOK() override {}
@@ -146,6 +153,7 @@ protected:
    void OnOK() override;
    afx_msg void OnKindChanged();
    afx_msg void OnParseChanged();
+   afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
    DECLARE_MESSAGE_MAP()
 
 private:

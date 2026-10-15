@@ -26,6 +26,8 @@
 #include "stdafx.h"
 #include "resource.h"
 #include "MappingEditorExportPanes.h"
+#include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
+#include "MappingEditorViews.h"
 #include "MappingEditorDoc.h"
 #include "MappingEditorUtil.h"
 #include "bSDD.h"
@@ -878,7 +880,14 @@ BEGIN_MESSAGE_MAP(CPropertyDlg, CDialog)
    ON_BN_CLICKED(IDC_PROP_NONE, &CPropertyDlg::OnBindingChanged)
    ON_BN_CLICKED(IDC_PROP_BIND_TARGET, &CPropertyDlg::OnBindingChanged)
    ON_BN_CLICKED(IDC_PROP_BIND_VALUE, &CPropertyDlg::OnBindingChanged)
+   ON_WM_HELPINFO()
 END_MESSAGE_MAP()
+
+BOOL CPropertyDlg::OnHelpInfo(HELPINFO* pHelpInfo)
+{
+   ShowMappingHelp(IDH_MAPPING_PROPERTY);
+   return TRUE;
+}
 
 CPropertyDlg::CPropertyDlg(bool bQuantity, const std::vector<std::string>& roles, const ordered_json& property, CWnd* pParent)
    : CDialog(IDD_MAPPING_PROPERTY, pParent), m_Property(property), m_bQuantity(bQuantity), m_Roles(roles)

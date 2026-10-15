@@ -30,6 +30,8 @@
 #include "IfcMappingTable.h"
 #include "MappingEditorUtil.h"
 #include "MappingEditorExportPanes.h"
+#include "MappingEditorViews.h"
+#include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
 #include "MappingEditorModelPane.h"
 
 #include <sstream>
@@ -721,13 +723,33 @@ void CInfoPane::OnSize(UINT nType, int cx, int cy)
 /////////////////////////////////////////////////////////////////////////////
 // CLocationDlg
 
+BEGIN_MESSAGE_MAP(CMappingPane, CDialog)
+   ON_WM_HELPINFO()
+END_MESSAGE_MAP()
+
+BOOL CMappingPane::OnHelpInfo(HELPINFO* pHelpInfo)
+{
+   ShowMappingHelp(m_nHelpID);
+   return TRUE;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// CLocationDlg
+
 BEGIN_MESSAGE_MAP(CLocationDlg, CDialog)
    ON_BN_CLICKED(IDC_LOC_PROPERTY, &CLocationDlg::OnKindChanged)
    ON_BN_CLICKED(IDC_LOC_ATTRIBUTE, &CLocationDlg::OnKindChanged)
    ON_BN_CLICKED(IDC_LOC_TYPE_ATTRIBUTE, &CLocationDlg::OnKindChanged)
    ON_BN_CLICKED(IDC_LOC_CLASSIFICATION, &CLocationDlg::OnKindChanged)
    ON_CBN_SELCHANGE(IDC_LOC_PARSE, &CLocationDlg::OnParseChanged)
+   ON_WM_HELPINFO()
 END_MESSAGE_MAP()
+
+BOOL CLocationDlg::OnHelpInfo(HELPINFO* pHelpInfo)
+{
+   ShowMappingHelp(IDH_MAPPING_LOCATION);
+   return TRUE;
+}
 
 namespace
 {

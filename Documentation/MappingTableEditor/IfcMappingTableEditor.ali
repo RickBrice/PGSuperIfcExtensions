@@ -1,0 +1,12 @@
+IDH_MAPPING_EDITOR=index.html
+IDH_MAPPING_TABLE=table.html
+IDH_MAPPING_ELEMENT_ROLES=element_roles.html
+IDH_MAPPING_TARGETS=targets.html
+IDH_MAPPING_LOCATION=locations.html
+IDH_MAPPING_PROPERTY_SETS=property_sets.html
+IDH_MAPPING_PROPERTY=property_sets.html#property_dialog
+IDH_MAPPING_CLASSIFICATIONS=classifications.html
+IDH_MAPPING_IDS=ids.html
+IDH_MAPPING_MODEL=model.html
+IDH_MAPPING_CHOOSING_TABLE=choosing_table.html
+IDH_MAPPING_REFERENCE=reference.html

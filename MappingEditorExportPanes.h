@@ -123,6 +123,7 @@ protected:
    BOOL OnInitDialog() override;
    void OnOK() override;
    afx_msg void OnBindingChanged();
+   afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
    DECLARE_MESSAGE_MAP()
 
 private:

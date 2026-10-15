@@ -210,6 +210,7 @@
 #define ID_MAPPING_FROM_IDS             32775
 #define ID_MAPPING_OPEN_MODEL           32776
 #define ID_MAPPING_TRY_MODEL            32777
+#define ID_MAPPING_HELP                 32778
 #define IDD_MAPPING_MODEL_PANE          397
 #define IDC_MODEL_INFO                  398
 #define IDC_MODEL_OPEN                  399
@@ -231,7 +232,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        406
-#define _APS_NEXT_COMMAND_VALUE         32778
+#define _APS_NEXT_COMMAND_VALUE         32779
 #define _APS_NEXT_CONTROL_VALUE         406
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
