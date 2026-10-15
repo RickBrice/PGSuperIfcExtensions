@@ -1,58 +1,58 @@
-[Info] [2026-10-15 11:12:36] Starting IFC import from file
-[Info] [2026-10-15 11:12:36] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
-[Info] [2026-10-15 11:12:37] Initializing units and precision from IFC file.
-[Info] [2026-10-15 11:12:37] Importing alignment data from IFC file...
-[Info] [2026-10-15 11:12:37] Importing from bridge IFC file.
-[Info] [2026-10-15 11:12:37] Abutment 1 orientation NORMAL (from positioning referent)
-[Info] [2026-10-15 11:12:37] Pier 2 orientation NORMAL (from positioning referent)
-[Info] [2026-10-15 11:12:37] Pier 3 orientation NORMAL (from positioning referent)
-[Info] [2026-10-15 11:12:37] Abutment 4 orientation NORMAL (from positioning referent)
-[Info] [2026-10-15 11:12:37] Girder type of Span 1, Girder 1 ("WF66G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
-[Info] [2026-10-15 11:12:37] Girder type of Span 2, Girder 1 ("WF100G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
-[Info] [2026-10-15 11:12:37] f'ci of Span 1, Girder 1 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 1, Girder 1 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 1, Girder 2 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 1, Girder 2 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 1, Girder 3 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 1, Girder 3 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 1, Girder 4 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 1, Girder 4 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 2, Girder 1 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 2, Girder 1 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 2, Girder 2 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 2, Girder 2 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 2, Girder 3 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 2, Girder 3 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 2, Girder 4 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 2, Girder 4 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 2, Girder 5 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 2, Girder 5 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 3, Girder 1 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 3, Girder 1 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 3, Girder 2 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 3, Girder 2 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 3, Girder 3 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 3, Girder 3 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'ci of Span 3, Girder 4 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] f'c of Span 3, Girder 4 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-15 11:12:37] Abutment 1 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-15 11:12:37] Pier 2 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-15 11:12:37] Pier 2 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-15 11:12:37] Pier 3 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-15 11:12:37] Pier 3 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-15 11:12:37] Abutment 4 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-15 11:12:37] The bearing fixed along the girder of Abutment 1, Girder 1 wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
-[Info] [2026-10-15 11:12:37] Bearings: the same bearing everywhere, rectangular, 12.000 in x 47.000 in, height 1.725 in
-[Info] [2026-10-15 11:12:38] Deck gross depth 7.500 in (from deck geometry)
-[Info] [2026-10-15 11:12:38] Left overhang edge depth 7.000 in (from deck geometry)
-[Info] [2026-10-15 11:12:38] Left overhang taper: taper to top of girder top flange (from deck geometry)
-[Info] [2026-10-15 11:12:38] Right overhang edge depth 7.000 in (from deck geometry)
-[Info] [2026-10-15 11:12:38] Right overhang taper: taper to top of girder top flange (from deck geometry)
-[Info] [2026-10-15 11:12:38] Haunch shape: filleted (from deck geometry)
-[Info] [2026-10-15 11:12:38] Fillet 0.750 in (from deck geometry)
-[Info] [2026-10-15 11:12:38] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-10-15 11:12:38] Slab offset for the bridge 9.500 in (from deck geometry)
-[Info] [2026-10-15 11:12:38] The bearing fixed along the girder also wasn't found for 25 more elements.
-[Info] [2026-10-15 11:12:38] Done IFC import from file
+[Info] [2026-10-15 12:16:17] Starting IFC import from file
+[Info] [2026-10-15 12:16:17] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
+[Info] [2026-10-15 12:16:17] Initializing units and precision from IFC file.
+[Info] [2026-10-15 12:16:17] Importing alignment data from IFC file...
+[Info] [2026-10-15 12:16:17] Importing from bridge IFC file.
+[Info] [2026-10-15 12:16:18] Abutment 1 orientation NORMAL (from positioning referent)
+[Info] [2026-10-15 12:16:18] Pier 2 orientation NORMAL (from positioning referent)
+[Info] [2026-10-15 12:16:18] Pier 3 orientation NORMAL (from positioning referent)
+[Info] [2026-10-15 12:16:18] Abutment 4 orientation NORMAL (from positioning referent)
+[Info] [2026-10-15 12:16:18] Girder type of Span 1, Girder 1 ("WF66G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-10-15 12:16:18] Girder type of Span 2, Girder 1 ("WF100G") was not found in the library. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-10-15 12:16:18] f'ci of Span 1, Girder 1 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 1, Girder 1 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 1, Girder 2 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 1, Girder 2 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 1, Girder 3 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 1, Girder 3 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 1, Girder 4 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 1, Girder 4 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 2, Girder 1 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 2, Girder 1 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 2, Girder 2 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 2, Girder 2 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 2, Girder 3 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 2, Girder 3 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 2, Girder 4 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 2, Girder 4 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 2, Girder 5 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 2, Girder 5 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 3, Girder 1 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 3, Girder 1 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 3, Girder 2 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 3, Girder 2 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 3, Girder 3 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 3, Girder 3 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'ci of Span 3, Girder 4 = 4.000 ksi, "4" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] f'c of Span 3, Girder 4 = 5.000 ksi, "5" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-15 12:16:18] Abutment 1 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-15 12:16:18] Pier 2 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-15 12:16:18] Pier 2 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-15 12:16:18] Pier 3 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-15 12:16:18] Pier 3 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-15 12:16:18] Abutment 4 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-15 12:16:18] The bearing fixed along the girder of Abutment 1, Girder 1 wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
+[Info] [2026-10-15 12:16:18] Bearings: the same bearing everywhere, rectangular, 12.000 in x 47.000 in, height 1.725 in
+[Info] [2026-10-15 12:16:19] Deck gross depth 7.500 in (from deck geometry)
+[Info] [2026-10-15 12:16:19] Left overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-10-15 12:16:19] Left overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-10-15 12:16:19] Right overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-10-15 12:16:19] Right overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-10-15 12:16:19] Haunch shape: filleted (from deck geometry)
+[Info] [2026-10-15 12:16:19] Fillet 0.750 in (from deck geometry)
+[Info] [2026-10-15 12:16:19] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-10-15 12:16:19] Slab offset for the bridge 9.500 in (from deck geometry)
+[Info] [2026-10-15 12:16:19] The bearing fixed along the girder also wasn't found for 25 more elements.
+[Info] [2026-10-15 12:16:19] Done IFC import from file
 IFC import succeeded
 Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Display.pgs

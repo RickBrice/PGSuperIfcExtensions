@@ -325,7 +325,8 @@
       "name": "Pset_ConcreteElementGeneral", "applies_to": "girder", "attach": "type", "condition": "always",
       "properties": [
         {"name": "AssemblyPlace", "type": "IfcLabel", "value": "FACTORY", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
-        {"name": "CastingMethod", "type": "IfcLabel", "value": "PRECAST", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}}
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "PRECAST", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "StrengthClass", "type": "IfcLabel", "value": "Override on entity instance"}
       ]
     },
     {
