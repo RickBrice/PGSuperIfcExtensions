@@ -55,9 +55,22 @@ CMappingTableConfigPage::CMappingTableConfigPage() : CPropertyPage(IDD_MAPPING_C
    m_psp.pszHeaderSubTitle = _T("Choose the mapping table that IFC imports and exports use");
 }
 
+CMappingTableConfigPage::~CMappingTableConfigPage()
+{
+   if (m_hLogo)
+      ::DeleteObject(m_hLogo);
+}
+
 BOOL CMappingTableConfigPage::OnInitDialog()
 {
    CPropertyPage::OnInitDialog();
+
+   // the bSI logo is the 13x13 menu bitmap, shown three times as large. LoadImage stretches it; the page runs in the
+   // application's module state, so the bitmap comes from the DLL's resources explicitly
+   if (!m_hLogo)
+      m_hLogo = (HBITMAP)::LoadImage(AfxGetStaticModuleState()->m_hCurrentResourceHandle, MAKEINTRESOURCE(IDB_BSI), IMAGE_BITMAP, 39, 39, LR_DEFAULTCOLOR);
+   if (m_hLogo)
+      SendDlgItemMessage(IDC_MAPPING_LOGO, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)m_hLogo);
 
    m_Chooser.Init(this, _T("Standard table (installed with the IFC extension)"), CIfcMappingTable::STANDARD_TABLE,
       MappingTableSource::InstalledStandard, MappingTableSource::ConfigurationSetting);

@@ -295,8 +295,8 @@ void CTablePane::OnExtendsChanged()
 
 void CTablePane::OnBrowseExtends()
 {
-   CFileDialog dlg(TRUE, _T("json"), nullptr, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
-      _T("IFC Mapping Tables (*.json)|*.json|All Files (*.*)|*.*||"), this);
+   CFileDialog dlg(TRUE, _T("ifcmap"), nullptr, OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
+      _T("IFC Mapping Tables (*.ifcmap)|*.ifcmap|JSON Files (*.json)|*.json|All Files (*.*)|*.*||"), this);
    if (dlg.DoModal() != IDOK)
       return;
 

@@ -48,7 +48,7 @@ Which table is used
 
 The first of these is used:
 
-1. `/IfcMapping=<table.json>` on the command line.
+1. `/IfcMapping=<table.ifcmap>` on the command line.
 2. The table chosen in the IFC Import window or on the Mapping Table tab of the export options. For an export from the command line without `/IfcMapping`, the project's table.
 3. The configured table.
 4. The standard table installed with the IFC extension.
@@ -71,9 +71,9 @@ Command line
 
 | Command | What it does |
 |---|---|
-| `/IfcMapping=<table.json>` | Uses this table for an `/IfcImport` or `/IfcExport`, in place of the configured table or the project's table. |
+| `/IfcMapping=<table.ifcmap>` | Uses this table for an `/IfcImport` or `/IfcExport`, in place of the configured table or the project's table. |
 | `/IfcIdsToTable=<agency.ids>` | Makes a table from an IDS (`/IfcTable=` names the table to write). See @ref ids. |
 | `/IfcTableToIds=<table.ids>` | Writes the configured table, or the `/IfcMapping=` table, as a general IDS. See @ref ids. |
-| `/IfcFormatTable=<table.json>` | Rewrites a table file in the standard table's style, as the editor does. |
+| `/IfcFormatTable=<table.ifcmap>` | Rewrites a table file in the standard table's style, as the editor does. |
 
 Imports and exports from the command line don't change the table a project remembers, or the list of recently used tables.

@@ -243,7 +243,8 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
 CAPTION "IFC Extension"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "The mapping table says where IFC imports and exports read and write each value. The configured table applies to PGSuper and PGSplice. An IFC import or export can choose another table, and /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,7,7,331,26
+    CONTROL         "",IDC_MAPPING_LOGO,"Static",SS_BITMAP | SS_CENTERIMAGE,7,7,28,26
+    LTEXT           "The mapping table says where IFC imports and exports read and write each value. The configured table applies to PGSuper and PGSplice. An IFC import or export can choose another table, and /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,41,7,297,26
     CONTROL         "Standard table (installed with the IFC extension)",IDC_MAPPING_STANDARD,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,38,331,10
     CONTROL         "Another table:",IDC_MAPPING_AGENCY,"Button",BS_AUTORADIOBUTTON,7,53,331,10
@@ -691,7 +692,7 @@ BEGIN
     ID_MAPPING_OPEN_MODEL   "Open an IFC model to pick properties from and to try the table on\nOpen Model"
     ID_MAPPING_TRY_MODEL    "Read every target from the model with the table, as an import would\nTry on Model"
     ID_MAPPING_HELP         "Show the IFC Mapping Table Editor documentation\nHelp"
-    IDR_MAPPING_EDITOR      "\nIfcMapping\nIFC Mapping Table\nIFC Mapping Tables (*.json)\n.json\nPGSuperIfc.MappingTable\nIFC Mapping Table"
+    IDR_MAPPING_EDITOR      "\nIfcMapping\nIFC Mapping Table\nIFC Mapping Tables (*.ifcmap;*.json)\n.ifcmap;.json\nPGSuperIfc.MappingTable\nIFC Mapping Table"
 END
 
 #endif    // English (United States) resources

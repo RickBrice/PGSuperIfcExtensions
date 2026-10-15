@@ -229,7 +229,7 @@ public:
    // Names the installed standard table where a table file can be given (project memory, the recent tables)
    static constexpr const wchar_t* STANDARD_TABLE = L"standard";
 
-   // The standard table installed with the extension (MappingTables\Standard.json next to the extension DLL)
+   // The standard table installed with the extension (MappingTables\Standard.ifcmap next to the extension DLL)
    static std::filesystem::path GetStandardTablePath();
 
    // The configured mapping table (Configure BridgeLink wizard), stored in the registry for all BridgeLink applications.

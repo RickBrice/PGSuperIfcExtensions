@@ -1286,7 +1286,7 @@ std::filesystem::path CIfcMappingTable::GetStandardTablePath()
    wchar_t module_path[MAX_PATH];
    DWORD length = ::GetModuleFileNameW((HMODULE)&__ImageBase, module_path, MAX_PATH);
    std::filesystem::path path(std::wstring(module_path, length));
-   return path.parent_path() / L"MappingTables" / L"Standard.json";
+   return path.parent_path() / L"MappingTables" / L"Standard.ifcmap";
 }
 
 std::unique_ptr<CIfcMappingTable> CIfcMappingTable::Load(const std::filesystem::path& selected_path, MappingTableSource source, const std::string* text)

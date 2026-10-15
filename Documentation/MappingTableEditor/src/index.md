@@ -23,7 +23,7 @@ Starting the editor
 The editor is a BridgeLink application installed with the IFC extension.
 
 - **A new table:** File > New, then choose **IFC Mapping Table**. A new table extends the standard table.
-- **An existing table:** File > Open, and choose the table (`.json`).
+- **An existing table:** File > Open, and choose the table (`.ifcmap`).
 - **A table from an IDS:** Table > Generate from IDS makes a table from an agency's IDS (Information Delivery Specification). See @ref ids.
 
 The editor window

@@ -30,7 +30,7 @@ CLASS
    Command line parser for batch IFC import and export.
 
    Import an IFC model into a new PGSuper project:
-   BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>] [/IfcMapping=<table.json>]
+   BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>] [/IfcMapping=<table.ifcmap>]
 
    The template file is opened by the application as a new project. The IFC model
    is then imported into that project and the project is saved.
@@ -40,7 +40,7 @@ CLASS
    mapping table installed with the extension.
 
    Export a PGSuper project to an IFC model:
-   BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.json>] [/IfcIds=<design.ids>]
+   BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.ifcmap>] [/IfcIds=<design.ids>]
 
    The project is exported with the default export options.
    /IfcPropertyUnits=Display (default) exports property values in display units with their units,
@@ -52,15 +52,15 @@ CLASS
    (girders pinned by Name).
 
    Write a mapping table as a general IDS (devdocs/MappingTablesDesign.md, M5):
-   BridgeLink.exe /IfcTableToIds=<table.ids> <template.pgt> [/IfcMapping=<table.json>] [/IfcLog=<file.log>]
+   BridgeLink.exe /IfcTableToIds=<table.ids> <template.pgt> [/IfcMapping=<table.ifcmap>] [/IfcLog=<file.log>]
 
    Generate a mapping table from a general IDS, e.g. an agency IDS:
-   BridgeLink.exe /IfcIdsToTable=<agency.ids> <template.pgt> /IfcTable=<table.json> [/IfcBinding=<binding.json>] [/IfcTableExtends=standard|none] [/IfcLog=<file.log>]
+   BridgeLink.exe /IfcIdsToTable=<agency.ids> <template.pgt> /IfcTable=<table.ifcmap> [/IfcBinding=<binding.json>] [/IfcTableExtends=standard|none] [/IfcLog=<file.log>]
 
    The generated table extends the standard table with only what differs from it (/IfcTableExtends=standard, the default),
    or stands alone with everything the IDS has (/IfcTableExtends=none).
    Rewrite a mapping table in the style of the standard table (as the mapping table editor writes it):
-   BridgeLink.exe /IfcFormatTable=<table.json> <template.pgt> /IfcTable=<formatted.json> [/IfcLog=<file.log>]
+   BridgeLink.exe /IfcFormatTable=<table.ifcmap> <template.pgt> /IfcTable=<formatted.ifcmap> [/IfcLog=<file.log>]
 
    The template only starts the application. /IfcLog defaults to the output file name with a .log extension.
    It has the notes (what the IDS can't express) or the report (facets without an element role or target).

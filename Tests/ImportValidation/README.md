@@ -25,7 +25,7 @@ For the round trips, the export is also checked against `export_baseline/`: the 
 
 After the models, the last row ("Standard table <-> IDS") checks the standard table's round trip through a general IDS with `check_table_ids.py`. The row isn't run when `--models` is given. The script:
 - writes `results/Standard.ids` (`/IfcTableToIds`)
-- generates `results/Standard-from-ids.json` from it (`/IfcIdsToTable`, `/IfcTableExtends=none`)
+- generates `results/Standard-from-ids.ifcmap` from it (`/IfcIdsToTable`, `/IfcTableExtends=none`)
 - compares what the two tables declare, with any differences in `results/Standard-from-ids.diff.txt`
 
 Two optional entries apply to any model:
@@ -37,8 +37,8 @@ An expected file lists values in SI (PGSuper system units) by the keys that `pgs
 | Model | Source |
 |---|---|
 | `PGSuper_Import_Model.pgs` | PGSuper project: 3 spans, 4/5/4 WF girders, curved alignment |
-| `PennDOT_Rearick_Rd_323010451_STR1.ifc` | PennDOT Rearick Road Bridge #1, from OpenBridge (Quadri): single span, no alignment. Mapping table `mappings/PennDOT.json` |
-| `Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip` | Iowa DOT ADCMS pilot, US 59 over IA 92: 3 spans, no alignment. Mapping table `mappings/Iowa.json` |
+| `PennDOT_Rearick_Rd_323010451_STR1.ifc` | PennDOT Rearick Road Bridge #1, from OpenBridge (Quadri): single span, no alignment. Mapping table `mappings/PennDOT.ifcmap` |
+| `Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip` | Iowa DOT ADCMS pilot, US 59 over IA 92: 3 spans, no alignment. Mapping table `mappings/Iowa.ifcmap` |
 
 ## Scripts
 

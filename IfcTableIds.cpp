@@ -781,6 +781,6 @@ IdsToTableResult GenerateTableFromIds(const std::filesystem::path& ids_path, con
    if (!classifications.empty()) table["classifications"] = classifications;
    if (!targets.empty()) table["targets"] = targets;
 
-   result.table_json = FormatMappingTable(table); // the style of Standard.json
+   result.table_json = FormatMappingTable(table); // the style of Standard.ifcmap
    return result;
 }

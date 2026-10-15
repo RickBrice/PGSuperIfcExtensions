@@ -23,7 +23,7 @@ The standard table describes the TPF/usBridge property sets PGSuper exports. Ext
 Files
 -----
 
-Tables are JSON files (`.json`).
+Tables are JSON files with the extension `.ifcmap`. A table with the extension `.json` can be used and opened too. New tables are saved as `.ifcmap`.
 
 | Command | What it does |
 |---|---|

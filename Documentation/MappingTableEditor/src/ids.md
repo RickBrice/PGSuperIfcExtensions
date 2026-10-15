@@ -18,7 +18,7 @@ When the table is generated, a report lists how many properties got a target and
 
 The same can be done from the command line:
 
-    BridgeLink.exe /IfcIdsToTable=<agency.ids> <template.pgt> /IfcTable=<table.json> [/IfcBinding=<binding.json>] [/IfcTableExtends=standard|none] [/IfcLog=<file.log>]
+    BridgeLink.exe /IfcIdsToTable=<agency.ids> <template.pgt> /IfcTable=<table.ifcmap> [/IfcBinding=<binding.json>] [/IfcTableExtends=standard|none] [/IfcLog=<file.log>]
 
 Writing a table as an IDS
 -------------------------
@@ -29,7 +29,7 @@ An IDS can't say everything a table says. What it can't say (targets, where a se
 
 The same can be done from the command line. It writes the configured table, or the table given with `/IfcMapping=`:
 
-    BridgeLink.exe /IfcTableToIds=<table.ids> <template.pgt> [/IfcMapping=<table.json>]
+    BridgeLink.exe /IfcTableToIds=<table.ids> <template.pgt> [/IfcMapping=<table.ifcmap>]
 
 Design-value IDS
 ----------------

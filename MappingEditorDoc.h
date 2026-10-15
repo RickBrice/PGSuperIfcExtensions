@@ -29,7 +29,7 @@
    nlohmann JSON tree), so key order, comments, and anything the editor
    doesn't show are kept. Validation loads the JSON with CIfcMappingTable,
    as imports and exports do, so a table the editor accepts is a table the
-   importer accepts. Files are written in the style of Standard.json
+   importer accepts. Files are written in the style of Standard.ifcmap
    (FormatMappingTable).
 *****************************************************************************/
 
@@ -136,7 +136,7 @@ public:
    const std::string& GetBaseTableError() const { return m_BaseError; }
    void LoadBaseTable();
 
-   // The table's file, or Untitled.json in the current folder for a new table (a relative "extends" is relative to its folder)
+   // The table's file, or Untitled.ifcmap in the current folder for a new table (a relative "extends" is relative to its folder)
    std::filesystem::path GetTablePath() const;
 
    // Loads the table as imports and exports do. message: the table and the tables it extends, or the error

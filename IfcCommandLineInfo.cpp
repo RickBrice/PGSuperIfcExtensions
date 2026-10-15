@@ -224,7 +224,7 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
 CString CIfcCommandLineInfo::GetUsageMessage()
 {
    CString strMsg;
-   strMsg.Format(_T("Usage: BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>] [/IfcMapping=<table.json>]\n\n")
+   strMsg.Format(_T("Usage: BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>] [/IfcMapping=<table.ifcmap>]\n\n")
                  _T("<template.pgt> - PGSuper project template used to create the new project (e.g. IfcImportTemplate.pgt)\n")
                  _T("/IfcImport - IFC model to import\n")
                  _T("/IfcOut - PGSuper project file to create. Defaults to the IFC file name with a .pgs extension\n")

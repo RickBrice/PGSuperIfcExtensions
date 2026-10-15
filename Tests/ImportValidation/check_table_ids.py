@@ -5,7 +5,7 @@ from that IDS (/IfcIdsToTable with /IfcTableExtends=none), and the declarations 
 sets, and classifications of every element role. Material property sets aren't compared - a general
 IDS can't hold them (IDS property facets check an element's own and type property sets).
 
-Writes results/Standard.ids, results/Standard-from-ids.json, and their logs.
+Writes results/Standard.ids, results/Standard-from-ids.ifcmap, and their logs.
 
 Usage: python check_table_ids.py [--bridgelink BridgeLink.exe]  (run_validation.py runs it too)
 """
@@ -18,7 +18,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
-STANDARD = HERE.parent.parent / "MappingTables" / "Standard.json"
+STANDARD = HERE.parent.parent / "MappingTables" / "Standard.ifcmap"
 TEMPLATE = HERE.parent.parent / "IfcImportTemplate.pgt"
 BSDD = "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/"
 
@@ -74,7 +74,7 @@ def run(exe, arguments):
 def check(exe):
     """runs the round trip. Returns (ok, message)"""
     ids = RESULTS / "Standard.ids"
-    generated = RESULTS / "Standard-from-ids.json"
+    generated = RESULTS / "Standard-from-ids.ifcmap"
     for f in (ids, generated):
         f.unlink(missing_ok=True)
 
@@ -83,11 +83,11 @@ def check(exe):
         return False, "the IDS wasn't written (see results/Standard.ids.log)"
     run(exe, [f'"/IfcIdsToTable={ids}"', f'"{TEMPLATE}"', f'"/IfcTable={generated}"', "/IfcTableExtends=none"])
     if not generated.exists():
-        return False, "the table wasn't generated (see results/Standard-from-ids.json.log)"
+        return False, "the table wasn't generated (see results/Standard-from-ids.ifcmap.log)"
 
-    log = (RESULTS / "Standard-from-ids.json.log").read_text(errors="replace")
+    log = (RESULTS / "Standard-from-ids.ifcmap.log").read_text(errors="replace")
     if "The generated table is valid." not in log:
-        return False, "the generated table isn't valid (see results/Standard-from-ids.json.log)"
+        return False, "the generated table isn't valid (see results/Standard-from-ids.ifcmap.log)"
 
     standard = canonical(json.loads(STANDARD.read_text(encoding="utf-8")))
     back = canonical(json.loads(generated.read_text(encoding="utf-8")))

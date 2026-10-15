@@ -171,8 +171,8 @@ void CMappingTableChooser::OnRecentChanged()
 void CMappingTableChooser::OnBrowse()
 {
    auto current = GetOtherTable();
-   CFileDialog dlg(TRUE, _T("json"), current.empty() ? nullptr : current.c_str(), OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
-      _T("IFC Mapping Tables (*.json)|*.json|All Files (*.*)|*.*||"), m_pParent);
+   CFileDialog dlg(TRUE, _T("ifcmap"), current.empty() ? nullptr : current.c_str(), OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST,
+      _T("IFC Mapping Tables (*.ifcmap)|*.ifcmap|JSON Files (*.json)|*.json|All Files (*.*)|*.*||"), m_pParent);
    if (dlg.DoModal() == IDOK)
    {
       FillList(std::filesystem::path(dlg.GetPathName().GetString()));

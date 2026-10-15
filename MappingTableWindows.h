@@ -35,6 +35,7 @@ class CMappingTableConfigPage : public CPropertyPage
 {
 public:
    CMappingTableConfigPage();
+   ~CMappingTableConfigPage();
 
    std::filesystem::path m_Table; // in: the configured table; out: the chosen table. Empty: the installed standard table
 
@@ -52,6 +53,7 @@ protected:
 
 private:
    CMappingTableChooser m_Chooser;
+   HBITMAP m_hLogo = nullptr; // the bSI logo (IDB_BSI, enlarged)
    bool TakeChoice(bool bReport); // validates the choice and puts it in m_Table
 };
 

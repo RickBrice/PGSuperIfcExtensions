@@ -346,7 +346,7 @@ Pset fields:
 1. `/IfcMapping=<file>` on the command line.
 2. The table chosen for one import or export: the IFC Import window, or the Mapping Table tab of the IFC export options. The export tab defaults to the project's table (below). A command line export without `/IfcMapping` uses the project's table.
 3. The configured table: the IFC Extension page of File > Configure BridgeLink (registry `IfcExtensions\MappingTable`, A1; M6).
-4. The installed standard table: `MappingTables\Standard.json` in the extension's install folder (next to the DLL).
+4. The installed standard table: `MappingTables\Standard.ifcmap` in the extension's install folder (next to the DLL).
 
 An `extends` chain is followed from there. `"standard"` always means file 4.
 
@@ -366,8 +366,8 @@ Support staff can then tell from a log which tables produced a result.
 
 | Problem | Example message |
 |---|---|
-| file not found | `File: D:\Tables\IowaDOT.json` / `The file was chosen by the configured mapping table (File > Configure BridgeLink).` / `The file was not found.` / `What to do: Correct the table, or choose a different table with File > Configure BridgeLink (choose the standard table to go back to it).` The "chosen by" and "What to do" text follows how the table was chosen (`MappingTableSource`). |
-| standard table missing | `The standard IFC mapping table is missing: C:\...\MappingTables\Standard.json. The IFC extension installation is incomplete; reinstall it.` |
+| file not found | `File: D:\Tables\IowaDOT.ifcmap` / `The file was chosen by the configured mapping table (File > Configure BridgeLink).` / `The file was not found.` / `What to do: Correct the table, or choose a different table with File > Configure BridgeLink (choose the standard table to go back to it).` The "chosen by" and "What to do" text follows how the table was chosen (`MappingTableSource`). |
+| standard table missing | `The standard IFC mapping table is missing: C:\...\MappingTables\Standard.ifcmap. The IFC extension installation is incomplete; reinstall it.` |
 | can't read the file | the path plus the system error text (access denied, locked, ...) |
 | invalid JSON | the path plus line, column, and the parser's message |
 | not a mapping table, or an unsupported version | `... has format "X" version 3; this version of the IFC extension reads PGSuperIfcMapping version 1.` |
@@ -470,7 +470,7 @@ public:
 ### Stages
 Each stage keeps the export identical to the baseline:
 1. The engine and getters. Property sets of the project, bridge, bridge parts, piers, foundations, deck slab, barriers, girders (occurrences and types), closure joints, and concrete materials.
-   - **Done 2026-09-29:** `IfcPropertyWriter.h/.cpp` (`CIfcExportSession`, `WritePropertySets`, `CreateTypePropertySets`, `WriteMaterialProperties`), 34 export targets with getters in `IfcTargets.cpp`, and 36 property set declarations in `Standard.json`. All five round-trip exports are the same as the baseline, and the import scores are unchanged. The export log names the table files, and `/IfcMapping` works for the export too.
+   - **Done 2026-09-29:** `IfcPropertyWriter.h/.cpp` (`CIfcExportSession`, `WritePropertySets`, `CreateTypePropertySets`, `WriteMaterialProperties`), 34 export targets with getters in `IfcTargets.cpp`, and 36 property set declarations in `Standard.ifcmap`. All five round-trip exports are the same as the baseline, and the import scores are unchanged. The export log names the table files, and `/IfcMapping` works for the export too.
 2. Quantity sets and classifications.
    - **Done 2026-09-29:**
      - `quantity_sets` (`Qto_BeamBaseQuantities`, `Qto_SlabBaseQuantities`), with new export units for area (in², ft²) and mass (lb).
@@ -521,7 +521,7 @@ Found while making the table reproduce the exporter it replaces. **Fixed 2026-09
 **Done 2026-09-29.** A general IDS says what an export must contain, with no design values. It is not the design-value IDS (M4), which pins values to single elements of one model and is not an input here.
 
 ### Table -> general IDS
-`/IfcTableToIds=<out.ids> <template.pgt> [/IfcMapping=<table.json>]` writes the table (the standard table if none is given) as a general IDS, with `WriteTableAsIds` (`IfcTableIds.cpp`):
+`/IfcTableToIds=<out.ids> <template.pgt> [/IfcMapping=<table.ifcmap>]` writes the table (the standard table if none is given) as a general IDS, with `WriteTableAsIds` (`IfcTableIds.cpp`):
 - **Specifications:** one for each element role that has requirements. It applies to the role's elements through the role's selector (entity, predefined type, and attribute values), which the table now has for every role (`elements`).
 - **Requirements:**
   - Properties and quantities with a target are required.
@@ -557,7 +557,7 @@ Found while making the table reproduce the exporter it replaces. **Fixed 2026-09
   A property the IDS types differently from the standard table is reported, and the standard table's type is kept.
 - **Standalone (`/IfcTableExtends=none`):** the table has everything the IDS has. The round trip check uses it.
 - **Checking the result:** the generated table is loaded and validated like any other table, and the log says "The generated table is valid." or gives the table's error.
-- **Style:** the table is written like `Standard.json` (`FormatMappingTable`), with entity and type names in the schema's spelling (`IfcSlab`, `IfcReal`) rather than the IDS's upper case (`IfcSpelling`).
+- **Style:** the table is written like `Standard.ifcmap` (`FormatMappingTable`), with entity and type names in the schema's spelling (`IfcSlab`, `IfcReal`) rather than the IDS's upper case (`IfcSpelling`).
 - **In the editor (M7 stage 3):** Table > Generate from IDS and Table > Write as General IDS do the same as the two commands.
 
 The agency IDS is never changed (A4). Manual assignments live in the binding file, so regenerating the table after the IDS changes keeps them. Binding file:
@@ -596,7 +596,7 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 | `MappingTableChooser.h/.cpp` | `CMappingTableChooser`: the controls that choose a table (default table, recent tables, browse, validation) (M6) |
 | `MappingTableWindows.h/.cpp` | the Configure BridgeLink page and its callback, the IFC Import window, and the export Mapping Table tab (M6); the configured table itself is `CIfcMappingTable::GetTableSetting`/`SetTableSetting` |
 | `IfcProjectMappingTable.h/.cpp` | `IIfcProjectMappingTable`, the tables a project remembers, and the export default (M6) |
-| `IfcTableFormat.h/.cpp` | `FormatMappingTable`: writes a table in the style of `Standard.json` (the editor, `/IfcFormatTable`) |
+| `IfcTableFormat.h/.cpp` | `FormatMappingTable`: writes a table in the style of `Standard.ifcmap` (the editor, `/IfcFormatTable`) |
 | `MappingEditorDoc.h/.cpp` | mapping table editor (M7): the BridgeLink application plugin, doc template, and document (the table's JSON) |
 | `MappingEditorViews.h/.cpp` | editor frame, section tree, and the view that hosts the panes |
 | `MappingEditorPanes.h/.cpp` | editor panes (table, selector, target locations) and the location dialog |
@@ -605,6 +605,6 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 | `MappingEditorModelPane.h/.cpp` | editor Model item (stage 4): browse a model, see what the table reads, add a property as a location |
 | `IfcModelBrowser.h/.cpp` | `CIfcModel`: an IFC model opened by the editor, its elements and properties, and "try the table on the model" (with `CIfcTargetReader` and `CIfcTargetHints`) |
 | `IfcExtensions.Manifest.BridgeLink` | registers the editor with BridgeLink (copied next to the DLL by the post-build step) |
-| `MappingTables/Standard.json` | standard table, installed next to the DLL (post-build copy for development builds) |
-| `Tests/ImportValidation/mappings/Iowa.json`, `PennDOT.json` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |
+| `MappingTables/Standard.ifcmap` | standard table, installed next to the DLL (post-build copy for development builds) |
+| `Tests/ImportValidation/mappings/Iowa.ifcmap`, `PennDOT.ifcmap` | agency tables (first versions in M1, completed in M2); `models.json` gets a `mapping` entry per model |
 | `Tests/ImportValidation/models.json` | `PennDOT-StandardTable` and `Iowa-StandardTable` runs with `expect_log`: text the log must contain (the hints) |

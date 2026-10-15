@@ -222,6 +222,7 @@
 #define IDD_IFC_IMPORT_TABLE            407
 #define IDD_EXPORT_TABLE_PAGE           408
 #define IDC_IMPORT_MODEL_FILE           409
+#define IDC_MAPPING_LOGO                410
 #define IDD_MAPPING_FROM_IDS            391
 #define IDC_FROMIDS_IDS                 392
 #define IDC_FROMIDS_IDS_BROWSE          393
@@ -235,7 +236,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        410
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         410
+#define _APS_NEXT_CONTROL_VALUE         411
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

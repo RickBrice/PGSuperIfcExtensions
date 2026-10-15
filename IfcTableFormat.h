@@ -24,7 +24,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-// Writes a mapping table in the hand-written style of MappingTables/Standard.json: the top-level sections in a fixed order,
+// Writes a mapping table in the hand-written style of MappingTables/Standard.ifcmap: the top-level sections in a fixed order,
 // then any other keys, and one selector, property, quantity, location, or classification per line. The JSON is UTF-8
 // with CR LF line ends. Tables written by the mapping table editor diff cleanly against hand-written ones.
 std::string FormatMappingTable(const nlohmann::ordered_json& table);

@@ -261,7 +261,7 @@ std::filesystem::path CMappingEditorDoc::GetTablePath() const
    if (strPath.IsEmpty())
    {
       std::error_code ec;
-      return std::filesystem::current_path(ec) / L"Untitled.json";
+      return std::filesystem::current_path(ec) / L"Untitled.ifcmap";
    }
    return std::filesystem::path(strPath.GetString());
 }
