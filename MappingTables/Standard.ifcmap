@@ -368,8 +368,8 @@
         {"name": "Specification", "type": "IfcLabel", "uri": "bsdd", "value": "ASTM A416 (AASHTO M203)"},
         {"name": "SpecificationVersion", "type": "IfcLabel", "uri": "bsdd", "value": "Unknown"},
         {"name": "TendonGrade", "type": "IfcPressureMeasure", "uri": "bsdd", "target": "tendon.fpu"},
-        {"name": "CoatingSpecification", "type": "IfcLabel", "uri": "bsdd"},
-        {"name": "CoatingSpecificationVersion", "type": "IfcLabel", "uri": "bsdd"}
+        {"name": "CoatingSpecification", "type": "IfcLabel", "uri": "bsdd", "value": "NONE"},
+        {"name": "CoatingSpecificationVersion", "type": "IfcLabel", "uri": "bsdd", "value": "N/A"}
       ]
     },
     {
