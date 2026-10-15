@@ -1,6 +1,6 @@
 Standard mapping table compared with the usBridge workbook usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx (categories: see check_standard.py)
 
-Counts: CLASS 4, REQUIRED 3, NO-VALUE 39, VALUE 13, TYPE 54, NAME 1, ENUM 17, PSET 20, RESTRICTED 23, OPTIONAL 36, EXTRA 27, NO-CLASS 1
+Counts: CLASS 4, REQUIRED 3, NO-VALUE 38, VALUE 13, TYPE 54, NAME 1, ENUM 17, PSET 20, RESTRICTED 23, OPTIONAL 36, EXTRA 27, NO-CLASS 1
 
 CLASS | girder_assembly (Girder) |  | the class Girder isn't in the workbook
 CLASS | project (BridgeProject) |  | the class BridgeProject isn't in the workbook
@@ -41,7 +41,6 @@ NO-VALUE | rebar (ReinforcingBar) | usBrPset_PayItemQuantities.UnitOfMeasure | r
 NO-VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
 NO-VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
 NO-VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
-NO-VALUE | tendon (Tendon) | usBrPset_ACI_TendonMaterial.CoatingSpecification | required, but declared without a target or a value
 NO-VALUE | tendon (Tendon) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
 NO-VALUE | tendon (Tendon) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
 NO-VALUE | tendon (Tendon) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value

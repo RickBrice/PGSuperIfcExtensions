@@ -3,7 +3,7 @@ usBridge IDS check of PGSuper-System.ifc
 usBrSpec_AbV Exclusions.ids: 0 of 261 specifications fail
 usBrSpec_Classes.ids: 2 of 146 specifications fail
 usBrSpec_General.ids: 0 of 17 specifications fail
-usBrSpec_PropertySets.ids: 8 of 130 specifications fail
+usBrSpec_PropertySets.ids: 7 of 130 specifications fail
 usBrSpec_SpatialBreakdown.ids: 0 of 45 specifications fail
 
 usBrSpec_Classes.ids | Reinforcing Bar | Shall not be classified using {'pattern': '[a-zA-Z0-9].*'} | IfcReinforcingBar | The classification should not have met the requirement | 2354 elements: "Row 1 #5, Girder_Longitudinal_Bar_#5", "Row 1 #5, Girder_Longitudinal_Bar_#5 (10)", "Row 1 #5, Girder_Longitudinal_Bar_#5 (11)" (and 366 more)
@@ -24,10 +24,6 @@ usBrSpec_Classes.ids | Tendon | {'pattern': '.*'} data shall not be provided in 
 usBrSpec_Classes.ids | Tendon | {'pattern': '.*'} data shall not be provided in the dataset usBrPset_Common | IfcTendon | The property should not have met the requirement | 369 elements: "Harped:1", "Harped:2", "Harped:3" (and 28 more)
 usBrSpec_Classes.ids | Tendon | {'pattern': '.*'} data shall not be provided in the dataset usBrPset_PayItemQuantities | IfcTendon | The property should not have met the requirement | 369 elements: "Harped:1", "Harped:2", "Harped:3" (and 28 more)
 usBrSpec_Classes.ids | Tendon | {'pattern': '.*'} data shall not be provided in the dataset usBrPset_TendonDebonding | IfcTendon | The property should not have met the requirement | 10 elements: "Temporary:1", "Temporary:2"
-usBrSpec_PropertySets.ids | usBrPset_ACI_TendonMaterial | CoatingSpecification data shall be provided in the dataset usBrPset_ACI_TendonMaterial | IfcTendon | The property set does not contain the required property | 369 elements: "Harped:1", "Harped:2", "Harped:3" (and 28 more)
-usBrSpec_PropertySets.ids | usBrPset_ACI_TendonMaterial | CoatingSpecification data shall be provided in the dataset usBrPset_ACI_TendonMaterial | IfcTendonType | The property set does not contain the required property | 6 elements: "Grade 270 Low Relaxation 0.6"", "Grade 270 Low Relaxation 0.6" (2)", "Grade 270 Low Relaxation 0.6" (3)" (and 3 more)
-usBrSpec_PropertySets.ids | usBrPset_ACI_TendonMaterial | CoatingSpecificationVersion data shall be provided in the dataset usBrPset_ACI_TendonMaterial | IfcTendon | The property set does not contain the required property | 369 elements: "Harped:1", "Harped:2", "Harped:3" (and 28 more)
-usBrSpec_PropertySets.ids | usBrPset_ACI_TendonMaterial | CoatingSpecificationVersion data shall be provided in the dataset usBrPset_ACI_TendonMaterial | IfcTendonType | The property set does not contain the required property | 6 elements: "Grade 270 Low Relaxation 0.6"", "Grade 270 Low Relaxation 0.6" (2)", "Grade 270 Low Relaxation 0.6" (3)" (and 3 more)
 usBrSpec_PropertySets.ids | usBrPset_BridgeIdentification | CarriedRoadwayName data shall be provided in the dataset usBrPset_BridgeIdentification | IfcBridge | The property set does not contain the required property | 1 elements: "Unnamed Bridge"
 usBrSpec_PropertySets.ids | usBrPset_BridgeIdentification | SNBIBridgeName data shall be provided in the dataset usBrPset_BridgeIdentification | IfcBridge | The property set does not contain the required property | 1 elements: "Unnamed Bridge"
 usBrSpec_PropertySets.ids | usBrPset_BridgeIdentification | SNBIBridgeNumber data shall be provided in the dataset usBrPset_BridgeIdentification | IfcBridge | The property set does not contain the required property | 1 elements: "Unnamed Bridge"

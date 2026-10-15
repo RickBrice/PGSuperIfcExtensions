@@ -376,8 +376,8 @@
         {"name": "Specification", "type": "IfcLabel", "value": "ASTM A416 (AASHTO M203)", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Specification"},
         {"name": "SpecificationVersion", "type": "IfcLabel", "value": "Unknown", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SpecificationVersion"},
         {"name": "TendonGrade", "type": "IfcPressureMeasure", "target": "tendon.fpu", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/TendonGrade"},
-        {"name": "CoatingSpecification", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CoatingSpecification"},
-        {"name": "CoatingSpecificationVersion", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CoatingSpecificationVersion"}
+        {"name": "CoatingSpecification", "type": "IfcLabel", "value": "NONE", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CoatingSpecification"},
+        {"name": "CoatingSpecificationVersion", "type": "IfcLabel", "value": "N/A", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/CoatingSpecificationVersion"}
       ]
     },
     {
