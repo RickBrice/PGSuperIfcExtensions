@@ -8,6 +8,11 @@ Project knowledge that isn't in the code or git history. The design notes are in
 - **Units:** PGSuper's system units are SI (kg, m, Pa). In-memory data and `.pgs` files are SI. Import code converts IFC values with `WBFL::Units::ConvertToSysUnits`.
 - **IfcOpenShell:** the upstream branch that matters is `v0.9.0` (not v0.8.0 or master). Compare against it and target PRs to it. The user's working branch is `rab_infrastructure`.
 
+## Direction (2026-10-15)
+- **The standard is data, not code.** The current target is usBridge: the IDS files and `usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx` (IFC classes, predefined types, usBridge classification names, property sets with cardinality and enumerations, and the spatial hierarchy) in the user's OneDrive (BIM for Bridges\usBridge). They will change, and other standards must be usable too.
+- Strive first to minimize, then to eliminate, C++ changes and DLL rebuilds when a standard changes. Expect this to need PGSuper API improvements and documentation (data PGSuper exposes, with names, units, and meaning).
+- Prefer solutions that move standard-specific content (property sets, names, classes, structure) into mapping tables or other data files over adding it to the C++.
+
 ## Design decisions to keep
 - **Importer template:** the importer starts from `IfcImportTemplate.pgt` on purpose (interim, fault tolerant across PGSuper versions). The goal is building `CBridgeDescription2` from scratch, so keep new import code independent of template values. Don't propose removing the template as a side fix.
 - **Design-value IDS vs general IDS:** the IDS from `IdsExporter` is model specific: each specification is pinned to one element and requires PGSuper's exact design values. It is not a general (agency) IDS and is never a source for mapping tables. Mapping tables are generated from, and written as, general IDS files (`/IfcIdsToTable`, `/IfcTableToIds`).
