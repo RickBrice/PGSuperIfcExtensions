@@ -22,6 +22,11 @@ baseline instead (after an intended change to the export).
 The standard table's round trip through a general IDS (/IfcTableToIds, /IfcIdsToTable; see
 check_table_ids.py) runs after the models, as the "Standard table <-> IDS" row, unless --models is given.
 
+Standards (standards.json, check_standard.py): each round-trip export is checked with the IDS files of
+each standard (results/<run>.<standard>-ids.txt), and, unless --models is given, the standard table is
+compared with each standard's data dictionary workbook (results/Standard-vs-<standard>-workbook.txt, one
+row per standard). --skip-standards leaves these checks out.
+
 Reports, logs, and imported projects are written to results/, replacing the previous results, so
 the change from one run to the next shows up as a difference in the repository. summary.md has the
 score of every run. Exported IFC files and unzipped models are written to results/ but not tracked.
@@ -33,7 +38,7 @@ unless --bridgelink is given.
 name matches) for the duration of the run and switches back to the current configuration
 when done.
 
-Usage: python run_validation.py [--models PGSuper Iowa] [--configuration "WSDOT (Local)"] [--bridgelink BridgeLink.exe]
+Usage: python run_validation.py [--models PGSuper Iowa] [--configuration "WSDOT (Local)"] [--bridgelink BridgeLink.exe] [--skip-standards]
 """
 import argparse
 import datetime
@@ -48,6 +53,7 @@ from pathlib import Path
 import compare_bridge
 import compare_export
 import compare_ids
+import check_standard
 import check_table_ids
 
 HERE = Path(__file__).resolve().parent
@@ -210,6 +216,8 @@ def round_trip(model, config, exe):
             rows.append((run, f"export failed: {message}", None))
             continue
         export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
+        for standard in config["standards"]:
+            export_message += check_standard.ids_message(standard, ifc, run)
 
         ok, message = import_ifc(exe, ifc, config["template"], pgs)
         message += export_message
@@ -263,6 +271,7 @@ def main():
     parser.add_argument("--bridgelink", help=r"BridgeLink.exe (default: %%ARPDIR%%\BridgeLink\RegFreeCOM\x64\Release\BridgeLink.exe)")
     parser.add_argument("--config-file", default=str(HERE / "models.json"))
     parser.add_argument("--update-export-baseline", action="store_true", help="save the round-trip exports as the export baseline")
+    parser.add_argument("--skip-standards", action="store_true", help="leave out the checks against the standards in standards.json")
     args = parser.parse_args()
 
     config_file = Path(args.config_file).resolve()
@@ -270,6 +279,7 @@ def main():
     config["base"] = config_file.parent
     config["template"] = (config["base"] / config["template"]).resolve()
     config["update_export_baseline"] = args.update_export_baseline
+    config["standards"] = [] if args.skip_standards else check_standard.load_standards()
     models = [m for m in config["models"] if not args.models or m["name"] in args.models]
 
     exe = args.bridgelink
@@ -302,6 +312,10 @@ def main():
             print("Running the standard table <-> IDS round trip...", flush=True)
             ok, message = check_table_ids.check(exe)
             summary.append(("Standard table <-> IDS", ("OK: " if ok else "FAILED: ") + message, None))
+            for standard in config["standards"]:
+                print(f"Comparing the standard table with the {standard['name']} workbook...", flush=True)
+                ok, message = check_standard.check_workbook(standard)
+                summary.append((f"Standard table vs {standard['name']} workbook", ("OK: " if ok else "DIFFERS: ") + message, None))
     finally:
         if original_configuration:
             set_configuration(exe, *original_configuration)

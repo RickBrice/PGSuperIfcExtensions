@@ -2,12 +2,13 @@
 
 Checks how well the IFC importer maps an IFC model into a PGSuper project. It runs BridgeLink from the command line (`/IfcExport`, `/IfcImport`), so no UI interaction is needed. Everything it needs is in this folder: the test models, the import template (`IfcImportTemplate.pgt` at the repository root), and the latest results.
 
-Requirements: Python 3 (standard library only) and a Release build of BridgeLink with this extension. BridgeLink is found through `%ARPDIR%` (`%ARPDIR%\BridgeLink\RegFreeCOM\x64\Release\BridgeLink.exe`) unless `--bridgelink` is given.
+Requirements: Python 3 and a Release build of BridgeLink with this extension. The standards checks also need `ifcopenshell`, `ifctester`, and `openpyxl` (the Python of the local IfcOpenShell build has them; `ifctester` is taken from `%IFCOPENSHELL_DIR%\src\ifctester` when that exists, because the installed one is older than the build's `ifcopenshell`), and the standard's files (see Standards). BridgeLink is found through `%ARPDIR%` (`%ARPDIR%\BridgeLink\RegFreeCOM\x64\Release\BridgeLink.exe`) unless `--bridgelink` is given.
 
 ```
 python run_validation.py                                   # all models
 python run_validation.py --models PGSuper                  # selected models
 python run_validation.py --configuration "WSDOT (Local)"   # run with another PGSuper configuration
+python run_validation.py --skip-standards                  # without the standards checks (faster)
 ```
 
 ## Results
@@ -28,6 +29,14 @@ After the models, the last row ("Standard table <-> IDS") checks the standard ta
 - generates `results/Standard-from-ids.ifcmap` from it (`/IfcIdsToTable`, `/IfcTableExtends=none`)
 - compares what the two tables declare, with any differences in `results/Standard-from-ids.diff.txt`
 
+## Standards
+
+`standards.json` lists the standards the exports are checked against (`check_standard.py`). Each has a folder (environment variables allowed, e.g. usBridge in `%OneDriveCommercial%\BIM for Bridges\usBridge`), its IDS files, and its data dictionary workbook. A standard whose folder isn't found is skipped, and the summary says so.
+- **IDS:** each round-trip export is checked with every IDS file of the standard (about 30 s per export). The run's summary row says how many specifications fail, with the failures in `results/<run>.<standard>-ids.txt`, grouped by specification, requirement, entity, and reason.
+- **Workbook:** the standard mapping table is compared with the standard's workbook, role by role, in a "Standard table vs <standard> workbook" row (not run with `--models`). The findings are in `results/Standard-vs-<standard>-workbook.txt`. CLASS, REQUIRED, NO-VALUE, VALUE, TYPE, NAME, and ENUM are differences to fix or decide on; PSET, RESTRICTED, OPTIONAL, EXTRA, and NO-CLASS are for review. `check_standard.py` describes the categories.
+
+The files are sorted and stable, so the change in conformance from one run to the next shows up as a difference in the repository.
+
 Two optional entries apply to any model:
 - **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the configured mapping table (File > Configure BridgeLink) is used, or the standard table installed with the extension if none is configured. The committed results are made without a configured table. Command line imports don't make the project remember a table, so the round-trip exports use the same table as the import. `run_validation.py` warns, and says in the summary, when one is set. See `devdocs/MappingTablesDesign.md`.
 - **`expect_log`:** text the import log must contain. The summary reports any text that is missing. The `-StandardTable` runs use it to check that the import suggests the agency properties (hints) when the agency table isn't used.
@@ -47,6 +56,7 @@ An expected file lists values in SI (PGSuper system units) by the keys that `pgs
   - A *default match* equals the expected value only because the import template has the same value, so it doesn't show the importer set it.
   - Values measured differently (e.g. girder spacing along vs normal to the pier) are *not comparable*.
 - `check_table_ids.py`: the standard table <-> general IDS round trip (can also run alone).
+- `check_standard.py`: the standards checks (IDS on exports, workbook against the standard table); also runs alone with `--ifc` or `--workbook`. `check_ids.py`: one IFC file against one IDS, optionally one specification.
 - `compare_export.py`, `compare_ids.py`: reduce an export or an IDS to the lines compared with `export_baseline/`.
 - `run_validation.py`: runs BridgeLink and the comparison for each model. `--configuration` switches the PGSuper configuration for the run, then switches back to the current one.
 

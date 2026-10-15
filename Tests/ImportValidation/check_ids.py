@@ -9,7 +9,8 @@ import argparse
 import sys
 
 import ifcopenshell
-import ifctester.ids as ids
+
+from check_standard import ifctester_ids
 
 
 def main():
@@ -19,6 +20,7 @@ def main():
     parser.add_argument("--spec", help="check only the specifications with this name")
     args = parser.parse_args()
 
+    ids = ifctester_ids()
     ifc = ifcopenshell.open(args.ifc)
     spec = ids.open(args.ids)
     if args.spec:

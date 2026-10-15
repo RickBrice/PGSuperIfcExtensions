@@ -1,0 +1,13 @@
+{
+  "comment": "The standards the exports are checked against (check_standard.py). folder may use environment variables (%OneDriveCommercial%). ids is a file pattern in the folder; each export is checked with every matching IDS. workbook is a data dictionary workbook in the usBridge layout (one sheet per IFC class: Entity, IFC Attributes, and property set sections); the standard mapping table is compared with it. classification_system is the table's classification system whose identifications name the workbook classes (prefix is removed).",
+  "standards": [
+    {
+      "name": "usBridge",
+      "folder": "%OneDriveCommercial%\\BIM for Bridges\\usBridge",
+      "ids": "usBrSpec_*.ids",
+      "workbook": "usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx",
+      "classification_system": "usBridge",
+      "classification_prefix": "usBridge_"
+    }
+  ]
+}
