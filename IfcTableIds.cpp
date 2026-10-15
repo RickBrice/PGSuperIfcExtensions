@@ -627,7 +627,9 @@ IdsToTableResult GenerateTableFromIds(const std::filesystem::path& ids_path, con
          }
          if (target.empty() && bound_property && bound_property->target != "?")
             target = bound_property->target;
-         if (target.empty())
+         // PGSuper's instructions name the target if there is one, so a property without one (e.g. a type property
+         // with a constant, where the occurrence property with the same name has a target) doesn't get the standard table's
+         if (target.empty() && !bPGSuperInstructions)
             target = standard_target(standard, role, *pset, *name);
 
          json property;
