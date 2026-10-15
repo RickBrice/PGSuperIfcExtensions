@@ -39,7 +39,7 @@ Validation: under the Regression configuration the WF girders aren't in the libr
    - temporary: the table's `tendon.status` location (`Pset_ElementComponentCommon.Status` = TEMPORARY), else position in the top flange (a hint, not data, per G3 of the design note)
    - debonded: the table's debond locations (`usBrPset_TendonDebonding`), else none. Strands shorter than the girder, or pieces of a strand (Iowa's short extrusions?), are a question to settle with the Iowa model
 4. **Material and jacking:** diameter and grade from the type or properties (`IfcTendonType.NominalDiameter`, `Pset_MaterialSteel`, Iowa's text `0.5"` and `270` through the table) to the PGSuper strand pool; jacking from `IfcTendon.TensionForce`/`PreStress` or `InitialTension`.
-5. **Fill `CStrandData`** with `sdtDirectStrandInput`, or with the library grid when every strand is on it (open question 2).
+5. **Fill `CStrandData`:** with the library grid when every strand is on it (`sdtDirectSelection`), else with `sdtDirectStrandInput` (decision 2).
 
 Validation: `pgs_extract.py` extracts the strands (count per type, positions at the ends and harp points, debonding, harp points, material, jacking) and the round trip compares them. Iowa: an inventory and the counts from the model.
 
@@ -57,6 +57,38 @@ Validation: `pgs_extract.py` extracts the shear data and the round trip compares
 ## Order
 
 G1 first: the strand elevations are measured from the girder's top or bottom and the zones need the girder depth. G2 next (it carries the path reading that G3 reuses), then G3. The round-trip models exercise all three; Iowa exercises the agency paths (mapped extrusions, text properties, marks).
+
+## Decisions (2026-10-15)
+
+1. **Library entries:** a PGSuper interface to create girder library entries is OK. Its details are worked out before coding (see "Library entry creation" below).
+2. **Strands: use the library's strand grid when possible.** Two use cases:
+   - **(a) The girder has strands: the import is for analysis.** The strands are imported as they are (on the grid when every strand is on it, else as individual strands); the import doesn't change them.
+   - **(b) The girder has no strands: the import is for design.** The priority is a library entry that already exists (by geometry, confirming the name), then cloning the closest entry and adjusting its dimensions, then a new entry with a strand grid generated from the section perimeter. The strands are left for design in PGSuper.
+3. **Bar roles in mapping tables:** tabled. PGSuper's rebar model is simple, so a table section for bar roles may not be worth it.
+4. **Longitudinal girder bars:** imported too (`CLongitudinalRebarData`).
+
+## Library entry creation (details to agree before coding)
+
+**What PGSuper already has (2026-10-15).** Everything needed is public today:
+- `ILibrary::GetGirderLibrary()` gives the project's girder library for changing; the library framework has `CloneEntry`, `AddEntry`, `NewEntry`.
+- `GirderLibraryEntry`: `SetBeamFactory`, `SetDimension(name, value, bAdjustStrands)`, `ClearAllStrands`, `AddStraightStrandCoordinates`/`AddHarpedStrandCoordinates`/`AddTemporaryStrandCoordinates`, harping point and adjustment limits, `ValidateData`.
+- `psgLib::BeamFamilyManager` lists the girder families and their factories. A `BeamFactory` builds the section for a set of dimensions (`CreateGirderSection`), and lists, validates, and defaults its dimensions (`GetDimensionNames`, `ValidateDimensions`, `GetDefaultDimensions`).
+
+**The steps for a girder** (case (b), and case (a) when the strands need a girder):
+1. **Measure** the section from the model (G1 step 1): outline polygon and voids, depth, flange widths and thicknesses, area, I, centroid.
+2. **Existing entry:** compare with every girder entry of the project library (its factory's section for its dimensions). An entry within tolerance is used. A name match (IFC type name, or the table's girder type locations) is confirmed by geometry; a name match that doesn't fit is reported, and the geometric match is used.
+3. **Clone and adjust:** the closest entry of the matching family is cloned and its dimensions fitted (`SetDimension` with strand adjustment); the result must validate (`ValidateDimensions`, `ValidateData`) and fit within tolerance.
+4. **New entry:** a family is chosen from the section topology, its dimensions fitted starting from the factory defaults, and a strand grid generated from the section perimeter (rules below).
+5. **Case (a):** if the girder's strands are all on the entry's grid, they're imported as a grid fill; if not, as individual strands. A cloned or new entry for case (a) could instead get a grid made from the model's strands (see question 6).
+
+**Points to decide:**
+1. **Where the code lives.** (i) In the extension, using the existing API: no PGSuper change, works now. (ii) A new PGSuper interface (e.g. `IGirderLibraryEntryFactory`: match, clone-and-fit, create with a grid) that the extension calls: other importers and plugins can use it, and the logic stays with the beam factories. Option (i) first and moving it to (ii) once it's proven is possible.
+2. **Matching tolerances.** Depth, flange widths, and thicknesses within 1/8 in; area and I within 1%? Per family?
+3. **Which dimensions are fitted** when cloning: all of the family's dimensions (general, slower, can find odd fits), or only depth-like dimensions (most real variants of a family differ in depth, e.g. WF girders)?
+4. **Names** of created entries: the IFC type name (e.g. "BTB45"), with " (IFC)" or " (2)" when the name is already used by a different girder?
+5. **Generated strand grid** (new entries): 2 in spacing with 2 in cover to the strand center (AASHTO minimums for 0.6 in strand)? Straight strands in the bottom flange (and web?), harped strands in the web, temporary strands in the top flange? Debondable everywhere? Agency rules here could be data later.
+6. **Case (a) with a cloned or new entry:** should its grid be made from the model's strands (so the import is a grid fill and the strands can be redesigned on the same grid), or the generated grid with the strands as individual strands?
+7. **The project library only:** entries are added to the project's library (saved with the project), not the master library. They show as project entries, like entries the user adds in the library editor.
 
 ## Open questions
 
