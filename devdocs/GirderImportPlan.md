@@ -79,16 +79,19 @@ G1 first: the strand elevations are measured from the girder's top or bottom and
 2. **Existing entry:** compare with every girder entry of the project library (its factory's section for its dimensions). An entry within tolerance is used. A name match (IFC type name, or the table's girder type locations) is confirmed by geometry; a name match that doesn't fit is reported, and the geometric match is used.
 3. **Clone and adjust:** the closest entry of the matching family is cloned and its dimensions fitted (`SetDimension` with strand adjustment); the result must validate (`ValidateDimensions`, `ValidateData`) and fit within tolerance.
 4. **New entry:** a family is chosen from the section topology, its dimensions fitted starting from the factory defaults, and a strand grid generated from the section perimeter (rules below).
-5. **Case (a):** if the girder's strands are all on the entry's grid, they're imported as a grid fill; if not, as individual strands. A cloned or new entry for case (a) could instead get a grid made from the model's strands (see question 6).
+5. **Strands:** see decision 6 below.
 
-**Points to decide:**
-1. **Where the code lives.** (i) In the extension, using the existing API: no PGSuper change, works now. (ii) A new PGSuper interface (e.g. `IGirderLibraryEntryFactory`: match, clone-and-fit, create with a grid) that the extension calls: other importers and plugins can use it, and the logic stays with the beam factories. Option (i) first and moving it to (ii) once it's proven is possible.
-2. **Matching tolerances.** Depth, flange widths, and thicknesses within 1/8 in; area and I within 1%? Per family?
-3. **Which dimensions are fitted** when cloning: all of the family's dimensions (general, slower, can find odd fits), or only depth-like dimensions (most real variants of a family differ in depth, e.g. WF girders)?
-4. **Names** of created entries: the IFC type name (e.g. "BTB45"), with " (IFC)" or " (2)" when the name is already used by a different girder?
-5. **Generated strand grid** (new entries): 2 in spacing with 2 in cover to the strand center (AASHTO minimums for 0.6 in strand)? Straight strands in the bottom flange (and web?), harped strands in the web, temporary strands in the top flange? Debondable everywhere? Agency rules here could be data later.
-6. **Case (a) with a cloned or new entry:** should its grid be made from the model's strands (so the import is a grid fill and the strands can be redesigned on the same grid), or the generated grid with the strands as individual strands?
-7. **The project library only:** entries are added to the project's library (saved with the project), not the master library. They show as project entries, like entries the user adds in the library editor.
+**Decided (2026-10-15):**
+1. **Where the code lives:** in the extension, with the existing PGSuper API (option i).
+2. **Matching tolerances:** 1/8 in for depth, flange widths, and thicknesses; 1% for area and I. The same for every family for now, but kept as data so they can differ by family later.
+3. **Fitting:** all of the family's dimensions. Girders of the same family can differ in more than depth (an Iowa and a WSDOT girder can both be WF girders with very different flanges).
+4. **Names:** the IFC type name (e.g. "BTB45"), with " (2)", and so on, when the name is already used by a different girder.
+5. **Generated strand grid:** 2 in spacing with 2 in cover to the strand center. Straight strands in the bottom flange, harped strands in the web, temporary strands in the top flange. No strands are debondable (harping is assumed, not debonding; harping and debonding could become a configuration option later).
+6. **The user's intent isn't known** when a project is created from an IFC file, so:
+   - **The girder has strands:** if they're all on the grid of the girder's library entry, a grid fill; otherwise individual strands.
+   - **The girder has no strands:** the library entry gets a strand grid if it doesn't have one.
+   - **A cloned entry** keeps the clone's grid. **A new entry** gets a generated grid (2 in spacing) even when the girder's strands are imported as individual strands: designers will move to the grid input, and it needs a grid.
+7. **Where entries go:** the project's own library (saved with the project), never the master library.
 
 ## Open questions
 
