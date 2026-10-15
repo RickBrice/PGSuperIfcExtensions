@@ -6,6 +6,8 @@ Drafted 2026-09-23. Last completed work before this plan: estimating deck slab e
 
 Everything needed to resume is in the repositories; nothing depends on local notes. All repositories are on `develop`, committed and pushed (PGSuperIfcExtensions, WBFL, and PGSuper in sync with `origin/develop` on 2026-10-15).
 
+**Priorities (2026-10-15):** (1) PGSuper import and export with maximum usBridge IDS coverage, (2) girder mapping and modeling with the PGSuper library (Phase 5), (3) getting information from geometry when properties lack it (Phases 4-6), (4) PGSplice support equivalent to PGSuper's ([PGSplicePlan.md](PGSplicePlan.md)).
+
 **Done:**
 - **Phase 0, test setup:** headless import and export, and `Tests/ImportValidation` (round trips, PennDOT, Iowa, three skew models, the standard-table runs, export and IDS baselines).
 - **Phase 1, correctness:** units, girder layout, spans, spacing.

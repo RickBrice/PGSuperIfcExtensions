@@ -8,6 +8,12 @@ Project knowledge that isn't in the code or git history. The design notes are in
 - **Units:** PGSuper's system units are SI (kg, m, Pa). In-memory data and `.pgs` files are SI. Import code converts IFC values with `WBFL::Units::ConvertToSysUnits`.
 - **IfcOpenShell:** the upstream branch that matters is `v0.9.0` (not v0.8.0 or master). Compare against it and target PRs to it. The user's working branch is `rab_infrastructure`.
 
+## Priorities (2026-10-15, the user's order)
+1. PGSuper import and export, with maximum usBridge IDS coverage (the standards work; step 1 is the usBridge conformance checks in `run_validation.py`).
+2. Proper beam mapping and modeling with the PGSuper girder library (Phase 5 of `devdocs/IfcImportPlan.md`: match library entries by geometry, fit and create entries).
+3. Analyzing geometry to get information that's missing from properties (e.g. profile from the deck, sections from girder solids, strands from tendon paths: Phases 4-6).
+4. PGSplice support equivalent to PGSuper's (`devdocs/PGSplicePlan.md`).
+
 ## Direction (2026-10-15)
 - **The standard is data, not code.** The current target is usBridge: the IDS files and `usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx` (IFC classes, predefined types, usBridge classification names, property sets with cardinality and enumerations, and the spatial hierarchy) in the user's OneDrive (BIM for Bridges\usBridge). They will change, and other standards must be usable too.
 - Strive first to minimize, then to eliminate, C++ changes and DLL rebuilds when a standard changes. Expect this to need PGSuper API improvements and documentation (data PGSuper exposes, with names, units, and meaning).
