@@ -87,10 +87,13 @@ namespace
       switch (source)
       {
       case MappingTableSource::CommandLine: return "the command line (/IfcMapping)";
-      case MappingTableSource::ConfigurationSetting: return "the mapping table setting (Options > IFC Mapping Table)";
+      case MappingTableSource::ConfigurationSetting: return "the configured mapping table (File > Configure BridgeLink)";
       case MappingTableSource::InstalledStandard: return "the standard table installed with the IFC extension";
       case MappingTableSource::Extends: return "\"extends\" in another table";
       case MappingTableSource::Editor: return "the mapping table editor";
+      case MappingTableSource::ChosenForImport: return "the table chosen for this import (IFC Import window)";
+      case MappingTableSource::ChosenForExport: return "the table chosen for this export (IFC export options)";
+      case MappingTableSource::Project: return "the table this project remembers (from its IFC import or last IFC export)";
       }
       ASSERT(false);
       return "";
@@ -134,7 +137,14 @@ namespace
             os << "Correct the table in the editor.";
             break;
          case MappingTableSource::ConfigurationSetting:
-            os << "Correct the table, or choose a different table with Options > IFC Mapping Table (choose the standard table to go back to it).";
+            os << "Correct the table, or choose a different table with File > Configure BridgeLink (choose the standard table to go back to it).";
+            break;
+         case MappingTableSource::ChosenForImport:
+            os << "Correct the table, or choose a different table in the IFC Import window.";
+            break;
+         case MappingTableSource::ChosenForExport:
+         case MappingTableSource::Project:
+            os << "Correct the table, or choose a different table in the IFC export options.";
             break;
          default:
             os << "Correct the table. It may have been edited after the IFC extension was installed; reinstalling the extension restores it.";
@@ -1208,12 +1218,61 @@ std::filesystem::path CIfcMappingTable::GetTableSetting()
 void CIfcMappingTable::SetTableSetting(const std::filesystem::path& path)
 {
    EAFGetApp()->WriteProfileString(SETTING_SECTION, SETTING_MAPPING_TABLE, path.native().c_str());
+   AddRecentTable(path);
 }
 
-std::unique_ptr<CIfcMappingTable> CIfcMappingTable::LoadActive(const std::filesystem::path& command_line_file)
+namespace
 {
-   if (!command_line_file.empty())
-      return Load(command_line_file, MappingTableSource::CommandLine);
+   const int MAX_RECENT_TABLES = 8;
+   CString recent_table_entry(int i)
+   {
+      CString entry;
+      entry.Format(_T("RecentMappingTable%d"), i + 1);
+      return entry;
+   }
+}
+
+std::vector<std::filesystem::path> CIfcMappingTable::GetRecentTables()
+{
+   std::vector<std::filesystem::path> tables;
+   for (int i = 0; i < MAX_RECENT_TABLES; i++)
+   {
+      CString path = EAFGetApp()->GetProfileString(SETTING_SECTION, recent_table_entry(i), _T(""));
+      path.Trim();
+      if (!path.IsEmpty())
+         tables.emplace_back(path.GetString());
+   }
+   return tables;
+}
+
+void CIfcMappingTable::AddRecentTable(const std::filesystem::path& path)
+{
+   if (path.empty() || path == STANDARD_TABLE)
+      return;
+
+   auto same = [&path](const std::filesystem::path& other)
+      {
+         std::error_code ec;
+         return std::filesystem::equivalent(path, other, ec) || _wcsicmp(path.c_str(), other.c_str()) == 0;
+      };
+
+   auto tables = GetRecentTables();
+   tables.erase(std::remove_if(tables.begin(), tables.end(), same), tables.end());
+   tables.insert(tables.begin(), path);
+   if (MAX_RECENT_TABLES < (int)tables.size())
+      tables.resize(MAX_RECENT_TABLES);
+
+   for (int i = 0; i < MAX_RECENT_TABLES; i++)
+      EAFGetApp()->WriteProfileString(SETTING_SECTION, recent_table_entry(i), i < (int)tables.size() ? tables[i].c_str() : _T(""));
+}
+
+std::unique_ptr<CIfcMappingTable> CIfcMappingTable::LoadActive(const std::filesystem::path& chosen_file, MappingTableSource source)
+{
+   if (chosen_file == STANDARD_TABLE)
+      return Load(std::filesystem::path(), MappingTableSource::InstalledStandard);
+
+   if (!chosen_file.empty())
+      return Load(chosen_file, source);
 
    auto setting = GetTableSetting();
    if (!setting.empty())

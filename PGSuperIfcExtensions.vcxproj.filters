@@ -40,7 +40,13 @@
     <ClCompile Include="GeoReferencingPage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MappingTableDlg.cpp">
+    <ClCompile Include="IfcProjectMappingTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MappingTableChooser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MappingTableWindows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IfcTableFormat.cpp">
@@ -180,7 +186,13 @@
     <ClInclude Include="GeoReferencingPage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MappingTableDlg.h">
+    <ClInclude Include="IfcProjectMappingTable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingTableChooser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MappingTableWindows.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcTableFormat.h">

@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <PsgLib\Keys.h>
+#include "IfcMappingTable.h"
 
 namespace WBFL { namespace EAF { class Broker; }; };
 
@@ -130,9 +131,11 @@ public:
    // by GlobalId. Not owned; must outlive the BuildModel call.
    std::map<CSegmentKey, std::string>* segment_global_ids = nullptr;
 
-   // Mapping table for the property sets (/IfcMapping). When empty, the mapping table setting
-   // (Options > IFC Mapping Table), else the installed standard table, is used (CIfcMappingTable::LoadActive)
+   // Mapping table for the property sets: /IfcMapping on the command line, the Mapping Table tab of the export
+   // options, or the table the project remembers (mapping_source says which). When empty, the configured table
+   // (Configure BridgeLink), else the installed standard table, is used (CIfcMappingTable::LoadActive)
    CString mapping_file;
+   MappingTableSource mapping_source = MappingTableSource::CommandLine;
 };
 
 ///////////////////////////////////////////////////////////////////////////

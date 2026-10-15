@@ -21,7 +21,7 @@ Status: **reviewed 2026-09-29.** The questions of the first draft are answered (
 5. **Layering.** The standard table describes TPF/usBridge, which is what PGSuper exports today. An agency table extends it:
    - On import, the agency's locations are tried first.
    - On export, the agency table can add, replace, or remove property sets.
-6. **Selection.** The active table comes from the setting (Options > IFC Mapping Table), or from `/IfcMapping=` (A1, A2).
+6. **Selection.** One configured table (File > Configure BridgeLink). An import or export can choose another table, a project remembers its table, and `/IfcMapping=` overrides them (A1, A2, M6).
 7. **IDS.** The design-value IDS takes its property locations from the same table (M4).
 
 Until the mapping table editor exists (requirement R3 in the plan, step M7), tables are written by hand.
@@ -344,10 +344,17 @@ Pset fields:
 
 **Where tables come from**, first found wins:
 1. `/IfcMapping=<file>` on the command line.
-2. The mapping table setting: Options > IFC Mapping Table (registry, A1; M6).
-3. The installed standard table: `MappingTables\Standard.json` in the extension's install folder (next to the DLL).
+2. The table chosen for one import or export: the IFC Import window, or the Mapping Table tab of the IFC export options. The export tab defaults to the project's table (below). A command line export without `/IfcMapping` uses the project's table.
+3. The configured table: the IFC Extension page of File > Configure BridgeLink (registry `IfcExtensions\MappingTable`, A1; M6).
+4. The installed standard table: `MappingTables\Standard.json` in the extension's install folder (next to the DLL).
 
-An `extends` chain is followed from there. `"standard"` always means file 3.
+An `extends` chain is followed from there. `"standard"` always means file 4.
+
+**The project's table.** The project (`CIfcExtensionAgent`, `IIfcProjectMappingTable`) saves the table of the interactive IFC import that made it and the table of its last interactive IFC export, as a path or `standard`. Exports default to the last export table, else the import table, else the configured table. A changed export table marks the project modified. Command line imports and exports don't change it. The project unit is version 2 only when a table is remembered, so other projects are saved as before.
+
+**Recent tables.** The tables chosen in these windows and used by interactive imports and exports are kept in one list (registry `RecentMappingTable1..8`), shown by table name.
+
+There is no automatic choice of a table from the IFC model (A2).
 
 **Logged at the start of every import and export:**
 - each table file used: full path, how the path was chosen ("command line", "configuration setting", "installed standard table"), table name, and version
@@ -359,7 +366,7 @@ Support staff can then tell from a log which tables produced a result.
 
 | Problem | Example message |
 |---|---|
-| file not found | `File: D:\Tables\IowaDOT.json` / `The file was chosen by the mapping table setting (Options > IFC Mapping Table).` / `The file was not found.` / `What to do: Correct the table, or choose a different table with Options > IFC Mapping Table (choose the standard table to go back to it).` |
+| file not found | `File: D:\Tables\IowaDOT.json` / `The file was chosen by the configured mapping table (File > Configure BridgeLink).` / `The file was not found.` / `What to do: Correct the table, or choose a different table with File > Configure BridgeLink (choose the standard table to go back to it).` The "chosen by" and "What to do" text follows how the table was chosen (`MappingTableSource`). |
 | standard table missing | `The standard IFC mapping table is missing: C:\...\MappingTables\Standard.json. The IFC extension installation is incomplete; reinstall it.` |
 | can't read the file | the path plus the system error text (access denied, locked, ...) |
 | invalid JSON | the path plus line, column, and the parser's message |
@@ -371,7 +378,7 @@ Support staff can then tell from a log which tables produced a result.
 - A table error stops the import or export. There is no silent fallback to the standard table, because the results would differ without notice.
 - Interactive: a message box shows the error and the log path. Headless (`/IfcImport`, `/IfcExport`): the error goes to the log and the command fails.
 - Findings that aren't errors (e.g. a declared property with no target) are logged as warnings and don't stop anything.
-- The IFC Mapping Table dialog (M6) loads and validates a file when the user picks it, and shows the same messages. It saves only a table that can be used.
+- The windows that choose a table (`CMappingTableChooser`: the Configure BridgeLink page, the IFC Import window, the export Mapping Table tab) load and validate a table when the user picks it, and show the same messages. A table that can't be used can't be chosen.
 
 ## Import engine (M1)
 
@@ -586,7 +593,9 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 | `IfcTargetHints.h/.cpp` | hint rules for targets that weren't found (G3) |
 | `IdsBuilder.h` | IDS document helpers (facets, restrictions, writing) shared by the design-value IDS and M5 |
 | `IfcTableIds.h/.cpp` | table -> general IDS writer and general IDS -> table generator (M5) |
-| `MappingTableDlg.h/.cpp` | Options > IFC Mapping Table dialog (M6); the setting itself is `CIfcMappingTable::GetTableSetting`/`SetTableSetting` |
+| `MappingTableChooser.h/.cpp` | `CMappingTableChooser`: the controls that choose a table (default table, recent tables, browse, validation) (M6) |
+| `MappingTableWindows.h/.cpp` | the Configure BridgeLink page and its callback, the IFC Import window, and the export Mapping Table tab (M6); the configured table itself is `CIfcMappingTable::GetTableSetting`/`SetTableSetting` |
+| `IfcProjectMappingTable.h/.cpp` | `IIfcProjectMappingTable`, the tables a project remembers, and the export default (M6) |
 | `IfcTableFormat.h/.cpp` | `FormatMappingTable`: writes a table in the style of `Standard.json` (the editor, `/IfcFormatTable`) |
 | `MappingEditorDoc.h/.cpp` | mapping table editor (M7): the BridgeLink application plugin, doc template, and document (the table's JSON) |
 | `MappingEditorViews.h/.cpp` | editor frame, section tree, and the view that hosts the panes |

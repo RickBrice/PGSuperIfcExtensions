@@ -24,6 +24,7 @@
 #include <IFace/Tools.h>
 #include <IFace\Project.h>
 #include "IfcImportUnits.h"
+#include "IfcMappingTable.h"
 
 class CIfcImportOptions
 {
@@ -42,9 +43,11 @@ public:
    bool interactive = true;
    CString log_file;
 
-   // Mapping table given on the command line (/IfcMapping). When empty, the mapping table setting
-   // (Options > IFC Mapping Table), else the installed standard table, is used (CIfcMappingTable::LoadActive)
+   // Mapping table chosen for this import: /IfcMapping on the command line, or the IFC Import window
+   // (mapping_source says which). When empty, the configured table (Configure BridgeLink), else the installed
+   // standard table, is used (CIfcMappingTable::LoadActive). The project remembers the table a bridge import used.
    CString mapping_file;
+   MappingTableSource mapping_source = MappingTableSource::CommandLine;
 };
 
 class CIfcMappingTable;

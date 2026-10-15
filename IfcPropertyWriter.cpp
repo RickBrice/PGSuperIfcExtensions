@@ -28,7 +28,7 @@ CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options)
 {
    ASSERT(ms_pCurrent == nullptr); // one export at a time
    std::filesystem::path path(options.mapping_file.GetString());
-   m_pTable = CIfcMappingTable::LoadActive(path);
+   m_pTable = CIfcMappingTable::LoadActive(path, options.mapping_source);
    ms_pCurrent = this;
 }
 

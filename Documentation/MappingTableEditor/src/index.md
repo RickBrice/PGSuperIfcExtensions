@@ -44,7 +44,7 @@ Changes are made to the table in the editor. File > Save writes the table. Table
 Using a table
 -------------
 
-PGSuper and PGSplice use one mapping table for every IFC import and export. Choose it with Options > IFC Mapping Table. See @ref choosing_table.
+PGSuper and PGSplice use the mapping table configured with File > Configure BridgeLink. An IFC import or export can choose another table, and a project remembers its table. See @ref choosing_table.
 
 Topics
 ------

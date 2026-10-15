@@ -36,6 +36,7 @@
 #include <memory>
 #include <string>
 #include <PsgLib\Keys.h>
+#include "IfcMappingTable.h"
 
 namespace WBFL { namespace EAF { class Broker; } }
 
@@ -96,9 +97,11 @@ public:
    // Prefix for each generated girder <specification> name, e.g. "Girder design values".
    CString specification_name_prefix = _T("Girder design values");
 
-   // Mapping table whose property locations the IDS uses, as the IFC export does (CIfcExportOptions::mapping_file).
-   // When empty, the mapping table setting, else the installed standard table, is used (CIfcMappingTable::LoadActive)
+   // Mapping table whose property locations the IDS uses, as the IFC export does (CIfcExportOptions::mapping_file
+   // and mapping_source). When empty, the configured table (Configure BridgeLink), else the installed standard table,
+   // is used (CIfcMappingTable::LoadActive)
    CString mapping_file;
+   MappingTableSource mapping_source = MappingTableSource::CommandLine;
 };
 
 class CIdsExporter

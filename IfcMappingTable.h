@@ -46,10 +46,13 @@ CLASS
 enum class MappingTableSource
 {
    CommandLine,          // /IfcMapping=<file>
-   ConfigurationSetting, // the mapping table setting (Options > IFC Mapping Table, registry)
+   ConfigurationSetting, // the configured mapping table (Configure BridgeLink wizard, registry)
    InstalledStandard,    // the standard table installed with the extension
    Extends,              // named by the "extends" of another table
-   Editor                // the table being edited in the mapping table editor
+   Editor,               // the table being edited in the mapping table editor
+   ChosenForImport,      // chosen in the IFC Import window for one import
+   ChosenForExport,      // chosen in the IFC export options for one export
+   Project               // the table the project remembers (used by its IFC import or its last IFC export)
 };
 
 // How a table file was chosen, for logs and messages (e.g. "the command line (/IfcMapping)")
@@ -218,17 +221,26 @@ public:
    // Throws CIfcMappingTableException with a message for users and support staff if a table can't be found, read, or used.
    static std::unique_ptr<CIfcMappingTable> Load(const std::filesystem::path& path, MappingTableSource source, const std::string* text = nullptr);
 
-   // Loads the table an import or export uses, first found wins: command_line_file (/IfcMapping=, if not empty),
-   // the mapping table setting, the installed standard table. Throws CIfcMappingTableException like Load
-   static std::unique_ptr<CIfcMappingTable> LoadActive(const std::filesystem::path& command_line_file);
+   // Loads the table an import or export uses, first found wins: chosen_file (if not empty; source says how it was
+   // chosen, e.g. /IfcMapping= or the IFC Import window), the configured table, the installed standard table.
+   // chosen_file may be STANDARD_TABLE for the installed standard table. Throws CIfcMappingTableException like Load
+   static std::unique_ptr<CIfcMappingTable> LoadActive(const std::filesystem::path& chosen_file, MappingTableSource source = MappingTableSource::CommandLine);
+
+   // Names the installed standard table where a table file can be given (project memory, the recent tables)
+   static constexpr const wchar_t* STANDARD_TABLE = L"standard";
 
    // The standard table installed with the extension (MappingTables\Standard.json next to the extension DLL)
    static std::filesystem::path GetStandardTablePath();
 
-   // The mapping table setting (Options > IFC Mapping Table), stored in the registry for all BridgeLink applications.
+   // The configured mapping table (Configure BridgeLink wizard), stored in the registry for all BridgeLink applications.
    // Empty means the installed standard table
    static std::filesystem::path GetTableSetting();
    static void SetTableSetting(const std::filesystem::path& path);
+
+   // Recently used table files, most recent first, shared by the configuration page, the IFC Import window, and the
+   // IFC export options. Files that no longer exist are kept (they may be on a drive that isn't connected)
+   static std::vector<std::filesystem::path> GetRecentTables();
+   static void AddRecentTable(const std::filesystem::path& path); // the standard table isn't added
 
    // Import locations of a target, in the order they are tried
    const std::vector<MappingLocation>& GetLocations(const TargetDef& target) const;

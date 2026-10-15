@@ -32,4 +32,5 @@ CExportOptionsSheet::CExportOptionsSheet(LPCTSTR pszCaption, CWnd* pParentWnd /*
    m_psh.dwFlags |= PSH_NOAPPLYNOW; // this is a one-shot options dialog, not a live-apply settings page
    AddPage(&m_IfcPage);
    AddPage(&m_IdsPage);
+   AddPage(&m_TablePage);
 }

@@ -27,6 +27,7 @@
 #include "IfcExporter.h"
 #include "IdsExporter.h"
 #include "ExportOptionsSheet.h"
+#include "IfcProjectMappingTable.h"
 
 #include <IFace/Tools.h>
 #include <IFace/Project.h>
@@ -70,6 +71,17 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    // 1. Export options: one dialog, two tabs (IFC, IDS). The IDS tab's own "Enable IDS
    // export" checkbox (options.enabled) is the only switch for step 3/4/6 below.
    CExportOptionsSheet options_sheet(_T("Export Options"));
+
+   // The Mapping Table tab defaults to the project's table (its last export table, else its import table), else the
+   // configured table
+   bool bFromImport = false;
+   std::filesystem::path project_table = GetProjectExportTable(pBroker, &bFromImport);
+   if (!project_table.empty())
+   {
+      CString label(bFromImport ? _T("This project's IFC import table: ") : _T("This project's last IFC export table: "));
+      options_sheet.m_TablePage.SetDefault(label + GetMappingTableDisplayName(project_table), project_table, MappingTableSource::Project);
+   }
+
    if (options_sheet.DoModal() == IDCANCEL)
       return S_OK;
 
@@ -114,6 +126,8 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
 
    std::map<CSegmentKey, std::string> segment_global_ids;
    CIfcExportOptions ifc_options = options_sheet.m_IfcPage.options;
+   ifc_options.mapping_file = options_sheet.m_TablePage.m_strTable;
+   ifc_options.mapping_source = options_sheet.m_TablePage.m_Source;
    if (bExportIds)
       ifc_options.segment_global_ids = &segment_global_ids;
 
@@ -128,6 +142,19 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    {
       // e.g. the mapping table can't be used (CIfcMappingTableException). The message says what to do
       strError = e.what();
+   }
+
+   // the project remembers the table, so its next export defaults to it
+   if (bIfcResult)
+   {
+      try
+      {
+         RememberExportTable(pBroker, *CIfcMappingTable::LoadActive(std::filesystem::path(ifc_options.mapping_file.GetString()), ifc_options.mapping_source));
+      }
+      catch (const std::exception&)
+      {
+         // the export used the table, so it can be loaded. If it changed since, the project's table is unchanged
+      }
    }
 
    CString strMsg;
@@ -146,7 +173,9 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       ids_options.title.Format(_T("%s - girder concrete strength requirements"), bridge_name);
       ids_options.global_id_by_segment = segment_global_ids;
 
-      ids_options.mapping_file = ifc_options.mapping_file; // the IDS checks the values where the IFC export put them
+      // the IDS checks the values where the IFC export put them
+      ids_options.mapping_file = ifc_options.mapping_file;
+      ids_options.mapping_source = ifc_options.mapping_source;
 
       CIdsExporter ids_builder;
       bool bIdsResult = false;

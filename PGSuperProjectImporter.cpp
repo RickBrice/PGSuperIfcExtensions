@@ -25,6 +25,7 @@
 #include "IfcExtensions.h"
 #include "PGSuperProjectImporter.h"
 #include "IfcImporter.h"
+#include "MappingTableWindows.h"
 #include <EAF\EAFApp.h>
 #include <EAF\EAFUtilities.h>
 
@@ -68,6 +69,16 @@ HRESULT CPGSuperProjectImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBrok
 
       CIfcImportOptions options;
       options.model_elements = CIfcImportOptions::ModelElements::AlignmentAndBridge;
+
+      // the IFC Import window: the configured mapping table, or another table for this import
+      {
+         AFX_MANAGE_STATE(AfxGetStaticModuleState());
+         CIfcImportTableDlg tableDlg(fileName);
+         if (tableDlg.DoModal() != IDOK)
+            return hr;
+         options.mapping_file = tableDlg.m_strTable;
+         options.mapping_source = tableDlg.m_Source;
+      }
 
       hr = CIfcImporter(pBroker).ImportFromIFC(fileName, options);
    }

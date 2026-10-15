@@ -36,7 +36,8 @@ CLASS
    is then imported into that project and the project is saved.
    /IfcOut defaults to the IFC file name with a .pgs extension.
    /IfcLog defaults to the output file name with a .log extension.
-   /IfcMapping defaults to the standard mapping table installed with the extension.
+   /IfcMapping defaults to the configured mapping table (File > Configure BridgeLink), else the standard
+   mapping table installed with the extension.
 
    Export a PGSuper project to an IFC model:
    BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.json>] [/IfcIds=<design.ids>]
@@ -45,7 +46,8 @@ CLASS
    /IfcPropertyUnits=Display (default) exports property values in display units with their units,
    /IfcPropertyUnits=System exports property values in system units using the project units.
    /IfcLog defaults to the IFC file name with a .export.log extension.
-   /IfcMapping defaults to the standard mapping table installed with the extension.
+   /IfcMapping defaults to the table the project remembers (from its IFC import or last IFC export), else the
+   configured mapping table, else the standard mapping table installed with the extension.
    /IfcIds also writes the design-value IDS for the exported model, with the default IDS options
    (girders pinned by Name).
 

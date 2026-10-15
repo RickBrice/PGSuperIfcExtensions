@@ -24,13 +24,15 @@
 #include "afxdialogex.h"
 #include "ExportOptions.h"
 #include "IdsExportOptions.h"
+#include "MappingTableWindows.h"
 
 // CExportOptionsSheet - the single "Bridge Model to IFC" export options dialog. Hosts
 // the IFC options and IDS options as two tabs of one property sheet, replacing what
 // used to be two dialogs shown one after the other (IFC options, then - only if the
 // user opted in - a separate IDS options dialog). IDS export has no standalone entry
 // point any more: m_IdsPage.options.enabled (the first control on the IDS tab) is the
-// only switch for whether PGSuperDataExporter.cpp writes a .ids file at all.
+// only switch for whether PGSuperDataExporter.cpp writes a .ids file at all. The Mapping Table tab chooses the
+// mapping table both use.
 class CExportOptionsSheet : public CPropertySheet
 {
 public:
@@ -38,4 +40,5 @@ public:
 
    CExportOptions       m_IfcPage;
    CIdsExportOptionsDlg m_IdsPage;
+   CExportTablePage     m_TablePage;
 };

@@ -27,11 +27,11 @@ Table > Write as General IDS writes the table as a general IDS (`.ids`): one spe
 
 An IDS can't say everything a table says. What it can't say (targets, where a set is attached, conditions, and so on) is written in the instructions of each facet, so a table generated from the IDS gets it back.
 
-The same can be done from the command line. It writes the active table, or the table given with `/IfcMapping=`:
+The same can be done from the command line. It writes the configured table, or the table given with `/IfcMapping=`:
 
     BridgeLink.exe /IfcTableToIds=<table.ids> <template.pgt> [/IfcMapping=<table.json>]
 
 Design-value IDS
 ----------------
 
-The IFC export can also write a design-value IDS: an IDS with the values PGSuper designed, for checking a model against the design. That IDS takes its property locations from the active table. It is written by the export, not by the editor.
+The IFC export can also write a design-value IDS: an IDS with the values PGSuper designed, for checking a model against the design. That IDS takes its property locations from the table the export uses (@ref choosing_table). It is written by the export, not by the editor.

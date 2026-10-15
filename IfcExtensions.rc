@@ -238,20 +238,48 @@ BEGIN
     EDITTEXT        IDC_EDIT,7,7,457,248,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
 END
 
-IDD_MAPPING_TABLE DIALOGEX 0, 0, 330, 222
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "IFC Mapping Table"
+IDD_MAPPING_CONFIG_PAGE DIALOGEX 0, 0, 345, 210
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
+CAPTION "IFC Extension"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "The mapping table says where IFC imports and exports read and write each value. The setting applies to PGSuper and PGSplice. /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,7,7,316,26
+    LTEXT           "The mapping table says where IFC imports and exports read and write each value. The configured table applies to PGSuper and PGSplice. An IFC import or export can choose another table, and /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,7,7,331,26
     CONTROL         "Standard table (installed with the IFC extension)",IDC_MAPPING_STANDARD,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,38,316,10
-    CONTROL         "Agency table:",IDC_MAPPING_AGENCY,"Button",BS_AUTORADIOBUTTON,7,53,316,10
-    EDITTEXT        IDC_MAPPING_FILE,19,66,280,14,ES_AUTOHSCROLL | WS_GROUP
-    PUSHBUTTON      "...",IDC_MAPPING_BROWSE,303,66,20,14
-    EDITTEXT        IDC_MAPPING_STATUS,7,88,316,106,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,219,201,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,273,201,50,14
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,38,331,10
+    CONTROL         "Another table:",IDC_MAPPING_AGENCY,"Button",BS_AUTORADIOBUTTON,7,53,331,10
+    COMBOBOX        IDC_MAPPING_FILE,19,66,295,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_MAPPING_BROWSE,318,66,20,14
+    EDITTEXT        IDC_MAPPING_STATUS,7,88,331,115,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+END
+
+IDD_IFC_IMPORT_TABLE DIALOGEX 0, 0, 330, 240
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "IFC Import"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "IFC model:",IDC_STATIC,7,7,316,8
+    EDITTEXT        IDC_IMPORT_MODEL_FILE,7,18,316,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_TABSTOP
+    LTEXT           "Mapping table for this import. The mapping table says where the import reads each value. Choosing another table here doesn't change the configured table (File > Configure BridgeLink).",IDC_STATIC,7,40,316,26
+    CONTROL         "The configured table",IDC_MAPPING_STANDARD,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,71,316,10
+    CONTROL         "Another table:",IDC_MAPPING_AGENCY,"Button",BS_AUTORADIOBUTTON,7,86,316,10
+    COMBOBOX        IDC_MAPPING_FILE,19,99,280,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_MAPPING_BROWSE,303,99,20,14
+    EDITTEXT        IDC_MAPPING_STATUS,7,121,316,92,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
+    DEFPUSHBUTTON   "Import",IDOK,219,219,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,273,219,50,14
+END
+
+IDD_EXPORT_TABLE_PAGE DIALOGEX 0, 0, 287, 230
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
+CAPTION "Mapping Table"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "The mapping table says where the IFC export writes each value, and where the IDS checks them. The project remembers the table of its last export, and its next export uses it unless another table is chosen here.",IDC_STATIC,7,7,273,34
+    CONTROL         "The configured table",IDC_MAPPING_STANDARD,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,46,273,10
+    CONTROL         "Another table:",IDC_MAPPING_AGENCY,"Button",BS_AUTORADIOBUTTON,7,61,273,10
+    COMBOBOX        IDC_MAPPING_FILE,19,74,237,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    PUSHBUTTON      "...",IDC_MAPPING_BROWSE,260,74,20,14
+    EDITTEXT        IDC_MAPPING_STATUS,7,96,273,127,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL | NOT WS_TABSTOP
 END
 
 IDD_MAPPING_TABLE_PANE DIALOGEX 0, 0, 360, 230
@@ -601,13 +629,6 @@ BEGIN
         BOTTOMMARGIN, 228
     END
 
-    IDD_MAPPING_TABLE, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 323
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 215
-    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -664,7 +685,6 @@ IDR_MAPPING_EDITOR      ICON                    "IfcProjectImporter.ico"
 STRINGTABLE
 BEGIN
     ID_EDIT_GEOREFERENCING  "Edit Georeferencing\nEdit Georeferencing"
-    ID_OPTIONS_IFC_MAPPING_TABLE "Choose the mapping table used by IFC imports and exports\nIFC Mapping Table"
     ID_MAPPING_VALIDATE     "Check the table the way IFC imports and exports do\nValidate"
     ID_MAPPING_WRITE_IDS    "Write what the table exports as a general IDS\nWrite as IDS"
     ID_MAPPING_FROM_IDS     "Generate a mapping table from a general IDS, e.g. an agency IDS\nGenerate from IDS"

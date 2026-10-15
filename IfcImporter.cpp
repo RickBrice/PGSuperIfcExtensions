@@ -28,6 +28,7 @@
 #include "Units.h"
 #include "ImportResults.h"
 #include "IfcMappingTable.h"
+#include "IfcProjectMappingTable.h"
 #include "IfcTargetReader.h"
 
 #include <EAF/AutoProgress.h>
@@ -49,7 +50,7 @@ void CIfcImporter::LoadMappingTable()
    m_pMappingTable.reset();
 
    std::filesystem::path path(m_Options.mapping_file.GetString());
-   m_pMappingTable = CIfcMappingTable::LoadActive(path);
+   m_pMappingTable = CIfcMappingTable::LoadActive(path, m_Options.mapping_source);
    m_pMappingTable->LogFiles();
    m_pTargetReader = std::make_unique<CIfcTargetReader>(*m_pMappingTable, m_Units);
 }
@@ -230,6 +231,10 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
     if (m_pTargetReader)
        m_pTargetReader->LogNotFoundSummary();
+
+    // the project remembers the table, so its exports default to it. A command line import doesn't (it names the table)
+    if (SUCCEEDED(hr) && m_pMappingTable && options.interactive && options.model_elements == CIfcImportOptions::ModelElements::AlignmentAndBridge)
+       RememberImportTable(m_pBroker, *m_pMappingTable);
 
     WBFL::System::Logger::Info(_T("Done IFC import from file"));
 

@@ -36,6 +36,7 @@
 #include <EAF\EAFResources.h>
 #include <EAF\EAFUtilities.h>
 #include <EAF\Help.h>
+#include <BridgeLink.h>
 #include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
 
 #include <fstream>
@@ -109,11 +110,23 @@ BOOL CMappingEditorPlugin::Init(CEAFApp* pParent)
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    m_DocumentationImpl.Init(std::dynamic_pointer_cast<WBFL::EAF::IPluginApp>(shared_from_this()));
+
+   // the configured mapping table is chosen in the Configure BridgeLink wizard
+   m_pParent = pParent;
+   if (auto* pBridgeLink = dynamic_cast<IBridgeLink*>(pParent))
+      m_ConfigurationCallbackID = pBridgeLink->Register(&m_ConfigurationCallback);
+
    return TRUE;
 }
 
 void CMappingEditorPlugin::Terminate()
 {
+   if (m_ConfigurationCallbackID != INVALID_ID)
+   {
+      if (auto* pBridgeLink = dynamic_cast<IBridgeLink*>(m_pParent))
+         pBridgeLink->UnregisterCallback(m_ConfigurationCallbackID);
+      m_ConfigurationCallbackID = INVALID_ID;
+   }
 }
 
 void CMappingEditorPlugin::IntegrateWithUI(BOOL bIntegrate)

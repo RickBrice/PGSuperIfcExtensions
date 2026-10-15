@@ -229,7 +229,7 @@ CString CIfcCommandLineInfo::GetUsageMessage()
                  _T("/IfcImport - IFC model to import\n")
                  _T("/IfcOut - PGSuper project file to create. Defaults to the IFC file name with a .pgs extension\n")
                  _T("/IfcLog - Import log file. Defaults to the project file name with a .log extension\n")
-                 _T("/IfcMapping - IFC mapping table. Defaults to the standard table installed with the IFC extension"));
+                 _T("/IfcMapping - IFC mapping table. Defaults to the configured table (File > Configure BridgeLink), else the standard table installed with the IFC extension"));
    return strMsg;
 }
 

@@ -277,7 +277,9 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="IfcExtensions.cpp" />
     <ClCompile Include="IfcExtensionAgent.cpp" />
     <ClCompile Include="GeoReferencingPage.cpp" />
-    <ClCompile Include="MappingTableDlg.cpp" />
+    <ClCompile Include="IfcProjectMappingTable.cpp" />
+    <ClCompile Include="MappingTableChooser.cpp" />
+    <ClCompile Include="MappingTableWindows.cpp" />
     <ClCompile Include="IfcTableFormat.cpp" />
     <ClCompile Include="MappingEditorDoc.cpp" />
     <ClCompile Include="MappingEditorExportPanes.cpp" />
@@ -356,7 +358,9 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="IfcExtensions.h" />
     <ClInclude Include="IfcExtensionAgent.h" />
     <ClInclude Include="GeoReferencingPage.h" />
-    <ClInclude Include="MappingTableDlg.h" />
+    <ClInclude Include="IfcProjectMappingTable.h" />
+    <ClInclude Include="MappingTableChooser.h" />
+    <ClInclude Include="MappingTableWindows.h" />
     <ClInclude Include="IfcTableFormat.h" />
     <ClInclude Include="MappingEditorDoc.h" />
     <ClInclude Include="MappingEditorExportPanes.h" />

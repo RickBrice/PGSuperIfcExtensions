@@ -39,6 +39,7 @@
 #include <IFace\ExtendUI.h>
 #include "GeoReferencingPage.h"
 #include "GeoReferencing.h"
+#include "IfcProjectMappingTable.h"
 
 class CIfcCommandLineInfo;
 
@@ -47,6 +48,7 @@ class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheri
    public WBFL::EAF::IAgentPersist,
    public WBFL::EAF::IAgentUIIntegration,
    public IGeoreferencing,
+   public IIfcProjectMappingTable,
    public IEditAlignmentCallback,
    public WBFL::EAF::ICommandCallback,
    public IEAFProcessCommandLine
@@ -79,6 +81,12 @@ public:
    void SetGeoreferencingData(const GeoreferencingData& data) override;
    const GeoreferencingData& GetGeoreferencingData() const override;
 
+public:
+   std::wstring GetImportMappingTable() const override { return m_ImportMappingTable; }
+   void SetImportMappingTable(const std::wstring& table) override { m_ImportMappingTable = table; }
+   std::wstring GetExportMappingTable() const override { return m_ExportMappingTable; }
+   void SetExportMappingTable(const std::wstring& table) override { m_ExportMappingTable = table; }
+
 // IEditAlignmentCallback
 public:
    CPropertyPage* CreatePropertyPage(IEditAlignmentData* pAlignmentData) override;
@@ -99,7 +107,6 @@ public:
    BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
 
    afx_msg void OnEditGeoreferencing();
-   afx_msg void OnIfcMappingTable();
 
 // IEAFProcessCommandLine
 public:
@@ -120,10 +127,13 @@ private:
    IDType m_EditAlignmentCallbackID;
 
    std::shared_ptr<WBFL::EAF::Menu> m_pEditMenu;
-   std::shared_ptr<WBFL::EAF::Menu> m_pOptionsMenu;
    CBitmap m_bmpMenu;
    void CreateMenus();
    void RemoveMenus();
 
    GeoreferencingData m_GeoreferencingData;
+
+   // the mapping tables the project remembers (IIfcProjectMappingTable)
+   std::wstring m_ImportMappingTable;
+   std::wstring m_ExportMappingTable;
 };

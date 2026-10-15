@@ -35,7 +35,6 @@
 #include "IfcExporter.h"
 #include "IdsExporter.h"
 #include "IfcTableIds.h"
-#include "MappingTableDlg.h"
 #include "IfcTableFormat.h"
 
 #include <EAF\EAFApp.h>
@@ -44,7 +43,6 @@
 
 BEGIN_MESSAGE_MAP(CIfcExtensionAgent,CCmdTarget)
    ON_COMMAND(ID_EDIT_GEOREFERENCING,&CIfcExtensionAgent::OnEditGeoreferencing)
-   ON_COMMAND(ID_OPTIONS_IFC_MAPPING_TABLE,&CIfcExtensionAgent::OnIfcMappingTable)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////
@@ -54,6 +52,7 @@ bool CIfcExtensionAgent::RegisterInterfaces()
 {
    EAF_AGENT_REGISTER_INTERFACES;
    REGISTER_INTERFACE(IGeoreferencing);
+   REGISTER_INTERFACE(IIfcProjectMappingTable);
 
    return true;
 }
@@ -95,7 +94,24 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
    if ( !pStrLoad->BeginUnit(_T("IfcExtensionAgent")) )
       return WBFL::EAF::Broker::LoadResult::Error;
 
+   Float64 version = pStrLoad->GetVersion();
+
    m_GeoreferencingData.Load(pStrLoad);
+
+   // version 2: the mapping tables the project remembers
+   m_ImportMappingTable.clear();
+   m_ExportMappingTable.clear();
+   if (2.0 <= version)
+   {
+      std::_tstring table;
+      if (!pStrLoad->Property(_T("ImportMappingTable"), &table))
+         return WBFL::EAF::Broker::LoadResult::Error;
+      m_ImportMappingTable = table;
+
+      if (!pStrLoad->Property(_T("ExportMappingTable"), &table))
+         return WBFL::EAF::Broker::LoadResult::Error;
+      m_ExportMappingTable = table;
+   }
 
    if ( !pStrLoad->EndUnit() )
       return WBFL::EAF::Broker::LoadResult::Error;
@@ -105,8 +121,15 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
 
 bool CIfcExtensionAgent::Save(WBFL::System::IStructuredSave* pStrSave)
 {
-   pStrSave->BeginUnit(_T("IfcExtensionAgent"),1.0);
+   // version 2 adds the mapping tables. A project that doesn't remember a table is saved as version 1, as before
+   bool bTables = !m_ImportMappingTable.empty() || !m_ExportMappingTable.empty();
+   pStrSave->BeginUnit(_T("IfcExtensionAgent"), bTables ? 2.0 : 1.0);
    m_GeoreferencingData.Save(pStrSave);
+   if (bTables)
+   {
+      pStrSave->Property(_T("ImportMappingTable"), m_ImportMappingTable.c_str());
+      pStrSave->Property(_T("ExportMappingTable"), m_ExportMappingTable.c_str());
+   }
    pStrSave->EndUnit();
    return true;
 }
@@ -145,14 +168,6 @@ void CIfcExtensionAgent::CreateMenus()
    auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
    m_pEditMenu->InsertMenu(alignmentPos, ID_EDIT_GEOREFERENCING, _T("&Georeferencing..."), callback);
    m_pEditMenu->SetMenuItemBitmaps(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
-
-   UINT optionsPos = pMenu->FindMenuItem(_T("Options"));
-   if (optionsPos != (UINT)-1)
-   {
-      m_pOptionsMenu = pMenu->GetSubMenu(optionsPos);
-      m_pOptionsMenu->AppendMenu(ID_OPTIONS_IFC_MAPPING_TABLE, _T("&IFC Mapping Table..."), callback);
-      m_pOptionsMenu->SetMenuItemBitmaps(ID_OPTIONS_IFC_MAPPING_TABLE, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
-   }
 }
 
 void CIfcExtensionAgent::RemoveMenus()
@@ -162,13 +177,6 @@ void CIfcExtensionAgent::RemoveMenus()
       auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
       m_pEditMenu->RemoveMenu(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, callback);
       m_pEditMenu.reset();
-   }
-
-   if ( m_pOptionsMenu )
-   {
-      auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
-      m_pOptionsMenu->RemoveMenu(ID_OPTIONS_IFC_MAPPING_TABLE, MF_BYCOMMAND, callback);
-      m_pOptionsMenu.reset();
    }
 }
 
@@ -221,15 +229,6 @@ void CIfcExtensionAgent::OnEditGeoreferencing()
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    GET_IFACE(IEditByUI,pEditByUI);
    pEditByUI->EditAlignmentDescription(_T("Georeferencing"));
-}
-
-void CIfcExtensionAgent::OnIfcMappingTable()
-{
-   AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   CMappingTableDlg dlg(EAFGetMainFrame());
-   dlg.m_strTable = CIfcMappingTable::GetTableSetting().c_str();
-   if (dlg.DoModal() == IDOK)
-      CIfcMappingTable::SetTableSetting(std::filesystem::path(dlg.m_strTable.GetString()));
 }
 
 void CIfcExtensionAgent::RegisterUIExtensions()
@@ -347,6 +346,12 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
    CIfcExportOptions options;
    options.display_units_for_properties = ifcCmdInfo.m_bDisplayUnitsForProperties;
    options.mapping_file = ifcCmdInfo.m_strMappingFile;
+   if (options.mapping_file.IsEmpty())
+   {
+      // the project's table, else the configured table. A command line export doesn't change the project's table
+      options.mapping_file = GetProjectExportTable(EAFGetBroker()).c_str();
+      options.mapping_source = MappingTableSource::Project;
+   }
 
    bool bResult = false;
    CString strError;
@@ -369,7 +374,8 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       {
          CIdsExportOptions ids_options;
          ids_options.enabled = true;
-         ids_options.mapping_file = ifcCmdInfo.m_strMappingFile;
+         ids_options.mapping_file = options.mapping_file;
+         ids_options.mapping_source = options.mapping_source;
          bIdsResult = CIdsExporter().BuildSpecification(EAFGetBroker(), ids_options, ifcCmdInfo.m_strIdsFile);
       }
       catch (const std::exception& e)

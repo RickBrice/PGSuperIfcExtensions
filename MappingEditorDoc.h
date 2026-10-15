@@ -38,6 +38,7 @@
 #include <EAF\ComponentObject.h>
 #include <EAF\PluginApp.h>
 #include <EAF\PluginAppDocumentationImpl.h>
+#include "MappingTableWindows.h"
 #include <nlohmann/json.hpp>
 
 #include "IfcMappingTable.h"
@@ -88,6 +89,9 @@ public:
 
 private:
    WBFL::EAF::PluginAppDocumentationImpl m_DocumentationImpl;
+   CMappingTableConfigCallback m_ConfigurationCallback; // the mapping table page of the Configure BridgeLink wizard
+   IDType m_ConfigurationCallbackID = INVALID_ID;
+   CEAFApp* m_pParent = nullptr;
 };
 
 class CMappingEditorDocTemplate : public CEAFDocTemplate

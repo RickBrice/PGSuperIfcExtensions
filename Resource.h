@@ -93,7 +93,6 @@
 #define IDC_SURVEY_POINTS_NONE          276
 #define IDC_SURVEY_POINTS_INDIVIDUAL    277
 #define IDC_SURVEY_POINTS_SET           278
-#define IDD_MAPPING_TABLE               279
 #define IDC_MAPPING_STANDARD            280
 #define IDC_MAPPING_AGENCY              281
 #define IDC_MAPPING_FILE                282
@@ -204,7 +203,6 @@
 #define IDC_CLS_DELETE                  389
 #define IDC_SET_ITEMS_LABEL             390
 #define ID_EDIT_GEOREFERENCING          32771
-#define ID_OPTIONS_IFC_MAPPING_TABLE    32772
 #define ID_MAPPING_VALIDATE             32773
 #define ID_MAPPING_WRITE_IDS            32774
 #define ID_MAPPING_FROM_IDS             32775
@@ -220,6 +218,10 @@
 #define IDC_MODEL_TARGET                403
 #define IDC_MODEL_READING               404
 #define IDC_MODEL_ADD                   405
+#define IDD_MAPPING_CONFIG_PAGE         406
+#define IDD_IFC_IMPORT_TABLE            407
+#define IDD_EXPORT_TABLE_PAGE           408
+#define IDC_IMPORT_MODEL_FILE           409
 #define IDD_MAPPING_FROM_IDS            391
 #define IDC_FROMIDS_IDS                 392
 #define IDC_FROMIDS_IDS_BROWSE          393
@@ -231,9 +233,9 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        406
+#define _APS_NEXT_RESOURCE_VALUE        410
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         406
+#define _APS_NEXT_CONTROL_VALUE         410
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif
