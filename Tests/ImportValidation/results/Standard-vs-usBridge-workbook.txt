@@ -1,6 +1,6 @@
 Standard mapping table compared with the usBridge workbook usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx (categories: see check_standard.py)
 
-Counts: CLASS 4, REQUIRED 3, NO-VALUE 38, VALUE 13, TYPE 52, NAME 1, ENUM 17, PSET 23, RESTRICTED 23, OPTIONAL 22, EXTRA 26, NO-CLASS 2
+Counts: CLASS 4, REQUIRED 3, NO-VALUE 39, VALUE 13, TYPE 54, NAME 1, ENUM 17, PSET 20, RESTRICTED 23, OPTIONAL 36, EXTRA 27, NO-CLASS 1
 
 CLASS | girder_assembly (Girder) |  | the class Girder isn't in the workbook
 CLASS | project (BridgeProject) |  | the class BridgeProject isn't in the workbook
@@ -13,8 +13,9 @@ NO-VALUE | barrier (Barrier) | usBrPset_MASH.MASHTestingLevel | required, but de
 NO-VALUE | barrier (Barrier) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
 NO-VALUE | barrier (Barrier) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
 NO-VALUE | barrier (Barrier) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
-NO-VALUE | bridge (GirderBridge) | usBrPset_BridgeIdentification.SNBIBridgeName | required, but declared without a target or a value
-NO-VALUE | bridge (GirderBridge) | usBrPset_BridgeIdentification.SNBIBridgeNumber | required, but declared without a target or a value
+NO-VALUE | bearing (Bearing) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | bearing (Bearing) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | bearing (Bearing) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
 NO-VALUE | bridge (GirderBridge) | usBrPset_FeatureIdentification.FeatureLocation | required, but declared without a target or a value
 NO-VALUE | bridge (GirderBridge) | usBrPset_FeatureIdentification.FeatureName | required, but declared without a target or a value
 NO-VALUE | bridge (GirderBridge) | usBrPset_FeatureIdentification.FeatureType | required, but declared without a target or a value
@@ -67,6 +68,9 @@ TYPE | abutment (Abutment) | usBrPset_SubstructureCommon.ReturnInterval | table 
 TYPE | barrier (Barrier) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
 TYPE | barrier (Barrier) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
 TYPE | barrier (Barrier) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | bearing (Bearing) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | bearing (Bearing) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | bearing (Bearing) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
 TYPE | bridge (GirderBridge) | usBrPset_BridgeIdentification.SNBIBridgeNumber | table IfcLabel, workbook IfcIdentifier
 TYPE | bridge (GirderBridge) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
 TYPE | bridge (GirderBridge) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
@@ -76,7 +80,6 @@ TYPE | bridge (GirderBridge) | usBrPset_Roadway.MinimumHorizontalClearanceRight 
 TYPE | deck (DeckSlab) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
 TYPE | deck (DeckSlab) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
 TYPE | deck (DeckSlab) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
-TYPE | deck (DeckSlab) | usBrPset_RoadwaySlab.SurfaceFinish | table IfcLabel, workbook IfcText
 TYPE | deck_part (Deck) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
 TYPE | deck_part (Deck) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
 TYPE | deck_part (Deck) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
@@ -136,6 +139,7 @@ PSET | barrier (Barrier) | Qto_WallBaseQuantities | not declared (7 properties, 
 PSET | barrier (Barrier) | usBrPset_BeamSeatElevations | not declared (2 properties, 2 required)
 PSET | barrier (Barrier) | usBrPset_Wall | not declared (10 properties, 0 required)
 PSET | barrier (Barrier) | usBrPset_WallsSloped | not declared (4 properties, 2 required)
+PSET | bearing (Bearing) | usBrPset_BearingLoads | not declared (13 properties, 0 required)
 PSET | bridge (GirderBridge) | usBrPset_HydraulicData | not declared (12 properties, 0 required)
 PSET | bridge (GirderBridge) | usBrPset_NavigableWaterway | not declared (3 properties, 0 required)
 PSET | bridge (GirderBridge) | usBrPset_Railroad | not declared (4 properties, 0 required)
@@ -146,13 +150,9 @@ PSET | foundation (Foundation) | usBrPset_PayItemQuantities | not declared (3 pr
 PSET | pier (Pier) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | rebar (ReinforcingBar) | Qto_ReinforcingElementBaseQuantities | not declared (2 properties, 0 required)
 PSET | rebar (ReinforcingBar) | usBrPset_ACI_BarShape | not declared (17 properties, 4 required)
-PSET | rebar (ReinforcingBar) | usBrPset_ACI_ReinforcingBar | not declared (3 properties, 0 required)
-PSET | rebar (ReinforcingBar) | usBrPset_ACI_ReinforcingBarType | not declared (5 properties, 3 required)
 PSET | substructure (BridgeSubstructure) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | superstructure (BridgeSuperstructure) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | tendon (Tendon) | Qto_ReinforcingElementBaseQuantities | not declared (3 properties, 0 required)
-PSET | tendon (Tendon) | usBrPset_ACI_Tendon | not declared (9 properties, 1 required)
-PSET | tendon (Tendon) | usBrPset_ACI_TendonType | not declared (7 properties, 1 required)
 RESTRICTED | abutment (Abutment) | usBrPset_BridgePartCommon | not declared; the workbook says "Only applies to Superstructure, Deck, Deck Segment, Approach, Culverts, Culvert Barrel"
 RESTRICTED | deck (DeckSlab) | usBrPset_CulvertSlab | not declared; the workbook says "Applies only to Culvert Top Slab and Culvert Bottom Slab"
 RESTRICTED | deck (DeckSlab) | usBrPset_Haunch | not declared; the workbook says "Applies only to Haunch"
@@ -197,6 +197,20 @@ OPTIONAL | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionArea | IfcAreaMeasu
 OPTIONAL | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetVolume | IfcQuantityVolume not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetWeight | IfcQuantityWeight not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.AverageEffectiveForce | IfcForceMeasure not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.Location | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.MaximumEffectiveForce | IfcForceMeasure not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.MinimumEffectiveForce | IfcForceMeasure not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.ProfileDatum | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.ProfileHeight | IfcLengthMeasure not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.StressingTail | IfcLengthMeasure not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_Tendon.TendonMark | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_TendonType.TightlySheathedAngularFrictionCoefficient | IfcNormalisedRatioMeasure not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_TendonType.TightlySheathedFillingMaterialSpecification | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_TendonType.TightlySheathedFillingMaterialSpecificationVersion | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_TendonType.TightlySheathedSheathingSpecification | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_TendonType.TightlySheathedSheathingSpecificationVersion | IfcLabel not declared
+OPTIONAL | tendon (Tendon) | usBrPset_ACI_TendonType.TightlySheathedWobbleFrictionCoefficient | IfcCurvatureMeasure not declared
 OPTIONAL | tendon (Tendon) | usBrPset_TendonDebonding.SleeveDiameter | IfcPositiveLengthMeasure not declared
 EXTRA | barrier (Barrier) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
 EXTRA | deck (DeckSlab) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
@@ -222,7 +236,7 @@ EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.Twis
 EXTRA | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.GrossWeight | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.OuterSurfaceArea | not in the workbook's property set for this class
 EXTRA | rebar (ReinforcingBar) | Pset_MaterialSteel.UltimateStrain | not in the workbook's property set for this class
+EXTRA | rebar (ReinforcingBar) | usBrPset_ACI_ReinforcingCover | property set not in the workbook for this class
 EXTRA | tendon (Tendon) | Pset_ElementComponentCommon | property set not in the workbook for this class
 EXTRA | tendon (Tendon) | Pset_MaterialSteel.UltimateStrain | not in the workbook's property set for this class
-NO-CLASS | bearing |  | IfcBearing: no usBridge classification in the table
 NO-CLASS | closure_joint |  | IfcBeam: no usBridge classification in the table
