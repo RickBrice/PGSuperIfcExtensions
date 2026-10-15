@@ -124,6 +124,9 @@
     <ClCompile Include="DeckSlab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GirderSection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="BarShape.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -313,6 +316,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeckSlab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GirderSection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BarShape.h">

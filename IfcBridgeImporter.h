@@ -23,6 +23,7 @@
 
 #include "IfcImporter.h"
 #include "BeamSpacing.h"
+#include "GirderSection.h"
 #include <IFace\Project.h>
 
 class CIfcBridgeImporter
@@ -43,9 +44,17 @@ private:
    void SetGirderProperties(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout);
    void ImportSlab(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout, const std::vector<Float64>& pier_stations);
    
-   const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam beam);
+   const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam beam, const GirderCenterline& girder);
    std::vector<std::string> GetGirderTypeNames(IfcSchema::IfcBeam beam);
-   std::map<std::vector<std::string>, const GirderLibraryEntry*> m_GirderMatches; // girder type names -> library entry, so each girder type is matched and logged once
+
+   // The library entry whose section matches the girder's section (devdocs/GirderImportPlan.md, G1), or nullptr
+   const GirderLibraryEntry* MatchLibraryEntry(const std::string& beam_name, const std::vector<std::string>& girder_type_names, const SectionMeasures& section);
+
+   // girder type names and section -> library entry, so each girder type is matched and logged once
+   std::map<std::pair<std::vector<std::string>, std::string>, const GirderLibraryEntry*> m_GirderMatches;
+
+   // the sections of the library entries, by name (nullopt if the entry's beam factory can't make one)
+   std::map<std::_tstring, std::optional<SectionMeasures>> m_LibrarySections;
 
    bool DeriveAlignmentFromDeck(ifcopenshell::file& file);
 

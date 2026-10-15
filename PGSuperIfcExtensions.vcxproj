@@ -312,6 +312,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level1</WarningLevel>
     </ClCompile>
     <ClCompile Include="BarShape.cpp" />
+    <ClCompile Include="GirderSection.cpp" />
     <ClCompile Include="Piers.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -337,6 +338,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="ImportResults.h" />
     <ClInclude Include="MapConversion.h" />
     <ClInclude Include="BarShape.h" />
+    <ClInclude Include="GirderSection.h" />
     <ClInclude Include="Piers.h" />
     <ClInclude Include="PropertySets.h" />
     <ClInclude Include="QuantitySets.h" />

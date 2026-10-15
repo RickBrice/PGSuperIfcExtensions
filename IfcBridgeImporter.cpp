@@ -272,7 +272,7 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
       for (const auto& girder : girders)
       {
          auto beam = file.instance_by_id(girder.beam_id).as<IfcSchema::IfcBeam>();
-         library_entries[girder.girder_key] = GetGirderLibraryEntry(beam);
+         library_entries[girder.girder_key] = GetGirderLibraryEntry(beam, girder);
       }
    }
 
@@ -759,17 +759,129 @@ std::vector<std::string> CIfcBridgeImporter::GetGirderTypeNames(IfcSchema::IfcBe
    return names;
 }
 
-const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::IfcBeam beam)
+const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::string& beam_name, const std::vector<std::string>& girder_type_names, const SectionMeasures& section)
+{
+   USES_CONVERSION;
+   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+   GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
+   std::vector<std::_tstring> library_names;
+   pLibNames->EnumGirderNames(&library_names); // all girder families
+
+   std::set<std::string> normalized_type_names;
+   for (const auto& name : girder_type_names)
+      normalized_type_names.insert(normalize_girder_name(name));
+
+   // the library entries whose sections match, and the closest entry
+   SectionTolerances tolerances;
+   std::vector<std::pair<std::_tstring, double>> matches; // name, difference
+   std::_tstring closest_name;
+   double closest_difference = DBL_MAX;
+   std::vector<std::string> closest_differences;
+   std::_tstring named_entry; // a library entry with one of the girder type names
+   std::vector<std::string> named_differences;
+   for (const auto& library_name : library_names)
+   {
+      auto found = m_LibrarySections.find(library_name);
+      if (found == m_LibrarySections.end())
+      {
+         std::optional<SectionMeasures> measures;
+         if (auto outline = GetLibraryEntryOutline(pLibrary->GetGirderEntry(library_name.c_str())))
+            measures = MeasureSection(*outline);
+         found = m_LibrarySections.emplace(library_name, measures).first;
+      }
+      if (!found->second)
+         continue;
+
+      auto differences = CompareSections(section, *found->second, tolerances);
+      double difference = SectionDifference(section, *found->second);
+      if (differences.empty())
+         matches.emplace_back(library_name, difference);
+      if (difference < closest_difference)
+      {
+         closest_difference = difference;
+         closest_name = library_name;
+         closest_differences = differences;
+      }
+      if (normalized_type_names.count(normalize_girder_name(T2A(library_name.c_str()))))
+      {
+         named_entry = library_name;
+         named_differences = differences;
+      }
+   }
+
+   std::ostringstream os;
+   os << "Section of " << beam_name << ": " << DescribeSection(section) << ". ";
+   const GirderLibraryEntry* entry = nullptr;
+   if (!named_entry.empty() && named_differences.empty())
+   {
+      // the name is confirmed by the section
+      os << "Library girder " << T2A(named_entry.c_str()) << " has the girder type name and the same section.";
+      entry = pLibrary->GetGirderEntry(named_entry.c_str());
+   }
+   else if (!matches.empty())
+   {
+      std::sort(matches.begin(), matches.end(), [](const auto& a, const auto& b) {return a.second < b.second; });
+      os << "Library girder " << T2A(matches.front().first.c_str()) << " has the same section";
+      if (1 < matches.size())
+         os << " (" << matches.size() << " library girders do, this one is the closest)";
+      if (!named_entry.empty())
+      {
+         os << ". The library girder with the girder type name, " << T2A(named_entry.c_str()) << ", has a different section (";
+         for (const auto& d : named_differences)
+            os << d << (&d == &named_differences.back() ? "" : ", ");
+         os << ")";
+      }
+      os << ".";
+      entry = pLibrary->GetGirderEntry(matches.front().first.c_str());
+   }
+   else
+   {
+      os << "No library girder has this section.";
+      if (!closest_name.empty())
+      {
+         os << " The closest is " << T2A(closest_name.c_str()) << " (";
+         for (const auto& d : closest_differences)
+            os << d << (&d == &closest_differences.back() ? "" : ", ");
+         os << ").";
+      }
+   }
+   WBFL::System::Logger::Info(os.str());
+   return entry;
+}
+
+const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::IfcBeam beam, const GirderCenterline& girder)
 {
    USES_CONVERSION;
 
+   auto beam_name = beam.Name().value_or("unnamed beam");
    auto girder_type_names = GetGirderTypeNames(beam);
-   auto found = m_GirderMatches.find(girder_type_names);
+
+   // the girder's section, at mid-length (end blocks and tapers are at the ends)
+   std::optional<SectionMeasures> section;
+   if (girder.mesh)
+   {
+      if (auto outline = CutGirderSection(*girder.mesh, girder.start, girder.end, 0.5))
+         section = MeasureSection(*outline);
+      else
+         WBFL::System::Logger::Info("The section of " + beam_name + " couldn't be cut from its geometry. The girder type is found by name.");
+   }
+
+   auto key = std::make_pair(girder_type_names, section ? DescribeSection(*section) : std::string());
+   auto found = m_GirderMatches.find(key);
    if (found != m_GirderMatches.end())
       return found->second;
 
    if (girder_type_names.empty())
-      CIfcImporter::GetTargetReader().ReportNotFound("girder.type_names", beam, beam.Name().value_or("unnamed beam"));
+      CIfcImporter::GetTargetReader().ReportNotFound("girder.type_names", beam, beam_name);
+
+   if (section)
+   {
+      if (auto entry = MatchLibraryEntry(beam_name, girder_type_names, *section))
+      {
+         m_GirderMatches.emplace(key, entry);
+         return entry;
+      }
+   }
 
    GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
    GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
@@ -833,7 +945,7 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
       WBFL::System::Logger::Info(os.str().c_str());
    }
 
-   m_GirderMatches.emplace(girder_type_names, girder_library_entry);
+   m_GirderMatches.emplace(key, girder_library_entry);
    return girder_library_entry;
 }
 
