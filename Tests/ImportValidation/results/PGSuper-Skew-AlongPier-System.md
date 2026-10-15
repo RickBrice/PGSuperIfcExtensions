@@ -5,78 +5,9 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**59 of 294 match** - mismatch: 64, not imported: 24, missing: 0, not comparable: 0, default match: 147, extra: 0
+**59 of 294 match** - mismatch: 0, not imported: 24, missing: 0, not comparable: 0, default match: 211, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
-
-## mismatch (64)
-
-| Value | Expected | Imported | Note |
-|---|---|---|---|
-| `bridge.slab_offset_type` | 0 | 2 |  |
-| `bridge.slab_offset` | 11.000 in |  |  |
-| `group[0].girder[0].slab_offset_start` | 11.000 in | 1.976 in |  |
-| `group[0].girder[0].slab_offset_end` | 11.000 in | 1.985 in |  |
-| `group[0].girder[1].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[0].girder[1].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[0].girder[2].slab_offset_start` | 11.000 in | 2.995 in |  |
-| `group[0].girder[2].slab_offset_end` | 11.000 in | 2.995 in |  |
-| `group[0].girder[3].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[0].girder[3].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[0].girder[4].slab_offset_start` | 11.000 in | 1.980 in |  |
-| `group[0].girder[4].slab_offset_end` | 11.000 in | 1.948 in |  |
-| `group[1].girder[0].slab_offset_start` | 11.000 in | 1.959 in |  |
-| `group[1].girder[0].slab_offset_end` | 11.000 in | 1.969 in |  |
-| `group[1].girder[1].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[1].girder[1].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[1].girder[2].slab_offset_start` | 11.000 in | 2.995 in |  |
-| `group[1].girder[2].slab_offset_end` | 11.000 in | 2.995 in |  |
-| `group[1].girder[3].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[1].girder[3].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[1].girder[4].slab_offset_start` | 11.000 in | 1.972 in |  |
-| `group[1].girder[4].slab_offset_end` | 11.000 in | 1.961 in |  |
-| `group[2].girder[0].slab_offset_start` | 11.000 in | 1.934 in |  |
-| `group[2].girder[0].slab_offset_end` | 11.000 in | 1.995 in |  |
-| `group[2].girder[1].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[2].girder[1].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[2].girder[2].slab_offset_start` | 11.000 in | 2.995 in |  |
-| `group[2].girder[2].slab_offset_end` | 11.000 in | 2.995 in |  |
-| `group[2].girder[3].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[2].girder[3].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[2].girder[4].slab_offset_start` | 11.000 in | 2.004 in |  |
-| `group[2].girder[4].slab_offset_end` | 11.000 in | 1.941 in |  |
-| `group[3].girder[0].slab_offset_start` | 11.000 in | 1.939 in |  |
-| `group[3].girder[0].slab_offset_end` | 11.000 in | 1.997 in |  |
-| `group[3].girder[1].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[3].girder[1].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[3].girder[2].slab_offset_start` | 11.000 in | 2.995 in |  |
-| `group[3].girder[2].slab_offset_end` | 11.000 in | 2.995 in |  |
-| `group[3].girder[3].slab_offset_start` | 11.000 in | 3.500 in |  |
-| `group[3].girder[3].slab_offset_end` | 11.000 in | 3.500 in |  |
-| `group[3].girder[4].slab_offset_start` | 11.000 in | 1.994 in |  |
-| `group[3].girder[4].slab_offset_end` | 11.000 in | 1.985 in |  |
-| `deck.gross_depth` | 7.500 in | 0.000 in |  |
-| `deck.left_overhang_edge_depth` | 7.000 in | 0.009 in |  |
-| `deck.right_overhang_edge_depth` | 7.000 in | 0.246 in |  |
-| `deck.right_overhang_taper` | 1 | 2 |  |
-| `at[0].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[0].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[1].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[1].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[2].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[2].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[3].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[3].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[4].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[4].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[5].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[5].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[6].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[6].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[7].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[7].deck.right_edge` | 15.000 ft | 2.104 ft |  |
-| `at[8].deck.left_edge` | 15.000 ft | 2.104 ft |  |
-| `at[8].deck.right_edge` | 15.000 ft | 2.104 ft |  |
 
 ## not imported (24)
 
@@ -107,7 +38,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[3].girder[3].type` | WF42G | Unknown_Girder_Type | template default |
 | `group[3].girder[4].type` | WF42G | Unknown_Girder_Type | template default |
 
-## default match (147)
+## default match (211)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -115,6 +46,8 @@ A *default match* equals the expected value only because the template has the sa
 | `bridge.girder_orientation` | 0 | 0 | template default |
 | `bridge.same_girder_for_entire_bridge` | -1 | -1 | template default |
 | `bridge.girder_spacing_type` | 0 | 0 | template default |
+| `bridge.slab_offset_type` | 0 | 0 | template default |
+| `bridge.slab_offset` | 11.000 in | 11.000 in | template default |
 | `bridge.fillet` | 0.750 in | 0.750 in | template default |
 | `pier[0].station` | 0+00.00 | 0+00.00 | template default |
 | `pier[0].connection_type` | 1 | 1 | template default |
@@ -188,51 +121,95 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].ahead.bearing_offset_measure` | NormalToPier | NormalToPier | template default |
 | `group[0].piers` | 0-1 | 0-1 | template default |
 | `group[0].girder_count` | 5 | 5 | template default |
+| `group[0].girder[0].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[0].girder[0].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[0].girder[0].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[0].girder[0].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[0].girder[1].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[0].girder[1].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[0].girder[1].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[0].girder[1].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[0].girder[2].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[0].girder[2].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[0].girder[2].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[0].girder[2].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[0].girder[3].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[0].girder[3].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[0].girder[3].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[0].girder[3].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[0].girder[4].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[0].girder[4].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[0].girder[4].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[0].girder[4].fci` | 5.000 ksi | 5.000 ksi | template default |
 | `group[1].girder_count` | 5 | 5 | template default |
+| `group[1].girder[0].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[1].girder[0].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[1].girder[0].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[1].girder[0].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[1].girder[1].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[1].girder[1].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[1].girder[1].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[1].girder[1].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[1].girder[2].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[1].girder[2].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[1].girder[2].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[1].girder[2].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[1].girder[3].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[1].girder[3].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[1].girder[3].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[1].girder[3].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[1].girder[4].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[1].girder[4].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[1].girder[4].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[1].girder[4].fci` | 5.000 ksi | 5.000 ksi | template default |
 | `group[2].girder_count` | 5 | 5 | template default |
+| `group[2].girder[0].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[2].girder[0].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[2].girder[0].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[2].girder[0].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[2].girder[1].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[2].girder[1].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[2].girder[1].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[2].girder[1].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[2].girder[2].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[2].girder[2].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[2].girder[2].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[2].girder[2].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[2].girder[3].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[2].girder[3].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[2].girder[3].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[2].girder[3].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[2].girder[4].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[2].girder[4].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[2].girder[4].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[2].girder[4].fci` | 5.000 ksi | 5.000 ksi | template default |
 | `group[3].girder_count` | 5 | 5 | template default |
+| `group[3].girder[0].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[3].girder[0].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[3].girder[0].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[3].girder[0].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[3].girder[1].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[3].girder[1].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[3].girder[1].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[3].girder[1].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[3].girder[2].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[3].girder[2].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[3].girder[2].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[3].girder[2].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[3].girder[3].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[3].girder[3].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[3].girder[3].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[3].girder[3].fci` | 5.000 ksi | 5.000 ksi | template default |
+| `group[3].girder[4].slab_offset_start` | 11.000 in | 11.000 in | template default |
+| `group[3].girder[4].slab_offset_end` | 11.000 in | 11.000 in | template default |
 | `group[3].girder[4].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[3].girder[4].fci` | 5.000 ksi | 5.000 ksi | template default |
 | `deck.type` | 0 | 0 | template default |
+| `deck.gross_depth` | 7.500 in | 7.500 in | template default |
+| `deck.left_overhang_edge_depth` | 7.000 in | 7.001 in | template default |
+| `deck.right_overhang_edge_depth` | 7.000 in | 7.000 in | template default |
 | `deck.left_overhang_taper` | 1 | 1 | template default |
+| `deck.right_overhang_taper` | 1 | 1 | template default |
 | `deck.haunch_shape` | 1 | 1 | template default |
 | `deck.fc` | 4.000 ksi | 4.000 ksi | template default |
 | `deck.edge_point_count` | 1 | 1 | template default |
@@ -242,22 +219,40 @@ A *default match* equals the expected value only because the template has the sa
 | `at[0].alignment.point` | (0.000, 0.000) ft | (0.000, 0.000) ft | template default |
 | `at[0].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[0].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[0].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[0].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[1].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[1].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[1].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[1].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[2].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[2].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[2].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[2].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[3].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[3].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[3].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[3].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[4].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[4].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[4].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[4].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[5].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[5].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[5].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[5].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[6].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[6].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[6].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[6].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[7].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[7].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[7].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[7].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[8].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[8].profile.grade` | 0.0000 % | 0.0000 % | template default |
+| `at[8].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[8].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 
 ## match (59)
 

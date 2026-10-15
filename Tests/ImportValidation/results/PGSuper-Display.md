@@ -106,7 +106,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[1].girder_count` | 5 | 5 | template default |
 | `deck.type` | 0 | 0 | template default |
 | `deck.gross_depth` | 7.500 in | 7.500 in | template default |
-| `deck.left_overhang_edge_depth` | 7.000 in | 7.001 in | template default |
+| `deck.left_overhang_edge_depth` | 7.000 in | 7.000 in | template default |
 | `deck.right_overhang_edge_depth` | 7.000 in | 7.000 in | template default |
 | `deck.left_overhang_taper` | 1 | 1 | template default |
 | `deck.right_overhang_taper` | 1 | 1 | template default |
