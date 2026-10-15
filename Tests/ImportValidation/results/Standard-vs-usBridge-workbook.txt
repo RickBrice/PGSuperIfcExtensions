@@ -1,0 +1,228 @@
+Standard mapping table compared with the usBridge workbook usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx (categories: see check_standard.py)
+
+Counts: CLASS 4, REQUIRED 3, NO-VALUE 38, VALUE 13, TYPE 52, NAME 1, ENUM 17, PSET 23, RESTRICTED 23, OPTIONAL 22, EXTRA 26, NO-CLASS 2
+
+CLASS | girder_assembly (Girder) |  | the class Girder isn't in the workbook
+CLASS | project (BridgeProject) |  | the class BridgeProject isn't in the workbook
+CLASS | site (BridgeSite) |  | the class BridgeSite isn't in the workbook
+CLASS | tendon_bundle (TendonBundle) | ObjectType | table (none), workbook IfcElementAssembly.USERDEFINED: TENDON_BUNDLE
+REQUIRED | bridge (GirderBridge) | usBrPset_BridgeIdentification.CarriedRoadwayName | IfcLabel not declared
+REQUIRED | bridge (GirderBridge) | usBrPset_Roadway.TrafficLanes | IfcInteger not declared
+REQUIRED | bridge (GirderBridge) | usBrPset_Roadway.TrafficYear | IfcInteger not declared
+NO-VALUE | barrier (Barrier) | usBrPset_MASH.MASHTestingLevel | required, but declared without a target or a value
+NO-VALUE | barrier (Barrier) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | barrier (Barrier) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | barrier (Barrier) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_BridgeIdentification.SNBIBridgeName | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_BridgeIdentification.SNBIBridgeNumber | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_FeatureIdentification.FeatureLocation | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_FeatureIdentification.FeatureName | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_FeatureIdentification.FeatureType | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.AnnualAverageDailyTraffic | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.AnnualAverageDailyTruckTraffic | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.DesignAnnualAverageDailyTraffic | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.DesignAnnualAverageDailyTruckTraffic | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.DesignTrafficYear | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.RoadwayName | required, but declared without a target or a value
+NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.RoadwayType | required, but declared without a target or a value
+NO-VALUE | deck (DeckSlab) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | deck (DeckSlab) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | deck (DeckSlab) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | girder (GirderPrecastConcrete) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | girder (GirderPrecastConcrete) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | girder (GirderPrecastConcrete) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | rebar (ReinforcingBar) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | rebar (ReinforcingBar) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | rebar (ReinforcingBar) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | tendon (Tendon) | usBrPset_ACI_TendonMaterial.CoatingSpecification | required, but declared without a target or a value
+NO-VALUE | tendon (Tendon) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | tendon (Tendon) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | tendon (Tendon) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | tendon_bundle (TendonBundle) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | tendon_bundle (TendonBundle) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | tendon_bundle (TendonBundle) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+VALUE | abutment (Abutment) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | abutment (Abutment) | usBrPset_SubstructureCommon.SubstructureType | "New" isn't one of ['See SNBI']
+VALUE | barrier (Barrier) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | bridge (GirderBridge) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | deck_part (Deck) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | foundation (Foundation) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | girder (GirderPrecastConcrete) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | pier (Pier) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | pier (Pier) | usBrPset_SubstructureCommon.SubstructureType | "New" isn't one of ['See SNBI']
+VALUE | reinforcement_cage (ReinforcementCage) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | substructure (BridgeSubstructure) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | superstructure (BridgeSuperstructure) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | tendon_bundle (TendonBundle) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+TYPE | abutment (Abutment) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | abutment (Abutment) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | abutment (Abutment) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | abutment (Abutment) | usBrPset_SubstructureCommon.ReturnInterval | table IfcTimeMeasure, workbook IfcDuration
+TYPE | barrier (Barrier) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | barrier (Barrier) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | barrier (Barrier) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | bridge (GirderBridge) | usBrPset_BridgeIdentification.SNBIBridgeNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | bridge (GirderBridge) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | bridge (GirderBridge) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | bridge (GirderBridge) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | bridge (GirderBridge) | usBrPset_Roadway.MinimumHorizontalClearanceLeft | table IfcPositiveLengthMeasure, workbook IfcNonNegativeLengthMeasure
+TYPE | bridge (GirderBridge) | usBrPset_Roadway.MinimumHorizontalClearanceRight | table IfcPositiveLengthMeasure, workbook IfcNonNegativeLengthMeasure
+TYPE | deck (DeckSlab) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | deck (DeckSlab) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | deck (DeckSlab) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | deck (DeckSlab) | usBrPset_RoadwaySlab.SurfaceFinish | table IfcLabel, workbook IfcText
+TYPE | deck_part (Deck) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | deck_part (Deck) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | deck_part (Deck) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | foundation (Foundation) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | foundation (Foundation) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | foundation (Foundation) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | girder (GirderPrecastConcrete) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | girder (GirderPrecastConcrete) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | girder (GirderPrecastConcrete) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | girder (GirderPrecastConcrete) | usBrPset_PrecastConcreteBeam.LiftingLoopLocation | table IfcLengthMeasure, workbook IfcPositiveLengthMeasure
+TYPE | girder (GirderPrecastConcrete) | usBrPset_PrecastConcreteBeam.MinimumTimetoDeckPlacement | table IfcTimeMeasure, workbook IfcDuration
+TYPE | pier (Pier) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | pier (Pier) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | pier (Pier) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | pier (Pier) | usBrPset_SubstructureCommon.ReturnInterval | table IfcTimeMeasure, workbook IfcDuration
+TYPE | rebar (ReinforcingBar) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | rebar (ReinforcingBar) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | rebar (ReinforcingBar) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | reinforcement_cage (ReinforcementCage) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | reinforcement_cage (ReinforcementCage) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | reinforcement_cage (ReinforcementCage) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | substructure (BridgeSubstructure) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | substructure (BridgeSubstructure) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | substructure (BridgeSubstructure) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | superstructure (BridgeSuperstructure) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | superstructure (BridgeSuperstructure) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | superstructure (BridgeSuperstructure) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | tendon (Tendon) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | tendon (Tendon) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | tendon (Tendon) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | tendon (Tendon) | usBrPset_TendonDebonding.DebondLengthEnd | table IfcLengthMeasure, workbook IfcPositiveLengthMeasure
+TYPE | tendon (Tendon) | usBrPset_TendonDebonding.DebondLengthStart | table IfcLengthMeasure, workbook IfcPositiveLengthMeasure
+TYPE | tendon_bundle (TendonBundle) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | tendon_bundle (TendonBundle) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | tendon_bundle (TendonBundle) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+NAME | girder (GirderPrecastConcrete) | usBrPset_PrecastConcreteBeam.MinimumTimetoDeckPlacement | the table has usBrPset_PrecastConcreteBeam.MinimumTimeToDeckPlacement
+ENUM | abutment (Abutment) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | abutment (Abutment) | usBrPset_SubstructureCommon.SubstructureType | table ['New', 'Other'], workbook ['See SNBI']
+ENUM | barrier (Barrier) | Pset_ConcreteElementGeneral.AssemblyPlace | table ['FACTORY', 'OFFSITE', 'SITE', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['FACTORY', 'OFFSITE', 'SITE']
+ENUM | barrier (Barrier) | Pset_ConcreteElementGeneral.CastingMethod | table ['INSITU', 'MIXED', 'PRECAST', 'PRINTED', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['INSITU', 'MIXED', 'PRECAST']
+ENUM | barrier (Barrier) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | bridge (GirderBridge) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | deck_part (Deck) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | foundation (Foundation) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.AssemblyPlace | table ['FACTORY', 'OFFSITE', 'SITE', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['FACTORY', 'OFFSITE', 'SITE']
+ENUM | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.CastingMethod | table ['INSITU', 'MIXED', 'PRECAST', 'PRINTED', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['INSITU', 'MIXED', 'PRECAST']
+ENUM | girder (GirderPrecastConcrete) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | pier (Pier) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | pier (Pier) | usBrPset_SubstructureCommon.SubstructureType | table ['New', 'Other'], workbook ['See SNBI']
+ENUM | reinforcement_cage (ReinforcementCage) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | substructure (BridgeSubstructure) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | superstructure (BridgeSuperstructure) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | tendon_bundle (TendonBundle) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+PSET | abutment (Abutment) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | barrier (Barrier) | Pset_PrecastConcreteElementGeneral | not declared (8 properties, 1 required)
+PSET | barrier (Barrier) | Qto_WallBaseQuantities | not declared (7 properties, 0 required)
+PSET | barrier (Barrier) | usBrPset_BeamSeatElevations | not declared (2 properties, 2 required)
+PSET | barrier (Barrier) | usBrPset_Wall | not declared (10 properties, 0 required)
+PSET | barrier (Barrier) | usBrPset_WallsSloped | not declared (4 properties, 2 required)
+PSET | bridge (GirderBridge) | usBrPset_HydraulicData | not declared (12 properties, 0 required)
+PSET | bridge (GirderBridge) | usBrPset_NavigableWaterway | not declared (3 properties, 0 required)
+PSET | bridge (GirderBridge) | usBrPset_Railroad | not declared (4 properties, 0 required)
+PSET | deck (DeckSlab) | Pset_PrecastConcreteElementGeneral | not declared (6 properties, 1 required)
+PSET | deck (DeckSlab) | usBrPset_ConcretePour | not declared (9 properties, 0 required)
+PSET | deck_part (Deck) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | foundation (Foundation) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | pier (Pier) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | rebar (ReinforcingBar) | Qto_ReinforcingElementBaseQuantities | not declared (2 properties, 0 required)
+PSET | rebar (ReinforcingBar) | usBrPset_ACI_BarShape | not declared (17 properties, 4 required)
+PSET | rebar (ReinforcingBar) | usBrPset_ACI_ReinforcingBar | not declared (3 properties, 0 required)
+PSET | rebar (ReinforcingBar) | usBrPset_ACI_ReinforcingBarType | not declared (5 properties, 3 required)
+PSET | substructure (BridgeSubstructure) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | superstructure (BridgeSuperstructure) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | tendon (Tendon) | Qto_ReinforcingElementBaseQuantities | not declared (3 properties, 0 required)
+PSET | tendon (Tendon) | usBrPset_ACI_Tendon | not declared (9 properties, 1 required)
+PSET | tendon (Tendon) | usBrPset_ACI_TendonType | not declared (7 properties, 1 required)
+RESTRICTED | abutment (Abutment) | usBrPset_BridgePartCommon | not declared; the workbook says "Only applies to Superstructure, Deck, Deck Segment, Approach, Culverts, Culvert Barrel"
+RESTRICTED | deck (DeckSlab) | usBrPset_CulvertSlab | not declared; the workbook says "Applies only to Culvert Top Slab and Culvert Bottom Slab"
+RESTRICTED | deck (DeckSlab) | usBrPset_Haunch | not declared; the workbook says "Applies only to Haunch"
+RESTRICTED | deck (DeckSlab) | usBrPset_SlopePaving | not declared; the workbook says "Applies only to Slope Protection Surface"
+RESTRICTED | deck_part (Deck) | usBrPset_SubstructureCommon | not declared; the workbook says "Only applies to Abutment and Pier entities"
+RESTRICTED | foundation (Foundation) | usBrPset_BridgePartCommon | not declared; the workbook says "Only applies to Superstructure, Deck, Deck Segment, Approach, Culverts, Culvert Barrel"
+RESTRICTED | foundation (Foundation) | usBrPset_SubstructureCommon | not declared; the workbook says "Only applies to Abutment and Pier entities"
+RESTRICTED | girder (GirderPrecastConcrete) | usBrPset_BeamSeatElevations | not declared; the workbook says "Applies only to Cap Beam"
+RESTRICTED | girder (GirderPrecastConcrete) | usBrPset_Diaphragm | not declared; the workbook says "Applies only to Concrete Diaphragm"
+RESTRICTED | girder (GirderPrecastConcrete) | usBrPset_PierCap | not declared; the workbook says "Applies only to Pier Cap"
+RESTRICTED | pier (Pier) | usBrPset_BridgePartCommon | not declared; the workbook says "Only applies to Superstructure, Deck, Deck Segment, Approach, Culverts, Culvert Barrel"
+RESTRICTED | reinforcement_cage (ReinforcementCage) | usBrPset_ACI_TendonBundle | not declared; the workbook says "Applies only to Prestressing / Post-tensioning"
+RESTRICTED | reinforcement_cage (ReinforcementCage) | usBrPset_CrossFrame | not declared; the workbook says "Applies only to Crossframes"
+RESTRICTED | reinforcement_cage (ReinforcementCage) | usBrPset_PileCasing | not declared; the workbook says "Applies only to Micropile"
+RESTRICTED | reinforcement_cage (ReinforcementCage) | usBrPset_SteelBlocking | not declared; the workbook says "Appies only to Girders (Rolled Steel), Girders (Built-up Steel), Girder Segment (Built-up Steel)"
+RESTRICTED | reinforcement_cage (ReinforcementCage) | usBrPset_SteelCamber | not declared; the workbook says "Appies only to Girders (Rolled Steel), Girders (Built-up Steel), Girder Segment (Built-up Steel)"
+RESTRICTED | substructure (BridgeSubstructure) | usBrPset_SubstructureCommon | not declared; the workbook says "Only applies to Abutment and Pier entities"
+RESTRICTED | superstructure (BridgeSuperstructure) | usBrPset_SubstructureCommon | not declared; the workbook says "Only applies to Abutment and Pier entities"
+RESTRICTED | tendon_bundle (TendonBundle) | usBrPset_ACI_TendonBundle | not declared; the workbook says "Applies only to Prestressing / Post-tensioning"
+RESTRICTED | tendon_bundle (TendonBundle) | usBrPset_CrossFrame | not declared; the workbook says "Applies only to Crossframes"
+RESTRICTED | tendon_bundle (TendonBundle) | usBrPset_PileCasing | not declared; the workbook says "Applies only to Micropile"
+RESTRICTED | tendon_bundle (TendonBundle) | usBrPset_SteelBlocking | not declared; the workbook says "Appies only to Girders (Rolled Steel), Girders (Built-up Steel), Girder Segment (Built-up Steel)"
+RESTRICTED | tendon_bundle (TendonBundle) | usBrPset_SteelCamber | not declared; the workbook says "Appies only to Girders (Rolled Steel), Girders (Built-up Steel), Girder Segment (Built-up Steel)"
+OPTIONAL | barrier (Barrier) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.AlternateRoadwayName | IfcLabel not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.ConstructionStageNumber | IfcLabel not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.DesignNumber | IfcIdentifier not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.MaintenanceNumber | IfcLabel not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.MileMarker | IfcNonNegativeLengthMeasure not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.PreviousBridgeNumber | IfcLabel not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.RefLatitude | IfcReal not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_BridgeIdentification.RefLongitude | IfcReal not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_DesignLoading.DesignFutureWearingLoad | IfcPressureMeasure not declared
+OPTIONAL | bridge (GirderBridge) | usBrPset_DesignLoading.PedestrianLiveLoad | IfcPressureMeasure not declared
+OPTIONAL | deck (DeckSlab) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
+OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.NetArea | IfcQuantityArea not declared
+OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.NetVolume | IfcQuantityVolume not declared
+OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.NetWeight | IfcQuantityWeight not declared
+OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.Width | IfcQuantityLength not declared
+OPTIONAL | deck (DeckSlab) | usBrPset_RoadwaySlab.SacrificialWearingThickness | IfcLengthMeasure not declared
+OPTIONAL | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionArea | IfcAreaMeasure not declared
+OPTIONAL | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
+OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetVolume | IfcQuantityVolume not declared
+OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetWeight | IfcQuantityWeight not declared
+OPTIONAL | tendon (Tendon) | usBrPset_TendonDebonding.SleeveDiameter | IfcPositiveLengthMeasure not declared
+EXTRA | barrier (Barrier) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
+EXTRA | deck (DeckSlab) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
+EXTRA | deck (DeckSlab) | Qto_SlabBaseQuantities.GrossArea | not in the workbook's property set for this class
+EXTRA | deck (DeckSlab) | Qto_SlabBaseQuantities.Perimeter | not in the workbook's property set for this class
+EXTRA | deck (DeckSlab) | usBrPset_RoadwaySlab.SacrificialWearingSurface | not in the workbook's property set for this class
+EXTRA | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionalArea | not in the workbook's property set for this class
+EXTRA | deck (DeckSlab) | usBrPset_SlabCommon.CrossSlope | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_BeamCommon.Slope | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_BeamCommon.Status | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.CamberAtMidspan | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.CornerChamfer | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.FormStrippingStrength | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.HollowCorePlugging | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.ManufacturingToleranceClass | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.MinimumAllowableSupportLength | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.PieceMark | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.Shortening | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.TendonRelaxation | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.TransportationStrength | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Pset_PrecastConcreteElementGeneral.Twisting | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.GrossWeight | not in the workbook's property set for this class
+EXTRA | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.OuterSurfaceArea | not in the workbook's property set for this class
+EXTRA | rebar (ReinforcingBar) | Pset_MaterialSteel.UltimateStrain | not in the workbook's property set for this class
+EXTRA | tendon (Tendon) | Pset_ElementComponentCommon | property set not in the workbook for this class
+EXTRA | tendon (Tendon) | Pset_MaterialSteel.UltimateStrain | not in the workbook's property set for this class
+NO-CLASS | bearing |  | IfcBearing: no usBridge classification in the table
+NO-CLASS | closure_joint |  | IfcBeam: no usBridge classification in the table
