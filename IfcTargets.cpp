@@ -23,6 +23,7 @@
 #include "IfcTargets.h"
 #include "IfcExporter.h"
 #include "SteelSpecifications.h"
+#include "BarShape.h"
 
 #include <IFace/Bridge.h>
 #include <IFace/Project.h>
@@ -33,10 +34,13 @@
 #include <PsgLib/BridgeDescription2.h>
 #include <PsgLib/GirderLabel.h>
 #include <PsgLib/TrafficBarrierEntry.h>
+#include <PsgLib/BearingData2.h>
 
 #include <limits>
 
 #include <algorithm>
+#include <chrono>
+#include <format>
 #include <sstream>
 
 namespace
@@ -109,6 +113,20 @@ namespace
       return vPoi.front();
    }
 
+   // a project property, or no value if it's empty
+   ExportValue project_text(LPCTSTR text)
+   {
+      USES_CONVERSION;
+      std::string value(T2A(text));
+      return value.empty() ? ExportValue::NoValue() : ExportValue(value);
+   }
+
+   // a bar cover, or absent if the bar doesn't have one
+   ExportValue bar_cover(const std::optional<Float64>& cover)
+   {
+      return cover ? ExportValue(*cover) : ExportValue::Absent();
+   }
+
    Float64 deck_fc(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetDeckFc28(); }
    Float64 deck_max_aggregate_size(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetDeckMaxAggrSize(); }
 }
@@ -119,6 +137,14 @@ const std::vector<TargetDef>& GetTargetDefs()
       //
       // Bridge
       //
+      { .name = "project.job_number", .element = ElementKind::Project, .kind = ValueKind::Text, .description = "job number (project properties)",
+        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IProjectProperties, pProps); return project_text(pProps->GetJobNumber()); } },
+      { .name = "project.export_date", .element = ElementKind::Project, .kind = ValueKind::Text, .description = "date of the export (YYYY-MM-DD, for IfcDate)",
+        .get = [](const ExportContext& c)
+         {
+            auto today = std::chrono::floor<std::chrono::days>(std::chrono::system_clock::now());
+            return ExportValue(std::format("{:%Y-%m-%d}", today));
+         } },
       { .name = "bridge.number_of_spans", .element = ElementKind::Bridge, .kind = ValueKind::Count, .description = "number of spans",
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridge, pBridge); return ExportValue((Int64)pBridge->GetSpanCount()); } },
       { .name = "bridge.length", .element = ElementKind::Bridge, .kind = ValueKind::Length, .description = "bridge length", .display_unit = DU::SpanLength,
@@ -143,6 +169,10 @@ const std::vector<TargetDef>& GetTargetDefs()
             }
             return ExportValue(skew);
          } },
+      { .name = "bridge.name", .element = ElementKind::Bridge, .kind = ValueKind::Text, .description = "bridge name (project properties)",
+        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IProjectProperties, pProps); return project_text(pProps->GetBridgeName()); } },
+      { .name = "bridge.id", .element = ElementKind::Bridge, .kind = ValueKind::Text, .description = "bridge identification (project properties)",
+        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IProjectProperties, pProps); return project_text(pProps->GetBridgeID()); } },
       { .name = "bridge.design_live_load", .element = ElementKind::Bridge, .kind = ValueKind::Text, .description = "design vehicular live load",
         .get = [](const ExportContext& c)
          {
@@ -395,10 +425,62 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(GetRebarSpecificationEdition(c.rebar)); } },
 
       //
+      // Reinforcing bars (the bar of a bar type, see BarShape.h)
+      //
+      { .name = "rebar.bar_mark", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "bar mark (e.g. G2)",
+        .get = [](const ExportContext& c) { return ExportValue(c.bar->mark); } },
+      { .name = "rebar.bar_size", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "bar size (e.g. #5)",
+        .get = [](const ExportContext& c) { USES_CONVERSION; return ExportValue(std::string(T2A(WBFL::LRFD::RebarPool::GetBarSize(c.bar->rebar->GetSize()).c_str()))); } },
+      { .name = "rebar.bar_mass", .element = ElementKind::Rebar, .kind = ValueKind::Mass, .description = "total mass of a bar, from its centerline length and nominal diameter", .display_unit = DU::Mass,
+        .get = [](const ExportContext& c) { return ExportValue(c.bar->GetMass()); } },
+      { .name = "rebar.bar_element", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "element the bar reinforces (e.g. BEAM)",
+        .get = [](const ExportContext& c) { return c.bar->element.empty() ? ExportValue::NoValue() : ExportValue(c.bar->element); } },
+      { .name = "rebar.bar_use", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "use of the bar (e.g. STIRRUP)",
+        .get = [](const ExportContext& c) { return c.bar->use.empty() ? ExportValue::NoValue() : ExportValue(c.bar->use); } },
+      { .name = "rebar.bar_position", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "position of the bar in the element (e.g. TOP)",
+        .get = [](const ExportContext& c) { return c.bar->position.empty() ? ExportValue::NoValue() : ExportValue(c.bar->position); } },
+      { .name = "rebar.cover_top", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "cover to the top face", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return bar_cover(c.bar->cover_top); } },
+      { .name = "rebar.cover_side", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "cover to the side faces", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return bar_cover(c.bar->cover_side); } },
+      { .name = "rebar.cover_bottom", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "cover to the bottom face", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return bar_cover(c.bar->cover_bottom); } },
+      { .name = "rebar.cover_end", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "cover to the end faces", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return bar_cover(c.bar->cover_end); } },
+
+      //
       // Bearings
       //
-      { .name = "bearing.fixed_x", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "bearing fixed along the girder" },
-      { .name = "bearing.fixed_y", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "bearing fixed across the girder" },
+      { .name = "bearing.fixed_x", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "bearing fixed along the girder",
+        .get = [](const ExportContext& c) { return ExportValue(TargetValue(c.bearing->FixedX)); } },
+      { .name = "bearing.fixed_y", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "bearing fixed across the girder",
+        .get = [](const ExportContext& c) { return ExportValue(TargetValue(c.bearing->FixedY)); } },
+      { .name = "bearing.displacement_accommodated", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "list of the displacements accommodated along, across, and normal to the girder",
+        .get = [](const ExportContext& c) { return ExportValue::List({ !c.bearing->FixedX, !c.bearing->FixedY, false }); } },
+      { .name = "bearing.rotation_accommodated", .element = ElementKind::Bearing, .kind = ValueKind::Boolean, .description = "list of the rotations accommodated about the axes along, across, and normal to the girder (all of them for an elastomeric bearing)",
+        .get = [](const ExportContext& c) { return ExportValue::List({ true, true, true }); } },
+      { .name = "bearing.height", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "bearing height", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return ExportValue(c.bearing->Height); } },
+      { .name = "bearing.length", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "length of a rectangular bearing, along the girder", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return c.bearing->Shape == bsRound ? ExportValue::Absent() : ExportValue(c.bearing->Length); } },
+      { .name = "bearing.width", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "width of a rectangular bearing, across the girder", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return c.bearing->Shape == bsRound ? ExportValue::Absent() : ExportValue(c.bearing->Width); } },
+      { .name = "bearing.diameter", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "diameter of a round bearing", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return c.bearing->Shape == bsRound ? ExportValue(c.bearing->Length) : ExportValue::Absent(); } },
+      { .name = "bearing.plate_count", .element = ElementKind::Bearing, .kind = ValueKind::Count, .description = "number of steel shims (one more than the internal elastomer layers)",
+        .get = [](const ExportContext& c) { return ExportValue((Int64)c.bearing->NumIntLayers + 1); } },
+      { .name = "bearing.plate_thickness", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "list of the steel shim thicknesses", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return ExportValue::List(std::vector<TargetValue>(c.bearing->NumIntLayers + 1, c.bearing->ShimThickness)); } },
+      { .name = "bearing.cover_thickness", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "thickness of the external elastomer layers", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return ExportValue(c.bearing->CoverThickness); } },
+      { .name = "bearing.layer_thickness", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "thickness of the internal elastomer layers", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return ExportValue(c.bearing->ElastomerThickness); } },
+      { .name = "bearing.top_elevation", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "elevation of the top of the bearing", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->TopBrgElevation); } },
+      { .name = "bearing.bottom_elevation", .element = ElementKind::Bearing, .kind = ValueKind::Length, .description = "elevation of the bottom of the bearing (bearing seat)", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->BrgSeatElevation); } },
+      { .name = "bearing.girder_slope", .element = ElementKind::Bearing, .kind = ValueKind::Ratio, .description = "longitudinal slope of the girder at the bearing",
+        .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->GirderGrade); } },
    };
    return targets;
 }

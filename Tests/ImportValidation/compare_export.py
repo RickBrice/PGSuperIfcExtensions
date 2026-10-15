@@ -136,6 +136,8 @@ class Listing:
         if v is None:
             return "$"
         if isinstance(v, Typed):
+            if v.name == "IFCDATE":
+                return "IFCDATE(<date>)"  # e.g. the export date, which changes from one export to the next
             return f"{v.name}({', '.join(self.value(a) for a in v.args)})"
         if isinstance(v, list):
             return "(" + ", ".join(self.value(a) for a in v) + ")"

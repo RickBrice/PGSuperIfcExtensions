@@ -1,5 +1,5 @@
 {
-  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The property sets reproduce the exporter's property sets as of 2026-09-29, with the export findings of the design note fixed. The types of properties without a value are placeholders until they are checked against bSDD. The reinforcing bar property sets whose values come from the rebar detailing (usBrPset_ACI_ReinforcingBarType, usBrPset_ACI_ReinforcingBar, usBrPset_ACI_ReinforcingCover, usBrPset_ACI_BarShape) and the bar count quantity stay in code (design note, M3 stage 3).",
+  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The property sets reproduce the exporter's property sets as of 2026-09-29, with the export findings of the design note fixed. The types of properties without a value are placeholders until they are checked against bSDD. Strands and bars have their data on their types, as usBridge requires: the bar detailing (mark, size, mass, use, covers) comes from the bar of each type (see BarShape.h). usBrPset_ACI_BarShape, whose properties depend on the bend shape, and the bar count of grouped bars stay in code.",
   "format": "PGSuperIfcMapping",
   "version": 1,
   "name": "Standard (TPF/usBridge)",
@@ -37,11 +37,11 @@
         {"name": "ApprovalStatus", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "FileNumber", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "LettingDate", "type": "IfcDate", "uri": "bsdd"},
-        {"name": "ModelPreparationDate", "type": "IfcDate", "uri": "bsdd"},
+        {"name": "ModelPreparationDate", "type": "IfcDate", "target": "project.export_date", "import": false, "uri": "bsdd"},
         {"name": "ModelVersion", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "ProjectDirectory", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "ProjectIdentification", "type": "IfcLabel", "uri": "bsdd"},
-        {"name": "ProjectNumber", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "ProjectNumber", "type": "IfcLabel", "target": "project.job_number", "import": false, "uri": "bsdd"},
         {"name": "ProjectURL", "type": "IfcURIReference", "uri": "bsdd"},
         {"name": "PSEData", "type": "IfcLabel", "uri": "bsdd"}
       ]
@@ -59,7 +59,7 @@
       ]
     },
     {
-      "name": "usBrPset_Common", "applies_to": ["bridge", "superstructure", "substructure", "deck_part", "pier", "abutment", "foundation", "deck", "barrier", "girder", "reinforcement_cage"],
+      "name": "usBrPset_Common", "applies_to": ["bridge", "superstructure", "substructure", "deck_part", "pier", "abutment", "foundation", "deck", "barrier", "girder", "reinforcement_cage", "bearing"],
       "properties": [
         {"name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}},
         {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd"},
@@ -85,8 +85,8 @@
     {
       "name": "usBrPset_BridgeIdentification", "applies_to": "bridge",
       "properties": [
-        {"name": "SNBIBridgeNumber", "type": "IfcLabel", "uri": "bsdd"},
-        {"name": "SNBIBridgeName", "type": "IfcLabel", "uri": "bsdd"}
+        {"name": "SNBIBridgeNumber", "type": "IfcLabel", "target": "bridge.id", "import": false, "uri": "bsdd"},
+        {"name": "SNBIBridgeName", "type": "IfcLabel", "target": "bridge.name", "import": false, "uri": "bsdd"}
       ]
     },
     {
@@ -120,7 +120,7 @@
       ]
     },
     {
-      "name": "usBrPset_PayItemQuantities", "applies_to": ["bridge", "deck", "barrier", "girder", "reinforcement_cage"],
+      "name": "usBrPset_PayItemQuantities", "applies_to": ["bridge", "deck", "barrier", "girder", "reinforcement_cage", "bearing"],
       "properties": [
         {"name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "PayQuantity", "type": "IfcReal", "uri": "bsdd"},
@@ -181,7 +181,7 @@
         {"name": "FormType", "type": "IfcLabel", "value": "Wood", "uri": "bsdd"},
         {"name": "SacrificialWearingSurface", "type": "IfcPositiveLengthMeasure", "uri": "bsdd:SacrificialWearingThickness"},
         {"name": "SurfaceArea", "type": "IfcAreaMeasure", "uri": "bsdd"},
-        {"name": "SurfaceFinish", "type": "IfcLabel", "value": "Raked", "uri": "bsdd"}
+        {"name": "SurfaceFinish", "type": "IfcText", "value": "Raked", "uri": "bsdd"}
       ]
     },
     {
@@ -291,8 +291,8 @@
       ]
     },
     {
-      "name": "usBrPset_Common", "applies_to": ["tendon", "rebar"], "shared": true,
-      "comment": "Shared by every strand or bar (see CreateSharedPropertySets)",
+      "name": "usBrPset_Common", "applies_to": ["tendon", "rebar"], "attach": "type",
+      "comment": "usBridge has the data of strands and bars on their types, not on the strands and bars (usBrSpec_Classes.ids)",
       "properties": [
         {"name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}},
         {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd"},
@@ -302,7 +302,7 @@
       ]
     },
     {
-      "name": "usBrPset_PayItemQuantities", "applies_to": ["tendon", "rebar"], "shared": true,
+      "name": "usBrPset_PayItemQuantities", "applies_to": ["tendon", "rebar"], "attach": "type",
       "properties": [
         {"name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "PayQuantity", "type": "IfcReal", "uri": "bsdd"},
@@ -310,7 +310,7 @@
       ]
     },
     {
-      "name": "usBrPset_Reinforcing", "applies_to": "rebar", "uri": "bsdd", "shared": true,
+      "name": "usBrPset_Reinforcing", "applies_to": "rebar", "attach": "type", "uri": "bsdd",
       "properties": [
         {"name": "EmbedmentAtEnd", "type": "IfcPositiveLengthMeasure", "uri": "bsdd"},
         {"name": "EmbedmentAtStart", "type": "IfcPositiveLengthMeasure", "uri": "bsdd"},
@@ -344,8 +344,8 @@
       ]
     },
     {
-      "name": "usBrPset_TendonDebonding", "applies_to": "tendon", "condition": "always", "uri": "bsdd",
-      "comment": "Debonded strands have the lengths at the ends (with usBridge classification), temporary strands the lengths from mid-span",
+      "name": "usBrPset_TendonDebonding", "applies_to": "tendon", "attach": "type", "condition": "always", "uri": "bsdd",
+      "comment": "Debonded strands have the lengths at the ends (with usBridge classification), temporary strands the lengths from mid-span. Strands with different debonding have different types",
       "properties": [
         {"name": "DebondLengthStart", "type": "IfcLengthMeasure", "uri": "bsdd", "target": "tendon.debond_start"},
         {"name": "DebondLengthEnd", "type": "IfcLengthMeasure", "uri": "bsdd", "target": "tendon.debond_end"},
@@ -363,13 +363,26 @@
       ]
     },
     {
-      "name": "usBrPset_ACI_TendonMaterial", "applies_to": "tendon", "attach": "material",
+      "name": "usBrPset_ACI_TendonMaterial", "applies_to": "tendon", "attach": "type",
       "properties": [
         {"name": "Specification", "type": "IfcLabel", "uri": "bsdd", "value": "ASTM A416 (AASHTO M203)"},
         {"name": "SpecificationVersion", "type": "IfcLabel", "uri": "bsdd", "value": "Unknown"},
         {"name": "TendonGrade", "type": "IfcPressureMeasure", "uri": "bsdd", "target": "tendon.fpu"},
         {"name": "CoatingSpecification", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "CoatingSpecificationVersion", "type": "IfcLabel", "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_ACI_TendonType", "applies_to": "tendon", "attach": "type", "uri": "bsdd",
+      "properties": [
+        {"name": "TendonType", "type": "IfcLabel", "value": "BARE", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_TendonType", "values": ["TIGHTLY_SHEATHED", "DUCTED-BONDED", "DUCTED-UNBONDED", "BARE"]}, "comment": "values as in usBrSpec_PropertySets.ids (the workbook has Bare, Tightly_Sheathed, ...)"}
+      ]
+    },
+    {
+      "name": "usBrPset_ACI_Tendon", "applies_to": "tendon", "attach": "type", "uri": "bsdd",
+      "comment": "Each IfcTendon is a strand",
+      "properties": [
+        {"name": "StrandOrBarCount", "type": "IfcInteger", "value": 1, "uri": "bsdd"}
       ]
     },
     {
@@ -382,7 +395,7 @@
       ]
     },
     {
-      "name": "usBrPset_ACI_ReinforcingMaterial", "applies_to": "rebar", "attach": "material", "condition": "always",
+      "name": "usBrPset_ACI_ReinforcingMaterial", "applies_to": "rebar", "attach": "type", "condition": "always",
       "properties": [
         {"name": "Specification", "type": "IfcLabel", "uri": "bsdd", "target": "rebar.specification"},
         {"name": "SpecificationVersion", "type": "IfcLabel", "uri": "bsdd", "target": "rebar.specification_edition"},
@@ -395,10 +408,66 @@
       ]
     },
     {
-      "name": "Pset_BearingCommon", "applies_to": "bearing", "condition": "always",
-      "comment": "Not exported yet: declared for the import. DisplacementAccommodated is a list, [0] along the girder and [1] across, read by the locations of bearing.fixed_x and bearing.fixed_y",
+      "name": "usBrPset_ACI_ReinforcingBarType", "applies_to": "rebar", "attach": "type",
+      "comment": "Bars with different marks, sizes, or lengths have different types. BarMass is the total mass of a bar of the type",
       "properties": [
-        {"name": "DisplacementAccommodated", "type": "IfcBoolean"}
+        {"name": "BarMark", "type": "IfcLabel", "target": "rebar.bar_mark", "import": false, "uri": "bsdd"},
+        {"name": "BarMass", "type": "IfcMassMeasure", "target": "rebar.bar_mass", "import": false, "uri": "bsdd"},
+        {"name": "BarSize", "type": "IfcLabel", "target": "rebar.bar_size", "import": false, "uri": "bsdd"},
+        {"name": "EndEndPrep", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "StartEndPrep", "type": "IfcLabel", "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_ACI_ReinforcingBar", "applies_to": "rebar", "attach": "type", "uri": "bsdd",
+      "properties": [
+        {"name": "BarElement", "type": "IfcLabel", "target": "rebar.bar_element", "import": false, "uri": "bsdd"},
+        {"name": "BarUse", "type": "IfcLabel", "target": "rebar.bar_use", "import": false, "uri": "bsdd"},
+        {"name": "BarPosition", "type": "IfcLabel", "target": "rebar.bar_position", "import": false, "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_ACI_ReinforcingCover", "applies_to": "rebar", "attach": "type",
+      "properties": [
+        {"name": "TopFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_top", "import": false, "uri": "bsdd"},
+        {"name": "SideFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_side", "import": false, "uri": "bsdd"},
+        {"name": "EndFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_end", "import": false, "uri": "bsdd"},
+        {"name": "BottomFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_bottom", "import": false, "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "Pset_BearingCommon", "applies_to": "bearing", "condition": "always",
+      "comment": "Lists of three booleans: along the girder, across it, and vertical. The import reads DisplacementAccommodated [0] and [1] with the locations of bearing.fixed_x and bearing.fixed_y",
+      "properties": [
+        {"name": "DisplacementAccommodated", "type": "IfcBoolean", "target": "bearing.displacement_accommodated", "import": false},
+        {"name": "RotationAccommodated", "type": "IfcBoolean", "target": "bearing.rotation_accommodated", "import": false}
+      ]
+    },
+    {
+      "name": "usBrPset_BearingCommon", "applies_to": "bearing", "uri": "bsdd",
+      "properties": [
+        {"name": "VendorDesigned", "type": "IfcBoolean", "value": false, "uri": "bsdd"},
+        {"name": "MinimumBearingHeight", "type": "IfcPositiveLengthMeasure", "target": "bearing.height", "import": false, "uri": "bsdd"},
+        {"name": "SlidingSkewAngle", "type": "IfcPlaneAngleMeasure", "value": 0.0, "uri": "bsdd", "comment": "a bearing moves along the girder"},
+        {"name": "BearingTopElevation", "type": "IfcLengthMeasure", "target": "bearing.top_elevation", "import": false, "uri": "bsdd"},
+        {"name": "BearingBottomElevation", "type": "IfcLengthMeasure", "target": "bearing.bottom_elevation", "import": false, "uri": "bsdd"},
+        {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope", "import": false, "uri": "bsdd"},
+        {"name": "BearingThermalMovement", "type": "IfcNonNegativeLengthMeasure", "uri": "bsdd"},
+        {"name": "SupportCondition", "type": "IfcLabel", "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_ElastomericBearing", "applies_to": "bearing", "uri": "bsdd",
+      "comment": "Rectangular bearings have a length and a width, round bearings a diameter",
+      "properties": [
+        {"name": "BearingHeight", "type": "IfcPositiveLengthMeasure", "target": "bearing.height", "import": false, "uri": "bsdd"},
+        {"name": "BearingWidth", "type": "IfcPositiveLengthMeasure", "target": "bearing.width", "import": false, "uri": "bsdd"},
+        {"name": "BearingLength", "type": "IfcPositiveLengthMeasure", "target": "bearing.length", "import": false, "uri": "bsdd"},
+        {"name": "Diameter", "type": "IfcPositiveLengthMeasure", "target": "bearing.diameter", "import": false, "uri": "bsdd"},
+        {"name": "NumberOfPlates", "type": "IfcInteger", "target": "bearing.plate_count", "import": false, "uri": "bsdd"},
+        {"name": "PlateThickness", "type": "IfcPositiveLengthMeasure", "target": "bearing.plate_thickness", "import": false, "uri": "bsdd"},
+        {"name": "ExternalLayerThickness", "type": "IfcPositiveLengthMeasure", "target": "bearing.cover_thickness", "import": false, "uri": "bsdd"},
+        {"name": "InternalLayerThickness", "type": "IfcPositiveLengthMeasure", "target": "bearing.layer_thickness", "import": false, "uri": "bsdd"}
       ]
     }
   ],
@@ -444,7 +513,8 @@
     {"applies_to": "tendon_bundle", "system": "usBridge", "identification": "usBridge_TendonBundle", "name": "TendonBundle", "location": "bsdd"},
     {"applies_to": "tendon", "system": "usBridge", "identification": "usBridge_Tendon", "name": "Tendon", "location": "bsdd"},
     {"applies_to": "reinforcement_cage", "system": "usBridge", "identification": "usBridge_ReinforcementCage", "name": "ReinforcementCage", "location": "bsdd"},
-    {"applies_to": "rebar", "system": "usBridge", "identification": "usBridge_ReinforcingBar", "name": "ReinforcingBar", "location": "bsdd"}
+    {"applies_to": "rebar", "system": "usBridge", "identification": "usBridge_ReinforcingBar", "name": "ReinforcingBar", "location": "bsdd"},
+    {"applies_to": "bearing", "system": "usBridge", "identification": "usBridge_Bearing", "name": "Bearing", "location": "bsdd"}
   ],
   "targets": {
     "girder.type_names": [

@@ -67,6 +67,14 @@ public:
    // classification share a reference and its IfcRelAssociatesClassification
    std::map<std::string, uint32_t> classification_references;
 
+   // IfcReinforcingBarType and IfcTendonType instances already written, by what makes the type (see GetBarType and
+   // GetTendonType), so identical bars and strands share a type
+   std::map<std::string, uint32_t> bar_types;
+   std::map<std::string, uint32_t> tendon_types;
+
+   // the number of types written with each name, so a type that has the name of another type gets " (2)", and so on
+   std::map<std::string, int> type_names;
+
 private:
    std::unique_ptr<CIfcMappingTable> m_pTable;
    static CIfcExportSession* ms_pCurrent;
@@ -80,6 +88,11 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
 
 // True if properties are written in display units with their own unit (see CIfcExportOptions::display_units_for_properties)
 bool UseDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options);
+
+// Text that's the same for two elements exactly when the role's type property sets have the same values for them,
+// e.g. strands with different debonding. Elements with the same type in IFC must share these values, so the
+// exporter gives elements with different signatures different types
+std::string GetTypePropertySignature(ElementKind role, const ExportContext& context);
 
 namespace ifc_property_writer
 {
@@ -121,6 +134,7 @@ namespace ifc_property_writer
       if (type == "IFCLABEL") return file.template create<typename Schema::IfcLabel>().initialize(as_text(value));
       if (type == "IFCTEXT") return file.template create<typename Schema::IfcText>().initialize(as_text(value));
       if (type == "IFCIDENTIFIER") return file.template create<typename Schema::IfcIdentifier>().initialize(as_text(value));
+      if (type == "IFCDATE") return file.template create<typename Schema::IfcDate>().initialize(as_text(value));
       if (type == "IFCBOOLEAN") return file.template create<typename Schema::IfcBoolean>().initialize(v != 0.0);
       if (type == "IFCINTEGER") return file.template create<typename Schema::IfcInteger>().initialize((int64_t)std::llround(v));
       if (type == "IFCCOUNTMEASURE") return file.template create<typename Schema::IfcCountMeasure>().initialize((int64_t)std::llround(v));
@@ -133,6 +147,7 @@ namespace ifc_property_writer
       if (type == "IFCPOSITIVEPLANEANGLEMEASURE") return file.template create<typename Schema::IfcPositivePlaneAngleMeasure>().initialize(v);
       if (type == "IFCRATIOMEASURE") return file.template create<typename Schema::IfcRatioMeasure>().initialize(v);
       if (type == "IFCPOSITIVERATIOMEASURE") return file.template create<typename Schema::IfcPositiveRatioMeasure>().initialize(v);
+      if (type == "IFCNORMALISEDRATIOMEASURE") return file.template create<typename Schema::IfcNormalisedRatioMeasure>().initialize(v);
       if (type == "IFCAREAMEASURE") return file.template create<typename Schema::IfcAreaMeasure>().initialize(v);
       if (type == "IFCVOLUMEMEASURE") return file.template create<typename Schema::IfcVolumeMeasure>().initialize(v);
       if (type == "IFCMASSMEASURE") return file.template create<typename Schema::IfcMassMeasure>().initialize(v);
@@ -160,9 +175,9 @@ namespace ifc_property_writer
    }
 
    // The value of a property or quantity, from its constant or its target, in display or system units, and the unit of a
-   // display unit value. Returns false if the target's value is absent
+   // display unit value. A target can give a list of values instead (list). Returns false if the target's value is absent
    template <typename Schema>
-   bool get_value(hierarchy_helper<Schema>& file, const PropertyDeclaration& property, const ExportContext& context, std::optional<TargetValue>& value, typename Schema::IfcUnit& unit)
+   bool get_value(hierarchy_helper<Schema>& file, const PropertyDeclaration& property, const ExportContext& context, std::optional<TargetValue>& value, std::vector<TargetValue>& list, typename Schema::IfcUnit& unit)
    {
       value = property.value;
       if (!value && property.target && property.target->get)
@@ -173,11 +188,24 @@ namespace ifc_property_writer
 
          if (result.state == ExportValue::State::Value)
          {
-            value = result.value;
-            if (std::holds_alternative<Float64>(*value) && property.target->display_unit != ExportUnit::None && UseDisplayUnits(context.broker, *context.options))
+            if (result.list.empty())
+               value = result.value;
+            else
+               list = result.list;
+
+            if (property.target->display_unit != ExportUnit::None && UseDisplayUnits(context.broker, *context.options))
             {
-               value = ConvertToDisplayUnits(context.broker, *property.target, std::get<Float64>(*value));
-               unit = display_unit<Schema>(file, context.broker, property.target->display_unit);
+               auto convert = [&](TargetValue& v)
+                  {
+                     if (!std::holds_alternative<Float64>(v))
+                        return;
+                     v = ConvertToDisplayUnits(context.broker, *property.target, std::get<Float64>(v));
+                     unit = display_unit<Schema>(file, context.broker, property.target->display_unit);
+                  };
+               if (value)
+                  convert(*value);
+               for (auto& v : list)
+                  convert(v);
             }
          }
       }
@@ -189,13 +217,22 @@ namespace ifc_property_writer
    typename Schema::IfcProperty create_property(hierarchy_helper<Schema>& file, const PropertyDeclaration& property, const ExportContext& context)
    {
       std::optional<TargetValue> value;
+      std::vector<TargetValue> list;
       typename Schema::IfcUnit unit;
-      if (!get_value<Schema>(file, property, context, value, unit))
+      if (!get_value<Schema>(file, property, context, value, list, unit))
          return {};
 
       std::optional<std::string> specification;
       if (!property.uri.empty())
          specification = property.uri;
+
+      if (!list.empty())
+      {
+         std::vector<typename Schema::IfcValue> values;
+         for (const auto& v : list)
+            values.push_back(create_value<Schema>(file, property.type, v));
+         return file.template create<typename Schema::IfcPropertyListValue>().initialize(property.name, specification, values, unit);
+      }
 
       if (!property.enumeration_name.empty())
       {
@@ -230,8 +267,9 @@ namespace ifc_property_writer
    typename Schema::IfcPhysicalQuantity create_quantity(hierarchy_helper<Schema>& file, const PropertyDeclaration& quantity, const ExportContext& context)
    {
       std::optional<TargetValue> value;
+      std::vector<TargetValue> list; // quantities have one value
       typename Schema::IfcUnit unit;
-      if (!get_value<Schema>(file, quantity, context, value, unit))
+      if (!get_value<Schema>(file, quantity, context, value, list, unit))
          return {};
 
       Float64 v = value ? as_number(*value) : 0.0;

@@ -22,6 +22,8 @@
 #include "stdafx.h"
 #include "IfcPropertyWriter.h"
 
+#include <sstream>
+
 CIfcExportSession* CIfcExportSession::ms_pCurrent = nullptr;
 
 CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options)
@@ -83,4 +85,32 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
       value = RoundOff(value, target.display_round);
 
    return value;
+}
+
+std::string GetTypePropertySignature(ElementKind role, const ExportContext& context)
+{
+   std::ostringstream os;
+   for (const auto* pset : CIfcExportSession::Current().GetTable().GetPropertySets(role, PropertyOwner::Type))
+   {
+      if (!IncludePropertySet(*pset, *context.options))
+         continue;
+
+      for (const auto& property : pset->properties)
+      {
+         if (property.value || !property.target || !property.target->get)
+            continue; // the same for every element
+
+         auto result = property.target->get(context);
+         os << pset->name << "." << property.name << "=" << (int)result.state;
+         if (result.state == ExportValue::State::Value)
+         {
+            if (result.list.empty())
+               os << ":" << FormatTargetValue(result.value);
+            for (const auto& v : result.list)
+               os << ":" << FormatTargetValue(v);
+         }
+         os << ";";
+      }
+   }
+   return os.str();
 }

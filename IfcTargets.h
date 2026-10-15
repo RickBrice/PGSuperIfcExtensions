@@ -36,6 +36,9 @@
 namespace WBFL { namespace EAF { class Broker; }; };
 namespace WBFL { namespace Materials { class PsStrand; class Rebar; }; };
 class CIfcExportOptions;
+class CBearingData2;
+struct BearingElevationDetails;
+struct BarDefinition;
 
 // The kind of PGSuper item a target belongs to. Mapping table element roles (e.g. "girder") use these names
 enum class ElementKind
@@ -107,7 +110,10 @@ struct ExportContext
    pgsTypes::StrandType strand_type = pgsTypes::Straight; // Tendon
    StrandIndexType strand_index = INVALID_INDEX; // Tendon
    const WBFL::Materials::Rebar* rebar = nullptr; // Rebar material
+   const BarDefinition* bar = nullptr; // Rebar: the bar of a bar type (see BarShape.h)
    pgsTypes::TrafficBarrierOrientation barrier_side = pgsTypes::tboLeft; // Barrier
+   const CBearingData2* bearing = nullptr; // Bearing
+   const BearingElevationDetails* bearing_elevation = nullptr; // Bearing: its location and elevations
 };
 
 // The value a target's getter gives the exporter
@@ -122,12 +128,14 @@ struct ExportValue
 
    State state = State::NoValue;
    TargetValue value;
+   std::vector<TargetValue> list; // a list value (written as IfcPropertyListValue) when not empty
 
    ExportValue() = default;
    ExportValue(const TargetValue& v) : state(State::Value), value(v) {}
    ExportValue(Float64 v) : state(State::Value), value(v) {}
    ExportValue(Int64 v) : state(State::Value), value(v) {}
    ExportValue(const std::string& v) : state(State::Value), value(v) {}
+   static ExportValue List(const std::vector<TargetValue>& values) { ExportValue v; v.state = State::Value; v.list = values; return v; }
    static ExportValue NoValue() { return ExportValue(); }
    static ExportValue Absent() { ExportValue v; v.state = State::Absent; return v; }
 };
