@@ -93,6 +93,11 @@ G1 first: the strand elevations are measured from the girder's top or bottom and
    - **A cloned entry** keeps the clone's grid. **A new entry** gets a generated grid (2 in spacing) even when the girder's strands are imported as individual strands: designers will move to the grid input, and it needs a grid.
 7. **Where entries go:** the project's own library (saved with the project), never the master library.
 
+**Guidance (2026-10-15):**
+- **No configuration is assumed.** The import must work with any PGSuper configuration and publisher (WSDOT, TxDOT, California, ...): it compares with whatever girder entries and beam factories the project's library has, and has no agency's girder names or shapes in code. WSDOT (Local) is only the test library (the Regression configuration has two girders).
+- **Names are clues, not data.** A girder name often hints at the height (e.g. "WF100G", "NU2000"), but not always. The height in a name may help rank candidates; it never replaces the section.
+- **I-beams are typically WF or NU types.** NU girders have rounded corners at the web-flange junctions (fillets); the section comparison sees them as width changes near the flanges, and the family's fillet dimension is fitted like the others.
+
 ## Open questions
 
 1. **Library entries:** may we add a PGSuper interface to create a girder library entry (clone an entry, set its dimensions)? (Phase 5 questions 1-4: cloning the closest entry, naming, preferring a geometric match over creating one.)
