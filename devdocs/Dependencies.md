@@ -84,3 +84,8 @@ Now we are ready to build IfcOpenShell. The solution file is IfcOpenShell\_build
 Select the Debug configuration and build only the IfcParse project.
 
 Select the Release configuration and build the INSTALL project, found in the folder CMakePredefinedTargets.
+
+IfcOpenShell's CMake option IFOPSH_SAFE_INSTANCE (ON by default since the 0.9.1 plugin ABI v2 change) changes the exported
+signatures of every entity class. PGSuperIfcExtensions.vcxproj defines IFOPSH_SAFE_INSTANCE to match. If IfcOpenShell is
+configured with IFOPSH_SAFE_INSTANCE=OFF, remove the define from the project or the link fails with unresolved
+instance_data constructors. On Windows, IfcOpenShell Debug libraries and DLLs carry a _d suffix (ifcopenshell.parse_d.lib, etc.).

@@ -66,7 +66,7 @@ bool UseDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExpor
 
 Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const TargetDef& target, Float64 value)
 {
-   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
    switch (target.display_unit)
    {
    case ExportUnit::SpanLength: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetSpanLengthUnit().UnitOfMeasure); break;

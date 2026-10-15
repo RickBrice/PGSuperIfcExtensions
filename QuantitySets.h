@@ -35,7 +35,7 @@
 template <typename Schema>
 void AddQto(hierarchy_helper<Schema>& file, typename Schema::IfcObjectDefinition object,typename Schema::IfcElementQuantity qto)
 {
-   if (qto == nullptr)
+   if (!qto)
       return;
 
    std::vector<typename Schema::IfcObjectDefinition> related_objects;
