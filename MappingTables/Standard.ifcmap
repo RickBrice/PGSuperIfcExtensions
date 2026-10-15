@@ -388,7 +388,7 @@
         {"name": "SpecificationVersion", "type": "IfcLabel", "uri": "bsdd", "target": "rebar.specification_edition"},
         {"name": "ReinforcingGrade", "type": "IfcPressureMeasure", "uri": "bsdd", "target": "rebar.fy"},
         {"name": "Subtype", "type": "IfcLabel", "uri": "bsdd"},
-        {"name": "CoatingSpecification", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "CoatingSpecification", "type": "IfcLabel", "uri": "bsdd", "value": "NONE"},
         {"name": "CoatingSpecificationVersion", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "CoatingSubtype", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "CoatedBeforeFabrication", "type": "IfcBoolean", "uri": "bsdd"}
