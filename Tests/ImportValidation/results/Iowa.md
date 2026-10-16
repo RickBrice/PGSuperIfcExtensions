@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**178 of 260 values set by the import**, 82 are template defaults
+**180 of 260 values set by the import**, 80 are template defaults
 
-## template default (82)
+## template default (80)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -73,8 +73,6 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.type` | 0 | 0 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
-| `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope |
-| `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope |
 | `pier[0].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[1].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
@@ -94,7 +92,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `at[6].profile.elevation` | 0.000 ft | 0.000 ft |
 | `at[6].profile.grade` | 0.0000 % | 0.0000 % |
 
-## set by the import (178)
+## set by the import (180)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -248,6 +246,8 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.left_overhang_taper` | 1 | 2 |
 | `deck.right_overhang_taper` | 1 | 2 |
 | `deck.haunch_shape` | 1 | 0 |
+| `railing.left.exterior` | 42&dq; Single Slope | West Barrier |
+| `railing.right.exterior` | 42&dq; Single Slope | West Barrier |
 | `at[0].alignment.point` | (-1.500, 0.000) ft | (16590744.323, 6958091.803) ft |
 | `at[0].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[0].deck.left_edge` | 15.000 ft | 23.583 ft |
