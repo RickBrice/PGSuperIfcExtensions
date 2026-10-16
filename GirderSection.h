@@ -238,3 +238,15 @@ public:
 // measured down from the tops, and in the bottom fraction measured up from the bottoms (the top of one isn't compared
 // with the bottom of the other). Girders of a series match, whatever their heights
 bool FlangesMatch(const SectionMeasures& model, const SectionMeasures& other, const SectionTolerances& tolerances, double fraction = 0.4);
+
+// The fit with a girder of constant depth. The section is fitted at one place, so dimensions that only shape the rest of
+// the girder (e.g. a tapered I-beam's depth at its far end) keep their starting values, which can make the girder vary
+// in depth. When the fitted girder is higher at one end than the other (BeamFactory::GetBeamHeight), a dimension that
+// doesn't change the fitted section is solved so the heights are the same. nullopt if no dimension does that: the
+// factory can't make the model's girder of constant depth with this section. (BeamFactory::IsPrismatic isn't used: it
+// says whether the section properties are constant, so end blocks make a girder non-prismatic)
+std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFactory> factory, const DimensionFit& fit);
+
+// True if the factory's default girder has the same height at both ends (a factory made for girders of constant
+// depth, unlike e.g. a tapered I-beam)
+bool HasConstantDepthDefaults(const PGS::Beams::BeamFactory& factory);

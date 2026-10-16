@@ -43,6 +43,20 @@ namespace
 {
    using Loop = SectionOutline::Loop;
 
+   // Fitting tries dimensions a beam factory accepts but whose shape breaks a precondition WBFL checks in debug builds
+   // (e.g. a U-beam with vertical webs gets non-finite points, and D6 must be zero when W4 is). Those sections are
+   // rejected anyway, so while a trial section is made the checks go to the debugger output instead of stopping
+   class QuietChecks
+   {
+   public:
+#if defined _DEBUG
+      QuietChecks() : m_Mode(_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG)) {}
+      ~QuietChecks() { _CrtSetReportMode(_CRT_ASSERT, m_Mode); }
+   private:
+      int m_Mode;
+#endif
+   };
+
    double signed_area(const Loop& loop)
    {
       double a = 0;
@@ -718,6 +732,7 @@ namespace
          std::_tstring message;
          if (!m_Factory->ValidateDimensions(d, true, &message))
             return std::nullopt;
+         QuietChecks quiet;
          try
          {
             CComPtr<IGirderSection> section;
@@ -1579,4 +1594,73 @@ std::optional<DimensionFit> SimplexDimensionFitter::Fit(std::shared_ptr<PGS::Bea
    }
 
    return sections.Result(sections.With(dimensions, active, best), model, comparison);
+}
+
+bool HasConstantDepthDefaults(const PGS::Beams::BeamFactory& factory)
+{
+   GirderDimensions defaults;
+   const auto& names = factory.GetDimensionNames();
+   const auto& values = factory.GetDefaultDimensions();
+   for (size_t i = 0; i < names.size() && i < values.size(); i++)
+      defaults.emplace_back(names[i], values[i]);
+   return fabs(factory.GetBeamHeight(defaults, pgsTypes::metEnd) - factory.GetBeamHeight(defaults, pgsTypes::metStart)) <= 1e-6;
+}
+
+std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFactory> factory, const DimensionFit& fit)
+{
+   const double inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+   auto gap = [&factory](const GirderDimensions& d) {return factory->GetBeamHeight(d, pgsTypes::metEnd) - factory->GetBeamHeight(d, pgsTypes::metStart); };
+   if (fabs(gap(fit.dimensions)) <= 1e-6)
+      return fit;
+
+   auto outline_of = [&factory](const GirderDimensions& d) -> std::optional<SectionOutline>
+      {
+         QuietChecks quiet;
+         try
+         {
+            CComPtr<IGirderSection> section;
+            factory->CreateGirderSection(nullptr, INVALID_ID, d, -1, -1, &section);
+            CComQIPtr<IShape> shape(section);
+            if (!shape)
+               return std::nullopt;
+            return GetShapeOutline(shape);
+         }
+         catch (...)
+         {
+            return std::nullopt;
+         }
+      };
+
+   for (size_t i = 0; i < fit.dimensions.size(); i++)
+   {
+      // solve the end height for this dimension (secant steps; the height is usually linear in it)
+      auto d = fit.dimensions;
+      auto other = d;
+      other[i].second += inch;
+      double f0 = gap(d), f1 = gap(other);
+      for (int step = 0; step < 5 && 1e-9 < fabs(f0) && 1e-12 < fabs(f1 - f0); step++)
+      {
+         double x = d[i].second - f0 * (other[i].second - d[i].second) / (f1 - f0);
+         other = d;
+         f1 = f0;
+         d[i].second = x;
+         f0 = gap(d);
+      }
+      if (1e-6 < fabs(f0) || d[i].second < 0)
+         continue;
+
+      std::_tstring message;
+      if (!factory->ValidateDimensions(d, true, &message))
+         continue;
+
+      // the dimension must not change the fitted section
+      auto outline = outline_of(d);
+      if (!outline || SectionTolerances().length / 100 < OutlineDistance(*outline, fit.section.outline))
+         continue;
+
+      auto constant = fit;
+      constant.dimensions = d;
+      return constant;
+   }
+   return std::nullopt;
 }

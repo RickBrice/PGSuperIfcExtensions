@@ -38,6 +38,7 @@
 #include <numeric>
 
 #include <MFCTools\Prompts.h>
+#include <EAF/EAFProgress.h>
 #include <boost/range/combine.hpp>
 #include <psgLib/BridgeDescription2.h>
 #include <psgLib/GirderLabel.h>
@@ -881,9 +882,10 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
       }
 
       // G1 steps 3 and 4: fit the dimensions of every beam factory (a family has several, e.g. WF, NU, and AASHTO
-      // girders are I-beams), starting from the factory's closest library entry (step 3: the entry is cloned), or, for
-      // a factory without library entries, from its default dimensions (step 4: a new entry). Every installed beam
-      // factory is tried, so no configuration is assumed
+      // girders are I-beams), starting from the factory's closest library entry and from its default dimensions (a fit
+      // can settle near its start: a 58 in entry fitted to a 31 in girder may not find the fit the defaults do). A fit
+      // of a factory with a library entry clones the entry (step 3); otherwise it's a new entry (step 4). Every installed
+      // beam factory is tried, so no configuration is assumed
       std::sort(ranked.begin(), ranked.end());
       struct Candidate
       {
@@ -893,12 +895,16 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
       };
       std::vector<Candidate> candidates;
       std::set<std::_tstring> factory_names;
+      std::map<std::_tstring, std::_tstring> factory_entries; // factory name -> its closest library entry
       for (const auto& [difference, name] : ranked)
       {
          const auto* pEntry = pLibrary->GetGirderEntry(name.c_str());
          auto factory = pEntry->GetBeamFactory();
          if (factory && factory_names.insert(factory->GetName()).second)
+         {
             candidates.push_back({ name, factory, pEntry->GetDimensions() });
+            factory_entries[factory->GetName()] = name;
+         }
       }
       GET_IFACE2(m_Importer.GetBroker(), IDocumentType, pDocType);
       for (const auto& family_name : PGS::Library::BeamFamilyManager::GetBeamFamilyNames(pDocType->IsPGSpliceDocument() ? CATID_PGSpliceBeamFamily : CATID_PGSuperBeamFamily))
@@ -909,14 +915,23 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
          for (const auto& factory_name : family->GetFactoryNames())
          {
             auto factory = family->CreateFactory(factory_name);
-            if (!factory || !factory_names.insert(factory->GetName()).second)
+            if (!factory)
                continue;
+            auto entry = factory_entries.find(factory->GetName());
+            if (entry == factory_entries.end() && !factory_names.insert(factory->GetName()).second)
+               continue; // already a candidate from another family
             GirderDimensions start;
             const auto& names = factory->GetDimensionNames();
             const auto& defaults = factory->GetDefaultDimensions();
             for (size_t i = 0; i < names.size() && i < defaults.size(); i++)
                start.emplace_back(names[i], defaults[i]);
-            candidates.push_back({ std::_tstring(), factory, start });
+            std::_tstring entry_name; // a fit from the defaults of a factory with a library entry clones the entry
+            if (entry != factory_entries.end())
+            {
+               entry_name = entry->second;
+               factory_entries.erase(entry); // its defaults once
+            }
+            candidates.push_back({ entry_name, factory, start });
          }
       }
 
@@ -956,9 +971,22 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
             flange_candidates.push_back({ name, pEntry->GetBeamFactory(), pEntry->GetDimensions() });
          }
       }
+      // The model's girder has a constant depth (the section is measured over its prismatic middle), so a fit must
+      // make a girder of constant depth (MakeConstantDepth: e.g. a tapered I-beam fitted at one end has the other free)
+      std::set<std::string> varying_depth; // factories that can't make the section as a girder of constant depth
+      auto prismatic = [&varying_depth](const std::shared_ptr<PGS::Beams::BeamFactory>& factory, const std::optional<DimensionFit>& fit) -> std::optional<DimensionFit>
+         {
+            if (!fit)
+               return fit;
+            auto result = MakeConstantDepth(factory, *fit);
+            if (!result)
+               varying_depth.insert(std::string(CT2A(factory->GetName().c_str())));
+            return result;
+         };
+
       for (const auto& candidate : flange_candidates)
       {
-         auto fit = m_pHeightFitter->Fit(candidate.factory, candidate.start, section, *m_pFitComparison);
+         auto fit = prismatic(candidate.factory, m_pHeightFitter->Fit(candidate.factory, candidate.start, section, *m_pFitComparison));
          if (fit && fit->differences.empty())
             consider(candidate, fit);
       }
@@ -968,21 +996,47 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
       }
       else
       {
-         // Otherwise all of the dimensions of every beam factory: a short fit of each, then a full fit of the most promising
+         // Otherwise all of the dimensions of every beam factory: a short fit from each start, then a full fit of the
+         // five most promising factories (each from its better start). Fitting takes a while, so the progress window
+         // says which fit is running
+         GET_IFACE2(m_Importer.GetBroker(), IEAFProgress, pProgress);
          std::vector<std::pair<double, const Candidate*>> screened;
+         size_t count = 0;
          for (const auto& candidate : candidates)
          {
-            if (auto fit = m_pScreenFitter->Fit(candidate.factory, candidate.start, section, *m_pFitComparison))
+            std::_tostringstream progress;
+            progress << _T("Fitting the section of ") << A2T(beam_name.c_str()) << _T(": screening ") << ++count << _T(" of ") << candidates.size() << _T(" (") << candidate.factory->GetName() << _T(")");
+            pProgress->UpdateMessage(progress.str().c_str());
+            if (auto fit = prismatic(candidate.factory, m_pScreenFitter->Fit(candidate.factory, candidate.start, section, *m_pFitComparison)))
                screened.emplace_back(fit->difference, &candidate);
          }
          std::sort(screened.begin(), screened.end(), [](const auto& a, const auto& b) {return a.first < b.first; });
-         for (size_t i = 0; i < screened.size() && i < 5; i++)
-            consider(*screened[i].second, m_pFitter->Fit(screened[i].second->factory, screened[i].second->start, section, *m_pFitComparison));
+         std::vector<std::pair<double, const Candidate*>> promising;
+         std::set<std::_tstring> promising_factories;
+         for (const auto& s : screened)
+         {
+            if (promising.size() < 5 && promising_factories.insert(s.second->factory->GetName()).second)
+               promising.push_back(s);
+         }
+         count = 0;
+         for (const auto& [difference, candidate] : promising)
+         {
+            std::_tostringstream progress;
+            progress << _T("Fitting the section of ") << A2T(beam_name.c_str()) << _T(": full fit ") << ++count << _T(" of ") << promising.size() << _T(" (") << candidate->factory->GetName() << _T(")");
+            pProgress->UpdateMessage(progress.str().c_str());
+            consider(*candidate, prismatic(candidate->factory, m_pFitter->Fit(candidate->factory, candidate->start, section, *m_pFitComparison)));
+         }
 
          std::ostringstream os_how;
-         os_how << "all dimensions fitted, " << candidates.size() << " beam factories screened; the closest:";
-         for (size_t i = 0; i < screened.size() && i < 5; i++)
-            os_how << (i == 0 ? " " : ", ") << T2A(screened[i].second->factory->GetName().c_str()) << " " << std::fixed << std::setprecision(1) << screened[i].first;
+         os_how << "all dimensions fitted, " << promising_factories.size() << " of " << factory_names.size() << " beam factories fully fitted after screening; the closest:";
+         for (size_t i = 0; i < promising.size(); i++)
+            os_how << (i == 0 ? " " : ", ") << T2A(promising[i].second->factory->GetName().c_str()) << " " << std::fixed << std::setprecision(1) << promising[i].first;
+         if (!varying_depth.empty())
+         {
+            os_how << "; can't make the section as a girder of constant depth:";
+            for (const auto& name : varying_depth)
+               os_how << " " << name << (&name == &*varying_depth.rbegin() ? "" : ",");
+         }
          how = os_how.str();
       }
       auto fit_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - fit_start_time).count();
@@ -1001,6 +1055,19 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
                tie_names.insert(candidate->factory->GetName()).second &&
                OutlineDistance(fit.section.outline, best_fit->section.outline) <= SectionTolerances().length)
                ties.emplace_back(candidate, &fit);
+         }
+         // The model's girder has a constant depth: a factory made for such girders (its default girder has the same
+         // height at both ends) is preferred to one made for girders that vary in depth (e.g. a tapered I-beam), which
+         // only ties by being fitted with a constant depth
+         auto made_for_constant_depth = [](const Candidate* candidate) {return HasConstantDepthDefaults(*candidate->factory); };
+         if (std::any_of(ties.begin(), ties.end(), [&](const auto& tie) {return made_for_constant_depth(tie.first); }))
+         {
+            ties.erase(std::remove_if(ties.begin(), ties.end(), [&](const auto& tie) {return !made_for_constant_depth(tie.first); }), ties.end());
+            if (std::find_if(ties.begin(), ties.end(), [&](const auto& tie) {return tie.first == best_candidate; }) == ties.end())
+            {
+               best_candidate = ties.front().first;
+               best_fit = *ties.front().second;
+            }
          }
          if (1 < ties.size())
          {
