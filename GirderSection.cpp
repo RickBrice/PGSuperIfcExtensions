@@ -297,7 +297,7 @@ std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Ve
             best_angle = angle;
          }
       }
-      if (M_PI / 720 < fabs(best_angle))
+      if (!IsZero(best_angle, M_PI / 720))
       {
          Eigen::Rotation2Dd rotation(best_angle);
          for (auto& loop : loops)
@@ -336,7 +336,7 @@ SectionOutline GetShapeOutline(IShape* pShape)
             if (loop.empty() || (loop.back() - Eigen::Vector2d(x, y)).norm() > 1e-9)
                loop.emplace_back(x, y);
          }
-         if (1 < loop.size() && (loop.back() - loop.front()).norm() < 1e-9)
+         if (1 < loop.size() && IsZero((loop.back() - loop.front()).norm(), 1e-9))
             loop.pop_back(); // closed polygons repeat the first point
          return loop;
       };
@@ -457,7 +457,7 @@ namespace
       Comparison result;
       auto length = [&](const char* name, double a, double b)
          {
-            if (tolerances.length < fabs(a - b))
+            if (!IsEqual(a, b, tolerances.length))
             {
                std::ostringstream os;
                os << std::fixed << std::setprecision(3) << name << " " << inches(a) << " in vs " << inches(b) << " in";
@@ -772,7 +772,7 @@ namespace
             {
                auto d = base;
                d[i].second += sign * h;
-               if (auto s = Section(d); s && (1e-9 < fabs(s->area - base_section.area) || 1e-9 < fabs(s->height - base_section.height)))
+               if (auto s = Section(d); s && (!IsEqual(s->area, base_section.area, 1e-9) || !IsEqual(s->height, base_section.height, 1e-9)))
                   changes = true;
             }
             if (changes)
@@ -809,12 +809,12 @@ namespace
          {
             size_t i = active[k];
             auto f = feature_of(i, base[i].second + steps[k]);
-            if (f && 1e-9 < fabs(*f - f_base))
+            if (f && !IsEqual(*f, f_base, 1e-9))
                options.push_back({ i, fabs(*f - f_base) / steps[k] });
          }
          std::stable_sort(options.begin(), options.end(), [&](const Option& a, const Option& b)
             {
-               if (1e-6 < fabs(a.slope - b.slope))
+               if (!IsEqual(a.slope, b.slope, 1e-6))
                   return a.slope > b.slope;
                return base[a.dimension].second > base[b.dimension].second;
             });
@@ -836,7 +836,7 @@ namespace
                x1 = x0 - (target - f0) / option.slope;
                f1 = feature_of(dimension, x1);
             }
-            for (int iteration = 0; f1 && iteration < 20 && 1e-7 < fabs(target - *f1) && 1e-12 < fabs(*f1 - f0); iteration++)
+            for (int iteration = 0; f1 && iteration < 20 && !IsEqual(target, *f1, 1e-7) && !IsEqual(*f1, f0, 1e-12); iteration++)
             {
                double x2 = x1 + (target - *f1) * (x1 - x0) / (*f1 - f0);
                x0 = x1; f0 = *f1;
@@ -1003,7 +1003,7 @@ namespace
                   a = a + (b - a) * (-a.x() / (b.x() - a.x()));
                else if (on_axis < b.x())
                   b = a + (b - a) * (-a.x() / (b.x() - a.x()));
-               if ((fabs(a.x()) <= on_axis && fabs(b.x()) <= on_axis) || (b - a).norm() < 1e-12)
+               if ((IsZero(a.x(), on_axis) && IsZero(b.x(), on_axis)) || IsZero((b - a).norm(), 1e-12))
                   continue;
                edges.emplace_back(a, b);
             }
@@ -1117,7 +1117,7 @@ namespace
       size_t top = INVALID_INDEX, bottom = INVALID_INDEX;
       for (size_t i = 0; i < n; i++)
       {
-         if (on_axis < fabs(c[i].x()))
+         if (!IsZero(c[i].x(), on_axis))
             continue;
          if (top == INVALID_INDEX || c[top].y() < c[i].y())
             top = i;
@@ -1408,7 +1408,7 @@ std::optional<DimensionFit> OutlineDimensionFitter::Fit(std::shared_ptr<PGS::Bea
       auto d = featured;
       d[i].second = start_length;
       auto s = sections.Section(d);
-      if (s && (1e-9 < fabs(s->area - featured_section->area) || 1e-9 < fabs(s->height - featured_section->height)))
+      if (s && (!IsEqual(s->area, featured_section->area, 1e-9) || !IsEqual(s->height, featured_section->height, 1e-9)))
       {
          featured = d;
          featured_section = s;
@@ -1503,7 +1503,7 @@ std::optional<DimensionFit> SimplexDimensionFitter::Fit(std::shared_ptr<PGS::Bea
          std::iota(order.begin(), order.end(), 0);
          std::sort(order.begin(), order.end(), [&](size_t a, size_t b) {return values[a] < values[b]; });
          size_t lo = order.front(), hi = order.back(), next_hi = order[n - 1];
-         if (fabs(values[hi] - values[lo]) < 1e-6)
+         if (IsEqual(values[hi], values[lo], 1e-6))
             break;
 
          std::vector<double> centroid(n, 0.0);
@@ -1603,14 +1603,14 @@ bool HasConstantDepthDefaults(const PGS::Beams::BeamFactory& factory)
    const auto& values = factory.GetDefaultDimensions();
    for (size_t i = 0; i < names.size() && i < values.size(); i++)
       defaults.emplace_back(names[i], values[i]);
-   return fabs(factory.GetBeamHeight(defaults, pgsTypes::metEnd) - factory.GetBeamHeight(defaults, pgsTypes::metStart)) <= 1e-6;
+   return IsEqual(factory.GetBeamHeight(defaults, pgsTypes::metEnd), factory.GetBeamHeight(defaults, pgsTypes::metStart), 1e-6);
 }
 
 std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFactory> factory, const DimensionFit& fit)
 {
    const double inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
    auto gap = [&factory](const GirderDimensions& d) {return factory->GetBeamHeight(d, pgsTypes::metEnd) - factory->GetBeamHeight(d, pgsTypes::metStart); };
-   if (fabs(gap(fit.dimensions)) <= 1e-6)
+   if (IsZero(gap(fit.dimensions), 1e-6))
       return fit;
 
    auto outline_of = [&factory](const GirderDimensions& d) -> std::optional<SectionOutline>
@@ -1638,7 +1638,7 @@ std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFa
       auto other = d;
       other[i].second += inch;
       double f0 = gap(d), f1 = gap(other);
-      for (int step = 0; step < 5 && 1e-9 < fabs(f0) && 1e-12 < fabs(f1 - f0); step++)
+      for (int step = 0; step < 5 && !IsZero(f0, 1e-9) && !IsEqual(f1, f0, 1e-12); step++)
       {
          double x = d[i].second - f0 * (other[i].second - d[i].second) / (f1 - f0);
          other = d;
@@ -1646,7 +1646,7 @@ std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFa
          d[i].second = x;
          f0 = gap(d);
       }
-      if (1e-6 < fabs(f0) || d[i].second < 0)
+      if (!IsZero(f0, 1e-6) || d[i].second < 0)
          continue;
 
       std::_tstring message;
@@ -1668,7 +1668,7 @@ std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFa
 bool SameGirderSection(const SectionMeasures& a, const SectionMeasures& b, const SectionTolerances& tolerances)
 {
    auto relative = [](double x, double y) {return fabs(x - y) / std::max(fabs(x), fabs(y)); };
-   return fabs(a.centroid_y - b.centroid_y) <= tolerances.length &&
+   return IsEqual(a.centroid_y, b.centroid_y, tolerances.length) &&
       relative(a.area, b.area) <= tolerances.ratio &&
       relative(a.ix, b.ix) <= tolerances.ratio &&
       OutlineDistance(a.outline, b.outline) <= tolerances.length;

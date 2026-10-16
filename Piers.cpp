@@ -329,7 +329,7 @@ namespace
    {
       const Float64 tolerance = WBFL::Units::ConvertToSysUnits(1.0 / 16.0, WBFL::Units::Measure::Inch);
       return a.Shape == b.Shape && a.BearingCount == b.BearingCount && a.FixedX == b.FixedX && a.FixedY == b.FixedY &&
-         fabs(a.Length - b.Length) <= tolerance && fabs(a.Width - b.Width) <= tolerance && fabs(a.Height - b.Height) <= tolerance && fabs(a.Spacing - b.Spacing) <= tolerance;
+         IsEqual(a.Length, b.Length, tolerance) && IsEqual(a.Width, b.Width, tolerance) && IsEqual(a.Height, b.Height, tolerance) && IsEqual(a.Spacing, b.Spacing, tolerance);
    }
 }
 
@@ -366,7 +366,7 @@ void set_bearing_data(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::
                Eigen::Vector2d v = p - bearing.center;
                min_along = std::min(min_along, v.dot(direction)); max_along = std::max(max_along, v.dot(direction));
                min_across = std::min(min_across, v.dot(normal)); max_across = std::max(max_across, v.dot(normal));
-               if (std::none_of(plan_points.begin(), plan_points.end(), [&v](const auto& q) {return (q - v).norm() < 1.0e-4; }))
+               if (std::none_of(plan_points.begin(), plan_points.end(), [&v](const auto& q) {return IsZero((q - v).norm(), 1.0e-4); }))
                   plan_points.push_back(v);
             }
 
@@ -505,7 +505,7 @@ std::optional<Eigen::Vector2d> get_referent_direction(IfcSchema::IfcBridgePart p
 
    auto ratios = ref_direction.DirectionRatios();
    Eigen::Vector2d direction(ratios[0], ratios[1]);
-   if (direction.norm() < 1.0e-9)
+   if (IsZero(direction.norm(), 1.0e-9))
       return std::nullopt; // vertical
    return direction.normalized();
 }
@@ -523,7 +523,7 @@ namespace
       mean /= (double)points.size();
       Eigen::Matrix2d covariance = Eigen::Matrix2d::Zero();
       for (const auto& p : points) covariance += (p - mean) * (p - mean).transpose();
-      if (covariance.trace() < 1.0e-12)
+      if (IsZero(covariance.trace(), 1.0e-12))
          return std::nullopt;
 
       Eigen::SelfAdjointEigenSolver<Eigen::Matrix2d> solver(covariance);
@@ -718,6 +718,13 @@ void set_end_distance_and_bearing_offset(std::shared_ptr<WBFL::EAF::Broker> pBro
 
       Float64 end_distance = median(end_distances);
       Float64 bearing_offset = median(bearing_offsets);
+
+      // A measured zero is round-off (e.g. -3.5e-12 in for bearings on the CL pier) and its sign matters: WBFL checks the
+      // sign of the bearing offset against the geometry (CoordGeom GirderLine), so it's made exactly zero
+      if (IsZero(end_distance))
+         end_distance = 0.0;
+      if (IsZero(bearing_offset))
+         bearing_offset = 0.0;
 
       if (!bBearings)
       {

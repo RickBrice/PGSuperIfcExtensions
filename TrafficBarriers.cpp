@@ -144,7 +144,7 @@ namespace
          if (loop.empty() || 1e-9 < (loop.back() - Eigen::Vector2d(x, y)).norm())
             loop.emplace_back(x, y);
       }
-      if (1 < loop.size() && (loop.back() - loop.front()).norm() < 1e-9)
+      if (1 < loop.size() && IsZero((loop.back() - loop.front()).norm(), 1e-9))
          loop.pop_back(); // closed polygons may repeat the first point
       return loop;
    }
@@ -316,7 +316,7 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
       os << "The " << side_name << " exterior traffic barrier is " << cut.name << " (#" << cut.element.id() << "): area "
          << std::fixed << std::setprecision(1) << WBFL::Units::ConvertFromSysUnits(fabs(loop_area(model)), WBFL::Units::Measure::Inch2) << " in^2, "
          << model.size() << " corners, turned back " << std::setprecision(2) << 100 * slope << "% (the roadway cross slope at the edge of the deck, rising toward the roadway).";
-      if (deck_slope && 0.0025 < fabs(*deck_slope - slope))
+      if (deck_slope && !IsEqual(*deck_slope, slope, 0.0025))
          os << " The top of the deck inside the barrier slopes " << std::setprecision(2) << 100 * *deck_slope
             << "%, so the roadway section doesn't match the model (it isn't imported yet), and the barrier is turned by the wrong slope.";
       for (size_t i = 1; i < cuts.size(); i++)

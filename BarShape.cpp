@@ -49,7 +49,7 @@ namespace
       Float64 cos_b = std::clamp(dot(minus(a, b), minus(c, b)) / (ab * bc), -1.0, 1.0);
       Float64 angle_b = acos(cos_b);
       Float64 sin_b = sin(angle_b);
-      if (sin_b < 1e-12)
+      if (IsZero(sin_b, 1e-12))
          return ab + bc; // collinear points: a straight line
       Float64 radius = ac / (2 * sin_b);
       return radius * (TWO_PI - 2 * angle_b);

@@ -104,7 +104,7 @@ std::vector<Wire> Wire::decompose(double max_edge_angle_deg) const {
 
             double n1 = v1.norm();
             double n2 = v2.norm();
-            if (n1 < 1e-12 || n2 < 1e-12)
+            if (IsZero(n1, 1e-12) || IsZero(n2, 1e-12))
                continue;
 
             v1 /= n1; // normalize vectors
@@ -424,7 +424,7 @@ std::optional<std::pair<double, double>> Mesh::z_range_at(double x, double y) co
          continue;
 
       double d = (b.y() - c.y()) * (a.x() - c.x()) + (c.x() - b.x()) * (a.y() - c.y());
-      if (fabs(d) < 1.0e-12)
+      if (IsZero(d, 1.0e-12))
          continue; // vertical face
 
       double l1 = ((b.y() - c.y()) * (x - c.x()) + (c.x() - b.x()) * (y - c.y())) / d;

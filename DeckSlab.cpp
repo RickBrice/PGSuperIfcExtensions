@@ -162,7 +162,7 @@ std::vector<CDeckPoint> create_deck_points(const EdgeProfile& left, const EdgePr
          stations.push_back(station);
    }
    std::sort(stations.begin(), stations.end());
-   stations.erase(std::unique(stations.begin(), stations.end(), [tolerance](double a, double b) {return fabs(a - b) <= tolerance; }), stations.end());
+   stations.erase(std::unique(stations.begin(), stations.end(), [tolerance](double a, double b) {return IsEqual(a, b, tolerance); }), stations.end());
 
    // round to a micrometer to remove floating point noise from the geometry (e.g. 4.572000000003 m)
    const double accuracy = 1.0e-6;
@@ -182,8 +182,8 @@ std::vector<CDeckPoint> create_deck_points(const EdgeProfile& left, const EdgePr
    for (size_t i = 0; i < deck_points.size(); i++)
    {
       bool bLast = (i == deck_points.size() - 1);
-      deck_points[i].LeftTransitionType = (bLast || fabs(deck_points[i].LeftEdge - deck_points[i + 1].LeftEdge) <= tolerance) ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
-      deck_points[i].RightTransitionType = (bLast || fabs(deck_points[i].RightEdge - deck_points[i + 1].RightEdge) <= tolerance) ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+      deck_points[i].LeftTransitionType = (bLast || IsEqual(deck_points[i].LeftEdge, deck_points[i + 1].LeftEdge, tolerance)) ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
+      deck_points[i].RightTransitionType = (bLast || IsEqual(deck_points[i].RightEdge, deck_points[i + 1].RightEdge, tolerance)) ? pgsTypes::DeckPointTransitionType::dptParallel : pgsTypes::DeckPointTransitionType::dptLinear;
    }
 
    // remove points in the middle of runs that parallel the alignment on both sides - they don't change the edges
@@ -447,7 +447,7 @@ namespace
                inside = outside;
                outside += direction * step;
             }
-            while (inch / 64 < fabs(outside - inside))
+            while (!IsEqual(outside, inside, inch / 64))
             {
                Float64 mid = (inside + outside) / 2;
                (on_mesh(mid) ? inside : outside) = mid;
@@ -480,7 +480,7 @@ namespace
          sx += offsets[i]; sy += depths[i]; sxx += offsets[i] * offsets[i]; sxy += offsets[i] * depths[i];
       }
       Float64 det = n * sxx - sx * sx;
-      Float64 slope = fabs(det) < 1.0e-12 ? 0.0 : (n * sxy - sx * sy) / det;
+      Float64 slope = IsZero(det, 1.0e-12) ? 0.0 : (n * sxy - sx * sy) / det;
       Float64 intercept = (sy - slope * sx) / n;
 
       if (max_residual)
@@ -644,9 +644,9 @@ DeckSectionData analyze_deck_section(std::shared_ptr<WBFL::EAF::Broker> pBroker,
 
             const Float64 tolerance = inch / 4;
             pgsTypes::DeckOverhangTaper taper;
-            if (fabs(depth_at_tip - edge_depth) <= tolerance)
+            if (IsEqual(depth_at_tip, edge_depth, tolerance))
                taper = pgsTypes::dotNone; // constant thickness overhang
-            else if (fabs(depth_at_tip - haunch_depth) <= tolerance)
+            else if (IsEqual(depth_at_tip, haunch_depth, tolerance))
                taper = pgsTypes::dotTopTopFlange; // soffit runs to the top of the top flange
             else if (haunch_depth < depth_at_tip)
                taper = pgsTypes::dotBottomTopFlange; // soffit runs below the top of the top flange

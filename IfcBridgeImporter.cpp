@@ -601,7 +601,7 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
       {
          Float64 property_depth = std::get<Float64>(depth_reading->value);
          const Float64 tolerance = WBFL::Units::ConvertToSysUnits(1.0 / 8.0, WBFL::Units::Measure::Inch);
-         if (tolerance < fabs(property_depth - *section.gross_depth))
+         if (!IsEqual(property_depth, *section.gross_depth, tolerance))
          {
             std::ostringstream os;
             os << std::fixed << std::setprecision(3) << "The deck gross depth is " << WBFL::Units::ConvertFromSysUnits(property_depth, WBFL::Units::Measure::Inch)

@@ -88,7 +88,7 @@ namespace
          std::vector<double> offsets{ from, to, other.from, other.to };
          offsets.insert(offsets.end(), ridges.begin(), ridges.end());
          offsets.insert(offsets.end(), other.ridges.begin(), other.ridges.end());
-         return std::all_of(offsets.begin(), offsets.end(), [&](double o) {return fabs(surface(o) - other.surface(o)) <= inch / 16; });
+         return std::all_of(offsets.begin(), offsets.end(), [&](double o) {return IsEqual(surface(o), other.surface(o), inch / 16); });
       }
    };
 
@@ -166,7 +166,7 @@ namespace
          offsets.push_back(c.second);
       }
       std::sort(offsets.begin(), offsets.end());
-      offsets.erase(std::unique(offsets.begin(), offsets.end(), [](double a, double b) {return fabs(a - b) < 1e-6; }), offsets.end());
+      offsets.erase(std::unique(offsets.begin(), offsets.end(), [](double a, double b) {return IsEqual(a, b, 1e-6); }), offsets.end());
 
       // the uncovered stretches of the top of the deck; the roadway is the one at the alignment, else the longest
       std::vector<std::vector<Eigen::Vector2d>> stretches;
@@ -205,7 +205,7 @@ namespace
       auto corners = SimplifyPolyline(*roadway, inch / 16);
       for (size_t i = 1; i + 1 < corners.size(); i++)
       {
-         if (fabs(corners[i].x()) <= inch / 2)
+         if (IsZero(corners[i].x(), inch / 2))
             corners[i].x() = 0.0;
       }
       StationSection section;
@@ -331,7 +331,7 @@ namespace
          for (const auto& p : samples)
          {
             double t = p.x();
-            if (std::any_of(best.knots.begin(), best.knots.end(), [t](double k) {return fabs(k - t) < 1e-6; }))
+            if (std::any_of(best.knots.begin(), best.knots.end(), [t](double k) {return IsEqual(k, t, 1e-6); }))
                continue;
             auto knots = best.knots;
             knots.insert(std::upper_bound(knots.begin(), knots.end(), t), t);
@@ -489,7 +489,7 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
       auto augmented = s;
       for (double o : nearest->ridges)
       {
-         if (std::none_of(augmented.ridges.begin(), augmented.ridges.end(), [o](double r) {return fabs(r - o) < 12 * inch; }))
+         if (std::none_of(augmented.ridges.begin(), augmented.ridges.end(), [o](double r) {return IsEqual(r, o, 12 * inch); }))
             augmented = augmented.with_ridge(o);
       }
       if (is_common(augmented))
@@ -678,7 +678,7 @@ void import_profile(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck
                }
             }
          }
-         glitch = inch / 2 < fabs(best_at_sample);
+         glitch = !IsZero(best_at_sample, inch / 2);
       }
       (glitch ? glitches : kept).push_back(samples[i]);
    }
