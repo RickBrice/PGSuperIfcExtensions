@@ -1664,3 +1664,12 @@ std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFa
    }
    return std::nullopt;
 }
+
+bool SameGirderSection(const SectionMeasures& a, const SectionMeasures& b, const SectionTolerances& tolerances)
+{
+   auto relative = [](double x, double y) {return fabs(x - y) / std::max(fabs(x), fabs(y)); };
+   return fabs(a.centroid_y - b.centroid_y) <= tolerances.length &&
+      relative(a.area, b.area) <= tolerances.ratio &&
+      relative(a.ix, b.ix) <= tolerances.ratio &&
+      OutlineDistance(a.outline, b.outline) <= tolerances.length;
+}

@@ -331,6 +331,28 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
          }
       }
    }
+
+   // The girders of a girder type group share a library entry (PGSuper checks it). With different entries, each run of
+   // adjacent girders with the same entry is a group
+   if (!bSameGirder)
+   {
+      for (GroupIndexType grpIdx = 0; grpIdx < bridge_desc.GetGirderGroupCount(); grpIdx++)
+      {
+         auto* pGroup = bridge_desc.GetGirderGroup(grpIdx);
+         pGroup->ExpandAll();
+         GirderIndexType nGirders = pGroup->GetGirderCount();
+         for (GirderIndexType first = 0; first < nGirders; )
+         {
+            std::_tstring name(pGroup->GetGirder(first)->GetGirderName());
+            GirderIndexType last = first;
+            while (last + 1 < nGirders && name == pGroup->GetGirder(last + 1)->GetGirderName())
+               last++;
+            if (first < last)
+               pGroup->Join(first, last, first);
+            first = last + 1;
+         }
+      }
+   }
 }
 
 bool CIfcBridgeImporter::IsValidBridge(ifcopenshell::file& file, IfcSchema::IfcBridge bridge)
@@ -1242,10 +1264,14 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
       {
          if (match.names != girder_type_names || match.section.has_value() != section.has_value())
             return false;
-         return !section || m_pMatchComparison->Compare(*section, *match.section).empty();
+         return !section || m_pMatchComparison->Compare(*section, *match.section).empty() || SameGirderSection(*section, *match.section);
       });
    if (found != m_GirderMatches.end())
+   {
+      if (section && found->entry)
+         WBFL::System::Logger::Info("Section of " + beam_name + ": the same as an earlier girder's, so " + std::string(CT2A(found->entry->GetName().c_str())) + " is used without fitting again.");
       return found->entry;
+   }
 
    if (girder_type_names.empty())
       CIfcImporter::GetTargetReader().ReportNotFound("girder.type_names", beam, beam_name);

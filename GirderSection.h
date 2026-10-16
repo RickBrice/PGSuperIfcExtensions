@@ -250,3 +250,10 @@ std::optional<DimensionFit> MakeConstantDepth(std::shared_ptr<PGS::Beams::BeamFa
 // True if the factory's default girder has the same height at both ends (a factory made for girders of constant
 // depth, unlike e.g. a tapered I-beam)
 bool HasConstantDepthDefaults(const PGS::Beams::BeamFactory& factory);
+
+// True if two sections measured from a model are the same girder's: outlines within the length tolerance of each other
+// (OutlineDistance), and area, moment of inertia, and centroid within the tolerances. The girders of a span (and often
+// of the whole bridge) are one shape; sections cut from their geometry differ only by the measurement (e.g. a girder
+// sitting 0.1 in lower on one side under a crowned deck), so a girder with the section of one already matched uses its
+// library entry without being fitted again
+bool SameGirderSection(const SectionMeasures& a, const SectionMeasures& b, const SectionTolerances& tolerances = SectionTolerances());
