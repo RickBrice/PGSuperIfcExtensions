@@ -158,8 +158,8 @@ CIfcImporter::ImportResult CIfcAlignmentImporter::InitAlignmentParameters(ifcope
 
    LoadProfile(file, alignment, alignment_adjustment);
 
-#pragma Reminder("WORKING HERE - Roadway Section Data")
-   // this is dummy data
+   // A 2% crown until the bridge import measures the roadway section from the deck (RoadwaySection.h); the alignment
+   // has no cross slope data
    RoadwaySectionTemplate roadway_template;
    roadway_template.LeftSlope = -0.02;
    roadway_template.RightSlope = -0.02;

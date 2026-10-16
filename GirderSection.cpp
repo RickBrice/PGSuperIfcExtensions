@@ -134,6 +134,38 @@ namespace
    double inches(double length) { return WBFL::Units::ConvertFromSysUnits(length, WBFL::Units::Measure::Inch); }
 }
 
+std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> CutMeshSegments(const Mesh& mesh, const Eigen::Vector2d& point2d, Eigen::Vector2d axis)
+{
+   std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> segments;
+   if (axis.norm() <= 0)
+      return segments;
+   axis.normalize();
+
+   Eigen::Vector3d point(point2d.x(), point2d.y(), 0);
+   Eigen::Vector3d normal(axis.x(), axis.y(), 0);
+   Eigen::Vector3d left(-axis.y(), axis.x(), 0);
+   std::vector<double> d(mesh.verts.size());
+   for (size_t i = 0; i < mesh.verts.size(); i++)
+      d[i] = (mesh.verts[i] - point).dot(normal);
+
+   for (const auto& face : mesh.faces)
+   {
+      std::vector<Eigen::Vector2d> points;
+      for (int i = 0; i < 3; i++)
+      {
+         int a = face[i], b = face[(i + 1) % 3];
+         if ((0 <= d[a]) == (0 <= d[b]))
+            continue;
+         double t = d[a] / (d[a] - d[b]);
+         Eigen::Vector3d p = mesh.verts[a] + t * (mesh.verts[b] - mesh.verts[a]);
+         points.emplace_back((p - point).dot(left), p.z());
+      }
+      if (points.size() == 2)
+         segments.emplace_back(points[0], points[1]);
+   }
+   return segments;
+}
+
 std::vector<SectionOutline::Loop> CutMesh(const Mesh& mesh, const Eigen::Vector2d& point2d, Eigen::Vector2d axis)
 {
    if (axis.norm() <= 0)
@@ -1227,6 +1259,11 @@ bool FlangesMatch(const SectionMeasures& model, const SectionMeasures& other, co
    bool top = matches([&](size_t k) {return wm[k]; }, [&](size_t k) {return wo[k]; });
    bool bottom = matches([&](size_t k) {return wm[wm.size() - 1 - k]; }, [&](size_t k) {return wo[wo.size() - 1 - k]; });
    return top && bottom;
+}
+
+std::vector<Eigen::Vector2d> SimplifyPolyline(const std::vector<Eigen::Vector2d>& points, double tolerance)
+{
+   return Corners(points, tolerance);
 }
 
 SectionOutline::Loop SimplifyLoop(const SectionOutline::Loop& loop, double tolerance)

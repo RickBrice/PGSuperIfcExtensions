@@ -158,6 +158,62 @@ class Profile:
         return elev + g2 * (s - pvi), g2
 
 
+class Roadway:
+    """Evaluates a PGSuper roadway section (SuperelevationData version 3): the elevation of the roadway surface at an
+    offset (positive right), relative to the alignment. See CBridgeAgentImp::BuildRoadway: the slopes are made rises to
+    the right (with RelativeToAlignmentPoint, the left outer segment and the segments left of the alignment point are
+    measured away from it), and the templates are interpolated between their stations."""
+
+    def __init__(self, crown):
+        data = crown.find("SuperelevationData") if crown is not None else None
+        self.supported = data is not None and data.get("version") == "3"
+        self.templates = []
+        if not self.supported:
+            return
+        relative = _f(data, "SlopeMeasure", 0.0) == 0
+        self.alignment_point = int(_f(data, "ControllingRidgePointIdx", 1))
+        for t in data.findall("RoadwaySectionTemplate"):
+            segments = [(_f(sd, "Length", 0.0), _f(sd, "Slope", 0.0)) for sd in t.findall("RoadwaySegmentData")]
+            left = (-1 if relative else 1) * _f(t, "LeftSlope", 0.0)
+            right = _f(t, "RightSlope", 0.0)
+            interior = [(length, (-1 if relative and j + 1 < self.alignment_point else 1) * slope) for j, (length, slope) in enumerate(segments)]
+            self.templates.append((_f(t, "Station", 0.0), left, interior, right))
+        self.templates.sort(key=lambda t: t[0])
+
+    def _template(self, station):
+        """(left, [(length, rise)], right) at the station, interpolated between templates"""
+        ts = self.templates
+        if station <= ts[0][0] or len(ts) == 1:
+            return ts[0][1:]
+        if ts[-1][0] <= station:
+            return ts[-1][1:]
+        for a, b in zip(ts, ts[1:]):
+            if a[0] <= station <= b[0]:
+                f = (station - a[0]) / (b[0] - a[0]) if b[0] > a[0] else 0.0
+                lerp = lambda u, v: u + f * (v - u)
+                return lerp(a[1], b[1]), [(lerp(la, lb), lerp(sa, sb)) for (la, sa), (lb, sb) in zip(a[2], b[2])], lerp(a[3], b[3])
+
+    def evaluate(self, station, offset):
+        left, interior, right = self._template(station)
+        # ridge points 1..n+1 with their offsets and elevations, relative to the alignment point
+        ridges = [(0.0, 0.0)] * (len(interior) + 1)
+        a = self.alignment_point - 1
+        ridges[a] = (0.0, 0.0)
+        for j in range(a, len(interior)):
+            o, z = ridges[j]
+            ridges[j + 1] = (o + interior[j][0], z + interior[j][0] * interior[j][1])
+        for j in range(a, 0, -1):
+            o, z = ridges[j]
+            ridges[j - 1] = (o - interior[j - 1][0], z - interior[j - 1][0] * interior[j - 1][1])
+        if offset <= ridges[0][0]:
+            return ridges[0][1] + left * (offset - ridges[0][0])
+        if ridges[-1][0] <= offset:
+            return ridges[-1][1] + right * (offset - ridges[-1][0])
+        for j in range(len(interior)):
+            if ridges[j][0] <= offset <= ridges[j + 1][0]:
+                return ridges[j][1] + interior[j][1] * (offset - ridges[j][0])
+
+
 def _dms(parts):
     """degrees from [ddd[, mm[, ss.s]]] strings"""
     return sum(float(v) / 60 ** i for i, v in enumerate(parts))
@@ -354,6 +410,7 @@ def extract(path, stations=None):
         elif orientation:
             put(f"pier[{i}].skew", pier_skew(orientation, alignment.evaluate(pier_stations[i])[1]), "angle")
     profile = Profile(root.find(".//ProfileData"))
+    roadway = Roadway(root.find(".//Crown"))
     alignment_offset = _f(bridge, "AlignmentOffset", 0.0)
     for k, station in enumerate(stations):
         tag = f"at[{k}]"  # the station is in meta["stations"][k]
@@ -373,6 +430,12 @@ def extract(path, stations=None):
                 left, right = left + alignment_offset, right - alignment_offset
             put(f"{tag}.deck.left_edge", left, "length_ft")
             put(f"{tag}.deck.right_edge", right, "length_ft")
+            # the roadway surface at the deck edges, relative to the alignment (left edges are negative offsets)
+            if roadway.supported and roadway.templates:
+                put(f"{tag}.roadway.at_left_edge", roadway.evaluate(station, -left), "length_ft")
+                put(f"{tag}.roadway.at_right_edge", roadway.evaluate(station, right), "length_ft")
+            else:
+                put(f"{tag}.roadway.at_left_edge", "roadway section format not supported", "unsupported")
 
     meta = {"file": str(path), "stations": stations, "pier_stations": pier_stations}
     return {"meta": meta, "values": values}

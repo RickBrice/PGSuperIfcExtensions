@@ -22,6 +22,11 @@
       "property_units": [ "System" ]
     },
     {
+      "name": "PGSuper-Superelevation",
+      "pgs": "models/PGSuper_Superelevation.pgs",
+      "property_units": [ "System" ]
+    },
+    {
       "name": "PennDOT",
       "ifc": "models/PennDOT_Rearick_Rd_323010451_STR1.ifc",
       "mapping": "mappings/PennDOT.ifcmap"

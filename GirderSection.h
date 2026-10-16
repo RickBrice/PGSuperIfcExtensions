@@ -74,6 +74,10 @@ struct SectionTolerances
 // first. A loop's points are (distance to the left of the point, looking along the axis; elevation)
 std::vector<SectionOutline::Loop> CutMesh(const Mesh& mesh, const Eigen::Vector2d& point, Eigen::Vector2d axis);
 
+// The segments where the faces of a mesh are cut by the same plane, in the same coordinates, without joining them into
+// loops: a mesh of several solids that touch (e.g. a deck slab and its haunches) can't always be joined correctly
+std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> CutMeshSegments(const Mesh& mesh, const Eigen::Vector2d& point, Eigen::Vector2d axis);
+
 // The section of a girder mesh cut by a vertical plane normal to the girder axis (start to end, in plan) at a
 // fraction of its length. Returns nullopt if the plane doesn't cut a closed outline
 std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Vector2d& start, const Eigen::Vector2d& end, double fraction);
@@ -142,6 +146,10 @@ double OutlineDifferenceArea(const SectionOutline& a, const SectionOutline& b);
 
 // True if the outline's coordinates are finite and none of its loops crosses itself
 bool IsSimpleOutline(const SectionOutline& outline);
+
+// The corners of an open polyline: points closer than the tolerance to the line between their neighboring corners are
+// dropped (Douglas-Peucker). The ends are kept
+std::vector<Eigen::Vector2d> SimplifyPolyline(const std::vector<Eigen::Vector2d>& points, double tolerance);
 
 // The corners of a closed loop: points closer than the tolerance to the line between their neighboring corners are
 // dropped (Douglas-Peucker). The first point is kept

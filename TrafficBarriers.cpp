@@ -164,46 +164,23 @@ namespace
    };
 }
 
-void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const Mesh& deck, const std::vector<Float64>& pier_stations, CBridgeDescription2& bridge_desc)
+std::vector<ElementMesh> get_barrier_meshes(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
 {
-   USES_CONVERSION;
    const auto& reader = CIfcImporter::GetTargetReader();
-   if (!reader.HasSelector(ElementKind::Barrier) || pier_stations.size() < 2)
-      return;
+   if (!reader.HasSelector(ElementKind::Barrier))
+      return {};
 
    auto barriers = reader.Select(ElementKind::Barrier, file);
    if (barriers.empty())
    {
-      WBFL::System::Logger::Info("The model has no traffic barriers (" + reader.GetTable().GetSelector(ElementKind::Barrier)->Describe() + "). The railing systems are not changed.");
-      return;
+      WBFL::System::Logger::Info("The model has no traffic barriers (" + reader.GetTable().GetSelector(ElementKind::Barrier)->Describe() + ").");
+      return {};
    }
 
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Processing traffic barrier geometry"));
 
-   // the cut: normal to the alignment at the middle of the bridge (barrier end sections and transitions are at the ends)
-   Float64 station = (pier_stations.front() + pier_stations.back()) / 2;
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
-   CComPtr<IPoint2d> alignment_point;
-   pAlignment->GetPoint(station, 0.0, nullptr, pgsTypes::PlanCoordinateType::pcGlobal, &alignment_point);
-   Float64 x, y;
-   alignment_point->Location(&x, &y);
-   Eigen::Vector2d point(x, y);
-   CComPtr<IDirection> bearing;
-   pAlignment->GetBearing(station, &bearing);
-   Float64 angle;
-   bearing->get_Value(&angle);
-   Eigen::Vector2d axis(cos(angle), sin(angle));
-
-   auto deck_loops = CutMesh(deck, point, axis);
-   if (deck_loops.empty())
-   {
-      WBFL::System::Logger::Info("The deck couldn't be cut at the middle of the bridge, so the traffic barriers can't be located. The railing systems are not changed.");
-      return;
-   }
-
-   // the barrier sections at the cut, by side
    std::set<int> ids;
    for (const auto& barrier : barriers)
       ids.insert(barrier.id());
@@ -218,11 +195,11 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopen
    ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, 1);
    if (!iterator.initialize())
    {
-      WBFL::System::Logger::Info("Unable to process the traffic barrier geometry. The railing systems are not changed.");
-      return;
+      WBFL::System::Logger::Info("Unable to process the traffic barrier geometry.");
+      return {};
    }
 
-   std::array<std::vector<BarrierCut>, 2> sides; // pgsTypes::tboLeft, tboRight
+   std::vector<ElementMesh> meshes;
    do
    {
       auto element = iterator.get();
@@ -240,15 +217,55 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopen
       f.reserve(faces.size() / 3);
       for (size_t i = 0; i + 2 < faces.size(); i += 3)
          f.emplace_back(std::array<int, 3>({ faces[i], faces[i + 1], faces[i + 2] }));
+      meshes.push_back({ element->product().as<IfcSchema::IfcObject>(), Mesh(v, f) });
+   } while (iterator.next());
+   return meshes;
+}
 
-      auto loops = CutMesh(Mesh(v, f), point, axis);
+AlignmentCut get_alignment_cut(std::shared_ptr<WBFL::EAF::Broker> pBroker, Float64 station)
+{
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   CComPtr<IPoint2d> alignment_point;
+   pAlignment->GetPoint(station, 0.0, nullptr, pgsTypes::PlanCoordinateType::pcGlobal, &alignment_point);
+   Float64 x, y;
+   alignment_point->Location(&x, &y);
+   CComPtr<IDirection> bearing;
+   pAlignment->GetBearing(station, &bearing);
+   Float64 angle;
+   bearing->get_Value(&angle);
+   return { station, Eigen::Vector2d(x, y), Eigen::Vector2d(cos(angle), sin(angle)) };
+}
+
+void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations, CBridgeDescription2& bridge_desc)
+{
+   USES_CONVERSION;
+   if (barriers.empty() || pier_stations.size() < 2)
+      return;
+
+   const auto& reader = CIfcImporter::GetTargetReader();
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+
+   // the cut: normal to the alignment at the middle of the bridge (barrier end sections and transitions are at the ends)
+   auto cut_plane = get_alignment_cut(pBroker, (pier_stations.front() + pier_stations.back()) / 2);
+   Float64 station = cut_plane.station;
+   auto deck_loops = CutMesh(deck, cut_plane.point, cut_plane.axis);
+   if (deck_loops.empty())
+   {
+      WBFL::System::Logger::Info("The deck couldn't be cut at the middle of the bridge, so the traffic barriers can't be located. The railing systems are not changed.");
+      return;
+   }
+
+   // the barrier sections at the cut, by side
+   std::array<std::vector<BarrierCut>, 2> sides; // pgsTypes::tboLeft, tboRight
+   for (const auto& barrier : barriers)
+   {
+      auto loops = CutMesh(barrier.mesh, cut_plane.point, cut_plane.axis);
       if (loops.empty())
          continue; // e.g. an end section, which doesn't reach the middle of the bridge
 
-      auto object = element->product().as<IfcSchema::IfcObject>();
       auto side = (0 < loop_center(loops.front()).x() ? pgsTypes::tboLeft : pgsTypes::tboRight);
-      sides[side].push_back({ object, object.Name().value_or("unnamed barrier"), loops.front() });
-   } while (iterator.next());
+      sides[side].push_back({ barrier.element, barrier.element.Name().value_or("unnamed barrier"), loops.front() });
+   }
 
    GET_IFACE2(pBroker, ILibrary, pLibrary);
    auto& library = pLibrary->GetTrafficBarrierLibrary();

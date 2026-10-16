@@ -252,6 +252,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClCompile Include="BeamSpacing.cpp" />
     <ClCompile Include="DeckSlab.cpp" />
     <ClCompile Include="TrafficBarriers.cpp" />
+    <ClCompile Include="RoadwaySection.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="IfcAlignmentImporter.cpp" />
     <ClCompile Include="IfcBridgeImporter.cpp" />
@@ -330,6 +331,7 @@ xcopy /Y /D "$(XSDDIR)\bin\xerces-c-3.2d.dll" "$(OutDir)"</Command>
     <ClInclude Include="bSDD.h" />
     <ClInclude Include="DeckSlab.h" />
     <ClInclude Include="TrafficBarriers.h" />
+    <ClInclude Include="RoadwaySection.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Georeferencing.h" />
     <ClInclude Include="IfcAlignmentImporter.h" />
