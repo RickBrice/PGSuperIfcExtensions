@@ -4,6 +4,9 @@
   "version": 1,
   "name": "PennDOT",
   "extends": "standard",
+  "elements": {
+    "barrier": {"any_of": [{"entity": "IfcWall", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "BARRIER"}}, {"entity": "IfcWall", "predefined_type": "PARAPET"}]}
+  },
   "targets": {
     "girder.type_names": [
       {"property": {"pset": "_PS Concrete Beams", "name": "Type"}}

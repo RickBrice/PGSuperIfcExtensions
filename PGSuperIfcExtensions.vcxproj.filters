@@ -124,6 +124,9 @@
     <ClCompile Include="DeckSlab.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TrafficBarriers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="GirderSection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -316,6 +319,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeckSlab.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TrafficBarriers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GirderSection.h">

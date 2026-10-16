@@ -30,6 +30,7 @@
 
 #include "BeamSpacing.h"
 #include "DeckSlab.h"
+#include "TrafficBarriers.h"
 #include "Piers.h"
 
 #include <chrono>
@@ -531,6 +532,9 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
    auto deck_points = get_deck_edge_points(m_Importer.GetBroker(), *deck);
    if (!deck_points.empty())
       pDeck->DeckEdgePoints = deck_points;
+
+   // the traffic barriers, located from the edges of the deck
+   import_traffic_barriers(m_Importer.GetBroker(), file, *deck, pier_stations, bridge_desc);
 
    // cross section, measured with the haunches, which may be separate from the deck slab
    auto deck_concrete = get_deck_concrete_mesh(m_Importer.GetBroker(), file);

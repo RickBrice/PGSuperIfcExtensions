@@ -5,6 +5,7 @@
   "name": "Iowa DOT",
   "extends": "standard",
   "elements": {
+    "barrier": {"any_of": [{"entity": "IfcWall", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "BARRIER"}}, {"entity": "IfcWall", "predefined_type": "PARAPET"}]},
     "haunch": {"entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "Haunch"}}
   },
   "targets": {

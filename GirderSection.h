@@ -70,6 +70,10 @@ struct SectionTolerances
    double local_depth = 0.0127;   // 1/2 in: the total depth over which a fitted section's widths may differ (FittedSectionComparison)
 };
 
+// The closed loops of a mesh cut by the vertical plane through a point, normal to a horizontal axis, largest (by area)
+// first. A loop's points are (distance to the left of the point, looking along the axis; elevation)
+std::vector<SectionOutline::Loop> CutMesh(const Mesh& mesh, const Eigen::Vector2d& point, Eigen::Vector2d axis);
+
 // The section of a girder mesh cut by a vertical plane normal to the girder axis (start to end, in plan) at a
 // fraction of its length. Returns nullopt if the plane doesn't cut a closed outline
 std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Vector2d& start, const Eigen::Vector2d& end, double fraction);
@@ -138,6 +142,10 @@ double OutlineDifferenceArea(const SectionOutline& a, const SectionOutline& b);
 
 // True if the outline's coordinates are finite and none of its loops crosses itself
 bool IsSimpleOutline(const SectionOutline& outline);
+
+// The corners of a closed loop: points closer than the tolerance to the line between their neighboring corners are
+// dropped (Douglas-Peucker). The first point is kept
+SectionOutline::Loop SimplifyLoop(const SectionOutline::Loop& loop, double tolerance);
 
 // The largest distance from a point of either outline to the other outline (the Hausdorff distance)
 double OutlineDistance(const SectionOutline& a, const SectionOutline& b);

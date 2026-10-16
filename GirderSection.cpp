@@ -134,14 +134,12 @@ namespace
    double inches(double length) { return WBFL::Units::ConvertFromSysUnits(length, WBFL::Units::Measure::Inch); }
 }
 
-std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Vector2d& start, const Eigen::Vector2d& end, double fraction)
+std::vector<SectionOutline::Loop> CutMesh(const Mesh& mesh, const Eigen::Vector2d& point2d, Eigen::Vector2d axis)
 {
-   Eigen::Vector2d axis = end - start;
    if (axis.norm() <= 0)
-      return std::nullopt;
+      return {};
    axis.normalize();
 
-   Eigen::Vector2d point2d = start + fraction * (end - start);
    Eigen::Vector3d point(point2d.x(), point2d.y(), 0);
    Eigen::Vector3d normal(axis.x(), axis.y(), 0);
    Eigen::Vector3d left(-axis.y(), axis.x(), 0);
@@ -214,11 +212,17 @@ std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Ve
          loops.push_back(std::move(loop));
    }
 
+   std::sort(loops.begin(), loops.end(), [](const Loop& a, const Loop& b) {return fabs(signed_area(a)) > fabs(signed_area(b)); });
+   return loops;
+}
+
+std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Vector2d& start, const Eigen::Vector2d& end, double fraction)
+{
+   auto loops = CutMesh(mesh, start + fraction * (end - start), end - start);
    if (loops.empty())
       return std::nullopt;
 
    // the largest loop is the outside of the section, loops inside it are voids
-   std::sort(loops.begin(), loops.end(), [](const Loop& a, const Loop& b) {return fabs(signed_area(a)) > fabs(signed_area(b)); });
 
    // A girder can be rotated about its axis (e.g. to the cross slope of the deck). The section is turned back to the
    // rotation, within 15 degrees, where it's the least high: girders have flat tops and bottoms, so that's upright, also
@@ -1223,6 +1227,17 @@ bool FlangesMatch(const SectionMeasures& model, const SectionMeasures& other, co
    bool top = matches([&](size_t k) {return wm[k]; }, [&](size_t k) {return wo[k]; });
    bool bottom = matches([&](size_t k) {return wm[wm.size() - 1 - k]; }, [&](size_t k) {return wo[wo.size() - 1 - k]; });
    return top && bottom;
+}
+
+SectionOutline::Loop SimplifyLoop(const SectionOutline::Loop& loop, double tolerance)
+{
+   if (loop.size() < 4)
+      return loop;
+   auto chain = loop;
+   chain.push_back(loop.front()); // closed: the first point is kept, and is the last too
+   auto corners = Corners(chain, tolerance);
+   corners.pop_back();
+   return corners.size() < 3 ? loop : corners;
 }
 
 double OutlineDistance(const SectionOutline& a, const SectionOutline& b)
