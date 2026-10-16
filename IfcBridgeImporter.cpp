@@ -292,7 +292,13 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
    bool bSameGirder = std::all_of(library_entries.begin(), library_entries.end(), [first_entry](const auto& item) {return item.second == first_entry; });
    bridge_desc.UseSameGirderForEntireBridge(bSameGirder);
    if (bSameGirder)
+   {
+      // the entry and its name: PGSuper finds the entry by name when the project is loaded (SetGirderLibraryEntry
+      // doesn't set the name, unlike CSplicedGirderData's). The entry first, since setting the name copies the entry's
+      // shear and longitudinal reinforcement to the segments
       bridge_desc.SetGirderLibraryEntry(first_entry);
+      bridge_desc.SetGirderName(first_entry->GetName().c_str());
+   }
 
    bridge_desc.SetGirderFamilyName(first_entry->GetGirderFamilyName().c_str());
 
