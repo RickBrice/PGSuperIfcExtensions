@@ -31,6 +31,7 @@
 #include <Plugins\PGSuperIEPlugin.h>
 #include "IfcExtensions.h"
 #include "PGSuperCatCom.h"
+#include "PGSpliceCatCom.h"
 #include <WBFLCogo_i.c>
 #include <WBFLGeometry_i.c>
 

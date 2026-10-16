@@ -32,6 +32,7 @@
 #include "DeckSlab.h"
 #include "Piers.h"
 
+#include <chrono>
 #include <numeric>
 
 #include <MFCTools\Prompts.h>
@@ -39,6 +40,11 @@
 #include <psgLib/BridgeDescription2.h>
 #include <psgLib/GirderLabel.h>
 #include <psgLib/GirderLibraryEntry.h>
+#include <psgLib/LibraryManager.h>
+#include <psgLib/BeamFamilyManager.h>
+#include <IFace/DocumentType.h>
+#include <PGSuperCatCom.h>
+#include <PGSpliceCatCom.h>
 
 
 
@@ -772,13 +778,13 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
       normalized_type_names.insert(normalize_girder_name(name));
 
    // the library entries whose sections match, and the closest entry
-   SectionTolerances tolerances;
    std::vector<std::pair<std::_tstring, double>> matches; // name, difference
    std::_tstring closest_name;
    double closest_difference = DBL_MAX;
    std::vector<std::string> closest_differences;
    std::_tstring named_entry; // a library entry with one of the girder type names
    std::vector<std::string> named_differences;
+   std::vector<std::pair<double, std::_tstring>> ranked; // difference, name
    for (const auto& library_name : library_names)
    {
       auto found = m_LibrarySections.find(library_name);
@@ -792,8 +798,9 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
       if (!found->second)
          continue;
 
-      auto differences = CompareSections(section, *found->second, tolerances);
-      double difference = SectionDifference(section, *found->second);
+      auto differences = m_pMatchComparison->Compare(section, *found->second);
+      double difference = m_pMatchComparison->Difference(section, *found->second);
+      ranked.emplace_back(difference, library_name);
       if (differences.empty())
          matches.emplace_back(library_name, difference);
       if (difference < closest_difference)
@@ -807,6 +814,25 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
          named_entry = library_name;
          named_differences = differences;
       }
+   }
+
+   if (!m_bLibrarySectionsReported)
+   {
+      auto n = std::count_if(m_LibrarySections.begin(), m_LibrarySections.end(), [](const auto& item) {return item.second.has_value(); });
+      std::ostringstream os;
+      os << n << " of " << library_names.size() << " library girders have a section to compare with.";
+      std::vector<std::string> without;
+      for (const auto& [name, measures] : m_LibrarySections)
+         if (!measures)
+            without.push_back(T2A(name.c_str()));
+      if (!without.empty())
+      {
+         os << " Without: ";
+         for (const auto& name : without)
+            os << name << (&name == &without.back() ? "" : ", ");
+      }
+      WBFL::System::Logger::Info(os.str());
+      m_bLibrarySectionsReported = true;
    }
 
    std::ostringstream os;
@@ -844,9 +870,195 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
             os << d << (&d == &closest_differences.back() ? "" : ", ");
          os << ").";
       }
+
+      // G1 steps 3 and 4: fit the dimensions of every beam factory (a family has several, e.g. WF, NU, and AASHTO
+      // girders are I-beams), starting from the factory's closest library entry (step 3: the entry is cloned), or, for
+      // a factory without library entries, from its default dimensions (step 4: a new entry). Every installed beam
+      // factory is tried, so no configuration is assumed
+      std::sort(ranked.begin(), ranked.end());
+      struct Candidate
+      {
+         std::_tstring entry; // the library entry to clone, or empty for the factory's defaults
+         std::shared_ptr<PGS::Beams::BeamFactory> factory;
+         GirderDimensions start;
+      };
+      std::vector<Candidate> candidates;
+      std::set<std::_tstring> factory_names;
+      for (const auto& [difference, name] : ranked)
+      {
+         const auto* pEntry = pLibrary->GetGirderEntry(name.c_str());
+         auto factory = pEntry->GetBeamFactory();
+         if (factory && factory_names.insert(factory->GetName()).second)
+            candidates.push_back({ name, factory, pEntry->GetDimensions() });
+      }
+      GET_IFACE2(m_Importer.GetBroker(), IDocumentType, pDocType);
+      for (const auto& family_name : PGS::Library::BeamFamilyManager::GetBeamFamilyNames(pDocType->IsPGSpliceDocument() ? CATID_PGSpliceBeamFamily : CATID_PGSuperBeamFamily))
+      {
+         auto family = PGS::Library::BeamFamilyManager::GetBeamFamily(family_name);
+         if (!family)
+            continue;
+         for (const auto& factory_name : family->GetFactoryNames())
+         {
+            auto factory = family->CreateFactory(factory_name);
+            if (!factory || !factory_names.insert(factory->GetName()).second)
+               continue;
+            GirderDimensions start;
+            const auto& names = factory->GetDimensionNames();
+            const auto& defaults = factory->GetDefaultDimensions();
+            for (size_t i = 0; i < names.size() && i < defaults.size(); i++)
+               start.emplace_back(names[i], defaults[i]);
+            candidates.push_back({ std::_tstring(), factory, start });
+         }
+      }
+
+      std::optional<DimensionFit> best_fit;
+      const Candidate* best_candidate = nullptr;
+      std::string how; // how the fit was found, for the log
+      auto fit_start_time = std::chrono::steady_clock::now();
+      // An accepted fit is better than one that isn't, and an accepted fit of a library entry is better than one of a
+      // factory's defaults: a clone of the entry keeps the rest of its data (e.g. its strand grid). Otherwise the
+      // smaller difference is better
+      auto rank = [](const Candidate& candidate, const DimensionFit& fit)
+         {
+            return fit.differences.empty() ? (candidate.entry.empty() ? 1 : 0) : 2;
+         };
+      auto consider = [&](const Candidate& candidate, const std::optional<DimensionFit>& fit)
+         {
+            if (fit && (!best_fit || rank(candidate, *fit) < rank(*best_candidate, *best_fit) ||
+               (rank(candidate, *fit) == rank(*best_candidate, *best_fit) && fit->difference < best_fit->difference)))
+            {
+               best_fit = fit;
+               best_candidate = &candidate;
+            }
+         };
+
+      // First the library entries whose top and bottom flanges match the model's: girders of a series (e.g. the WSDOT
+      // WF girders) have the same flanges, so only the height differs
+      std::vector<Candidate> flange_candidates;
+      for (const auto& [difference, name] : ranked)
+      {
+         const auto& measures = m_LibrarySections[name];
+         if (measures && FlangesMatch(section, *measures, SectionTolerances()))
+         {
+            const auto* pEntry = pLibrary->GetGirderEntry(name.c_str());
+            flange_candidates.push_back({ name, pEntry->GetBeamFactory(), pEntry->GetDimensions() });
+         }
+      }
+      for (const auto& candidate : flange_candidates)
+      {
+         auto fit = m_pHeightFitter->Fit(candidate.factory, candidate.start, section, *m_pFitComparison);
+         if (fit && fit->differences.empty())
+            consider(candidate, fit);
+      }
+      if (best_fit)
+      {
+         how = "the flanges match, only the height is fitted";
+      }
+      else
+      {
+         // Otherwise all of the dimensions of every beam factory: a short fit of each, then a full fit of the most promising
+         std::vector<std::pair<double, const Candidate*>> screened;
+         for (const auto& candidate : candidates)
+         {
+            if (auto fit = m_pScreenFitter->Fit(candidate.factory, candidate.start, section, *m_pFitComparison))
+               screened.emplace_back(fit->difference, &candidate);
+         }
+         std::sort(screened.begin(), screened.end(), [](const auto& a, const auto& b) {return a.first < b.first; });
+         for (size_t i = 0; i < screened.size() && i < 5; i++)
+            consider(*screened[i].second, m_pFitter->Fit(screened[i].second->factory, screened[i].second->start, section, *m_pFitComparison));
+
+         std::ostringstream os_how;
+         os_how << "all dimensions fitted, " << candidates.size() << " beam factories screened; the closest:";
+         for (size_t i = 0; i < screened.size() && i < 5; i++)
+            os_how << (i == 0 ? " " : ", ") << T2A(screened[i].second->factory->GetName().c_str()) << " " << std::fixed << std::setprecision(1) << screened[i].first;
+         how = os_how.str();
+      }
+      auto fit_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - fit_start_time).count();
+      std::_tstring best_start = best_candidate ? best_candidate->entry : std::_tstring();
+      std::string best_factory = best_candidate ? std::string(T2A(best_candidate->factory->GetName().c_str())) : std::string();
+
+      if (best_fit && best_fit->differences.empty() && best_start.empty())
+      {
+         // step 4 isn't finished (the new entry needs a generated strand grid): report the fit for now
+         os << " The " << best_factory << " beam factory fits the section (" << how << ", "
+            << std::fixed << std::setprecision(1) << fit_seconds << " s). A new library entry is needed (not created yet):";
+         for (size_t i = 0; i < best_fit->dimensions.size(); i++)
+            os << " " << T2A(best_fit->dimensions[i].first.c_str()) << " " << std::fixed << std::setprecision(3)
+               << WBFL::Units::ConvertFromSysUnits(best_fit->dimensions[i].second, WBFL::Units::Measure::Inch) << " in" << (i + 1 < best_fit->dimensions.size() ? "," : ".");
+         for (const auto& allowed : best_fit->allowed)
+            os << " It differs locally: " << allowed << ".";
+      }
+      else if (best_fit && best_fit->differences.empty())
+      {
+         entry = CreateFittedEntry(best_start, girder_type_names, beam_name, *best_fit);
+         const auto* pStart = pLibrary->GetGirderEntry(best_start.c_str());
+         os << " " << T2A(best_start.c_str()) << " (" << T2A(pStart->GetGirderFamilyName().c_str()) << ") was cloned as " << T2A(entry->GetName().c_str())
+            << " with its dimensions fitted to the section (" << how << ", " << std::fixed << std::setprecision(1) << fit_seconds << " s):";
+         // the dimensions that changed (by at least 0.001 in)
+         const auto& start_dimensions = pStart->GetDimensions();
+         std::vector<std::string> changes;
+         for (size_t i = 0; i < best_fit->dimensions.size() && i < start_dimensions.size(); i++)
+         {
+            const auto& [name, value] = best_fit->dimensions[i];
+            double from = WBFL::Units::ConvertFromSysUnits(start_dimensions[i].second, WBFL::Units::Measure::Inch);
+            double to = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Inch);
+            if (0.0005 <= fabs(to - from))
+            {
+               std::ostringstream change;
+               change << T2A(name.c_str()) << " " << std::fixed << std::setprecision(3) << from << " -> " << to << " in";
+               changes.push_back(change.str());
+            }
+         }
+         for (const auto& change : changes)
+            os << " " << change << (&change == &changes.back() ? "." : ",");
+         for (const auto& allowed : best_fit->allowed)
+            os << " It differs locally: " << allowed << ".";
+         m_LibrarySections[entry->GetName()] = best_fit->section;
+      }
+      else if (best_fit)
+      {
+         os << " The best fit, from " << (best_start.empty() ? "the defaults of the " + best_factory + " beam factory" : std::string(T2A(best_start.c_str())) + " (" + best_factory + ")")
+            << " (" << how << ", " << std::fixed << std::setprecision(1) << fit_seconds << " s), didn't match the section (";
+         for (const auto& d : best_fit->differences)
+            os << d << (&d == &best_fit->differences.back() ? "" : ", ");
+         os << "). The closest fit:";
+         const auto& start_dimensions = best_candidate->start;
+         for (size_t i = 0; i < best_fit->dimensions.size(); i++)
+         {
+            const auto& [name, value] = best_fit->dimensions[i];
+            os << " " << T2A(name.c_str()) << " " << std::fixed << std::setprecision(3) << (i < start_dimensions.size() ? WBFL::Units::ConvertFromSysUnits(start_dimensions[i].second, WBFL::Units::Measure::Inch) : 0.0)
+               << " -> " << WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Inch) << (i + 1 < best_fit->dimensions.size() ? "," : ".");
+         }
+      }
    }
    WBFL::System::Logger::Info(os.str());
    return entry;
+}
+
+const GirderLibraryEntry* CIfcBridgeImporter::CreateFittedEntry(const std::_tstring& start_name, const std::vector<std::string>& girder_type_names, const std::string& beam_name, const DimensionFit& fit)
+{
+   USES_CONVERSION;
+   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+   auto& library = pLibrary->GetGirderLibrary();
+
+   // the name: the girder type name from the model (else the beam's name), with " (2)", and so on, if it's taken
+   std::_tstring base(A2T((girder_type_names.empty() ? beam_name : girder_type_names.front()).c_str()));
+   std::_tstring name = base;
+   for (int n = 2; pLibrary->GetGirderEntry(name.c_str()); n++)
+   {
+      std::_tostringstream os;
+      os << base << _T(" (") << n << _T(")");
+      name = os.str();
+   }
+
+   auto clone = library.CreateEntryClone(start_name.c_str());
+   auto* pEntry = dynamic_cast<GirderLibraryEntry*>(clone.get());
+   for (const auto& [dimension, value] : fit.dimensions)
+      pEntry->SetDimension(dimension, value, true /*adjust strands*/);
+
+   library.AddEntry(*pEntry, name.c_str());
+   library.EnableEditing(name.c_str(), true);
+   return pLibrary->GetGirderEntry(name.c_str());
 }
 
 const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::IfcBeam beam, const GirderCenterline& girder)
@@ -866,10 +1078,14 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
          WBFL::System::Logger::Info("The section of " + beam_name + " couldn't be cut from its geometry. The girder type is found by name.");
    }
 
-   auto key = std::make_pair(girder_type_names, section ? DescribeSection(*section) : std::string());
-   auto found = m_GirderMatches.find(key);
+   auto found = std::find_if(m_GirderMatches.begin(), m_GirderMatches.end(), [&](const GirderMatch& match)
+      {
+         if (match.names != girder_type_names || match.section.has_value() != section.has_value())
+            return false;
+         return !section || m_pMatchComparison->Compare(*section, *match.section).empty();
+      });
    if (found != m_GirderMatches.end())
-      return found->second;
+      return found->entry;
 
    if (girder_type_names.empty())
       CIfcImporter::GetTargetReader().ReportNotFound("girder.type_names", beam, beam_name);
@@ -878,7 +1094,7 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
    {
       if (auto entry = MatchLibraryEntry(beam_name, girder_type_names, *section))
       {
-         m_GirderMatches.emplace(key, entry);
+         m_GirderMatches.push_back({ girder_type_names, section, entry });
          return entry;
       }
    }
@@ -945,7 +1161,7 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
       WBFL::System::Logger::Info(os.str().c_str());
    }
 
-   m_GirderMatches.emplace(key, girder_library_entry);
+   m_GirderMatches.push_back({ girder_type_names, section, girder_library_entry });
    return girder_library_entry;
 }
 

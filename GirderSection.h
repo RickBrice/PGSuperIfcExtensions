@@ -33,6 +33,7 @@
 struct Mesh;
 class GirderLibraryEntry;
 interface IShape;
+namespace PGS { namespace Beams { class BeamFactory; } }
 
 // The outline of a section: its solid parts and their voids (e.g. the pieces of a composite library section). Solid
 // parts don't overlap, and voids are inside them
@@ -52,16 +53,21 @@ struct SectionMeasures
    double ix = 0;         // about the horizontal axis through the centroid
    double width = 0;      // overall width
    std::vector<double> width_profile; // material width at each WIDTH_PROFILE_STEP below the top
+   std::vector<double> area_profile;  // area of the section above each AREA_PROFILE_STEP below the top (exact, so it
+                                      // changes smoothly with the dimensions, for fitting)
+   SectionOutline outline;            // the outline measured (section coordinates)
 };
 
 constexpr double WIDTH_PROFILE_STEP = 0.003175; // 1/8 in
+constexpr double AREA_PROFILE_STEP = 0.0127;    // 1/2 in
 
 // The tolerances for a section to match another. The same for every girder family for now
 // (devdocs/GirderImportPlan.md, decision 2), but kept as data so they can differ by family later
 struct SectionTolerances
 {
-   double length = 0.003175; // 1/8 in: height and widths at each depth (and the depth where a width changes)
-   double ratio = 0.01;      // area and moment of inertia
+   double length = 0.003175;      // 1/8 in: height, centroid, and widths at each depth (and the depth where a width changes)
+   double ratio = 0.01;           // area and moment of inertia
+   double local_depth = 0.0127;   // 1/2 in: the total depth over which a fitted section's widths may differ (FittedSectionComparison)
 };
 
 // The section of a girder mesh cut by a vertical plane normal to the girder axis (start to end, in plan) at a
@@ -76,12 +82,143 @@ std::optional<SectionOutline> GetLibraryEntryOutline(const GirderLibraryEntry* p
 
 SectionMeasures MeasureSection(const SectionOutline& outline);
 
-// The differences between two sections that are larger than the tolerances, as text (e.g. "height 1.250 in"). Empty
-// if the sections match
-std::vector<std::string> CompareSections(const SectionMeasures& model, const SectionMeasures& library, const SectionTolerances& tolerances);
-
-// A number that grows with the difference between two sections, to rank the library entries
-double SectionDifference(const SectionMeasures& model, const SectionMeasures& library);
-
 // e.g. "height 72.000 in, area 913.4 in^2, I 545,894 in^4, top width 49.000 in"
 std::string DescribeSection(const SectionMeasures& measures);
+
+// How a section is compared with another (devdocs/GirderImportPlan.md, G1). Comparisons are strategies, so other
+// approaches can be tried without changing the import
+class ISectionComparison
+{
+public:
+   virtual ~ISectionComparison() = default;
+
+   // The differences the comparison doesn't allow, as text (e.g. "height 36.001 in vs 35.000 in"). Empty if the sections agree
+   virtual std::vector<std::string> Compare(const SectionMeasures& model, const SectionMeasures& other) const = 0;
+
+   // The differences the comparison allows but that are worth reporting (e.g. the corners of a flange), as text
+   virtual std::vector<std::string> Allowed(const SectionMeasures& model, const SectionMeasures& other) const { return {}; }
+
+   // A number that grows smoothly with the difference, about 1 at the tolerances: it ranks sections and is the
+   // objective of fitting
+   virtual double Difference(const SectionMeasures& model, const SectionMeasures& other) const = 0;
+};
+
+// The sections are the same: height, centroid, and the width at every depth within the length tolerance (a width may
+// come from a depth within the tolerance, so a flange thickness that differs by less isn't a difference), area and I
+// within the ratio. For recognizing an existing library entry
+class ExactSectionComparison : public ISectionComparison
+{
+public:
+   ExactSectionComparison(const SectionTolerances& tolerances = SectionTolerances()) : m_Tolerances(tolerances) {}
+   std::vector<std::string> Compare(const SectionMeasures& model, const SectionMeasures& other) const override;
+   double Difference(const SectionMeasures& model, const SectionMeasures& other) const override;
+
+protected:
+   SectionTolerances m_Tolerances;
+};
+
+// A fitted section represents the model's: as ExactSectionComparison, except that the widths may differ over a total
+// depth up to SectionTolerances::local_depth, or over any depth if the outlines are within the length tolerance of each
+// other (OutlineDistance). These are local details a girder family can't make (e.g. the corners of a flange tip), and
+// small offsets on shallow tapers (e.g. a model's flange tips a tenth of an inch lower on one side, from a crown),
+// where a small vertical offset is a large width difference; they're reported by Allowed. For accepting a library entry with fitted dimensions.
+// Its Difference, the fitting objective, is the area between the two outlines (their symmetric difference), with the
+// height, centroid, area, and I: it changes continuously with every dimension, including flange tapers and fillets
+class FittedSectionComparison : public ExactSectionComparison
+{
+public:
+   using ExactSectionComparison::ExactSectionComparison;
+   std::vector<std::string> Compare(const SectionMeasures& model, const SectionMeasures& other) const override;
+   std::vector<std::string> Allowed(const SectionMeasures& model, const SectionMeasures& other) const override;
+   double Difference(const SectionMeasures& model, const SectionMeasures& other) const override;
+};
+
+// The area between two outlines (the area of their symmetric difference)
+double OutlineDifferenceArea(const SectionOutline& a, const SectionOutline& b);
+
+// True if the outline's coordinates are finite and none of its loops crosses itself
+bool IsSimpleOutline(const SectionOutline& outline);
+
+// The largest distance from a point of either outline to the other outline (the Hausdorff distance)
+double OutlineDistance(const SectionOutline& a, const SectionOutline& b);
+
+using GirderDimensions = std::vector<std::pair<std::_tstring, Float64>>;
+
+// The dimensions of a girder family that give a section closest to the model's section (devdocs/GirderImportPlan.md,
+// G1 step 3)
+struct DimensionFit
+{
+   GirderDimensions dimensions;
+   SectionMeasures section;              // the section of the fitted dimensions
+   double difference = DBL_MAX;          // ISectionComparison::Difference
+   std::vector<std::string> differences; // ISectionComparison::Compare: empty if the fitted section is accepted
+   std::vector<std::string> allowed;     // ISectionComparison::Allowed
+};
+
+// Fits the dimensions of a library entry's beam factory to a section. Fitting is a strategy, like ISectionComparison
+class IDimensionFitter
+{
+public:
+   virtual ~IDimensionFitter() = default;
+
+   // The fitted dimensions of a beam factory, starting from the given dimensions (e.g. a library entry's, or the
+   // factory's defaults), judged by the comparison. nullopt if the factory can't make a section
+   virtual std::optional<DimensionFit> Fit(std::shared_ptr<PGS::Beams::BeamFactory> factory, const GirderDimensions& start, const SectionMeasures& model, const ISectionComparison& comparison) const = 0;
+};
+
+// The fitters share these rules: the length dimensions are fitted (scalars and booleans keep their values), dimensions
+// that don't change the section (e.g. end blocks) keep their values, dimensions the factory doesn't accept, with a
+// negative length, or whose section isn't simple (IsSimpleOutline: a factory may accept dimensions that make an outline
+// cross itself) are rejected, and a fit has a budget (evaluations and time)
+
+// Only the height: the dimension that changes the height the most (e.g. H, or the web height) is solved for the model's
+// height. For a library entry whose flanges match the model's (FlangesMatch): girders of a series (e.g. the WSDOT WF
+// girders) have the same flanges and differ only in height
+class HeightDimensionFitter : public IDimensionFitter
+{
+public:
+   std::optional<DimensionFit> Fit(std::shared_ptr<PGS::Beams::BeamFactory> factory, const GirderDimensions& start, const SectionMeasures& model, const ISectionComparison& comparison) const override;
+};
+
+// All of the dimensions by least squares (Levenberg-Marquardt), after solving the height. The residuals are the
+// average widths in each band of depth (from the exact area profile, so they change continuously with the
+// dimensions), the height, the centroid, the area, and I, each about 1 at the tolerances
+class LevenbergMarquardtDimensionFitter : public IDimensionFitter
+{
+public:
+   LevenbergMarquardtDimensionFitter(int max_iterations = 100) : m_MaxIterations(max_iterations) {}
+   std::optional<DimensionFit> Fit(std::shared_ptr<PGS::Beams::BeamFactory> factory, const GirderDimensions& start, const SectionMeasures& model, const ISectionComparison& comparison) const override;
+
+private:
+   int m_MaxIterations;
+};
+
+// All of the dimensions by least squares (Levenberg-Marquardt) of the distance between the outlines, after solving the
+// height. Girder sections are symmetric about their vertical axis, so the left halves are compared. Two fits, and the
+// better is kept: the corners of the outlines paired in order along them, then the outline distance (for polygonal
+// sections, e.g. WF girders, whose corners fix the dimensions), and the outline distance alone (for curved sections,
+// e.g. NU girders' fillets). The outline distance measures points spaced evenly along each outline to the nearest edge
+// of the other, so a fit from a factory's defaults isn't held where a flange edge lines up with the wrong edge, as it
+// is when widths are compared depth by depth. Least squares steps stop at zero lengths
+class OutlineDimensionFitter : public IDimensionFitter
+{
+public:
+   OutlineDimensionFitter(int max_iterations = 100) : m_MaxIterations(max_iterations) {}
+   std::optional<DimensionFit> Fit(std::shared_ptr<PGS::Beams::BeamFactory> factory, const GirderDimensions& start, const SectionMeasures& model, const ISectionComparison& comparison) const override;
+
+private:
+   int m_MaxIterations;
+};
+
+// All of the dimensions by a downhill simplex search (restarted), then a pattern search one dimension at a time, after
+// solving the height. Minimizes ISectionComparison::Difference. Kept to compare with the other fitters
+class SimplexDimensionFitter : public IDimensionFitter
+{
+public:
+   std::optional<DimensionFit> Fit(std::shared_ptr<PGS::Beams::BeamFactory> factory, const GirderDimensions& start, const SectionMeasures& model, const ISectionComparison& comparison) const override;
+};
+
+// True if the top and bottom flanges of two sections match: the widths in the top fraction of the shorter section
+// measured down from the tops, and in the bottom fraction measured up from the bottoms (the top of one isn't compared
+// with the bottom of the other). Girders of a series match, whatever their heights
+bool FlangesMatch(const SectionMeasures& model, const SectionMeasures& other, const SectionTolerances& tolerances, double fraction = 0.4);

@@ -50,11 +50,31 @@ private:
    // The library entry whose section matches the girder's section (devdocs/GirderImportPlan.md, G1), or nullptr
    const GirderLibraryEntry* MatchLibraryEntry(const std::string& beam_name, const std::vector<std::string>& girder_type_names, const SectionMeasures& section);
 
-   // girder type names and section -> library entry, so each girder type is matched and logged once
-   std::map<std::pair<std::vector<std::string>, std::string>, const GirderLibraryEntry*> m_GirderMatches;
+   // A new library entry (in the project's library) cloned from a library entry with fitted dimensions (G1 step 3)
+   const GirderLibraryEntry* CreateFittedEntry(const std::_tstring& start_name, const std::vector<std::string>& girder_type_names, const std::string& beam_name, const DimensionFit& fit);
+
+   // the girder types already matched (girder type names, section, library entry or nullptr), so girders of a type are
+   // matched and logged once: a girder's section only has to match a previous one within the tolerances
+   struct GirderMatch
+   {
+      std::vector<std::string> names;
+      std::optional<SectionMeasures> section;
+      const GirderLibraryEntry* entry;
+   };
+   std::vector<GirderMatch> m_GirderMatches;
 
    // the sections of the library entries, by name (nullopt if the entry's beam factory can't make one)
    std::map<std::_tstring, std::optional<SectionMeasures>> m_LibrarySections;
+
+   // the strategies (see GirderSection.h): recognizing a library entry, accepting a fitted entry, fitting only the height
+   // of an entry whose flanges match, and fitting all of the dimensions (a short fit to screen the beam factories, then
+   // a full fit of the most promising)
+   std::unique_ptr<ISectionComparison> m_pMatchComparison = std::make_unique<ExactSectionComparison>();
+   std::unique_ptr<ISectionComparison> m_pFitComparison = std::make_unique<FittedSectionComparison>();
+   std::unique_ptr<IDimensionFitter> m_pHeightFitter = std::make_unique<HeightDimensionFitter>();
+   std::unique_ptr<IDimensionFitter> m_pScreenFitter = std::make_unique<OutlineDimensionFitter>(10);
+   std::unique_ptr<IDimensionFitter> m_pFitter = std::make_unique<OutlineDimensionFitter>(100);
+   bool m_bLibrarySectionsReported = false;
 
    bool DeriveAlignmentFromDeck(ifcopenshell::file& file);
 
