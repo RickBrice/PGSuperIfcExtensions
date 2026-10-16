@@ -5,14 +5,15 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+24.00, at[2] = 0+54.00
 
-**73 of 108 values set by the import**, 35 are template defaults
+**67 of 108 values set by the import**, 41 are template defaults
 
-## template default (35)
+## template default (41)
 
 | Value | Template | Imported |
 |---|---|---|
 | `bridge.girder_family` | I-Beam | I-Beam |
 | `bridge.girder_orientation` | 0 | 0 |
+| `bridge.same_girder_for_entire_bridge` | -1 | -1 |
 | `bridge.girder_spacing_type` | 0 | 0 |
 | `bridge.fillet` | 0.750 in | 0.750 in |
 | `bridge.pier_count` | 2 | 2 |
@@ -35,6 +36,11 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `bridge.group_count` | 1 | 1 |
 | `group[0].piers` | 0-1 | 0-1 |
 | `group[0].girder_count` | 5 | 5 |
+| `group[0].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
+| `group[0].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
+| `group[0].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
+| `group[0].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
+| `group[0].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `deck.type` | 0 | 0 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
@@ -47,11 +53,10 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `at[2].roadway.at_left_edge` | -0.300 ft | -0.304 ft |
 | `at[2].roadway.at_right_edge` | -0.300 ft | -0.304 ft |
 
-## set by the import (73)
+## set by the import (67)
 
 | Value | Template | Imported |
 |---|---|---|
-| `bridge.same_girder_for_entire_bridge` | -1 | 0 |
 | `bridge.girder_spacing` | 6.000 ft (type 0, location 0) | 6.500 ft (type 0, location 0) |
 | `bridge.slab_offset_type` | 0 | 2 |
 | `bridge.slab_offset` | 11.000 in |  |
@@ -73,27 +78,22 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `pier[1].back.bearing_offset` | 32.500 in | -0.000 in |
 | `pier[1].ahead.end_distance` | 20.500 in | 12.000 in |
 | `pier[1].ahead.bearing_offset` | 32.500 in | -0.000 in |
-| `group[0].girder[0].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.172 in |
 | `group[0].girder[0].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[0].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[1].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
 | `group[0].girder[1].slab_offset_start` | 11.000 in | 9.983 in |
 | `group[0].girder[1].slab_offset_end` | 11.000 in | 10.098 in |
 | `group[0].girder[1].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[1].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[2].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
 | `group[0].girder[2].slab_offset_start` | 11.000 in | 10.036 in |
 | `group[0].girder[2].slab_offset_end` | 11.000 in | 10.133 in |
 | `group[0].girder[2].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[2].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[3].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
 | `group[0].girder[3].slab_offset_start` | 11.000 in | 9.983 in |
 | `group[0].girder[3].slab_offset_end` | 11.000 in | 10.098 in |
 | `group[0].girder[3].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[3].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[4].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
 | `group[0].girder[4].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[4].slab_offset_end` | 11.000 in | 10.172 in |
 | `group[0].girder[4].fc` | 6.000 ksi | 8.000 ksi |
