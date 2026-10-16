@@ -2,9 +2,9 @@
 
 Drafted 2026-09-23. Last completed work before this plan: estimating deck slab edges from geometry.
 
-## Resume here (status 2026-10-15)
+## Resume here (status 2026-10-16)
 
-Everything needed to resume is in the repositories; nothing depends on local notes. All repositories are on `develop`, committed and pushed (PGSuperIfcExtensions, WBFL, and PGSuper in sync with `origin/develop` on 2026-10-15).
+Everything needed to resume is in the repositories; nothing depends on local notes. All repositories are on `develop`. The user pushes after the overnight PGSuper regression tests, so the latest PGSuperIfcExtensions commits may be local only.
 
 **Priorities (2026-10-15):** (1) PGSuper import and export with maximum usBridge IDS coverage, (2) girder mapping and modeling with the PGSuper library (Phase 5), (3) getting information from geometry when properties lack it (Phases 4-6), (4) PGSplice support equivalent to PGSuper's ([PGSplicePlan.md](PGSplicePlan.md)).
 
@@ -13,22 +13,26 @@ Everything needed to resume is in the repositories; nothing depends on local not
 - **Phase 1, correctness:** units, girder layout, spans, spacing.
 - **Phase 2, superstructure geometry:** pier skew, girder end distance and bearing offset, uniform spacing (normal to the alignment or along the CL piers), bearing data. Boundary conditions are not done (see the decisions below).
 - **Phase 3, deck:** cast-in-place deck dimensions and slab offset; the deck and haunches export as one `IfcSlab` with several representation items, and the import measures haunches however a model has them. Stay-in-place panels are still to do.
+- **Phase 4, roadway from the deck (2026-10-15/16):** the roadway section (cross slopes and superelevation transitions), and the profile when the model has no vertical alignment. Superelevation events are still to do.
+- **Phase 5, girder section (G1 of [GirderImportPlan.md](GirderImportPlan.md), 2026-10-15):** the section from the model, matching library entries by geometry, fitting a factory's dimensions and cloning the closest entry, and choosing among factories that fit equally well. Creating a new entry from a factory's defaults, with a generated strand grid, is next (Iowa needs it: the library has no NU entry).
+- **Phase 7, exterior traffic barriers (2026-10-15):** matched to library entries by their section, or new entries made from it.
+- **Standards, step 1 (2026-10-15):** the usBridge conformance checks in `run_validation.py` (the usBridge IDS files on every export, and the data dictionary workbook against the standard table), and usBridge Group 1 (strand and bar data on their types, bearing and project data).
 - **Mapping tables M0-M7 (2026-09-29/30):** import and export engines, `MappingTables/Standard.ifcmap` and the Iowa and PennDOT tables in `Tests/ImportValidation/mappings`, the IDS generator and writer (`/IfcIdsToTable`, `/IfcTableToIds`), choosing the table (a Configure BridgeLink page, the IFC Import window, the export Mapping Table tab, the project's table, and `/IfcMapping=`), and the mapping table editor (R3, stages 1-4). PennDOT and Iowa f'c and f'ci come from their tables.
 - **Other repositories:** WBFL `ISectionCutTool::CreateSlabShapeWithoutHaunches`/`CreateHaunchShape` and the `CreateSlabShape` refactor, exposed as PGSuper `IShapes::GetSlabShapeWithoutHaunches`/`GetHaunchShape` (PGSuper regression tests passed); the WBFL AutoSave status bar fix (44062f89e); the PGSuper Test/TxDOT agent command line fix (F2). IfcOpenShell (`F:\IfcOpenShell`, branch `rab_infrastructure`): the false GEO 242 warning is fixed (592ea02f7, #9590), with the example `src/examples/IfcCompositeCurveSegments.cpp`.
 
 **Drafted, waiting for review:**
-- **Girder import:** [GirderImportPlan.md](GirderImportPlan.md) (2026-10-15): the girder section (Phase 5), the strands as individual strands (`sdtDirectStrandInput`) with harping, debonding, and temporary strands, and the stirrup, confinement, and splitting zones from the bars. Four open questions.
 - **PGSplice import and export:** [PGSplicePlan.md](PGSplicePlan.md) (2026-10-15): one code path for the PGSplice model with PGSuper as the special case. Phases S0-S5: test setup, registration in the PGSplice categories (nothing is registered for PGSplice today), export completeness (post-tensioning, temporary supports), the import core for groups and segments, a PGSplice project importer, and the data importer. Six open questions.
-- **Standards as data** (see `CLAUDE.md`): step 1, usBridge conformance checks in `run_validation.py` (the usBridge IDS files on the exports, and the data dictionary workbook against the standard table), was started and paused for the PGSplice plan. No files written yet.
 - **R1 round trip:** [RoundTripDesign.md](RoundTripDesign.md) (2026-09-30): export, then merge into a copy of the source model, matched by an element registry saved in the project. It recommends answers to its six open questions and plans milestones RT0-RT6. RT0 is the review of the note.
 
 **Decisions waiting on answers:**
 - **Phase 2, boundary conditions and connections** (see Phase 2): (1) is `Pset_BearingCommon` in the AbV? (2) should the exporter emit PGSuper's pier diaphragms as `IfcBeam .DIAPHRAGM.`? (3) default when there is no fixity information? (4) is "after deck" the right default for continuity timing?
-- **Phase 5, girder library entries** (see Phase 5): (1) a new PGSuper interface to create girder library entries (creation is UI-only today)? (2) clone the closest entry of the family as the base for data the IFC doesn't define? (3) naming of created entries? (4) prefer an existing entry that matches geometrically over creating one, even when names differ?
 - **R1:** the recommended answers in [RoundTripDesign.md](RoundTripDesign.md).
+- **PGSplice:** the six open questions in [PGSplicePlan.md](PGSplicePlan.md).
 - **F1** (girders as constructed vs. with camber): the haunch bottom follows PGSuper's haunch depth, so a gap to the cambered girder is expected for now.
 
-**Not started:** Phase 4's superelevation events (`IfcReferent` SUPERELEVATIONEVENT, see Phase 4), Phase 6 (prestressing), Phase 7 beyond the exterior traffic barriers (diaphragms, sidewalks, interior barriers), R2 (BCF output; C1-C5 decided), the E2 validation template and expected values for PennDOT and Iowa, a test with a real agency IDS, and the export checks with ifctester (see "Mapping tables and IDS", Validation).
+The girder import questions (Phase 5) were decided on 2026-10-15; see [GirderImportPlan.md](GirderImportPlan.md), "Decisions" and "Library entry creation".
+
+**Not started:** Phase 4's superelevation events (`IfcReferent` SUPERELEVATIONEVENT, see Phase 4), G2 (strands) and G3 (stirrups, confinement, splitting bars) of [GirderImportPlan.md](GirderImportPlan.md), Phase 6 (prestressing), Phase 7 beyond the exterior traffic barriers (diaphragms, sidewalks, interior barriers), R2 (BCF output; C1-C5 decided), the E2 validation template and expected values for PennDOT and Iowa, a test with a real agency IDS, and checking each export with ifctester against its own design-value IDS and against a general IDS written from the table (see "Mapping tables and IDS", Validation; the usBridge IDS checks already run).
 
 **Parked / to do:**
 - **Exported deck on skewed bridges** (found 2026-10-15): the exporter cuts the deck normal to the alignment and stretches the polygon to the skew angle, keeping the normal cut's elevations (`IfcExporter.cpp`, the deck sections; skewed cuts were avoided because of duplicate points from WBFL COGO). Where the cross slope changes along the bridge (a superelevation transition), a skewed section's edges get the slopes of its reference station, not their own: about 1/8 in at the deck edges for 20 degrees of skew and a 6% change over 440 ft. That's why the superelevation round trip is built on the unskewed main model.
@@ -330,7 +334,8 @@ The Iowa model imports end to end. What its log shows:
 - **To do:** write superelevation events in the export and read them in the import, with the deck as the fallback and check (as for the profile). Use deck station psets (Iowa) for the reference station.
 
 ### Phase 5: Girder section and material mapping
-- **Current behavior (interim, 2026-09-23):** `GetGirderLibraryEntry` matches names only: `IfcBeamType.Name`, `ObjectType`, "...Type"/"...Shape..." text properties and non-usBridge classification names, exact (ignoring case and punctuation) or most similar (longest common substring >= 0.5), otherwise the first I-Beam. Each girder type is matched and logged once.
+- **Status (2026-10-16):** steps 1, 2 and 4 are done, and step 5 for a cloned entry. The section is fitted with every factory's dimensions (the fit takes the place of step 3's classification), and fits that are equally good are a choice for the user. The details are in [GirderImportPlan.md](GirderImportPlan.md), "How dimensions are fitted". Next: a new entry from a factory's defaults with a generated strand grid.
+- **Before 2026-10-15 (replaced):** `GetGirderLibraryEntry` matched names only: `IfcBeamType.Name`, `ObjectType`, "...Type"/"...Shape..." text properties and non-usBridge classification names, exact (ignoring case and punctuation) or most similar (longest common substring >= 0.5), otherwise the first I-Beam. Each girder type is matched and logged once.
 - **What the models carry (2026-09-25):**
   - PGSuper export: `IfcBeamType` named for the library entry (WF100G, WF66G) and `usBrPset_PrecastConcreteBeam.ShapeName`; each girder is an `IfcSectionedSolidHorizontal` of `IfcArbitraryClosedProfileDef` polygons (the exact PGSuper section, including end blocks).
   - PennDOT: no `IfcBeamType`; `IfcFacetedBrep`; `_PS Concrete Beams` properties (`Type`, `Beam Designation`, f'c, f'ci).
@@ -343,7 +348,12 @@ The Iowa model imports end to end. What its log shows:
   4. **Fit the family dimensions:** initial values from measured features (depth, flange widths, thicknesses, web width, fillets/chamfers), refined by minimizing the difference between the measured polygon and the factory's section for the dimensions (area of the symmetric difference). Accept only if area, I, and centroid are within tolerance; otherwise report that the section doesn't fit the family.
   5. **Create the library entry (D3):** a new programmatic path in PGSuper (a new interface, since creation is UI-only today): clone the closest existing entry of the family (keeps strand grids, shear, debonding, and other data the IFC doesn't define), set the fitted dimensions with `bAdjustStrands`, name it from the IFC type name (unique if it collides), add it to the project library, validate it, and log it. Command line: create and log. Interactive: prompt to pick one of the geometric candidates or create the entry (later step).
   6. **Validation:** the PGSuper round trip under the Regression configuration (WF girders not in the library) must create entries whose dimensions match the source project's entries; `pgs_extract` compares the girder entry dimensions. PennDOT and Iowa: fitted dimensions compared with their standard shapes (PA bulb tee, Iowa BTB45) where they are known.
-- **Open questions:** (1) a new PGSuper interface to create girder library entries (e.g. clone an entry and set dimensions)? (2) clone the closest entry of the family as the base for data the IFC doesn't define? (3) name for created entries (IFC type name, with a suffix when it collides)? (4) prefer an existing entry that matches geometrically over creating one, even when the names differ?
+- **Decided (2026-10-15, details in [GirderImportPlan.md](GirderImportPlan.md)):**
+  1. No new PGSuper interface is needed: the existing library API (`CloneEntry`, `AddEntry`, `SetBeamFactory`, `SetDimension`, `ValidateData`) is enough, so the code lives in the extension.
+  2. In order of preference: an existing entry that matches by geometry, then a clone of the closest entry with fitted dimensions (it keeps the data the IFC doesn't define), then a new entry from the family's defaults with a generated strand grid.
+  3. Created entries are named for the IFC type name, with " (2)", and so on, when the name is already used by a different girder.
+  4. Geometry decides; names are clues. An existing entry that matches by geometry is used even when its name differs.
+  5. Tolerances: 1/8 in for depth, flange widths, and thicknesses; 1% for area and I. New entries go in the project's library, never the master library.
 - **Configuration for exact-match testing:** `BridgeLink.exe /App=PGSuper /Configuration="WSDOT (Local)":"WSDOT (Local)"`. Record the current `CatalogServer2`/`Publisher2` (`HKCU\...\PGSuper\Options`) first and switch back with `/Configuration` when done; the dev machine is normally `"Regression":"Regression"`.
 - Orientation from the measured beam roll/plumb.
 - Material lookup chain: standard psets → configurable vendor pset aliases (with string/unit-in-name parsing) → default. Vendor psets and girder name aliases are handled by mapping tables (see "Mapping tables and IDS").

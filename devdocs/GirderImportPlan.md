@@ -1,8 +1,8 @@
 # Girder Import Plan: Section, Strands, Transverse Reinforcement
 
-Drafted 2026-10-15. Waiting for review. Priorities 2 and 3 in `CLAUDE.md` (girder mapping with the PGSuper library, information from geometry). It builds on Phase 5 (girder section) and Phase 6 (prestressing) of [IfcImportPlan.md](IfcImportPlan.md).
+Drafted 2026-10-15 and reviewed the same day (see "Decisions"). **Status (2026-10-16):** G1 steps 1-3 are done (the section from the model, matching by geometry, fitting dimensions and cloning the closest entry); step 4, a new entry with a generated strand grid, is next. G2 and G3 are not started. Priorities 2 and 3 in `CLAUDE.md` (girder mapping with the PGSuper library, information from geometry). It builds on Phase 5 (girder section) and Phase 6 (prestressing) of [IfcImportPlan.md](IfcImportPlan.md).
 
-Today the importer sets the girder type by name only (`GetGirderLibraryEntry`, falling back to the first I-beam) and leaves the strands, stirrups, confinement, and splitting bars of the import template unchanged. An imported girder has the template's reinforcement.
+Before G1, the importer set the girder type by name only (`GetGirderLibraryEntry`, falling back to the first I-beam). The strands, stirrups, confinement, and splitting bars still come from the import template unchanged (G2 and G3), so an imported girder has the template's reinforcement.
 
 ## What the test models have (2026-10-15)
 
@@ -15,7 +15,7 @@ Today the importer sets the girder type by name only (`GetGirderLibraryEntry`, f
 
 ## PGSuper data the import fills
 
-- **Section:** the girder library entry of each girder (`GirderLibraryEntry`, a beam factory with named dimensions). Creating entries has no programmatic path today (Phase 5).
+- **Section:** the girder library entry of each girder (`GirderLibraryEntry`, a beam factory with named dimensions). Entries are created with the existing library API (see "Library entry creation").
 - **Strands:** `CStrandData`. With `pgsTypes::sdtDirectStrandInput` (available in PGSuper and PGSplice) each `CStrandRow` is one strand: its type (straight, harped, temporary), its horizontal position `m_Z`, its elevation at the start, the two harp points, and the end (`m_Y`, from the top or bottom face), its debonding at each end, and extension. The harp points are on `CStrandData` (`SetHarpPoints`). Strand material per type, and jacking.
   The other definition types fill the library entry's strand grid (`sdtTotal`, `sdtStraightHarped`, `sdtDirectSelection`).
 - **Transverse reinforcement:** `CShearData2`: shear zones (length, bar size, spacing, number of legs, horizontal interface bars), the splitting zone (bar size, spacing, length, number of bars), the confinement zone (bar size, spacing, length), symmetric or not.
@@ -26,7 +26,7 @@ Phase 5 of [IfcImportPlan.md](IfcImportPlan.md) is the plan; in short:
 1. Get the section polygon of each girder from the model: the swept profiles (PGSuper export, Iowa), or a cut through the solid (PennDOT). Several cuts to see end blocks and tapers; the prismatic middle portion is the section.
 2. Match a library entry by geometry (depth, flange widths and thicknesses, area, I, centroid), confirming a name match. A geometric match with another name is used and logged.
 3. If nothing matches: classify the family and fit its dimensions (minimize the difference between the polygon and the factory's section).
-4. Create the library entry (clone the closest entry of the family, set the dimensions). This needs a new PGSuper interface (open question 1).
+4. Create the library entry: clone the closest entry of the family and set the dimensions, or start from the factory's defaults. The existing PGSuper library API is enough (see "Library entry creation").
 
 Validation: under the Regression configuration the WF girders aren't in the library, so the round trip must create entries that match the source project's.
 
@@ -67,7 +67,7 @@ G1 first: the strand elevations are measured from the girder's top or bottom and
 3. **Bar roles in mapping tables:** tabled. PGSuper's rebar model is simple, so a table section for bar roles may not be worth it.
 4. **Longitudinal girder bars:** imported too (`CLongitudinalRebarData`).
 
-## Library entry creation (details to agree before coding)
+## Library entry creation
 
 **What PGSuper already has (2026-10-15).** Everything needed is public today:
 - `ILibrary::GetGirderLibrary()` gives the project's girder library for changing; the library framework has `CloneEntry`, `AddEntry`, `NewEntry`.
@@ -117,7 +117,8 @@ Results (WSDOT (Local) library): the three PennDOT girders fit the WF factory (W
 
 ## Open questions
 
-1. **Library entries:** may we add a PGSuper interface to create a girder library entry (clone an entry, set its dimensions)? (Phase 5 questions 1-4: cloning the closest entry, naming, preferring a geometric match over creating one.)
-2. **Strand definition:** always `sdtDirectStrandInput` (exact positions, but the strands can't be adjusted with the library's strand grid in PGSuper), or the library grid when every strand is on it (familiar input for PGSuper users)?
-3. **Bar roles:** should the agency bar roles (Iowa's marks and bend shapes) go in the agency mapping tables, as the girder type does? This would mean a table section for bar roles.
-4. **Longitudinal girder bars** (the PGSuper export's longitudinal rows, Iowa's `5b1`, `6b3`): import them too (`CLongitudinalRebarData`)?
+None. The draft's four questions were answered on 2026-10-15:
+1. **Library entries:** allowed; the existing library API turned out to be enough (Decision 1, "Library entry creation").
+2. **Strand definition:** the library's grid when every strand is on it, otherwise individual strands (`sdtDirectStrandInput`) (Decision 2, and decision 6 of "Library entry creation").
+3. **Bar roles in mapping tables:** tabled (Decision 3).
+4. **Longitudinal girder bars:** imported (`CLongitudinalRebarData`, Decision 4).

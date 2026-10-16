@@ -9,7 +9,7 @@ Project knowledge that isn't in the code or git history. The design notes are in
 - **IfcOpenShell:** the upstream branch that matters is `v0.9.0` (not v0.8.0 or master). Compare against it and target PRs to it. The user's working branch is `rab_infrastructure`.
 
 ## Priorities (2026-10-15, the user's order)
-1. PGSuper import and export, with maximum usBridge IDS coverage (the standards work; step 1 is the usBridge conformance checks in `run_validation.py`).
+1. PGSuper import and export, with maximum usBridge IDS coverage (the standards work; step 1, the usBridge conformance checks in `run_validation.py`, is done).
 2. Proper beam mapping and modeling with the PGSuper girder library (Phase 5 of `devdocs/IfcImportPlan.md`: match library entries by geometry, fit and create entries).
 3. Analyzing geometry to get information that's missing from properties (e.g. profile from the deck, sections from girder solids, strands from tendon paths: Phases 4-6).
 4. PGSplice support equivalent to PGSuper's (`devdocs/PGSplicePlan.md`).
