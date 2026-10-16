@@ -25,6 +25,8 @@
 #include "BeamSpacing.h"
 #include "GirderSection.h"
 #include <IFace\Project.h>
+#include <map>
+#include <set>
 
 class CIfcBridgeImporter
 {
@@ -65,6 +67,10 @@ private:
 
    // the sections of the library entries, by name (nullopt if the entry's beam factory can't make one)
    std::map<std::_tstring, std::optional<SectionMeasures>> m_LibrarySections;
+
+   // the beam factory chosen among factories that fit a section equally (e.g. the same NU shape from several), by the
+   // names of the factories, so the user is asked once per import
+   std::map<std::set<std::_tstring>, std::_tstring> m_FactoryChoices;
 
    // the strategies (see GirderSection.h): recognizing a library entry, accepting a fitted entry, fitting only the height
    // of an entry whose flanges match, and fitting all of the dimensions (a short fit to screen the beam factories, then

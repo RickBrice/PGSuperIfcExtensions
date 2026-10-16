@@ -922,8 +922,11 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
          {
             return fit.differences.empty() ? (candidate.entry.empty() ? 1 : 0) : 2;
          };
+      std::vector<std::pair<const Candidate*, DimensionFit>> fits; // every fit considered, for the ties
       auto consider = [&](const Candidate& candidate, const std::optional<DimensionFit>& fit)
          {
+            if (fit)
+               fits.emplace_back(&candidate, *fit);
             if (fit && (!best_fit || rank(candidate, *fit) < rank(*best_candidate, *best_fit) ||
                (rank(candidate, *fit) == rank(*best_candidate, *best_fit) && fit->difference < best_fit->difference)))
             {
@@ -974,6 +977,87 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
          how = os_how.str();
       }
       auto fit_seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - fit_start_time).count();
+
+      // Several beam factories can make the same shape (e.g. the NU girder of the Nebraska NU Girder factory and of other
+      // publishers' factories). The fits as good as the best (accepted, of the same rank, with outlines within the length
+      // tolerance of each other) from other factories are ties: the user picks the factory, or, without a user (e.g. a
+      // command line import), the one published by WSDOT, else the best fit
+      if (best_fit && best_fit->differences.empty())
+      {
+         std::vector<std::pair<const Candidate*, const DimensionFit*>> ties{ { best_candidate, &*best_fit } };
+         std::set<std::_tstring> tie_names{ best_candidate->factory->GetName() };
+         for (const auto& [candidate, fit] : fits)
+         {
+            if (fit.differences.empty() && rank(*candidate, fit) == rank(*best_candidate, *best_fit) &&
+               tie_names.insert(candidate->factory->GetName()).second &&
+               OutlineDistance(fit.section.outline, best_fit->section.outline) <= SectionTolerances().length)
+               ties.emplace_back(candidate, &fit);
+         }
+         if (1 < ties.size())
+         {
+            tie_names.clear();
+            for (const auto& tie : ties)
+               tie_names.insert(tie.first->factory->GetName());
+
+            auto is_wsdot = [](const std::_tstring& publisher)
+               {
+                  CString p(publisher.c_str());
+                  p.MakeUpper();
+                  return p == _T("WSDOT") || p.Find(_T("WASHINGTON STATE DEPARTMENT OF TRANSPORTATION")) != -1;
+               };
+            size_t default_choice = 0;
+            for (size_t i = 0; i < ties.size(); i++)
+            {
+               if (is_wsdot(ties[i].first->factory->GetPublisher()))
+               {
+                  default_choice = i;
+                  break;
+               }
+            }
+
+            size_t choice = default_choice;
+            std::string chosen_by = "published by " + std::string(T2A(ties[default_choice].first->factory->GetPublisher().c_str()));
+            auto found = m_FactoryChoices.find(tie_names);
+            if (found != m_FactoryChoices.end())
+            {
+               for (size_t i = 0; i < ties.size(); i++)
+               {
+                  if (ties[i].first->factory->GetName() == found->second)
+                     choice = i;
+               }
+               chosen_by = "chosen earlier in this import";
+            }
+            else if (m_Importer.IsInteractive())
+            {
+               std::_tostringstream responses;
+               for (const auto& [candidate, fit] : ties)
+               {
+                  responses << candidate->factory->GetName() << _T(" (") << candidate->factory->GetGirderFamilyName() << _T(", published by ") << candidate->factory->GetPublisher();
+                  if (!candidate->entry.empty())
+                     responses << _T(", from ") << candidate->entry;
+                  responses << _T(")") << std::endl;
+               }
+               std::_tostringstream question;
+               question << _T("The section of ") << A2T(beam_name.c_str()) << _T(" fits these beam factories equally. Select the beam factory for its library entry.");
+               int result = AfxChoose(_T("Select Beam Factory"), question.str().c_str(), responses.str().c_str(), (int)default_choice, FALSE);
+               if (0 <= result && result < (int)ties.size())
+               {
+                  choice = (size_t)result;
+                  chosen_by = "chosen by the user";
+               }
+            }
+            m_FactoryChoices[tie_names] = ties[choice].first->factory->GetName();
+
+            os << " These beam factories fit the section equally:";
+            for (const auto& [candidate, fit] : ties)
+               os << " " << T2A(candidate->factory->GetName().c_str()) << " (" << T2A(candidate->factory->GetPublisher().c_str()) << ")" << (&candidate == &ties.back().first ? ";" : ",");
+            os << " " << T2A(ties[choice].first->factory->GetName().c_str()) << " was " << chosen_by << ".";
+
+            best_candidate = ties[choice].first;
+            best_fit = *ties[choice].second;
+         }
+      }
+
       std::_tstring best_start = best_candidate ? best_candidate->entry : std::_tstring();
       std::string best_factory = best_candidate ? std::string(T2A(best_candidate->factory->GetName().c_str())) : std::string();
 
