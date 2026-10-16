@@ -1,76 +1,76 @@
-[Info] [2026-10-16 12:34:23] Starting IFC import from file
-[Info] [2026-10-16 12:34:23] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
-[Info] [2026-10-16 12:34:24] Initializing units and precision from IFC file.
-[Info] [2026-10-16 12:34:24] Importing alignment data from IFC file...
-[Info] [2026-10-16 12:34:24] Importing from bridge IFC file.
-[Info] [2026-10-16 12:34:25] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
-[Info] [2026-10-16 12:34:25] Expected Pier 1 #679=IfcBridgePart('0pyGw5cdLBju4mkNqayzKu',$,'Abutment 1',$,$,#2616,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-10-16 12:34:25] Expected Pier 2 #2786=IfcBridgePart('1UYyVXuwj99uHgd4PvNEY_',$,'Abutment 2',$,$,#20246,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-10-16 12:34:25] Expected Pier 3 #3357=IfcBridgePart('3e9_ctlvr45xIz5UO_ym6j',$,'Pier 1',$,$,#13660,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-10-16 12:34:25] Expected Pier 4 #4395=IfcBridgePart('3C_4h4D8nBvhIMFgPGIP4w',$,'Pier 2',$,$,#17575,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-10-16 12:34:27] The girder designation (e.g. "Span 1, Girder 2") of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
-[Info] [2026-10-16 12:34:28] Abutment 1 orientation NORMAL (from CL bearing line)
-[Info] [2026-10-16 12:34:28] Pier 2 orientation NORMAL (from CL bearing line)
-[Info] [2026-10-16 12:34:28] Pier 3 orientation NORMAL (from CL bearing line)
-[Info] [2026-10-16 12:34:28] Abutment 4 orientation NORMAL (from CL bearing line)
-[Info] [2026-10-16 12:34:28] Uniform girder spacing 6.694 ft, measured normal to the alignment at the pier lines
-[Info] [2026-10-16 12:34:28] The girder type name of Beam 1 Span 1 wasn't found. Locations tried: type attribute Name; usBrPset_PrecastConcreteBeam.ShapeName.
-[Info] [2026-10-16 12:34:28] Hint: properties of Beam 1 Span 1 that may hold the girder type name: IaDOT_PPCB.2_Type = "BTB45"; classification 2407-0562845 Name = "Beam, PPC, BTB45". They aren't used. To use one, add it to the locations of girder.type_names in the mapping table.
-[Info] [2026-10-16 12:34:28] 2 of 2 library girders have a section to compare with.
-[Info] [2026-10-16 12:34:31] Section of Beam 1 Span 1: height 36.001 in, width 34.000 in, area 633.1 in^2, I 99766 in^4. No library girder has this section. The closest is azdrcared (height 36.001 in vs 58.000 in, centroid (from the top) 19.364 in vs 30.042 in, area 633.1 vs 604.5 in^2, I 99765.8 vs 265373.7 in^4, width differs over 35.750 in of depth (the most 35.188 in below the top: 30.000 in vs 6.000 in)). These beam factories fit the section equally: NU Beam (BridgeSight) (BridgeSight), CalTrans I-Beam (BridgeSight) (BridgeSight), Nebraska NU Girder (WSDOT); Nebraska NU Girder was published by WSDOT. The Nebraska NU Girder beam factory fits the section (all dimensions fitted, 5 of 39 beam factories fully fitted after screening; the closest: NU Beam (BridgeSight) 0.9, CalTrans I-Beam (BridgeSight) 0.9, Nebraska NU Girder 0.9, IL Girder (BridgeSight) 1.0, FIB Girder (BridgeSight) 1.5, 3.0 s). A new library entry is needed (not created yet): D1 3.868 in, D2 1.583 in, D3 17.565 in, D4 5.479 in, D5 7.506 in, R1 8.208 in, R2 8.418 in, R3 0.037 in, R4 2.171 in, T 6.512 in, W1 33.990 in, W2 30.001 in, C1 0.729 in. It differs locally: width differs over 1.000 in of depth (the most 3.938 in below the top: 32.293 in vs 32.788 in), but the outlines are within 0.081 in of each other.
-[Info] [2026-10-16 12:34:31] Girder type of Beam 1 Span 1 could not be determined. No similar girder in the library. Using Unknown_Girder_Type
-[Info] [2026-10-16 12:34:31] Section of Beam 2 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 3 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 4 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 5 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 6 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 7 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 1 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 2 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 3 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 4 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 5 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 6 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 7 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 1 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 2 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 3 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 4 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 5 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 6 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] Section of Beam 7 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
-[Info] [2026-10-16 12:34:31] The girder concrete strength at release, f'ci of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.ReleaseStrength.
-[Info] [2026-10-16 12:34:31] The girder concrete strength, f'c of Beam 1 Span 1 wasn't found. Locations tried: Pset_MaterialConcrete.CompressiveStrength (material).
-[Info] [2026-10-16 12:34:31] Abutment 1 ahead face: end distance 8.00002 in, bearing offset 1.17855e-08 in (from the CL bearings)
-[Info] [2026-10-16 12:34:31] Pier 2 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-10-16 12:34:31] Pier 2 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-10-16 12:34:31] Pier 3 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-10-16 12:34:31] Pier 3 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
-[Info] [2026-10-16 12:34:31] Abutment 4 back face: end distance 8.00002 in, bearing offset -5.23895e-09 in (from the CL bearings)
-[Info] [2026-10-16 12:34:31] The bearing fixed along the girder of Bearing 1 wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
-[Info] [2026-10-16 12:34:31] Hint: properties of Bearing 1 that may hold the bearing fixed along the girder: Bearing Item - ItemTypes.3_Fixity = "Fixed". They aren't used. To use one, add it to the locations of bearing.fixed_x in the mapping table.
-[Info] [2026-10-16 12:34:31] Bearings at Abutment 1 ahead face: rectangular, 3.000 in x 28.500 in, height 3.000 in
-[Info] [2026-10-16 12:34:31] Bearings at Pier 2 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-10-16 12:34:31] Bearings at Pier 2 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-10-16 12:34:31] Bearings at Pier 3 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-10-16 12:34:31] Bearings at Pier 3 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
-[Info] [2026-10-16 12:34:31] Bearings at Abutment 4 back face: rectangular, 3.000 in x 28.500 in, height 3.000 in
-[Info] [2026-10-16 12:34:31] The model has no traffic barriers (IfcWall.USERDEFINED with ObjectType = "BARRIER").
-[Info] [2026-10-16 12:34:31] Profile from the top of the deck at the alignment at 28 stations: elevation 1220.072 ft at station -1.500 ft, a vertical curve from station -1.500 ft to 197.500 ft (0.94% to 0.41%) (within 0.050 in).
-[Info] [2026-10-16 12:34:31] Roadway section from the top of the deck at 11 stations (the quarter points of the spans and near the ends of the bridge): 4 templates: station 0.500 ft: left -0.01%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 1.00% for 3.000 ft, ridge at the alignment, -1.00% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); station 71.250 ft: left -0.32%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 0.95% for 3.000 ft, ridge at the alignment, -0.95% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); station 98.000 ft: left -0.06%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 1.06% for 3.000 ft, ridge at the alignment, -1.06% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); station 186.000 ft: left -0.15%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 0.89% for 3.000 ft, ridge at the alignment, -0.89% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); At station 124.750 ft the section has 6 ridge points, not 5, and is left out: left -0.01%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 0.84% for 3.000 ft, ridge at the alignment, -1.25% for 1.638 ft, ridge at 1.638 ft, -0.35% for 1.362 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft). At station 195.500 ft the section has 7 ridge points, not 5, and is left out: left 0.01%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 1.30% for 1.774 ft, ridge at -1.226 ft, 0.25% for 1.226 ft, ridge at the alignment, -0.33% for 1.498 ft, ridge at 1.498 ft, -1.41% for 1.502 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft).
-[Info] [2026-10-16 12:34:31] Hint: 21 elements may be haunches, e.g. IfcSlab #5361 (Name "Haunch_S3B7", ObjectType "Haunch"). They aren't used. To measure them with the deck, add a "haunch" element role to the mapping table.
-[Info] [2026-10-16 12:34:31] Deck gross depth 8.470 in (from deck geometry)
-[Info] [2026-10-16 12:34:31] Left overhang edge depth 10.059 in (from deck geometry)
-[Info] [2026-10-16 12:34:31] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-10-16 12:34:31] Right overhang edge depth 9.942 in (from deck geometry)
-[Info] [2026-10-16 12:34:31] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-10-16 12:34:31] The haunches are not part of the deck geometry. The default haunch shape and fillet are used.
-[Info] [2026-10-16 12:34:31] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-10-16 12:34:31] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
-[Info] [2026-10-16 12:34:31] The bearing fixed along the girder also wasn't found for 41 more elements.
-[Info] [2026-10-16 12:34:31] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 20 more elements.
-[Info] [2026-10-16 12:34:31] The girder concrete strength, f'c also wasn't found for 20 more elements.
-[Info] [2026-10-16 12:34:31] The girder concrete strength at release, f'ci also wasn't found for 20 more elements.
-[Info] [2026-10-16 12:34:31] Done IFC import from file
+[Info] [2026-10-16 13:09:26] Starting IFC import from file
+[Info] [2026-10-16 13:09:26] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
+[Info] [2026-10-16 13:09:28] Initializing units and precision from IFC file.
+[Info] [2026-10-16 13:09:28] Importing alignment data from IFC file...
+[Info] [2026-10-16 13:09:28] Importing from bridge IFC file.
+[Info] [2026-10-16 13:09:28] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
+[Info] [2026-10-16 13:09:28] Expected Pier 1 #679=IfcBridgePart('0pyGw5cdLBju4mkNqayzKu',$,'Abutment 1',$,$,#2616,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-10-16 13:09:28] Expected Pier 2 #2786=IfcBridgePart('1UYyVXuwj99uHgd4PvNEY_',$,'Abutment 2',$,$,#20246,$,$,$,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-10-16 13:09:28] Expected Pier 3 #3357=IfcBridgePart('3e9_ctlvr45xIz5UO_ym6j',$,'Pier 1',$,$,#13660,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-10-16 13:09:29] Expected Pier 4 #4395=IfcBridgePart('3C_4h4D8nBvhIMFgPGIP4w',$,'Pier 2',$,$,#17575,$,$,$,.NOTDEFINED.,.PIER.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-10-16 13:09:31] The girder designation (e.g. "Span 1, Girder 2") of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
+[Info] [2026-10-16 13:09:31] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-10-16 13:09:31] Pier 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-10-16 13:09:31] Pier 3 orientation NORMAL (from CL bearing line)
+[Info] [2026-10-16 13:09:31] Abutment 4 orientation NORMAL (from CL bearing line)
+[Info] [2026-10-16 13:09:31] Uniform girder spacing 6.694 ft, measured normal to the alignment at the pier lines
+[Info] [2026-10-16 13:09:31] The girder type name of Beam 1 Span 1 wasn't found. Locations tried: type attribute Name; usBrPset_PrecastConcreteBeam.ShapeName.
+[Info] [2026-10-16 13:09:31] Hint: properties of Beam 1 Span 1 that may hold the girder type name: IaDOT_PPCB.2_Type = "BTB45"; classification 2407-0562845 Name = "Beam, PPC, BTB45". They aren't used. To use one, add it to the locations of girder.type_names in the mapping table.
+[Info] [2026-10-16 13:09:31] 2 of 2 library girders have a section to compare with.
+[Info] [2026-10-16 13:09:34] Section of Beam 1 Span 1: height 36.001 in, width 34.000 in, area 633.1 in^2, I 99766 in^4. No library girder has this section. The closest is azdrcared (height 36.001 in vs 58.000 in, centroid (from the top) 19.364 in vs 30.042 in, area 633.1 vs 604.5 in^2, I 99765.8 vs 265373.7 in^4, width differs over 35.750 in of depth (the most 35.188 in below the top: 30.000 in vs 6.000 in)). These beam factories fit the section equally: NU Beam (BridgeSight) (BridgeSight), CalTrans I-Beam (BridgeSight) (BridgeSight), Nebraska NU Girder (WSDOT); Nebraska NU Girder was published by WSDOT. The Nebraska NU Girder beam factory fits the section (all dimensions fitted, 5 of 39 beam factories fully fitted after screening; the closest: NU Beam (BridgeSight) 0.9, CalTrans I-Beam (BridgeSight) 0.9, Nebraska NU Girder 0.9, IL Girder (BridgeSight) 1.0, FIB Girder (BridgeSight) 1.5, 3.0 s). A new library entry is needed (not created yet): D1 3.868 in, D2 1.583 in, D3 17.565 in, D4 5.479 in, D5 7.506 in, R1 8.208 in, R2 8.418 in, R3 0.037 in, R4 2.171 in, T 6.512 in, W1 33.990 in, W2 30.001 in, C1 0.729 in. It differs locally: width differs over 1.000 in of depth (the most 3.938 in below the top: 32.293 in vs 32.788 in), but the outlines are within 0.081 in of each other.
+[Info] [2026-10-16 13:09:34] Girder type of Beam 1 Span 1 could not be determined. No similar girder in the library. Using Unknown_Girder_Type
+[Info] [2026-10-16 13:09:34] Section of Beam 2 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 3 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 4 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 5 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 6 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 7 Span 1: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 1 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 2 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 3 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 4 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 5 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 6 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 7 Span 2: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 1 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 2 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 3 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 4 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 5 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 6 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] Section of Beam 7 Span 3: the same as an earlier girder's, so Unknown_Girder_Type is used without fitting again.
+[Info] [2026-10-16 13:09:34] The girder concrete strength at release, f'ci of Beam 1 Span 1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.ReleaseStrength.
+[Info] [2026-10-16 13:09:34] The girder concrete strength, f'c of Beam 1 Span 1 wasn't found. Locations tried: Pset_MaterialConcrete.CompressiveStrength (material).
+[Info] [2026-10-16 13:09:34] Abutment 1 ahead face: end distance 8.00002 in, bearing offset 1.17855e-08 in (from the CL bearings)
+[Info] [2026-10-16 13:09:34] Pier 2 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-10-16 13:09:34] Pier 2 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-10-16 13:09:34] Pier 3 ahead face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-10-16 13:09:34] Pier 3 back face: end distance 8.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-10-16 13:09:34] Abutment 4 back face: end distance 8.00002 in, bearing offset -5.23895e-09 in (from the CL bearings)
+[Info] [2026-10-16 13:09:34] The bearing fixed along the girder of Bearing 1 wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
+[Info] [2026-10-16 13:09:34] Hint: properties of Bearing 1 that may hold the bearing fixed along the girder: Bearing Item - ItemTypes.3_Fixity = "Fixed". They aren't used. To use one, add it to the locations of bearing.fixed_x in the mapping table.
+[Info] [2026-10-16 13:09:34] Bearings at Abutment 1 ahead face: rectangular, 3.000 in x 28.500 in, height 3.000 in
+[Info] [2026-10-16 13:09:34] Bearings at Pier 2 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-10-16 13:09:34] Bearings at Pier 2 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-10-16 13:09:34] Bearings at Pier 3 ahead face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-10-16 13:09:34] Bearings at Pier 3 back face: rectangular, 9.000 in x 28.500 in, height 1.000 in
+[Info] [2026-10-16 13:09:34] Bearings at Abutment 4 back face: rectangular, 3.000 in x 28.500 in, height 3.000 in
+[Info] [2026-10-16 13:09:34] The model has no traffic barriers (IfcWall.USERDEFINED with ObjectType = "BARRIER").
+[Info] [2026-10-16 13:09:34] Profile from the top of the deck at the alignment at 28 stations: elevation 1220.072 ft at station -1.500 ft, a vertical curve from station -1.500 ft to 197.500 ft (0.94% to 0.41%) (within 0.050 in).
+[Info] [2026-10-16 13:09:34] Roadway section from the top of the deck at 11 stations (the quarter points of the spans and near the ends of the bridge): 4 templates: station 0.500 ft: left -0.01%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 1.00% for 3.000 ft, ridge at the alignment, -1.00% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); station 71.250 ft: left -0.32%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 0.95% for 3.000 ft, ridge at the alignment, -0.95% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); station 98.000 ft: left -0.06%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 1.06% for 3.000 ft, ridge at the alignment, -1.06% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); station 186.000 ft: left -0.15%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 0.89% for 3.000 ft, ridge at the alignment, -0.89% for 3.000 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft); At station 124.750 ft the section has 6 ridge points, not 5, and is left out: left -0.01%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 0.84% for 3.000 ft, ridge at the alignment, -1.25% for 1.638 ft, ridge at 1.638 ft, -0.35% for 1.362 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft). At station 195.500 ft the section has 7 ridge points, not 5, and is left out: left 0.01%, ridge at -22.000 ft, 2.00% for 19.000 ft, ridge at -3.000 ft, 1.30% for 1.774 ft, ridge at -1.226 ft, 0.25% for 1.226 ft, ridge at the alignment, -0.33% for 1.498 ft, ridge at 1.498 ft, -1.41% for 1.502 ft, ridge at 3.000 ft, -2.00% for 19.000 ft, ridge at 22.000 ft, right 0.00% (rise to the right, measured from -23.500 ft to 23.500 ft).
+[Info] [2026-10-16 13:09:34] Hint: 21 elements may be haunches, e.g. IfcSlab #5361 (Name "Haunch_S3B7", ObjectType "Haunch"). They aren't used. To measure them with the deck, add a "haunch" element role to the mapping table.
+[Info] [2026-10-16 13:09:34] Deck gross depth 8.470 in (from deck geometry)
+[Info] [2026-10-16 13:09:34] Left overhang edge depth 10.059 in (from deck geometry)
+[Info] [2026-10-16 13:09:34] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-10-16 13:09:34] Right overhang edge depth 9.942 in (from deck geometry)
+[Info] [2026-10-16 13:09:34] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-10-16 13:09:34] The haunches are not part of the deck geometry. The default haunch shape and fillet are used.
+[Info] [2026-10-16 13:09:34] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-10-16 13:09:34] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-10-16 13:09:35] The bearing fixed along the girder also wasn't found for 41 more elements.
+[Info] [2026-10-16 13:09:35] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 20 more elements.
+[Info] [2026-10-16 13:09:35] The girder concrete strength, f'c also wasn't found for 20 more elements.
+[Info] [2026-10-16 13:09:35] The girder concrete strength at release, f'ci also wasn't found for 20 more elements.
+[Info] [2026-10-16 13:09:35] Done IFC import from file
 IFC import succeeded
 Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\Iowa-StandardTable.pgs

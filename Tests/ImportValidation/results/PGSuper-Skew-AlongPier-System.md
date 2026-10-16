@@ -5,11 +5,11 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**59 of 312 match** - mismatch: 0, not imported: 24, missing: 0, not comparable: 0, default match: 229, extra: 0
+**79 of 312 match** - mismatch: 0, not imported: 4, missing: 0, not comparable: 0, default match: 229, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
-## not imported (24)
+## not imported (4)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -17,26 +17,6 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[2].connection_type` | 2 | 6 | template default |
 | `pier[3].connection_type` | 2 | 6 | template default |
 | `pier[4].connection_type` | 1 | 6 | template default |
-| `group[0].girder[0].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[0].girder[1].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[0].girder[2].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[0].girder[3].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[0].girder[4].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[1].girder[0].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[1].girder[1].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[1].girder[2].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[1].girder[3].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[1].girder[4].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[2].girder[0].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[2].girder[1].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[2].girder[2].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[2].girder[3].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[2].girder[4].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[3].girder[0].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[3].girder[1].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[3].girder[2].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[3].girder[3].type` | WF42G | Unknown_Girder_Type | template default |
-| `group[3].girder[4].type` | WF42G | Unknown_Girder_Type | template default |
 
 ## default match (229)
 
@@ -272,7 +252,7 @@ A *default match* equals the expected value only because the template has the sa
 | `at[8].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[8].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 
-## match (59)
+## match (79)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -311,9 +291,29 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].ahead.end_distance` | 25.000 in | 25.000 in |  |
 | `pier[4].ahead.bearing_offset` | 18.000 in | 18.000 in |  |
 | `bridge.group_count` | 4 | 4 |  |
+| `group[0].girder[0].type` | WF42G | WF42G |  |
+| `group[0].girder[1].type` | WF42G | WF42G |  |
+| `group[0].girder[2].type` | WF42G | WF42G |  |
+| `group[0].girder[3].type` | WF42G | WF42G |  |
+| `group[0].girder[4].type` | WF42G | WF42G |  |
 | `group[1].piers` | 1-2 | 1-2 |  |
+| `group[1].girder[0].type` | WF42G | WF42G |  |
+| `group[1].girder[1].type` | WF42G | WF42G |  |
+| `group[1].girder[2].type` | WF42G | WF42G |  |
+| `group[1].girder[3].type` | WF42G | WF42G |  |
+| `group[1].girder[4].type` | WF42G | WF42G |  |
 | `group[2].piers` | 2-3 | 2-3 |  |
+| `group[2].girder[0].type` | WF42G | WF42G |  |
+| `group[2].girder[1].type` | WF42G | WF42G |  |
+| `group[2].girder[2].type` | WF42G | WF42G |  |
+| `group[2].girder[3].type` | WF42G | WF42G |  |
+| `group[2].girder[4].type` | WF42G | WF42G |  |
 | `group[3].piers` | 3-4 | 3-4 |  |
+| `group[3].girder[0].type` | WF42G | WF42G |  |
+| `group[3].girder[1].type` | WF42G | WF42G |  |
+| `group[3].girder[2].type` | WF42G | WF42G |  |
+| `group[3].girder[3].type` | WF42G | WF42G |  |
+| `group[3].girder[4].type` | WF42G | WF42G |  |
 | `pier[0].skew` | 20.0000 deg | 20.0000 deg |  |
 | `pier[2].skew` | -15.0000 deg | -15.0000 deg |  |
 | `pier[3].skew` | -30.0000 deg | -30.0000 deg |  |
