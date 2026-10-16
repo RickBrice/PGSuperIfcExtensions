@@ -5,15 +5,14 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+24.00, at[2] = 0+54.00
 
-**59 of 102 values set by the import**, 43 are template defaults
+**60 of 102 values set by the import**, 42 are template defaults
 
-## template default (43)
+## template default (42)
 
 | Value | Template | Imported |
 |---|---|---|
 | `bridge.girder_family` | I-Beam | I-Beam |
 | `bridge.girder_orientation` | 0 | 0 |
-| `bridge.same_girder_for_entire_bridge` | -1 | -1 |
 | `bridge.girder_spacing_type` | 0 | 0 |
 | `bridge.fillet` | 0.750 in | 0.750 in |
 | `bridge.pier_count` | 2 | 2 |
@@ -55,10 +54,11 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `at[2].profile.elevation` | 0.000 ft | 0.000 ft |
 | `at[2].profile.grade` | 0.0000 % | 0.0000 % |
 
-## set by the import (59)
+## set by the import (60)
 
 | Value | Template | Imported |
 |---|---|---|
+| `bridge.same_girder_for_entire_bridge` | -1 | 0 |
 | `bridge.girder_spacing` | 6.000 ft (type 0, location 0) | 6.500 ft (type 0, location 0) |
 | `bridge.slab_offset_type` | 0 | 2 |
 | `bridge.slab_offset` | 11.000 in |  |

@@ -5,24 +5,18 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 20+00.00, at[1] = 20+50.00, at[2] = 21+00.00, at[3] = 21+65.00, at[4] = 22+30.00, at[5] = 22+80.00, at[6] = 23+30.00
 
-**124 of 239 match** - mismatch: 0, not imported: 14, missing: 0, not comparable: 0, default match: 101, extra: 0
+**130 of 239 match** - mismatch: 0, not imported: 8, missing: 0, not comparable: 0, default match: 101, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
-## not imported (14)
+## not imported (8)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
-| `bridge.same_girder_for_entire_bridge` | 0 | -1 | template default |
 | `group[0].girder[0].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[0].girder[1].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[0].girder[2].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[0].girder[3].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[1].girder[0].type` | WF100G | Unknown_Girder_Type | template default |
-| `group[1].girder[1].type` | WF100G | Unknown_Girder_Type | template default |
-| `group[1].girder[2].type` | WF100G | Unknown_Girder_Type | template default |
-| `group[1].girder[3].type` | WF100G | Unknown_Girder_Type | template default |
-| `group[1].girder[4].type` | WF100G | Unknown_Girder_Type | template default |
 | `group[2].girder[0].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[2].girder[1].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[2].girder[2].type` | WF66G | Unknown_Girder_Type | template default |
@@ -134,10 +128,11 @@ A *default match* equals the expected value only because the template has the sa
 | `at[6].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[6].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 
-## match (124)
+## match (130)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
+| `bridge.same_girder_for_entire_bridge` | 0 | 0 |  |
 | `bridge.girder_spacing_type` | 1 | 1 |  |
 | `bridge.slab_offset` | 9.500 in | 9.500 in |  |
 | `bridge.pier_count` | 4 | 4 |  |
@@ -196,22 +191,27 @@ A *default match* equals the expected value only because the template has the sa
 | `group[0].girder[3].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[0].girder[3].fci` | 4.000 ksi | 4.000 ksi |  |
 | `group[1].piers` | 1-2 | 1-2 |  |
+| `group[1].girder[0].type` | WF100G | WF100G |  |
 | `group[1].girder[0].slab_offset_start` | 9.500 in | 9.500 in |  |
 | `group[1].girder[0].slab_offset_end` | 9.500 in | 9.500 in |  |
 | `group[1].girder[0].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[0].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[1].girder[1].type` | WF100G | WF100G |  |
 | `group[1].girder[1].slab_offset_start` | 9.500 in | 9.500 in |  |
 | `group[1].girder[1].slab_offset_end` | 9.500 in | 9.500 in |  |
 | `group[1].girder[1].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[1].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[1].girder[2].type` | WF100G | WF100G |  |
 | `group[1].girder[2].slab_offset_start` | 9.500 in | 9.500 in |  |
 | `group[1].girder[2].slab_offset_end` | 9.500 in | 9.500 in |  |
 | `group[1].girder[2].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[2].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[1].girder[3].type` | WF100G | WF100G |  |
 | `group[1].girder[3].slab_offset_start` | 9.500 in | 9.500 in |  |
 | `group[1].girder[3].slab_offset_end` | 9.500 in | 9.500 in |  |
 | `group[1].girder[3].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[3].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[1].girder[4].type` | WF100G | WF100G |  |
 | `group[1].girder[4].slab_offset_start` | 9.500 in | 9.500 in |  |
 | `group[1].girder[4].slab_offset_end` | 9.500 in | 9.500 in |  |
 | `group[1].girder[4].fc` | 5.000 ksi | 5.000 ksi |  |
