@@ -534,9 +534,10 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
    if (!deck_points.empty())
       pDeck->DeckEdgePoints = deck_points;
 
-   // the roadway section, from the top of the deck between the barriers, then the traffic barriers, which PGSuper
-   // places at the edges of the deck turned to the roadway's cross slope
+   // the profile (when the alignment has none) and the roadway section, from the top of the deck between the barriers,
+   // then the traffic barriers, which PGSuper places at the edges of the deck turned to the roadway's cross slope
    auto barriers = get_barrier_meshes(m_Importer.GetBroker(), file);
+   import_profile(m_Importer.GetBroker(), *deck, barriers, pier_stations, !m_Importer.HasProfile());
    import_roadway_section(m_Importer.GetBroker(), *deck, barriers, pier_stations);
    import_traffic_barriers(m_Importer.GetBroker(), *deck, barriers, pier_stations, bridge_desc);
 

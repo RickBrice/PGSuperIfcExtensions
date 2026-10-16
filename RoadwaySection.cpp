@@ -259,6 +259,162 @@ namespace
       os << ", right " << percent(s.right_slope) << " (rise to the right, measured from " << feet(s.from) << " to " << feet(s.to) << ")";
       return os.str();
    }
+
+   // A profile fitted to elevations along the alignment: tangents and parabolic vertical curves with the grade
+   // continuous (a quadratic spline). The pieces are between knots and are curved or straight
+   struct ProfileFit
+   {
+      std::vector<double> knots; // the ends of the pieces, from the first station to the last
+      std::vector<bool> curved;  // for each piece
+      Eigen::VectorXd x;         // the elevation and grade at the first knot, then the rate of change of grade of each curved piece
+      double max_residual = DBL_MAX;
+      double sum_of_squares = DBL_MAX;
+
+      // the elevation at s is row(s).dot(x); with grade_row, the grade
+      Eigen::RowVectorXd row(double s, bool grade_row = false) const
+      {
+         Eigen::RowVectorXd r(x.size());
+         r(0) = grade_row ? 0.0 : 1.0;
+         r(1) = grade_row ? 1.0 : s - knots.front();
+         Eigen::Index c = 2;
+         for (size_t k = 0; k < curved.size(); k++)
+         {
+            if (!curved[k])
+               continue;
+            double a = knots[k], b = knots[k + 1];
+            double u = std::clamp(s, a, b) - a; // distance into the piece
+            double beyond = std::max(s - b, 0.0);
+            r(c++) = grade_row ? u : u * u / 2 + (b - a) * beyond;
+         }
+         return r;
+      }
+      double elevation(double s) const { return row(s).dot(x); }
+      double grade(double s) const { return row(s, true).dot(x); }
+   };
+
+   ProfileFit fit_pieces(const std::vector<Eigen::Vector2d>& samples, const std::vector<double>& knots, const std::vector<bool>& curved)
+   {
+      ProfileFit fit;
+      fit.knots = knots;
+      fit.curved = curved;
+      fit.x = Eigen::VectorXd::Zero(2 + std::count(curved.begin(), curved.end(), true));
+      if (samples.size() < (size_t)fit.x.size())
+         return fit;
+      Eigen::MatrixXd A(samples.size(), fit.x.size());
+      Eigen::VectorXd z(samples.size());
+      for (size_t i = 0; i < samples.size(); i++)
+      {
+         A.row(i) = fit.row(samples[i].x());
+         z(i) = samples[i].y();
+      }
+      fit.x = A.colPivHouseholderQr().solve(z);
+      Eigen::VectorXd residuals = A * fit.x - z;
+      fit.max_residual = residuals.cwiseAbs().maxCoeff();
+      fit.sum_of_squares = residuals.squaredNorm();
+      return fit;
+   }
+
+   // The simplest profile within tolerance of the samples: a tangent, else one vertical curve, else vertical curves
+   // between knots added at the samples one at a time (where the fit improves most); then pieces become tangents and
+   // knots are removed where the fit stays within tolerance. The end pieces reach from and to the given stations
+   ProfileFit fit_profile(const std::vector<Eigen::Vector2d>& samples, double from, double to, double tolerance)
+   {
+      double first = std::min(from, samples.front().x()), last = std::max(to, samples.back().x());
+      auto best = fit_pieces(samples, { first, last }, { false });
+      if (best.max_residual <= tolerance)
+         return best;
+      best = fit_pieces(samples, { first, last }, { true });
+
+      while (tolerance < best.max_residual && best.knots.size() < samples.size() / 3 + 2)
+      {
+         ProfileFit next;
+         for (const auto& p : samples)
+         {
+            double t = p.x();
+            if (std::any_of(best.knots.begin(), best.knots.end(), [t](double k) {return fabs(k - t) < 1e-6; }))
+               continue;
+            auto knots = best.knots;
+            knots.insert(std::upper_bound(knots.begin(), knots.end(), t), t);
+            auto f = fit_pieces(samples, knots, std::vector<bool>(knots.size() - 1, true));
+            if (f.sum_of_squares < next.sum_of_squares)
+               next = f;
+         }
+         if (best.sum_of_squares <= next.sum_of_squares)
+            break;
+         best = next;
+      }
+
+      double limit = std::max(tolerance, best.max_residual);
+      for (bool changed = true; changed; )
+      {
+         changed = false;
+         for (size_t k = 0; k < best.curved.size(); k++)
+         {
+            if (!best.curved[k])
+               continue;
+            auto curved = best.curved;
+            curved[k] = false;
+            auto f = fit_pieces(samples, best.knots, curved);
+            if (f.max_residual <= limit)
+            {
+               best = f;
+               changed = true;
+            }
+         }
+         for (size_t j = 1; j + 1 < best.knots.size(); j++)
+         {
+            auto knots = best.knots;
+            auto curved = best.curved;
+            knots.erase(knots.begin() + j);
+            curved[j - 1] = curved[j - 1] || curved[j];
+            curved.erase(curved.begin() + j);
+            auto f = fit_pieces(samples, knots, curved);
+            if (f.max_residual <= limit)
+            {
+               best = f;
+               changed = true;
+               break;
+            }
+         }
+      }
+      return best;
+   }
+
+   // PGSuper's profile: from the first knot, with a symmetric vertical curve for each curved piece
+   ProfileData2 to_profile_data(const ProfileFit& fit)
+   {
+      ProfileData2 profile;
+      profile.Station = fit.knots.front();
+      profile.Elevation = fit.elevation(profile.Station);
+      profile.Grade = fit.grade(profile.Station);
+      for (size_t k = 0; k < fit.curved.size(); k++)
+      {
+         if (!fit.curved[k])
+            continue;
+         VertCurveData curve;
+         curve.PVIStation = (fit.knots[k] + fit.knots[k + 1]) / 2;
+         curve.L1 = fit.knots[k + 1] - fit.knots[k];
+         curve.L2 = 0; // symmetric
+         curve.ExitGrade = fit.grade(fit.knots[k + 1]);
+         profile.VertCurves.push_back(curve);
+      }
+      return profile;
+   }
+
+   std::string describe(const ProfileFit& fit)
+   {
+      std::ostringstream os;
+      os << "elevation " << feet(fit.elevation(fit.knots.front())) << " at station " << feet(fit.knots.front());
+      for (size_t k = 0; k < fit.curved.size(); k++)
+      {
+         double a = fit.knots[k], b = fit.knots[k + 1];
+         if (fit.curved[k])
+            os << ", a vertical curve from station " << feet(a) << " to " << feet(b) << " (" << percent(fit.grade(a)) << " to " << percent(fit.grade(b)) << ")";
+         else
+            os << ", a grade of " << percent(fit.grade(a)) << " from station " << feet(a) << " to " << feet(b);
+      }
+      return os.str();
+   }
 }
 
 void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations)
@@ -345,16 +501,6 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
    for (const auto& s : sections)
       (is_common(s) ? used : different).push_back(s);
 
-   // the top of the deck at the alignment is a check of the profile (the profile grade is the roadway surface)
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
-   double lowest = DBL_MAX, highest = -DBL_MAX;
-   for (const auto& s : used) // measured sections only
-   {
-      double difference = s.elevation - pAlignment->GetElevation(s.station, 0.0);
-      lowest = std::min(lowest, difference);
-      highest = std::max(highest, difference);
-   }
-
    // In a transition (the sections at the first two, or last two, stations differ), the first and last sections are
    // extended linearly to the ends of the bridge, as PGSuper interpolates between templates
    size_t extrapolated = 0;
@@ -439,7 +585,138 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
       os << " " << not_measured << " stations couldn't be measured.";
    for (const auto& s : different)
       os << " At station " << feet(s.station) << " the section has " << s.ridges.size() << " ridge points, not " << common.first << ", and is left out: " << describe(s) << ".";
-   if (inch / 8 < std::max(fabs(lowest), fabs(highest)))
-      os << " The top of the deck at the alignment is " << feet(lowest) << " to " << feet(highest) << " above the profile (the profile isn't measured from the deck yet).";
+   WBFL::System::Logger::Info(os.str());
+}
+
+void import_profile(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations, bool bReplace)
+{
+   if (pier_stations.size() < 2)
+      return;
+
+   // the roadway surface at the alignment (the top of the deck, or the roadway extended to the alignment where the deck
+   // doesn't reach it) about every 10 ft, and at least 8 times in each span
+   std::vector<Eigen::Vector2d> on_deck, extended;
+   for (size_t span = 0; span + 1 < pier_stations.size(); span++)
+   {
+      double length = pier_stations[span + 1] - pier_stations[span];
+      size_t n = std::max<size_t>(8, (size_t)ceil(length / (120 * inch)));
+      for (size_t i = 0; i <= n; i++)
+      {
+         if (i == n && span + 2 < pier_stations.size())
+            break; // the next span starts here
+         double station = pier_stations[span] + length * i / n;
+         // at the end piers, as near them as the deck goes (it may stop short of the CL pier)
+         bool first = (span == 0 && i == 0);
+         bool last = (span + 2 == pier_stations.size() && i == n);
+         for (double distance : { 0.0, 1.0, 2.0, 4.0, 8.0 })
+         {
+            if (0 < distance && (!(first || last) || length / n <= distance * 12 * inch))
+               break;
+            double at = station + (first ? 1 : -1) * distance * 12 * inch;
+            if (auto section = measure(pBroker, deck, barriers, at))
+            {
+               (section->from <= 0 && 0 <= section->to ? on_deck : extended).emplace_back(at, section->elevation);
+               break;
+            }
+         }
+      }
+   }
+   // the deck at the alignment where it's measured there at most stations (a skewed end can leave it off the deck)
+   auto& samples = (extended.size() < on_deck.size() ? on_deck : extended);   if (samples.size() < 3)
+   {
+      WBFL::System::Logger::Info("The profile couldn't be measured from the top of the deck. The profile is not changed.");
+      return;
+   }
+
+   // glitches in the deck (e.g. a cut that misses the top of the deck, which happens at a few stations of the skewed
+   // PGSuper exports): a sample more than 1/2 in from the local profile is left out. The local profile is the parabola
+   // through three of the eight samples nearest it (four on each side, or eight on one side at an end) that the most of
+   // them agree with (least median of squares), so it holds when a few glitches are near each other
+   std::vector<Eigen::Vector2d> glitches;
+   std::vector<Eigen::Vector2d> kept;
+   for (size_t i = 0; i < samples.size(); i++)
+   {
+      std::vector<Eigen::Vector2d> nearby;
+      size_t from = (i < 4 ? 0 : i - 4);
+      size_t to = std::min(from + 8, samples.size() - 1);
+      from = (8 < to ? to - 8 : 0);
+      for (size_t j = from; j <= to; j++)
+      {
+         if (j != i)
+            nearby.push_back(samples[j] - samples[i]); // relative to the sample, which is at the origin
+      }
+      bool glitch = false;
+      if (4 <= nearby.size())
+      {
+         size_t rank = nearby.size() / 2 + 1; // a majority of the nearby samples
+         double best_rank_residual = DBL_MAX, best_at_sample = 0;
+         std::vector<double> residuals(nearby.size());
+         for (size_t a = 0; a < nearby.size(); a++)
+         {
+            for (size_t b = a + 1; b < nearby.size(); b++)
+            {
+               for (size_t c = b + 1; c < nearby.size(); c++)
+               {
+                  // the parabola through three samples (Lagrange form), at s
+                  auto parabola = [&](double s)
+                     {
+                        const auto& p = nearby[a];
+                        const auto& q = nearby[b];
+                        const auto& r = nearby[c];
+                        return p.y() * (s - q.x()) * (s - r.x()) / ((p.x() - q.x()) * (p.x() - r.x())) +
+                               q.y() * (s - p.x()) * (s - r.x()) / ((q.x() - p.x()) * (q.x() - r.x())) +
+                               r.y() * (s - p.x()) * (s - q.x()) / ((r.x() - p.x()) * (r.x() - q.x()));
+                     };
+                  for (size_t k = 0; k < nearby.size(); k++)
+                     residuals[k] = fabs(nearby[k].y() - parabola(nearby[k].x()));
+                  std::nth_element(residuals.begin(), residuals.begin() + rank - 1, residuals.end());
+                  if (residuals[rank - 1] < best_rank_residual)
+                  {
+                     best_rank_residual = residuals[rank - 1];
+                     best_at_sample = parabola(0.0);
+                  }
+               }
+            }
+         }
+         glitch = inch / 2 < fabs(best_at_sample);
+      }
+      (glitch ? glitches : kept).push_back(samples[i]);
+   }
+   if (kept.size() < 3)
+   {
+      WBFL::System::Logger::Info("The profile couldn't be measured from the top of the deck. The profile is not changed.");
+      return;
+   }
+
+   // from end pier to end pier: the deck may stop short of them, and a vertical curve there continues to them
+   auto fit = fit_profile(kept, pier_stations.front(), pier_stations.back(), inch / 8);
+
+   std::ostringstream os;
+   os << "Profile from the top of the deck at the alignment at " << kept.size() << " stations: " << describe(fit) << " (within " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(fit.max_residual, WBFL::Units::Measure::Inch) << " in).";
+   if (&samples == &extended)
+      os << " The deck doesn't reach the alignment at most stations, so the roadway is extended to it.";
+   for (const auto& g : glitches)
+      os << " At station " << feet(g.x()) << " the top of the deck is out of line with its neighbors and is left out.";
+
+   if (bReplace)
+   {
+      GET_IFACE2(pBroker, IRoadwayData, pRoadwayData);
+      pRoadwayData->SetProfileData2(to_profile_data(fit));
+   }
+   else
+   {
+      // the alignment has a profile: the deck is a check of it (the profile grade is the roadway surface)
+      GET_IFACE2(pBroker, IRoadway, pAlignment);
+      double lowest = DBL_MAX, highest = -DBL_MAX;
+      for (const auto& p : kept)
+      {
+         double difference = p.y() - pAlignment->GetElevation(p.x(), 0.0);
+         lowest = std::min(lowest, difference);
+         highest = std::max(highest, difference);
+      }
+      os << " The alignment has a profile, which is used.";
+      if (inch / 8 < std::max(fabs(lowest), fabs(highest)))
+         os << " The top of the deck at the alignment is " << feet(lowest) << " to " << feet(highest) << " above it.";
+   }
    WBFL::System::Logger::Info(os.str());
 }

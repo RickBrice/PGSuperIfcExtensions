@@ -141,6 +141,8 @@ struct TargetDef
 
 ### Vocabulary for M1–M2 (import)
 
+This was the design-time list. The current targets, and the PGSuper data and code behind each, are in [Targets.md](Targets.md).
+
 | Target | Element | Kind | Import setter | Export getter |
 |---|---|---|---|---|
 | `bridge.number_of_spans` | Bridge | Count | cross check against the modeled substructure; on a mismatch, log an error and use the model (G4) | `IBridge::GetSpanCount` |

@@ -62,11 +62,12 @@ def fmt(value, kind):
         return str(value)
 
 
-def same(a, b, kind):
-    """True if a and b are the same value within the tolerance for kind"""
+def same(a, b, kind, tol=None):
+    """True if a and b are the same value within the tolerance for kind, or within tol if given"""
     if a is None or b is None:
         return a is None and b is None
-    tol = KINDS.get(kind, (None, None))[0]
+    if tol is None:
+        tol = KINDS.get(kind, (None, None))[0]
     if kind == "point":
         return math.dist(a, b) <= tol
     if kind == "spacing":
@@ -96,8 +97,18 @@ def generic(key):
     return re.sub(r"(?<!^at)\[\d+\]", "[*]", key)
 
 
-def compare(imported, expected, template=None):
-    """list of (key, status, expected value, imported value, kind, note)"""
+def tolerance_for(key, tolerances):
+    """the tolerance (SI) of the first pattern in tolerances ({pattern: tolerance}, where * matches anything) that
+    matches key, else None"""
+    for pattern, tol in (tolerances or {}).items():
+        if re.fullmatch(re.escape(pattern).replace(r"\*", ".*"), key):
+            return tol
+    return None
+
+
+def compare(imported, expected, template=None, tolerances=None):
+    """list of (key, status, expected value, imported value, kind, note). tolerances ({key pattern: tolerance in SI})
+    replaces the tolerance of the kind for the keys it matches, e.g. for values measured from geometry"""
     template_values = {}
     if template:
         for key, v in template["values"].items():
@@ -116,7 +127,7 @@ def compare(imported, expected, template=None):
             rows.append((key, "not comparable", e, i, kind, "not supported by pgs_extract"))
         elif kind == "spacing" and e["datum"] != i["datum"]:
             rows.append((key, "not comparable", e, i, kind, "measured differently"))
-        elif same(e, i, kind):
+        elif same(e, i, kind, tolerance_for(key, tolerances)):
             is_default = any(same(t, i, kind) for t in template_values.get(generic(key), []))
             rows.append((key, "default match" if is_default else "match", e, i, kind, "template default" if is_default else ""))
         elif any(same(t, i, kind) for t in template_values.get(generic(key), [])):

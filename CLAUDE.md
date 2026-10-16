@@ -1,6 +1,6 @@
 # PGSuperIfcExtensions: notes for Claude
 
-Project knowledge that isn't in the code or git history. The design notes are in `devdocs/` (start with `IfcImportPlan.md` and `MappingTablesDesign.md`).
+Project knowledge that isn't in the code or git history. The design notes are in `devdocs/` (start with `IfcImportPlan.md` and `MappingTablesDesign.md`; `Targets.md` maps the mapping-table target names to PGSuper data and code, keep it current when targets change).
 
 ## Working rules
 - **Commits:** commit code and docs first, then the validation results (`Tests/ImportValidation/results`, `export_baseline`) in a separate "Updates ... validation results" commit. Never push; the user pushes after the overnight PGSuper regression tests. Changes in WBFL and PGSuper stay uncommitted until the user says so. Don't commit the stray `PGSuper_Import_Model.dbp/.dbr/.ifc` files.

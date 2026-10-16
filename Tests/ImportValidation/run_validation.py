@@ -2,7 +2,10 @@
 
 For a model with a "pgs" file (round trip):
    export the project to IFC (once for each "property_units" mode), import the IFC into a new
-   project, and compare the imported project to the original project.
+   project, and compare the imported project to the original project. "remove_from_export" lists IFC
+   classes removed from the export before the import, with what they nest (e.g. "IfcAlignmentVertical",
+   so the import measures the profile from the deck); "tolerances" replaces the comparison tolerance
+   (SI) for the keys matching each pattern (e.g. "at[*].profile.grade", for values measured from geometry).
 For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
    otherwise report which values the import set (inventory).
@@ -196,6 +199,30 @@ def check_ids(run, ids, update_baseline):
     return f", IDS differs from baseline: {n} lines (see {diff_file.name})"
 
 
+def remove_from_ifc(ifc, classes):
+    """removes the entities of the IFC classes from the file, with what they nest (e.g. an IfcAlignmentVertical and
+    its segments), to test the import of a model without them"""
+    import ifcopenshell
+    f = ifcopenshell.open(str(ifc))
+    doomed = []
+    pending = [e for c in classes for e in f.by_type(c)]
+    while pending:
+        e = pending.pop()
+        doomed.append(e)
+        for rel in getattr(e, "IsNestedBy", None) or []:
+            pending += list(rel.RelatedObjects)
+            doomed.append(rel)
+    ids = {e.id() for e in doomed}
+    for rel in f.by_type("IfcRelNests"):
+        if rel.id() not in ids and any(o.id() in ids for o in rel.RelatedObjects):
+            rel.RelatedObjects = [o for o in rel.RelatedObjects if o.id() not in ids]
+    for e in doomed:
+        if e.id() in ids:
+            ids.discard(e.id())
+            f.remove(e)
+    f.write(str(ifc))
+
+
 def round_trip(model, config, exe):
     """export -> import -> compare for a PGSuper project. Returns summary rows."""
     rows = []
@@ -218,6 +245,9 @@ def round_trip(model, config, exe):
         export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
         for standard in config["standards"]:
             export_message += check_standard.ids_message(standard, ifc, run)
+        if model.get("remove_from_export"):
+            remove_from_ifc(ifc, model["remove_from_export"])
+            export_message += ", removed " + ", ".join(model["remove_from_export"]) + " before the import"
 
         ok, message = import_ifc(exe, ifc, config["template"], pgs)
         message += export_message
@@ -226,7 +256,7 @@ def round_trip(model, config, exe):
             continue
 
         imported = compare_bridge.load(str(pgs), stations)
-        comparison = compare_bridge.compare(imported, expected, template)
+        comparison = compare_bridge.compare(imported, expected, template, model.get("tolerances"))
         report = compare_bridge.report(comparison, f"{run}: round trip", rel(pgs), rel(source), stations=stations)
         (RESULTS / f"{run}.md").write_text(report, encoding="utf-8")
         rows.append((run, message, compare_bridge.score(comparison)))

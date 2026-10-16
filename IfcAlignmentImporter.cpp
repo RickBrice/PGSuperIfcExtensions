@@ -413,6 +413,10 @@ void CIfcAlignmentImporter::LoadProfile(ifcopenshell::file& file, IfcSchema::Ifc
    Float64 start_station = GetStartStation(pAlignment);
    start_station += stationAdjustment;
 
+   m_Importer.SetHasProfile(false);
+   if (!vertical_alignment)
+      WBFL::System::Logger::Info(_T("The alignment has no vertical alignment. The profile is measured from the top of the deck when the bridge is imported."));
+
    if (vertical_alignment)
    {
       auto nested = vertical_alignment.IsNestedBy();
@@ -422,13 +426,14 @@ void CIfcAlignmentImporter::LoadProfile(ifcopenshell::file& file, IfcSchema::Ifc
       if (related_objects.size() == 0)
       {
          // the profile geometry list is empty so assume a flat grade
-         WBFL::System::Logger::Info(_T("A profile was not found or the profile does not contain segments. Assuming a default profile."));
+         WBFL::System::Logger::Info(_T("The vertical alignment has no segments. The profile is measured from the top of the deck when the bridge is imported."));
          m_ProfileData.Station = start_station;
          m_ProfileData.Elevation = 0.0;
          m_ProfileData.Grade = 0.0;
          return;
       }
 
+      m_Importer.SetHasProfile(true);
       auto begin = related_objects.begin();
       auto iter = begin;
       auto end = related_objects.end();

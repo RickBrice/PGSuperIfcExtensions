@@ -80,6 +80,11 @@ public:
 
    bool IsInteractive() const { return m_Options.interactive; }
 
+   // True when the alignment has a vertical alignment with segments. Otherwise the bridge import measures the profile
+   // from the top of the deck (RoadwaySection.h)
+   bool HasProfile() const { return m_bHasProfile; }
+   void SetHasProfile(bool bHasProfile) { m_bHasProfile = bHasProfile; }
+
    // Project length and angle units, for converting geometric values to system units
    const WBFL::Units::Length& GetLengthUnit() const { return m_LengthUnit; }
    const WBFL::Units::Angle& GetAngleUnit() const { return m_AngleUnit; }
@@ -101,6 +106,7 @@ private:
    WBFL::Units::Length m_LengthUnit{ 1.0, _T("m") };
    WBFL::Units::Angle m_AngleUnit{ 1.0, _T("rad") };
    std::ostringstream m_LogStream;
+   bool m_bHasProfile = false;
    std::ostream* m_pOldLogStream = nullptr;
 
    ImportResult ImportGeoreferencing(ifcopenshell::file& file);

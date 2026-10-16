@@ -35,3 +35,9 @@ namespace WBFL { namespace EAF { class Broker; }; };
 // ridge point the others have gets it; stations where the section can't be measured, or still has a different number
 // of ridge points than most, are left out
 void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations);
+
+// Measures the profile from the top of the deck at the alignment (devdocs/IfcImportPlan.md, Phase 4), about every 10 ft
+// between the end piers, and fits tangents and symmetric parabolic vertical curves to it within 1/8 in. With bReplace
+// (the alignment has no vertical alignment) the fit becomes the profile; otherwise the deck is compared with the
+// alignment's profile and a difference is logged
+void import_profile(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations, bool bReplace);
