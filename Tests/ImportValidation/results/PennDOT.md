@@ -57,22 +57,22 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `bridge.slab_offset` | 11.000 in |  |
 | `pier[0].station` | 0+00.00 | -0+06.00 |
 | `pier[0].back.end_distance` | 20.500 in | 12.000 in |
-| `pier[0].back.bearing_offset` | 32.500 in | -0.000 in |
+| `pier[0].back.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[0].ahead.bearing.width` | 12.000 in | 31.500 in |
 | `pier[0].ahead.bearing.height` | 0.000 in | 0.750 in |
 | `pier[0].ahead.bearing.fixed_x` | 0 | -1 |
 | `pier[0].ahead.bearing.fixed_y` | 0 | -1 |
 | `pier[0].ahead.end_distance` | 20.500 in | 12.000 in |
-| `pier[0].ahead.bearing_offset` | 32.500 in | -0.000 in |
+| `pier[0].ahead.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[1].station` | 0+00.00 | 0+54.00 |
 | `pier[1].back.bearing.width` | 12.000 in | 31.500 in |
 | `pier[1].back.bearing.height` | 0.000 in | 0.750 in |
 | `pier[1].back.bearing.fixed_x` | 0 | -1 |
 | `pier[1].back.bearing.fixed_y` | 0 | -1 |
 | `pier[1].back.end_distance` | 20.500 in | 12.000 in |
-| `pier[1].back.bearing_offset` | 32.500 in | -0.000 in |
+| `pier[1].back.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[1].ahead.end_distance` | 20.500 in | 12.000 in |
-| `pier[1].ahead.bearing_offset` | 32.500 in | -0.000 in |
+| `pier[1].ahead.bearing_offset` | 32.500 in | 0.000 in |
 | `group[0].girder[0].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.172 in |

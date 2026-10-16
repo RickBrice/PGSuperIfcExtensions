@@ -183,9 +183,9 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[3].back.bearing.width` | 12.000 in | 28.500 in |
 | `pier[3].back.bearing.height` | 0.000 in | 3.000 in |
 | `pier[3].back.end_distance` | 20.500 in | 8.000 in |
-| `pier[3].back.bearing_offset` | 32.500 in | -0.000 in |
+| `pier[3].back.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[3].ahead.end_distance` | 20.500 in | 8.000 in |
-| `pier[3].ahead.bearing_offset` | 32.500 in | -0.000 in |
+| `pier[3].ahead.bearing_offset` | 32.500 in | 0.000 in |
 | `bridge.group_count` | 1 | 3 |
 | `group[0].girder_count` | 5 | 7 |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 9.025 in |
