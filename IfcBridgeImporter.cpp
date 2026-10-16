@@ -777,7 +777,7 @@ std::vector<std::string> CIfcBridgeImporter::GetGirderTypeNames(IfcSchema::IfcBe
 const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::string& beam_name, const std::vector<std::string>& girder_type_names, const SectionMeasures& section)
 {
    USES_CONVERSION;
-   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+   GET_IFACE2_NOCHECK(m_Importer.GetBroker(), ILibrary, pLibrary); // not used when the library sections are cached and nothing matches
    GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
    std::vector<std::_tstring> library_names;
    pLibNames->EnumGirderNames(&library_names); // all girder families
@@ -1192,7 +1192,7 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
       }
    }
 
-   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+   GET_IFACE2_NOCHECK(m_Importer.GetBroker(), ILibrary, pLibrary); // not used when no name is found
    GET_IFACE2(m_Importer.GetBroker(), ILibraryNames, pLibNames);
    std::vector<std::_tstring> library_names;
    pLibNames->EnumGirderNames(&library_names); // all girder families

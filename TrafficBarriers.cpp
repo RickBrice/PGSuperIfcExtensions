@@ -243,7 +243,7 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
       return;
 
    const auto& reader = CIfcImporter::GetTargetReader();
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   GET_IFACE2_NOCHECK(pBroker, IRoadway, pAlignment); // not used when no barrier is cut
 
    // the cut: normal to the alignment at the middle of the bridge (barrier end sections and transitions are at the ends)
    auto cut_plane = get_alignment_cut(pBroker, (pier_stations.front() + pier_stations.back()) / 2);

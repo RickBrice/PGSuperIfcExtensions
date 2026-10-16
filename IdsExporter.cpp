@@ -713,7 +713,7 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
 
       GET_IFACE2(pBroker, IDocumentType, pDocType);
       GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
-      GET_IFACE2(pBroker, IMaterials, pMaterials);
+      GET_IFACE2_NOCHECK(pBroker, IMaterials, pMaterials); // only with rebar
       GET_IFACE2_NOCHECK(pBroker, IProjectProperties, pProjectProperties);
 
       const bool bSpliced = pDocType->IsPGSpliceDocument();

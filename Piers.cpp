@@ -591,7 +591,7 @@ namespace
 
 std::vector<Eigen::Vector2d> set_pier_orientation(std::shared_ptr<WBFL::EAF::Broker> pBroker, const GirderLayout& layout, const std::vector<Float64>& pier_stations, const std::vector<std::optional<Eigen::Vector2d>>& referent_directions, CBridgeDescription2& bridge_desc)
 {
-   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   GET_IFACE2_NOCHECK(pBroker, IRoadway, pAlignment); // only when the pier direction is assumed
    auto pier_faces = get_pier_faces(layout);
 
    const Float64 tolerance = WBFL::Units::ConvertToSysUnits(0.5, WBFL::Units::Measure::Degree);
