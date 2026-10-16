@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**59 of 294 match** - mismatch: 0, not imported: 24, missing: 0, not comparable: 0, default match: 211, extra: 0
+**59 of 312 match** - mismatch: 0, not imported: 24, missing: 0, not comparable: 0, default match: 229, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -38,7 +38,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[3].girder[3].type` | WF42G | Unknown_Girder_Type | template default |
 | `group[3].girder[4].type` | WF42G | Unknown_Girder_Type | template default |
 
-## default match (211)
+## default match (229)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -221,38 +221,56 @@ A *default match* equals the expected value only because the template has the sa
 | `at[0].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[0].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[0].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[0].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[0].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[1].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[1].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[1].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[1].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[1].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[1].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[2].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[2].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[2].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[2].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[2].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[2].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[3].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[3].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[3].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[3].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[3].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[3].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[4].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[4].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[4].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[4].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[4].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[4].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[5].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[5].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[5].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[5].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[5].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[5].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[6].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[6].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[6].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[6].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[6].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[6].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[7].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[7].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[7].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[7].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[7].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[7].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[8].profile.elevation` | 0.000 ft | 0.000 ft | template default |
 | `at[8].profile.grade` | 0.0000 % | 0.0000 % | template default |
 | `at[8].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[8].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[8].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[8].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 
 ## match (59)
 

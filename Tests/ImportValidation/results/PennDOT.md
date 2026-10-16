@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+24.00, at[2] = 0+54.00
 
-**62 of 102 values set by the import**, 40 are template defaults
+**62 of 108 values set by the import**, 46 are template defaults
 
-## template default (40)
+## template default (46)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -47,10 +47,16 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `pier[1].skew` | 0.0000 deg | 0.0000 deg |
 | `at[0].profile.elevation` | 0.000 ft | 0.000 ft |
 | `at[0].profile.grade` | 0.0000 % | 0.0000 % |
+| `at[0].roadway.at_left_edge` | -0.300 ft | -0.304 ft |
+| `at[0].roadway.at_right_edge` | -0.300 ft | -0.304 ft |
 | `at[1].profile.elevation` | 0.000 ft | 0.000 ft |
 | `at[1].profile.grade` | 0.0000 % | 0.0000 % |
+| `at[1].roadway.at_left_edge` | -0.300 ft | -0.304 ft |
+| `at[1].roadway.at_right_edge` | -0.300 ft | -0.304 ft |
 | `at[2].profile.elevation` | 0.000 ft | 0.000 ft |
 | `at[2].profile.grade` | 0.0000 % | 0.0000 % |
+| `at[2].roadway.at_left_edge` | -0.300 ft | -0.304 ft |
+| `at[2].roadway.at_right_edge` | -0.300 ft | -0.304 ft |
 
 ## set by the import (62)
 

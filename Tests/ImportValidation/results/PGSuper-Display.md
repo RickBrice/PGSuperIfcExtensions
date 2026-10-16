@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 20+00.00, at[1] = 20+50.00, at[2] = 21+00.00, at[3] = 21+65.00, at[4] = 22+30.00, at[5] = 22+80.00, at[6] = 23+30.00
 
-**130 of 239 match** - mismatch: 0, not imported: 8, missing: 0, not comparable: 0, default match: 101, extra: 0
+**130 of 253 match** - mismatch: 0, not imported: 8, missing: 0, not comparable: 0, default match: 115, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -22,7 +22,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[2].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[2].girder[3].type` | WF66G | Unknown_Girder_Type | template default |
 
-## default match (101)
+## default match (115)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -115,18 +115,32 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg | template default |
 | `at[0].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[0].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[0].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[0].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[1].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[1].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[1].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[1].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[2].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[2].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[2].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[2].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[3].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[3].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[3].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[3].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[4].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[4].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[4].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[4].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[5].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[5].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[5].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[5].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[6].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[6].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `at[6].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
+| `at[6].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
 
 ## match (130)
 
