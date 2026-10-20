@@ -42,7 +42,8 @@ unless --bridgelink is given.
 
 --configuration switches the PGSuper configuration (e.g. "WSDOT (Local)" for exact girder
 name matches) for the duration of the run and switches back to the current configuration
-when done.
+when done. A model with a "configuration" runs with that configuration and switches back after it (e.g.
+"PGSuper-WSDOT": the PGSuper model with the WSDOT library, whose girders it matches exactly).
 
 The girder label format (GirderLabelFormat in PGSuper's Settings key, "Alpha" by default) is set to
 Numeric for the run, as the baselines have, and restored when done.
@@ -402,9 +403,24 @@ def main():
 
     summary = []
     try:
+        run_configuration = get_configuration()
         for model in models:
             print(f"Running {model['name']}...", flush=True)
-            summary += round_trip(model, config, exe) if "pgs" in model else ifc_model(model, config, exe)
+            # a model can name the configuration it runs with (e.g. the girders of its library), "server" or "server:publisher"
+            model_configuration = None
+            if model.get("configuration"):
+                server, _, publisher = model["configuration"].partition(":")
+                model_configuration = (server, publisher or server)
+                if model_configuration != run_configuration:
+                    set_configuration(exe, *model_configuration)
+            try:
+                rows = round_trip(model, config, exe) if "pgs" in model else ifc_model(model, config, exe)
+            finally:
+                if model_configuration and model_configuration != run_configuration:
+                    set_configuration(exe, *run_configuration)
+            if model_configuration:
+                rows = [(run, message + f', configuration "{model_configuration[0]}":"{model_configuration[1]}"', score) for run, message, score in rows]
+            summary += rows
         if not args.models:
             print("Running the standard table <-> IDS round trip...", flush=True)
             ok, message = check_table_ids.check(exe)

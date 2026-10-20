@@ -7,6 +7,13 @@
       "property_units": [ "Display", "System" ]
     },
     {
+      "name": "PGSuper-WSDOT",
+      "comment": "The WF66G and WF100G girders are in the WSDOT library: they match their library entries and fill their strand grids. Without it (the run's configuration) the import makes new entries",
+      "pgs": "models/PGSuper_Import_Model.pgs",
+      "configuration": "WSDOT (Local)",
+      "property_units": [ "System" ]
+    },
+    {
       "name": "PGSuper-Skew",
       "pgs": "models/PGSuper_Skew_Straight.pgs",
       "property_units": [ "System" ]

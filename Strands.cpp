@@ -949,7 +949,7 @@ namespace
    }
 }
 
-void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, const std::set<std::_tstring>& import_entries, CBridgeDescription2& bridge_desc)
+void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc)
 {
    USES_CONVERSION;
    const auto& reader = CIfcImporter::GetTargetReader();
@@ -1122,11 +1122,7 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       std::array<Float64, 4> X{ 0.0, X1, X2, Ls };
       const GirderLibraryEntry* pEntry = bridge_desc.UseSameGirderForEntireBridge() ? bridge_desc.GetGirderLibraryEntry() : pGirder->GetGirderLibraryEntry();
       std::string reason = "the girder has no library entry";
-      bool bGrid = false;
-      if (pEntry && import_entries.count(pEntry->GetName()))
-         reason = "its library entry, " + std::string(T2A(pEntry->GetName().c_str())) + ", was created by the import (its generated grid is for design)";
-      else if (pEntry)
-         bGrid = fill_strand_grid(pEntry, by_type, X, strand_data, reason);
+      bool bGrid = pEntry && fill_strand_grid(pEntry, by_type, X, strand_data, reason);
       if (!bGrid)
       {
          WBFL::System::Logger::Info("Strands of " + girder_name + ": " + reason + ", so they are input as individual strands.");
