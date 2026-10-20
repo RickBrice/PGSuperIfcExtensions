@@ -130,7 +130,7 @@ The context carries the `WBFL::Materials::PsStrand`, the strand type, and the st
 | `tendon.fpu` | Stress | `PsStrand::GetUltimateStrength` | – |
 | `tendon.grade` | Text | "ASTM A416 Grade " + `PsStrand::GetGrade(grade, US units)` | – |
 | `tendon.corrosion_treatment` | Text | "NONE" or "EPOXYCOATED" from `PsStrand::GetCoating` | – |
-| `tendon.status` | Text | "TEMPORARY" for `pgsTypes::Temporary` strands, else absent | – |
+| `tendon.status` | Text | "TEMPORARY" for `pgsTypes::Temporary` strands, else "NEW" (`Pset_ElementComponentCommon.Status` on the strand and `usBrPset_Common.Status` on its type, so temporary strands get their own type) | – |
 | `tendon.debond_start`, `tendon.debond_end` | Length | `IStrandGeometry::IsStrandDebonded` start and end lengths (with usBridge classification only) | – |
 | `tendon.debond_midspan_to_start`, `tendon.debond_midspan_to_end` | Length | temporary strands only: half the plan length less 10 ft (assumes the WSDOT detail, bonded for 10 ft at each end) | – |
 

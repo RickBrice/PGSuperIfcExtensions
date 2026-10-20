@@ -192,7 +192,7 @@ namespace
    struct StrandTypeValues
    {
       bool        present = false;
-      double      pjack = 0.0;           // IfcTendon.TensionForce  (N, total for the group)
+      double      pjack = 0.0;           // N, total for the group (each IfcTendon.TensionForce is pjack / strand count)
       double      jacking_stress = 0.0;  // IfcTendon.PreStress     (Pa)
       bool        any_debonded = false;
       std::string coating;               // "NONE" / "EPOXYCOATED"

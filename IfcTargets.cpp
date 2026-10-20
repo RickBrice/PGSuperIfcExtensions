@@ -369,8 +369,8 @@ const std::vector<TargetDef>& GetTargetDefs()
          } },
       { .name = "tendon.corrosion_treatment", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand corrosion treatment (NONE or EPOXYCOATED)",
         .get = [](const ExportContext& c) { return ExportValue(std::string(c.strand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED")); } },
-      { .name = "tendon.status", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand status (TEMPORARY for temporary strands)",
-        .get = [](const ExportContext& c) { return c.strand_type == pgsTypes::Temporary ? ExportValue(std::string("TEMPORARY")) : ExportValue::Absent(); } },
+      { .name = "tendon.status", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand status (TEMPORARY for temporary strands, else NEW)",
+        .get = [](const ExportContext& c) { return ExportValue(std::string(c.strand_type == pgsTypes::Temporary ? "TEMPORARY" : "NEW")); } },
       { .name = "tendon.debond_start", .element = ElementKind::Tendon, .kind = ValueKind::Length, .description = "debond length at the start of a debonded strand", .display_unit = DU::SpanLength,
         .get = [](const ExportContext& c)
          {

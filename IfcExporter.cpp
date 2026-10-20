@@ -524,7 +524,7 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
             std::nullopt, /*Schema::IfcTendonTypeEnum::IfcTendonType_STRAND,*/ // per 4.1.3.2, this must not be used unless PredefinedType at the ObjectType level is set to NOTDEFINED
             std::nullopt, /*pStrand->GetNominalDiameter() depreciated*/
             std::nullopt, /*pStrand->GetNominalArea() depreciated*/
-            pStrandGeom->GetPjack(segmentKey, strandType),
+            pStrandGeom->GetPjack(segmentKey, strandType) / nStrands, // TensionForce is this strand's force; Pjack is for all strands of the type
             pStrandGeom->GetJackingStress(segmentKey, strandType),
             std::nullopt, std::nullopt, std::nullopt);
 

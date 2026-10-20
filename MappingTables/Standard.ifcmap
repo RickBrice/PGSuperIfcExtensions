@@ -291,7 +291,18 @@
       ]
     },
     {
-      "name": "usBrPset_Common", "applies_to": ["tendon", "rebar"], "attach": "type",
+      "name": "usBrPset_Common", "applies_to": "tendon", "attach": "type",
+      "comment": "usBridge has the data of strands and bars on their types, not on the strands and bars (usBrSpec_Classes.ids). Temporary strands get their own type, with Status TEMPORARY",
+      "properties": [
+        {"name": "Status", "type": "IfcLabel", "target": "tendon.status", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}},
+        {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "Note", "type": "IfcText", "uri": "bsdd"},
+        {"name": "SNBIElementNumber", "type": "IfcLabel", "uri": "bsdd"},
+        {"name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_Common", "applies_to": "rebar", "attach": "type",
       "comment": "usBridge has the data of strands and bars on their types, not on the strands and bars (usBrSpec_Classes.ids)",
       "properties": [
         {"name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}},
