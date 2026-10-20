@@ -918,8 +918,12 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       WBFL::Materials::Rebar::Size bar_size;
       Float64 nLegs, spacing;
       pStirrupGeometry->GetPrimaryVertStirrupBarInfo(segmentKey, zoneIdx, &bar_size, &nLegs, &spacing);
+      if (bar_size == WBFL::Materials::Rebar::Size::bsNone || spacing <= 0)
+         continue; // a zone without stirrups (e.g. the girder of a new library entry, which has no reinforcement)
 
       const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, bar_size);
+      if (!pRebar)
+         continue;
       Float64 db = pRebar->GetNominalDimension();
 
       Float64 offset = start + (start < Lg / 2.0 ? 1.0 : -1.0) * spacing;
