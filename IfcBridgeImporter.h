@@ -52,8 +52,16 @@ private:
    // The library entry whose section matches the girder's section (devdocs/GirderImportPlan.md, G1), or nullptr
    const GirderLibraryEntry* MatchLibraryEntry(const std::string& beam_name, const std::vector<std::string>& girder_type_names, const SectionMeasures& section);
 
-   // A new library entry (in the project's library) cloned from a library entry with fitted dimensions (G1 step 3)
-   const GirderLibraryEntry* CreateFittedEntry(const std::_tstring& start_name, const std::vector<std::string>& girder_type_names, const std::string& beam_name, const DimensionFit& fit);
+   // A new library entry (in the project's library) made by a beam factory with fitted dimensions and a generated strand
+   // grid (G1 step 4), named for the girder type (else the beam), with " (2)", and so on, if the name is taken
+   const GirderLibraryEntry* CreateFittedEntry(std::shared_ptr<PGS::Beams::BeamFactory> factory, const std::vector<std::string>& girder_type_names, const std::string& beam_name, const DimensionFit& fit, std::string& grid_description);
+
+   // The library entries the import may use: the ones from the master library (not editable in the project) and the ones
+   // this import created. Entries that came with the import template are left out, so the import doesn't depend on it
+   bool IsUsableLibraryEntry(const std::_tstring& name);
+
+   // the library entries this import created (G1 step 4)
+   std::set<std::_tstring> m_CreatedEntries;
 
    // the girder types already matched (girder type names, section, library entry or nullptr), so girders of a type are
    // matched and logged once: a girder's section only has to match a previous one within the tolerances

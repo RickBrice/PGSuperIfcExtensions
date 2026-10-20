@@ -26,6 +26,7 @@
 // top center of the section.
 
 #include <Eigen/Dense>
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
@@ -257,3 +258,11 @@ bool HasConstantDepthDefaults(const PGS::Beams::BeamFactory& factory);
 // sitting 0.1 in lower on one side under a crowned deck), so a girder with the section of one already matched uses its
 // library entry without being fitted again
 bool SameGirderSection(const SectionMeasures& a, const SectionMeasures& b, const SectionTolerances& tolerances = SectionTolerances());
+
+// Generates the strand grid of a new library entry from its section (devdocs/GirderImportPlan.md, decision 5): positions
+// on a 2 in grid (pairs at +/-1, 3, 5, ... in) with at least 2 in from the strand center to the section's edges and voids.
+// Straight strands are in the lower half of the section; harped strands are in the innermost column that runs through
+// mid-height (the web), at the top of it at the ends and at the bottom of it at the harp points; temporary strands are in
+// the top quarter. Straight and temporary strands stay out of the harped column. None can be debonded. A section without
+// such a column (e.g. a slab) has no harped strands. Returns the number of straight, harped, and temporary positions
+std::array<size_t, 3> GenerateStrandGrid(GirderLibraryEntry& entry, const SectionOutline& outline);

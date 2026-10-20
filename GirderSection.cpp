@@ -1673,3 +1673,136 @@ bool SameGirderSection(const SectionMeasures& a, const SectionMeasures& b, const
       relative(a.ix, b.ix) <= tolerances.ratio &&
       OutlineDistance(a.outline, b.outline) <= tolerances.length;
 }
+
+namespace
+{
+   bool inside_loop(const Loop& loop, const Eigen::Vector2d& p)
+   {
+      bool inside = false;
+      for (size_t i = 0, j = loop.size() - 1; i < loop.size(); j = i++)
+      {
+         const auto& a = loop[i];
+         const auto& b = loop[j];
+         if ((a.y() > p.y()) != (b.y() > p.y()) && p.x() < (b.x() - a.x()) * (p.y() - a.y()) / (b.y() - a.y()) + a.x())
+            inside = !inside;
+      }
+      return inside;
+   }
+
+   double distance_to_loop(const Loop& loop, const Eigen::Vector2d& p)
+   {
+      double d = DBL_MAX;
+      for (size_t i = 0; i < loop.size(); i++)
+      {
+         const auto& a = loop[i];
+         const auto& b = loop[(i + 1) % loop.size()];
+         Eigen::Vector2d ab = b - a;
+         double t = ab.squaredNorm() == 0 ? 0 : std::clamp((p - a).dot(ab) / ab.squaredNorm(), 0.0, 1.0);
+         d = std::min(d, (p - (a + t * ab)).norm());
+      }
+      return d;
+   }
+}
+
+std::array<size_t, 3> GenerateStrandGrid(GirderLibraryEntry& entry, const SectionOutline& outline)
+{
+   const double spacing = WBFL::Units::ConvertToSysUnits(2.0, WBFL::Units::Measure::Inch);
+   const double cover = WBFL::Units::ConvertToSysUnits(2.0, WBFL::Units::Measure::Inch); // to the strand center
+   entry.ClearAllStrands();
+
+   double ymin = 0, xmax = 0;
+   for (const auto& loop : outline.solids)
+   {
+      for (const auto& p : loop)
+      {
+         ymin = std::min(ymin, p.y());
+         xmax = std::max(xmax, fabs(p.x()));
+      }
+   }
+   const double ymid = ymin / 2;
+
+   // a position has a strand at (x, y), and its mirror at (-x, y)
+   auto valid_point = [&](double x, double y)
+      {
+         Eigen::Vector2d p(x, y);
+         bool bInSolid = std::any_of(outline.solids.begin(), outline.solids.end(), [&p](const auto& loop) {return inside_loop(loop, p); });
+         if (!bInSolid || std::any_of(outline.voids.begin(), outline.voids.end(), [&p](const auto& loop) {return inside_loop(loop, p); }))
+            return false;
+         for (const auto* loops : { &outline.solids, &outline.voids })
+            for (const auto& loop : *loops)
+               if (distance_to_loop(loop, p) < cover - 1.0e-9)
+                  return false;
+         return true;
+      };
+   auto valid = [&](double x, double y) {return valid_point(x, y) && valid_point(-x, y); };
+
+   std::vector<double> columns; // x of the pairs: 1, 3, 5, ... in
+   for (double x = spacing / 2; x <= xmax; x += spacing)
+      columns.push_back(x);
+   std::vector<double> rows; // y, from the bottom up: cover, cover + spacing, ...
+   for (double y = ymin + cover; y <= -cover + 1.0e-9; y += spacing)
+      rows.push_back(y);
+
+   // the harped column: the innermost column that has a position at mid-height (the web)
+   std::optional<double> harped_x;
+   for (double x : columns)
+   {
+      auto at_mid = std::min_element(rows.begin(), rows.end(), [ymid](double a, double b) {return fabs(a - ymid) < fabs(b - ymid); });
+      if (at_mid != rows.end() && valid(x, *at_mid))
+      {
+         harped_x = x;
+         break;
+      }
+   }
+
+   std::array<size_t, 3> counts{ 0, 0, 0 };
+   std::vector<GridIndexType> harped_positions; // added to the permanent strand order after the straight strands
+   if (harped_x)
+   {
+      // at the ends from the top of the column down, at the harp points from the bottom up, each to mid-height
+      std::vector<double> end_rows, hp_rows;
+      for (auto it = rows.rbegin(); it != rows.rend() && ymid < *it && valid(*harped_x, *it); it++)
+         end_rows.push_back(*it);
+      for (auto it = rows.begin(); it != rows.end() && *it < ymid && valid(*harped_x, *it); it++)
+         hp_rows.push_back(*it);
+      for (size_t i = 0; i < std::min(end_rows.size(), hp_rows.size()); i++)
+      {
+         // the Add...StrandCoordinates functions return the number of positions (not the new position's index as documented)
+         harped_positions.push_back(entry.AddHarpedStrandCoordinates(*harped_x, end_rows[i] - ymin, *harped_x, hp_rows[i] - ymin, *harped_x, end_rows[i] - ymin) - 1);
+         counts[1]++;
+      }
+   }
+
+   for (double y : rows)
+   {
+      if (ymid <= y)
+         break;
+      for (double x : columns)
+      {
+         if (harped_x && IsEqual(x, *harped_x))
+            continue;
+         if (valid(x, y))
+         {
+            auto grid_index = entry.AddStraightStrandCoordinates(x, y - ymin, x, y - ymin, false /*can't debond*/) - 1; // see above
+            entry.AddStrandToPermStrandGrid(GirderLibraryEntry::stStraight, grid_index);
+            counts[0]++;
+         }
+      }
+   }
+
+   for (auto grid_index : harped_positions)
+      entry.AddStrandToPermStrandGrid(GirderLibraryEntry::stAdjustable, grid_index);
+
+   for (auto it = rows.rbegin(); it != rows.rend() && ymin / 4 < *it; it++)
+   {
+      for (double x : columns)
+      {
+         if ((!harped_x || !IsEqual(x, *harped_x)) && valid(x, *it))
+         {
+            entry.AddTemporaryStrandCoordinates(x, *it - ymin, x, *it - ymin);
+            counts[2]++;
+         }
+      }
+   }
+   return counts;
+}
