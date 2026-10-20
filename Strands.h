@@ -33,8 +33,9 @@ namespace WBFL { namespace EAF { class Broker; }; };
 // (through its assemblies), else to the girder whose geometry contains its mid-point. Its centerline is read from its
 // body geometry, following mapped items: the straight pieces (circular profiles extruded along a line, swept disks along
 // polylines) chained end to end, with revolved solids as the bends between them. The centerline is clipped to the girder's
-// plan footprint (strands may project beyond the ends, e.g. bent up into the diaphragms; extended strands aren't imported
-// yet), and tendons that don't run the length of the girder (e.g. lifting loops) are skipped. The centerline is put in
+// plan footprint, and tendons that don't run the length of the girder (e.g. lifting loops) are skipped. A straight strand
+// that projects beyond an end of the girder (e.g. bent up into the diaphragm) is an extended strand at that end, unless it's
+// debonded there; PGSuper keeps only that it's extended, not the shape of the extension, and extends only straight strands. The centerline is put in
 // girder coordinates: the distance from the start of the
 // girder in plan, the offset from the CL girder (positive to the right looking ahead on station), and the depth below the
 // top of the girder, measured normal to the girder's top line from the CL girder at the ends.

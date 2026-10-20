@@ -57,6 +57,14 @@ namespace
       std::vector<GirderPoint> path;
       pgsTypes::StrandType type = pgsTypes::Straight;
       std::array<Float64, 2> debond{ 0, 0 }; // debond length at the start and end (pgsTypes::MemberEndType)
+      std::array<bool, 2> projects{ false, false }; // the strand projects beyond the girder at the start and end
+
+      // PGSuper extends only straight strands, and not at a debonded end. It keeps only that a strand is extended, not the
+      // shape of the extension (e.g. a strand bent up into the diaphragm)
+      bool IsExtended(pgsTypes::MemberEndType end) const
+      {
+         return projects[end] && type == pgsTypes::Straight && IsZero(debond[end]);
+      }
    };
 
    // The girder coordinate system of a girder: the origin is the top of the CL girder at the start, the x axis is along
@@ -346,9 +354,9 @@ namespace
    }
 
    // The part of a strand's centerline (densified) inside the girder's plan footprint, from where it enters to where it
-   // leaves (found by bisection), and whether the strand projects beyond the girder ends (by more than 1 in, e.g. strands
-   // bent up into the diaphragms). Empty if no point is inside
-   std::vector<Eigen::Vector3d> clip_to_girder(const std::vector<Eigen::Vector3d>& points, const Mesh& mesh, bool& bProjects)
+   // leaves (found by bisection), and whether the strand projects beyond the girder at its first and last point (by more
+   // than 1 in, e.g. strands bent up into the diaphragms). Empty if no point is inside
+   std::vector<Eigen::Vector3d> clip_to_girder(const std::vector<Eigen::Vector3d>& points, const Mesh& mesh, std::array<bool, 2>& projects)
    {
       auto inside = [&mesh](const Eigen::Vector3d& p) {return mesh.z_range_at(p.x(), p.y()).has_value(); };
       auto boundary = [&](Eigen::Vector3d in, Eigen::Vector3d out)
@@ -372,18 +380,18 @@ namespace
 
       const Float64 projection_tolerance = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
       std::vector<Eigen::Vector3d> clipped;
-      bProjects = false;
+      projects = { false, false };
       if (0 < i0)
       {
          auto b = boundary(points[i0], points[i0 - 1]);
-         bProjects |= projection_tolerance < (points[i0 - 1] - b).norm() || 1 < i0;
+         projects[0] = projection_tolerance < (points[i0 - 1] - b).norm() || 1 < i0;
          clipped.push_back(b);
       }
       clipped.insert(clipped.end(), points.begin() + i0, points.begin() + i1 + 1);
       if (i1 + 1 < points.size())
       {
          auto b = boundary(points[i1], points[i1 + 1]);
-         bProjects |= projection_tolerance < (points[i1 + 1] - b).norm() || i1 + 2 < points.size();
+         projects[1] = projection_tolerance < (points[i1 + 1] - b).norm() || i1 + 2 < points.size();
          clipped.push_back(b);
       }
       return clipped;
@@ -758,12 +766,35 @@ namespace
          }
       }
 
+      // the straight strand positions extended at each end: both strands of a pair alike
+      std::array<std::vector<GridIndexType>, 2> extended;
+      for (const auto& fill : type_fills[pgsTypes::Straight].fills)
+      {
+         for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+         {
+            bool bExtended = by_type[pgsTypes::Straight][fill.strands.front()]->IsExtended(end);
+            for (auto s : fill.strands)
+            {
+               if (by_type[pgsTypes::Straight][s]->IsExtended(end) != bExtended)
+               {
+                  reason = "the two strands of a grid position are extended differently";
+                  return false;
+               }
+            }
+            if (bExtended)
+               extended[end].push_back(fill.grid_index);
+         }
+      }
+
       strand_data.SetStrandDefinitionType(pgsTypes::sdtDirectSelection);
       strand_data.SetDirectStrandFillStraight(make_fill_collection(type_fills[pgsTypes::Straight].fills));
       strand_data.SetDirectStrandFillHarped(make_fill_collection(type_fills[pgsTypes::Harped].fills));
       strand_data.SetDirectStrandFillTemporary(make_fill_collection(type_fills[pgsTypes::Temporary].fills));
       for (int i = 0; i < 3; i++)
          strand_data.SetDebonding((pgsTypes::StrandType)i, debonds[i]);
+      strand_data.ClearExtendedStrands();
+      for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+         strand_data.SetExtendedStrands(pgsTypes::Straight, end, extended[end]);
 
       if (!harped.empty())
       {
@@ -823,6 +854,7 @@ namespace
          {
             row.m_bIsDebonded[end] = IsGT(0.0, strand.debond[end]);
             row.m_DebondLength[end] = strand.debond[end];
+            row.m_bIsExtendedStrand[end] = strand.IsExtended(end);
          }
          rows.push_back(row);
       }
@@ -985,7 +1017,6 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
    // the strands of each girder, in girder coordinates
    std::map<int, std::vector<Strand>> girder_strands;
    IndexType nWithoutGeometry = 0, nWithoutGirder = 0, nShort = 0;
-   std::map<int, IndexType> nProjecting; // strands that project beyond the ends of each girder
    std::map<int, TopProfile> top_profiles; // of each girder, made when its first strand is read
    for (const auto& object : tendons)
    {
@@ -1020,9 +1051,9 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
 
       // the part of the strand in the girder: strands may project beyond the girder ends (e.g. bent up into the diaphragms)
       const auto& girder = *girders[*beam_id];
-      bool bProjects = false;
+      std::array<bool, 2> projects{ false, false }; // at the first and last point of the centerline
       if (girder.mesh)
-         centerline = clip_to_girder(densify(centerline, 0.25 /*m*/), *girder.mesh, bProjects);
+         centerline = clip_to_girder(densify(centerline, 0.25 /*m*/), *girder.mesh, projects);
       if (centerline.size() < 2)
       {
          nShort++;
@@ -1043,8 +1074,12 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
          strand.path.push_back(point);
       }
       if (strand.path.back().x < strand.path.front().x)
+      {
          std::reverse(strand.path.begin(), strand.path.end());
+         std::swap(projects[0], projects[1]);
+      }
       strand.path = simplify(strand.path);
+      strand.projects = projects;
 
       // a prestressing strand runs the length of the girder (a debonded strand too). Shorter tendons are something
       // else, e.g. lifting loops when the tendon role selects them
@@ -1053,8 +1088,6 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
          nShort++;
          continue;
       }
-      if (bProjects)
-         nProjecting[*beam_id]++;
 
       auto status = reader.Read("tendon.status", tendon);
       if (status && std::get<std::string>(status->value) == "TEMPORARY")
@@ -1165,7 +1198,27 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       os << ".";
       WBFL::System::Logger::Info(os.str());
 
-      if (auto found = nProjecting.find(beam_id); found != nProjecting.end())
-         WBFL::System::Logger::Info("Strands of " + girder_name + ": " + std::to_string(found->second) + " strands project beyond the girder ends. Only the part in the girder is imported (extended strands aren't imported yet).");
+      // the strands that project beyond the girder ends: extended strands, as far as PGSuper can say so
+      std::array<IndexType, 2> nExtended{ 0, 0 }, nNotExtended{ 0, 0 };
+      for (const auto& strand : strands)
+      {
+         for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+         {
+            if (strand.IsExtended(end))
+               nExtended[end]++;
+            else if (strand.projects[end])
+               nNotExtended[end]++;
+         }
+      }
+      if (0 < nExtended[0] + nExtended[1] + nNotExtended[0] + nNotExtended[1])
+      {
+         std::ostringstream os_ext;
+         os_ext << "Strands of " << girder_name << ": " << nExtended[pgsTypes::metStart] << " strands are extended at the start and " << nExtended[pgsTypes::metEnd]
+            << " at the end (they project beyond the girder; PGSuper keeps that a strand is extended, not the shape of the extension).";
+         if (0 < nNotExtended[0] + nNotExtended[1])
+            os_ext << " " << nNotExtended[pgsTypes::metStart] << " at the start and " << nNotExtended[pgsTypes::metEnd]
+               << " at the end also project, but PGSuper extends only straight strands that aren't debonded there, so only their part in the girder is imported.";
+         WBFL::System::Logger::Info(os_ext.str());
+      }
    }
 }
