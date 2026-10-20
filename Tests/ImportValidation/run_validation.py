@@ -41,6 +41,9 @@ unless --bridgelink is given.
 name matches) for the duration of the run and switches back to the current configuration
 when done.
 
+The girder label format (GirderLabelFormat in PGSuper's Settings key, "Alpha" by default) is set to
+Numeric for the run, as the baselines have, and restored when done.
+
 Usage: python run_validation.py [--models PGSuper Iowa] [--configuration "WSDOT (Local)"] [--bridgelink BridgeLink.exe] [--skip-standards]
 """
 import argparse
@@ -64,6 +67,8 @@ RESULTS = HERE / "results"
 EXPORT_BASELINE = HERE / "export_baseline"
 TIMEOUT = 600  # seconds for one BridgeLink run
 PGSUPER_OPTIONS_KEY = r"Software\Washington State Department of Transportation\PGSuper\Options"
+PGSUPER_SETTINGS_KEY = r"Software\Washington State Department of Transportation\PGSuper\Settings"
+GIRDER_LABEL_FORMAT = "Numeric"  # girder names in the exports and baselines are "Girder 1", ...
 IFC_EXTENSIONS_KEY = r"Software\Washington State Department of Transportation\BridgeLink\IfcExtensions"
 
 
@@ -108,6 +113,27 @@ def get_mapping_table_setting():
             return winreg.QueryValueEx(key, "MappingTable")[0].strip()
     except OSError:
         return ""
+
+
+def get_girder_label_format():
+    """PGSuper's girder label format ("Alpha" or "Numeric"), or None when it isn't set (PGSuper's default is Alpha)"""
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, PGSUPER_SETTINGS_KEY) as key:
+            return winreg.QueryValueEx(key, "GirderLabelFormat")[0]
+    except OSError:
+        return None
+
+
+def set_girder_label_format(label_format):
+    """sets the girder label format, or removes the setting when label_format is None"""
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, PGSUPER_SETTINGS_KEY) as key:
+        if label_format is None:
+            try:
+                winreg.DeleteValue(key, "GirderLabelFormat")
+            except OSError:
+                pass
+        else:
+            winreg.SetValueEx(key, "GirderLabelFormat", 0, winreg.REG_SZ, label_format)
 
 
 def set_configuration(exe, server, publisher):
@@ -333,6 +359,11 @@ def main():
         print(f'Configuration "{server}":"{publisher or server}" (was "{original_configuration[0]}":"{original_configuration[1]}")')
         set_configuration(exe, server, publisher or server)
 
+    original_label_format = get_girder_label_format()
+    if original_label_format != GIRDER_LABEL_FORMAT:
+        print(f'Girder label format {GIRDER_LABEL_FORMAT} (was {original_label_format or "not set"})')
+        set_girder_label_format(GIRDER_LABEL_FORMAT)
+
     summary = []
     try:
         for model in models:
@@ -347,6 +378,9 @@ def main():
                 ok, message = check_standard.check_workbook(standard)
                 summary.append((f"Standard table vs {standard['name']} workbook", ("OK: " if ok else "DIFFERS: ") + message, None))
     finally:
+        if original_label_format != GIRDER_LABEL_FORMAT:
+            set_girder_label_format(original_label_format)
+            print(f'Girder label format restored to {original_label_format or "not set"}')
         if original_configuration:
             set_configuration(exe, *original_configuration)
             print(f'Configuration restored to "{original_configuration[0]}":"{original_configuration[1]}"')

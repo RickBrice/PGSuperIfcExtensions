@@ -58,6 +58,6 @@ An expected file lists values in SI (PGSuper system units) by the keys that `pgs
 - `check_table_ids.py`: the standard table <-> general IDS round trip (can also run alone).
 - `check_standard.py`: the standards checks (IDS on exports, workbook against the standard table); also runs alone with `--ifc` or `--workbook`. `check_ids.py`: one IFC file against one IDS, optionally one specification.
 - `compare_export.py`, `compare_ids.py`: reduce an export or an IDS to the lines compared with `export_baseline/`.
-- `run_validation.py`: runs BridgeLink and the comparison for each model. `--configuration` switches the PGSuper configuration for the run, then switches back to the current one.
+- `run_validation.py`: runs BridgeLink and the comparison for each model. `--configuration` switches the PGSuper configuration for the run, then switches back to the current one. The girder label format is set to Numeric for the run ("Girder 1", as in the baselines; PGSuper's default is Alpha) and restored afterwards. The standards checks need `openpyxl` and ifctester's `xmlschema` in the Python that runs them.
 
 Exact girder name matches need a configuration whose library has the girders, e.g. `WSDOT (Local)` for the WF girders in the PGSuper model. The committed results use the `Regression` configuration.

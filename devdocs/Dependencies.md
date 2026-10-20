@@ -10,19 +10,19 @@ git config --global --add safe.directory *
 
 This may work too, but I haven't tested it
 ~~~
-git config --global --add safe.directory F:/IfcOpenShell/*
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/*
 ~~~
 
 Option 2 - Make git trust the following directories (more directories may be added to this list as IfcOpenShell evolves with time)
 ~~~
-git config --global --add safe.directory F:/IfcOpenShell
-git config --global --add safe.directory F:/IfcOpenShell/_deps/mpfr
-git config --global --add safe.directory F:/IfcOpenShell/_deps/mpir
-git config --global --add safe.directory F:/IfcOpenShell/_deps/OpenCOLLADA
-git config --global --add safe.directory F:/IfcOpenShell/_deps/occt_git
-git config --global --add safe.directory F:/IfcOpenShell/_deps/cgal
-git config --global --add safe.directory F:/IfcOpenshell/_deps-vs2022-x64-installed/Eigen
-git config --global --add safe.directory F:/IfcOpenshell/src/ifcconvert/cityjson
+git config --global --add safe.directory %IFCOPENSHELL_DIR%
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/mpfr
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/mpir
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/OpenCOLLADA
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/occt_git
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/cgal
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps-vs2022-x64-installed/Eigen
+git config --global --add safe.directory %IFCOPENSHELL_DIR%/src/ifcconvert/cityjson
 ~~~
 
 
@@ -51,7 +51,7 @@ I have experienced the scripts failing the first time I run them. Just run them 
 First build the Debug version of the dependencies.
 
 ~~~
-cd F:\IfcOpenShell\win
+cd %IFCOPENSHELL_DIR%\win
 build-deps.cmd vs2022-x64 Debug
 ~~~
 
@@ -65,7 +65,7 @@ Now we need to start over for the Release dependencies.
 Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
 git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
 set IFCOS_NUM_BUILD_PROCS=12
-cd F:\IfcOpenShell\win
+cd %IFCOPENSHELL_DIR%\win
 build-deps.cmd vs2022-x64 Release
 run-cmake.cmd vs2022-x64
 ~~~
