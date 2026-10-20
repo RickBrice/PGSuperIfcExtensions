@@ -29,6 +29,8 @@
 #include <ifcgeom/abstract_mapping.h>
 
 #include <psgLib/StrandData.h>
+#include <psgLib/GirderLibraryEntry.h>
+#include <IFace/BeamFactory.h>
 #include <LRFD/StrandPool.h>
 
 #include <iomanip>
@@ -54,6 +56,7 @@ namespace
       IfcSchema::IfcTendon tendon;
       std::vector<GirderPoint> path;
       pgsTypes::StrandType type = pgsTypes::Straight;
+      std::array<Float64, 2> debond{ 0, 0 }; // debond length at the start and end (pgsTypes::MemberEndType)
    };
 
    // The girder coordinate system of a girder: the origin is the top of the CL girder at the start, the x axis is along
@@ -140,18 +143,21 @@ namespace
       return std::nullopt;
    }
 
-   // depth of the strand at x, by linear interpolation along its path and extrapolation of its first and last segments
-   Float64 depth_at(const std::vector<GirderPoint>& path, Float64 x)
+   // the strand at x, by linear interpolation along its path and extrapolation of its first and last segments
+   GirderPoint point_at(const std::vector<GirderPoint>& path, Float64 x)
    {
       if (path.size() == 1)
-         return path.front().y;
+         return path.front();
       size_t i = 1;
       while (i + 1 < path.size() && path[i].x < x)
          i++;
       const auto& a = path[i - 1];
       const auto& b = path[i];
-      return IsEqual(a.x, b.x) ? b.y : a.y + (x - a.x) * (b.y - a.y) / (b.x - a.x);
+      Float64 t = IsEqual(a.x, b.x) ? 1.0 : (x - a.x) / (b.x - a.x);
+      return { x, a.z + t * (b.z - a.z), a.y + t * (b.y - a.y) };
    }
+
+   Float64 depth_at(const std::vector<GirderPoint>& path, Float64 x) { return point_at(path, x).y; }
 
    // true if the path bends: an interior point is off the line through the ends
    bool is_harped(const std::vector<GirderPoint>& path)
@@ -167,6 +173,379 @@ namespace
             return true;
       }
       return false;
+   }
+
+   // A position in the girder section: X from the CL girder (positive to the right), Y up from the bottom of the girder
+   struct SectionPoint
+   {
+      Float64 X, Y;
+   };
+
+   // A strand's or grid position's section points at the start, left harp point, right harp point, and end
+   using SectionPath = std::array<SectionPoint, 4>;
+   enum Location { Start = 0, LeftHP = 1, RightHP = 2, End = 3 };
+
+   // The grid positions of a strand type of a library entry (X >= 0, a position with X > 0 is a pair of strands at +/-X).
+   // Straight and temporary positions are at their start position at the left harp point and their end position at the right
+   std::vector<SectionPath> get_grid(const GirderLibraryEntry* pEntry, pgsTypes::StrandType type, std::vector<bool>* pCanDebond = nullptr)
+   {
+      std::vector<SectionPath> grid;
+      if (type == pgsTypes::Straight)
+      {
+         for (GridIndexType i = 0; i < pEntry->GetNumStraightStrandCoordinates(); i++)
+         {
+            Float64 Xs, Ys, Xe, Ye;
+            bool canDebond;
+            pEntry->GetStraightStrandCoordinates(i, &Xs, &Ys, &Xe, &Ye, &canDebond);
+            grid.push_back({ SectionPoint{Xs, Ys}, SectionPoint{Xs, Ys}, SectionPoint{Xe, Ye}, SectionPoint{Xe, Ye} });
+            if (pCanDebond)
+               pCanDebond->push_back(canDebond);
+         }
+      }
+      else if (type == pgsTypes::Harped)
+      {
+         for (GridIndexType i = 0; i < pEntry->GetNumHarpedStrandCoordinates(); i++)
+         {
+            Float64 Xs, Ys, Xhp, Yhp, Xe, Ye;
+            pEntry->GetHarpedStrandCoordinates(i, &Xs, &Ys, &Xhp, &Yhp, &Xe, &Ye);
+            grid.push_back({ SectionPoint{Xs, Ys}, SectionPoint{Xhp, Yhp}, SectionPoint{Xhp, Yhp}, SectionPoint{Xe, Ye} });
+         }
+      }
+      else
+      {
+         for (GridIndexType i = 0; i < pEntry->GetNumTemporaryStrandCoordinates(); i++)
+         {
+            Float64 Xs, Ys, Xe, Ye;
+            pEntry->GetTemporaryStrandCoordinates(i, &Xs, &Ys, &Xe, &Ye);
+            grid.push_back({ SectionPoint{Xs, Ys}, SectionPoint{Xs, Ys}, SectionPoint{Xe, Ye}, SectionPoint{Xe, Ye} });
+         }
+      }
+      return grid;
+   }
+
+   // A filled grid position: its index in the grid of its strand type and its strands (indices of one or two strands)
+   struct GridFill
+   {
+      GridIndexType grid_index;
+      std::vector<size_t> strands;
+   };
+
+   // a grid position with X > 0 at any location is a pair of strands at +/-X (PGSuper)
+   bool is_pair(const SectionPath& p)
+   {
+      return std::any_of(p.begin(), p.end(), [](const auto& point) {return position_tolerance < point.X; });
+   }
+
+   // Fills grid positions with the strands at a location, with the grid shifted up by dy. A pair position holds two strands
+   // at +/-X (both at the center where its X is 0, e.g. harped strands bundled at the harp points), or one strand at X = 0
+   // (PGSuper puts a single strand of a pair at the center); another position holds one strand. Pairs are filled first,
+   // then the other positions, then single strands in pair positions. nullopt unless every strand is at a grid position
+   std::optional<std::vector<GridFill>> fill_grid_at(const std::vector<SectionPath>& strands, const std::vector<SectionPath>& grid, Location loc, Float64 dy)
+   {
+      std::vector<bool> used_strand(strands.size(), false), used_grid(grid.size(), false);
+      std::vector<GridFill> fills;
+      auto find = [&](Float64 X, Float64 Y, std::optional<size_t> other = std::nullopt) -> std::optional<size_t>
+         {
+            for (size_t s = 0; s < strands.size(); s++)
+            {
+               if (!used_strand[s] && s != other && IsEqual(strands[s][loc].X, X, position_tolerance) && IsEqual(strands[s][loc].Y, Y, position_tolerance))
+                  return s;
+            }
+            return std::nullopt;
+         };
+
+      for (size_t g = 0; g < grid.size(); g++)
+      {
+         if (!is_pair(grid[g]))
+            continue;
+         const auto& p = grid[g][loc];
+         auto left = find(-p.X, p.Y + dy);
+         auto right = left ? find(p.X, p.Y + dy, left) : std::nullopt;
+         if (left && right)
+         {
+            used_strand[*left] = used_strand[*right] = used_grid[g] = true;
+            fills.push_back({ g, {*left, *right} });
+         }
+      }
+
+      for (bool bPairPositions : {false, true})
+      {
+         for (size_t g = 0; g < grid.size(); g++)
+         {
+            const auto& p = grid[g][loc];
+            if (used_grid[g] || is_pair(grid[g]) != bPairPositions)
+               continue;
+            if (auto s = find(0.0, p.Y + dy))
+            {
+               used_strand[*s] = used_grid[g] = true;
+               fills.push_back({ g, {*s} });
+            }
+         }
+      }
+
+      if (std::find(used_strand.begin(), used_strand.end(), false) != used_strand.end())
+         return std::nullopt;
+
+      std::sort(fills.begin(), fills.end(), [](const auto& a, const auto& b) {return a.grid_index < b.grid_index; });
+      return fills;
+   }
+
+   // The vertical shift of the grid at a location that puts the filled positions on their strands, or nullopt if there's none
+   std::optional<Float64> grid_shift_at(const std::vector<GridFill>& fills, const std::vector<SectionPath>& strands, const std::vector<SectionPath>& grid, Location loc)
+   {
+      std::optional<Float64> dy;
+      for (const auto& fill : fills)
+      {
+         const auto& p = grid[fill.grid_index][loc];
+         Float64 X = (fill.strands.size() == 1 ? 0.0 : p.X);
+         if (fill.strands.size() == 2 && position_tolerance < X && 0 < strands[fill.strands[0]][loc].X * strands[fill.strands[1]][loc].X)
+            return std::nullopt; // a pair is on both sides of the CL girder (unless both are at the center)
+         for (auto s : fill.strands)
+         {
+            const auto& q = strands[s][loc];
+            if (!IsEqual(fabs(q.X), X, position_tolerance))
+               return std::nullopt;
+            if (!dy)
+               dy = q.Y - p.Y;
+            else if (!IsEqual(q.Y - p.Y, *dy, position_tolerance))
+               return std::nullopt;
+         }
+      }
+      return dy.value_or(0.0);
+   }
+
+   // The grid fill of a strand type: the filled positions and the grid's vertical shift at each location. Straight and
+   // temporary strands aren't shifted. A harped grid is shifted at the harp points and at the ends: the shift at the left
+   // harp point is found by putting the lowest strand there on each grid position, and the other shifts follow from the fill.
+   // nullopt (with the reason) unless every strand is at a grid position
+   struct TypeFill
+   {
+      std::vector<GridFill> fills;
+      std::array<Float64, 4> shift{ 0, 0, 0, 0 };
+   };
+   std::optional<TypeFill> fill_type(const std::vector<SectionPath>& strands, const std::vector<SectionPath>& grid, pgsTypes::StrandType type, std::string& reason)
+   {
+      TypeFill result;
+      if (strands.empty())
+         return result;
+
+      if (type != pgsTypes::Harped)
+      {
+         auto fills = fill_grid_at(strands, grid, Start, 0.0);
+         auto shift = fills ? grid_shift_at(*fills, strands, grid, End) : std::nullopt;
+         if (!fills || !shift || position_tolerance < fabs(*shift))
+         {
+            reason = std::string(type == pgsTypes::Straight ? "straight" : "temporary") + " strands aren't at the library entry's grid positions";
+            return std::nullopt;
+         }
+         result.fills = *fills;
+         return result;
+      }
+
+      // The fill is found at the start, where the strands of a pair are usually apart, else at the left harp point. The
+      // shift there is found by putting the lowest strand on each grid position in turn
+      for (auto fill_loc : { Start, LeftHP })
+      {
+         const auto& q = (*std::min_element(strands.begin(), strands.end(), [fill_loc](const auto& a, const auto& b) {return a[fill_loc].Y < b[fill_loc].Y; }))[fill_loc];
+         for (const auto& p : grid)
+         {
+            if (!IsEqual(fabs(q.X), p[fill_loc].X, position_tolerance) && !IsZero(q.X, position_tolerance))
+               continue;
+            auto fills = fill_grid_at(strands, grid, fill_loc, q.Y - p[fill_loc].Y);
+            if (!fills)
+               continue;
+
+            bool bFits = true;
+            for (auto loc : { Start, LeftHP, RightHP, End })
+            {
+               auto shift = grid_shift_at(*fills, strands, grid, loc);
+               if (!shift)
+               {
+                  bFits = false;
+                  break;
+               }
+               result.shift[loc] = *shift;
+            }
+            if (bFits)
+            {
+               result.fills = *fills;
+               return result;
+            }
+         }
+      }
+      reason = "harped strands aren't at the library entry's grid positions, with a common vertical offset at each end and harp point";
+      return std::nullopt;
+   }
+
+   CDirectStrandFillCollection make_fill_collection(const std::vector<GridFill>& fills)
+   {
+      CDirectStrandFillCollection collection;
+      for (const auto& fill : fills)
+         collection.AddFill(CDirectStrandFillInfo(fill.grid_index, fill.strands.size()));
+      return collection;
+   }
+
+   // Fills the library entry's strand grid with a girder's strands (pgsTypes::sdtDirectSelection). False, with the reason,
+   // unless every strand is at a grid position (the harped strands with a common vertical offset at each end and harp
+   // point that the entry allows), both strands of a pair are debonded alike, and debonded strands are at debondable
+   // positions. The harped strand offsets are input as PGSuper measures them, from the strands: the top harped strand to
+   // the top of the girder at the ends, and the bottom harped strand to the bottom of the girder at the harp points
+   bool fill_strand_grid(const GirderLibraryEntry* pEntry, const std::array<std::vector<const Strand*>, 3>& by_type, const std::array<Float64, 4>& X, CStrandData& strand_data, std::string& reason)
+   {
+      auto factory = pEntry->GetBeamFactory();
+      Float64 Hstart = factory->GetBeamHeight(pEntry->GetDimensions(), pgsTypes::metStart);
+      Float64 Hend = factory->GetBeamHeight(pEntry->GetDimensions(), pgsTypes::metEnd);
+      std::array<Float64, 4> Hg{ Hstart, Hstart, Hend, Hend };
+
+      std::array<TypeFill, 3> type_fills;
+      std::vector<bool> can_debond;
+      for (int i = 0; i < 3; i++)
+      {
+         auto type = (pgsTypes::StrandType)i;
+         auto grid = get_grid(pEntry, type, type == pgsTypes::Straight ? &can_debond : nullptr);
+         std::vector<SectionPath> paths;
+         for (const auto* strand : by_type[i])
+         {
+            SectionPath path;
+            for (int loc = 0; loc < 4; loc++)
+            {
+               auto p = point_at(strand->path, X[loc]);
+               path[loc] = { p.z, Hg[loc] - p.y };
+            }
+            paths.push_back(path);
+         }
+         auto fill = fill_type(paths, grid, type, reason);
+         if (!fill)
+            return false;
+         type_fills[i] = *fill;
+      }
+
+      const auto& harped = by_type[pgsTypes::Harped];
+      if (!harped.empty())
+      {
+         const auto& shift = type_fills[pgsTypes::Harped].shift;
+         if (pEntry->GetAdjustableStrandType() == pgsTypes::asStraight)
+         {
+            reason = "the library entry's adjustable strands are straight, but the model's are harped";
+            return false;
+         }
+         if (!pEntry->IsVerticalAdjustmentAllowedEnd() && (position_tolerance < fabs(shift[Start]) || position_tolerance < fabs(shift[End])))
+         {
+            reason = "the harped strands are offset at the girder ends, which the library entry doesn't allow";
+            return false;
+         }
+         if (!pEntry->IsVerticalAdjustmentAllowedHP() && (position_tolerance < fabs(shift[LeftHP]) || position_tolerance < fabs(shift[RightHP])))
+         {
+            reason = "the harped strands are offset at the harp points, which the library entry doesn't allow";
+            return false;
+         }
+      }
+
+      std::array<std::vector<CDebondData>, 3> debonds;
+      for (int i = 0; i < 3; i++)
+      {
+         for (const auto& fill : type_fills[i].fills)
+         {
+            const auto& debond = by_type[i][fill.strands.front()]->debond;
+            for (auto s : fill.strands)
+            {
+               const auto& other = by_type[i][s]->debond;
+               if (!IsEqual(debond[0], other[0], position_tolerance) || !IsEqual(debond[1], other[1], position_tolerance))
+               {
+                  reason = "the two strands of a grid position are debonded differently";
+                  return false;
+               }
+            }
+            if (IsZero(debond[0]) && IsZero(debond[1]))
+               continue;
+            if (i != pgsTypes::Straight || !can_debond[fill.grid_index])
+            {
+               reason = "a debonded strand is at a grid position that can't be debonded";
+               return false;
+            }
+            CDebondData debond_data;
+            debond_data.strandTypeGridIdx = fill.grid_index;
+            debond_data.Length = debond;
+            debonds[i].push_back(debond_data);
+         }
+      }
+
+      strand_data.SetStrandDefinitionType(pgsTypes::sdtDirectSelection);
+      strand_data.SetDirectStrandFillStraight(make_fill_collection(type_fills[pgsTypes::Straight].fills));
+      strand_data.SetDirectStrandFillHarped(make_fill_collection(type_fills[pgsTypes::Harped].fills));
+      strand_data.SetDirectStrandFillTemporary(make_fill_collection(type_fills[pgsTypes::Temporary].fills));
+      for (int i = 0; i < 3; i++)
+         strand_data.SetDebonding((pgsTypes::StrandType)i, debonds[i]);
+
+      if (!harped.empty())
+      {
+         strand_data.SetAdjustableStrandType(pgsTypes::asHarped);
+         strand_data.SetHarpStrandOffsetMeasurementAtEnd(hsoTOP2TOP);
+         strand_data.SetHarpStrandOffsetMeasurementAtHarpPoint(hsoBOTTOM2BOTTOM);
+         for (auto [end, loc] : { std::make_pair(pgsTypes::metStart, Start), std::make_pair(pgsTypes::metEnd, End) })
+         {
+            Float64 top = std::numeric_limits<Float64>::max();
+            for (const auto* strand : harped)
+               top = std::min(top, depth_at(strand->path, X[loc]));
+            strand_data.SetHarpStrandOffsetAtEnd(end, top);
+         }
+         for (auto [end, loc] : { std::make_pair(pgsTypes::metStart, LeftHP), std::make_pair(pgsTypes::metEnd, RightHP) })
+         {
+            Float64 bottom = std::numeric_limits<Float64>::max();
+            for (const auto* strand : harped)
+               bottom = std::min(bottom, Hg[loc] - depth_at(strand->path, X[loc]));
+            strand_data.SetHarpStrandOffsetAtHarpPoint(end, bottom);
+         }
+      }
+      return true;
+   }
+
+   // Inputs a girder's strands as individual strands (pgsTypes::sdtDirectStrandInput) with common harp points
+   void fill_individual_strands(const std::vector<Strand>& strands, const std::array<Float64, 4>& X, CStrandData& strand_data, const std::string& girder_name)
+   {
+      strand_data.SetStrandDefinitionType(pgsTypes::sdtDirectStrandInput);
+      strand_data.SetHarpPoints(X[Start], X[LeftHP], X[RightHP], X[End]);
+
+      CStrandRowCollection rows;
+      IndexType nMoving = 0; // harped strands whose offset from the CL girder changes along the girder
+      for (const auto& strand : strands)
+      {
+         CStrandRow row;
+         row.m_StrandType = strand.type;
+         row.m_nStrands = 1; // CStrandData counts the strands of the rows, also for individual strands
+         for (int i = 0; i < 4; i++)
+         {
+            row.m_Y[i] = depth_at(strand.path, X[i]);
+            row.m_Face[i] = pgsTypes::TopFace;
+         }
+
+         if (strand.type == pgsTypes::Harped)
+         {
+            // individual strand input has one offset for a strand: the offset at the harp points
+            row.m_Z = (strand.path[1].z + strand.path[strand.path.size() - 2].z) / 2;
+            if (position_tolerance < std::max(fabs(strand.path.front().z - row.m_Z), fabs(strand.path.back().z - row.m_Z)))
+               nMoving++;
+         }
+         else
+         {
+            row.m_Z = (strand.path.front().z + strand.path.back().z) / 2;
+         }
+
+         for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+         {
+            row.m_bIsDebonded[end] = IsGT(0.0, strand.debond[end]);
+            row.m_DebondLength[end] = strand.debond[end];
+         }
+         rows.push_back(row);
+      }
+      strand_data.SetStrandRows(rows);
+
+      if (0 < nMoving)
+      {
+         std::ostringstream os;
+         os << "Strands of " << girder_name << ": " << nMoving << " harped strands change their offset from the CL girder along the girder. Individual strand input has one offset for each strand, so the offset at the harp points is used.";
+         WBFL::System::Logger::Warning(os.str());
+      }
    }
 
    // The strand material of the strands, from their diameter (IfcTendonType.NominalDiameter, else the swept disk) and the
@@ -273,6 +652,7 @@ namespace
 
 void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc)
 {
+   USES_CONVERSION;
    const auto& reader = CIfcImporter::GetTargetReader();
    if (!reader.HasSelector(ElementKind::Tendon))
    {
@@ -351,6 +731,12 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       else if (is_harped(strand.path))
          strand.type = pgsTypes::Harped;
 
+      for (auto [end, target] : { std::make_pair(pgsTypes::metStart, "tendon.debond_start"), std::make_pair(pgsTypes::metEnd, "tendon.debond_end") })
+      {
+         if (auto reading = reader.Read(target, tendon); reading && IsGT(0.0, std::get<Float64>(reading->value)))
+            strand.debond[end] = std::get<Float64>(reading->value);
+      }
+
       girder_strands[*beam_id].push_back(std::move(strand));
    }
 
@@ -398,52 +784,16 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       auto* pGirder = bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex);
       auto* pSegment = pGirder->GetSegment(0);
       CStrandData strand_data(pSegment->Strands);
-      strand_data.SetStrandDefinitionType(pgsTypes::sdtDirectStrandInput);
-      strand_data.SetHarpPoints(0.0, X1, X2, Ls);
 
-      CStrandRowCollection rows;
-      IndexType nMoving = 0; // harped strands whose offset from the CL girder changes along the girder
-      for (const auto& strand : strands)
+      // the library entry's strand grid when every strand is on it (G2, decision 2), else individual strands
+      std::array<Float64, 4> X{ 0.0, X1, X2, Ls };
+      const GirderLibraryEntry* pEntry = bridge_desc.UseSameGirderForEntireBridge() ? bridge_desc.GetGirderLibraryEntry() : pGirder->GetGirderLibraryEntry();
+      std::string reason = "the girder has no library entry";
+      bool bGrid = pEntry && fill_strand_grid(pEntry, by_type, X, strand_data, reason);
+      if (!bGrid)
       {
-         CStrandRow row;
-         row.m_StrandType = strand.type;
-         row.m_nStrands = 1; // CStrandData counts the strands of the rows, also for individual strands
-         std::array<Float64, 4> X{ 0.0, X1, X2, Ls };
-         for (int i = 0; i < 4; i++)
-         {
-            row.m_Y[i] = depth_at(strand.path, X[i]);
-            row.m_Face[i] = pgsTypes::TopFace;
-         }
-
-         if (strand.type == pgsTypes::Harped)
-         {
-            // individual strand input has one offset for a strand: the offset at the harp points
-            row.m_Z = (strand.path[1].z + strand.path[strand.path.size() - 2].z) / 2;
-            if (position_tolerance < std::max(fabs(strand.path.front().z - row.m_Z), fabs(strand.path.back().z - row.m_Z)))
-               nMoving++;
-         }
-         else
-         {
-            row.m_Z = (strand.path.front().z + strand.path.back().z) / 2;
-         }
-
-         for (auto [end, target] : { std::make_pair(pgsTypes::metStart, "tendon.debond_start"), std::make_pair(pgsTypes::metEnd, "tendon.debond_end") })
-         {
-            if (auto reading = reader.Read(target, strand.tendon); reading && IsGT(0.0, std::get<Float64>(reading->value)))
-            {
-               row.m_bIsDebonded[end] = true;
-               row.m_DebondLength[end] = std::get<Float64>(reading->value);
-            }
-         }
-         rows.push_back(row);
-      }
-      strand_data.SetStrandRows(rows);
-
-      if (0 < nMoving)
-      {
-         std::ostringstream os;
-         os << "Strands of " << girder_name << ": " << nMoving << " harped strands change their offset from the CL girder along the girder. Individual strand input has one offset for each strand, so the offset at the harp points is used.";
-         WBFL::System::Logger::Warning(os.str());
+         WBFL::System::Logger::Info("Strands of " + girder_name + ": " + reason + ", so they are input as individual strands.");
+         fill_individual_strands(strands, X, strand_data, girder_name);
       }
 
       for (int i = 0; i < 3; i++)
@@ -472,9 +822,13 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
 
       std::ostringstream os;
       os << "Strands of " << girder_name << ": " << by_type[pgsTypes::Straight].size() << " straight, " << by_type[pgsTypes::Harped].size() << " harped, "
-         << by_type[pgsTypes::Temporary].size() << " temporary, input as individual strands";
+         << by_type[pgsTypes::Temporary].size() << " temporary, ";
+      if (bGrid)
+         os << "filled into the strand grid of " << T2A(pEntry->GetName().c_str());
+      else
+         os << "input as individual strands";
       if (!by_type[pgsTypes::Harped].empty())
-         os << ", harp points at " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(X1, WBFL::Units::Measure::Feet) << " and " << WBFL::Units::ConvertFromSysUnits(X2, WBFL::Units::Measure::Feet) << " ft";
+         os << ", harp points (from the model) at " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(X1, WBFL::Units::Measure::Feet) << " and " << WBFL::Units::ConvertFromSysUnits(X2, WBFL::Units::Measure::Feet) << " ft";
       os << ".";
       WBFL::System::Logger::Info(os.str());
    }

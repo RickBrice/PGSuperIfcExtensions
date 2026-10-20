@@ -35,9 +35,11 @@ namespace WBFL { namespace EAF { class Broker; }; };
 // girder in plan, the offset from the CL girder (positive to the right looking ahead on station), and the depth below the
 // top of the girder, measured normal to the girder's top line from the CL girder at the ends.
 //
-// A strand is temporary if its tendon.status is TEMPORARY, harped if its centerline bends, and straight otherwise. The
-// strands are input as individual strands (pgsTypes::sdtDirectStrandInput), with the harped strands' common harp points,
-// the debonding of each strand (tendon.debond_start and tendon.debond_end), the strand material of each strand type (from
+// A strand is temporary if its tendon.status is TEMPORARY, harped if its centerline bends, and straight otherwise. When
+// every strand is at a position of the girder library entry's strand grid (harped strands with a common vertical offset at
+// each end and harp point), the grid is filled (pgsTypes::sdtDirectSelection) with the harped strand offsets. Otherwise the
+// strands are input as individual strands (pgsTypes::sdtDirectStrandInput) with the harped strands' common harp points.
+// Both have the debonding of each strand (tendon.debond_start and tendon.debond_end), the strand material of each strand type (from
 // the diameter and tendon.fpu, tendon.grade, and tendon.corrosion_treatment), and the jacking force (IfcTendon.PreStress,
 // else IfcTendon.TensionForce). Girders without strands keep the template's strands.
 void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc);
