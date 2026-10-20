@@ -33,6 +33,7 @@
 #include "TrafficBarriers.h"
 #include "RoadwaySection.h"
 #include "Piers.h"
+#include "Strands.h"
 
 #include <chrono>
 #include <numeric>
@@ -255,6 +256,9 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
 
    // Bearing data from the bearing geometry and properties
    set_bearing_data(m_Importer.GetBroker(), file, layout, bridge_desc);
+
+   // Prestressing strands, after the library entries are set
+   import_strands(m_Importer.GetBroker(), file, layout, bridge_desc);
 
    ImportSlab(file, bridge_desc, layout, pier_stations);
 

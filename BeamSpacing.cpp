@@ -215,11 +215,14 @@ GirderLayout get_girder_layout(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcop
       girder.mesh = std::make_shared<Mesh>(std::move(m));
       girder.start = c1.head<2>();
       girder.end = c2.head<2>();
+      girder.start_top = c1.z();
+      girder.end_top = c2.z();
       std::tie(girder.start_station, girder.start_offset) = station_and_offset(girder.start);
       std::tie(girder.end_station, girder.end_offset) = station_and_offset(girder.end);
       if (girder.end_station < girder.start_station)
       {
          std::swap(girder.start, girder.end);
+         std::swap(girder.start_top, girder.end_top);
          std::swap(girder.start_station, girder.end_station);
          std::swap(girder.start_offset, girder.end_offset);
       }

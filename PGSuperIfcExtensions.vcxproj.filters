@@ -127,6 +127,9 @@
     <ClCompile Include="TrafficBarriers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Strands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="RoadwaySection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -325,6 +328,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TrafficBarriers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Strands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RoadwaySection.h">

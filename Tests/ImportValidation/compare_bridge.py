@@ -29,6 +29,7 @@ import pgs_extract
 FT = 0.3048
 IN = 0.0254
 KSI = 6894757.293168361
+KIP = 4448.2216152605
 
 # kind: (tolerance in SI, formatter)
 KINDS = {
@@ -39,11 +40,42 @@ KINDS = {
     "angle": (1.0e-4, lambda v: f"{math.degrees(v):.4f} deg"),
     "grade": (1.0e-5, lambda v: f"{v * 100:.4f} %"),
     "stress": (0.05 * KSI, lambda v: f"{v / KSI:.3f} ksi"),
+    "force": (0.05 * KIP, lambda v: f"{v / KIP:.3f} kip"),
     "spacing": (0.003, lambda v: f"{v['value'] / FT:.3f} ft ({v['datum']})"),
     "count": (0, str),
     "text": (None, str),
     "unsupported": (None, str),
+    "lengths": (0.003, lambda v: ", ".join(f"{x / FT:.3f}" for x in v) + " ft"),
+    "length_pairs": (0.003, lambda v: ", ".join(f"({a / FT:.3f}, {b / FT:.3f})" for a, b in v) + " ft"),
+    "paths": (0.003, lambda v: f"{len(v)} strands"),  # strand centerlines, matched point by point (see match_paths)
 }
+
+
+def match_paths(a, b, tol):
+    """Matches each path of a with a path of b that has the same number of points, closest first.
+    Returns (number of paths of a without a match within tol, number of paths of b left over, largest distance between
+    matched points)."""
+    distance = lambda p, q: max(math.dist(u, v) for u, v in zip(p, q))
+    candidates = sorted((distance(p, q), i, j) for i, p in enumerate(a) for j, q in enumerate(b) if len(p) == len(q))
+    used_a, used_b, largest = set(), set(), 0.0
+    for d, i, j in candidates:
+        if d <= tol and i not in used_a and j not in used_b:
+            used_a.add(i)
+            used_b.add(j)
+            largest = max(largest, d)
+    return len(a) - len(used_a), len(b) - len(used_b), largest
+
+
+def difference(e, i, kind, tol=None):
+    """a note on how a mismatched value differs, for kinds where the formatted values don't show it"""
+    if kind == "paths" and isinstance(e, list) and isinstance(i, list):
+        tol = KINDS["paths"][0] if tol is None else tol
+        unmatched, left_over, _ = match_paths(e, i, tol)
+        closest = [min((max(math.dist(u, v) for u, v in zip(p, q)) for q in i if len(q) == len(p)), default=math.inf) for p in e]
+        worst = max(closest, default=0.0)
+        return f"{unmatched} expected strands without a match within {tol / IN:.3f} in, {left_over} imported strands left over" + \
+            (f", largest distance to the closest strand {worst / IN:.3f} in" if worst < math.inf else "")
+    return ""
 
 
 def _station(v):
@@ -74,8 +106,15 @@ def same(a, b, kind, tol=None):
         return a["datum"] == b["datum"] and abs(a["value"] - b["value"]) <= tol
     if kind == "angle":
         return abs(math.atan2(math.sin(a - b), math.cos(a - b))) <= tol
+    if kind == "paths":
+        return len(a) == len(b) and match_paths(a, b, tol)[:2] == (0, 0)
+    if kind in ("lengths", "length_pairs"):
+        flat = lambda v: [x for item in v for x in (item if isinstance(item, (list, tuple)) else [item])]
+        return len(a) == len(b) and all(abs(x - y) <= tol for x, y in zip(flat(a), flat(b)))
     if tol is None or isinstance(a, str) or isinstance(b, str):
         return str(a) == str(b)
+    if isinstance(a, list) or isinstance(b, list):  # e.g. strands of one type with different prestress
+        return isinstance(a, list) and isinstance(b, list) and len(a) == len(b) and all(abs(x - y) <= tol for x, y in zip(a, b))
     return abs(a - b) <= tol
 
 
@@ -133,7 +172,7 @@ def compare(imported, expected, template=None, tolerances=None):
         elif any(same(t, i, kind) for t in template_values.get(generic(key), [])):
             rows.append((key, "not imported", e, i, kind, "template default"))
         else:
-            rows.append((key, "mismatch", e, i, kind, ""))
+            rows.append((key, "mismatch", e, i, kind, difference(e, i, kind, tolerance_for(key, tolerances))))
 
     for key, imp in imported["values"].items():
         if key not in expected["values"]:

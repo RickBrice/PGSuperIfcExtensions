@@ -45,6 +45,7 @@ struct GirderCenterline
    int beam_id;                     // IfcBeam
    CGirderKey girder_key;           // group = span, girder index from left to right looking ahead on station
    Eigen::Vector2d start, end;      // CL girder at the ends of the girder (global coordinates), start is at the lesser station
+   Float64 start_top, end_top;      // elevation of the top of the girder at start and end
    Float64 start_station, start_offset;
    Float64 end_station, end_offset;
    std::shared_ptr<Mesh> mesh;      // girder geometry (global coordinates)

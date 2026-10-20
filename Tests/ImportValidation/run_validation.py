@@ -6,6 +6,9 @@ For a model with a "pgs" file (round trip):
    classes removed from the export before the import, with what they nest (e.g. "IfcAlignmentVertical",
    so the import measures the profile from the deck); "tolerances" replaces the comparison tolerance
    (SI) for the keys matching each pattern (e.g. "at[*].profile.grade", for values measured from geometry).
+   The strands are compared physically (ifc_strands.py): the imported project is exported again
+   (results/reexport/, not tracked), and its strands are compared with the strands of the first export.
+   The template's girders have no strands, so a strand count of 0 is reported as the template default.
 For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
    otherwise report which values the import set (inventory).
@@ -55,12 +58,14 @@ import time
 import winreg
 import zipfile
 from pathlib import Path
+from xml.etree import ElementTree
 
 import compare_bridge
 import compare_export
 import compare_ids
 import check_standard
 import check_table_ids
+import ifc_strands
 
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
@@ -249,6 +254,32 @@ def remove_from_ifc(ifc, classes):
     f.write(str(ifc))
 
 
+def template_has_strands(template):
+    """True if any girder of the template (.pgt) has strands"""
+    root = ElementTree.parse(template).getroot()
+    for prestress in root.iter("PrestressData"):
+        counts = [prestress.findtext(tag) for tag in ("NumStraightStrands", "NumHarpedStrands", "NumTempStrands", "NumPermanentStrands")]
+        if any(c and int(c) for c in counts) or any(int(rows.findtext("Count") or 0) for rows in prestress.iter("StrandRows")):
+            return True
+    return False
+
+
+def compare_strands(exe, run, pgs, units, expected_strands, config, tolerances):
+    """Compares the strands of the source export (expected_strands, an ifc_strands summary) with the strands of an export
+    of the imported project pgs. Returns (comparison rows, message for the summary)."""
+    reexport = RESULTS / "reexport" / f"{run}.ifc"
+    reexport.parent.mkdir(exist_ok=True)
+    reexport.unlink(missing_ok=True)
+    ok, message = run_bridgelink(exe, [quote(f"/IfcExport={reexport}"), quote(pgs), f"/IfcPropertyUnits={units}"])
+    if not ok or not reexport.exists():
+        return [], f", strands not compared: the export of the imported project failed ({message})"
+    # the template's girders have no strands, so a strand count of 0 is the template default
+    template = None
+    if not config["template_has_strands"]:
+        template = {"values": {key: {"value": 0, "kind": "count"} for key, v in expected_strands["values"].items() if v["kind"] == "count"}}
+    return compare_bridge.compare(ifc_strands.extract(reexport), expected_strands, template, tolerances), ""
+
+
 def round_trip(model, config, exe):
     """export -> import -> compare for a PGSuper project. Returns summary rows."""
     rows = []
@@ -268,6 +299,7 @@ def round_trip(model, config, exe):
         if not ok or not ifc.exists():
             rows.append((run, f"export failed: {message}", None))
             continue
+        expected_strands = ifc_strands.extract(ifc)  # before anything is removed from the export
         export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
         for standard in config["standards"]:
             export_message += check_standard.ids_message(standard, ifc, run)
@@ -283,6 +315,9 @@ def round_trip(model, config, exe):
 
         imported = compare_bridge.load(str(pgs), stations)
         comparison = compare_bridge.compare(imported, expected, template, model.get("tolerances"))
+        strand_rows, strand_message = compare_strands(exe, run, pgs, units, expected_strands, config, model.get("tolerances"))
+        comparison += strand_rows
+        message += strand_message
         report = compare_bridge.report(comparison, f"{run}: round trip", rel(pgs), rel(source), stations=stations)
         (RESULTS / f"{run}.md").write_text(report, encoding="utf-8")
         rows.append((run, message, compare_bridge.score(comparison)))
@@ -334,6 +369,7 @@ def main():
     config = json.loads(config_file.read_text(encoding="utf-8"))
     config["base"] = config_file.parent
     config["template"] = (config["base"] / config["template"]).resolve()
+    config["template_has_strands"] = template_has_strands(config["template"])
     config["update_export_baseline"] = args.update_export_baseline
     config["standards"] = [] if args.skip_standards else check_standard.load_standards()
     models = [m for m in config["models"] if not args.models or m["name"] in args.models]

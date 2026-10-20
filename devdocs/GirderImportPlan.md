@@ -1,6 +1,6 @@
 # Girder Import Plan: Section, Strands, Transverse Reinforcement
 
-Drafted 2026-10-15 and reviewed the same day (see "Decisions"). **Status (2026-10-16):** G1 steps 1-3 are done (the section from the model, matching by geometry, fitting dimensions and cloning the closest entry); step 4, a new entry with a generated strand grid, is next. G2 and G3 are not started. Priorities 2 and 3 in `CLAUDE.md` (girder mapping with the PGSuper library, information from geometry). It builds on Phase 5 (girder section) and Phase 6 (prestressing) of [IfcImportPlan.md](IfcImportPlan.md).
+Drafted 2026-10-15 and reviewed the same day (see "Decisions"). **Status (2026-10-16):** G1 steps 1-3 are done (the section from the model, matching by geometry, fitting dimensions and cloning the closest entry); step 4, a new entry with a generated strand grid, is next. G2 started 2026-10-20 (see G2). G3 is not started. Priorities 2 and 3 in `CLAUDE.md` (girder mapping with the PGSuper library, information from geometry). It builds on Phase 5 (girder section) and Phase 6 (prestressing) of [IfcImportPlan.md](IfcImportPlan.md).
 
 Before G1, the importer set the girder type by name only (`GetGirderLibraryEntry`, falling back to the first I-beam). The strands, stirrups, confinement, and splitting bars still come from the import template unchanged (G2 and G3), so an imported girder has the template's reinforcement.
 
@@ -42,6 +42,12 @@ Validation: under the Regression configuration the WF girders aren't in the libr
 5. **Fill `CStrandData`:** with the library grid when every strand is on it (`sdtDirectSelection`), else with `sdtDirectStrandInput` (decision 2).
 
 Validation: `pgs_extract.py` extracts the strands (count per type, positions at the ends and harp points, debonding, harp points, material, jacking) and the round trip compares them. Iowa: an inventory and the counts from the model.
+
+**Status (2026-10-20):**
+- **Validation:** the strands are compared physically rather than from the `.pgs` data (`Tests/ImportValidation/ifc_strands.py`): the round trip exports the imported project again and compares its strands with the first export's (per girder: counts by type, material, prestress, tension force, centerlines within 1/8 in, debonding, harp points). PGSuper's strand definitions (grid fills, rows, individual strands, harped offsets, extended strands) don't need re-implementing in Python.
+- **Done (`Strands.cpp`), steps 1-4 and the individual-strand half of step 5:** strands by the tendon role, assigned to girders through their assemblies (else by geometry); centerlines from swept disk polylines in girder coordinates; harped by a bend, temporary by `tendon.status`; material from the diameter and `tendon.fpu`/`tendon.grade`/`tendon.corrosion_treatment`; jacking from `PreStress` (else `TensionForce`); debonding from `tendon.debond_start`/`end`; filled as individual strands (`sdtDirectStrandInput`) with common harp points.
+- **PGSuper round trip:** every strand value matches except the harped strand paths, 1.000 in off at the ends: PGSuper's harped grid positions move sideways (±1 in at the ends, 0 at the harp points), and individual strand input has one offset per strand (logged).
+- **Next:** the grid fill of step 5 (`sdtDirectSelection`) when every strand is on the library entry's grid, with the harped strand offsets at the ends and harp points (`HpOffsetAtStart`/`End`/`Hp1`/`Hp2`), which makes the round trips exact; then other representations (indexed poly curves, extruded solids and mapped items for Iowa); a model with debonding (none of the round-trip models has any).
 
 ## G3. Stirrups, confinement, and splitting bars
 

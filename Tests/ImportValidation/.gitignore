@@ -2,6 +2,7 @@
 results/*.ifc
 results/*.ids
 results/models/
+results/reexport/
 __pycache__/
 # import and export logs are part of the results (*.log is ignored at the repository root)
 !results/*.log

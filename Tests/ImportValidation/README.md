@@ -53,6 +53,7 @@ An expected file lists values in SI (PGSuper system units) by the keys that `pgs
 
 - `pgs_extract.py`: reduces a `.pgs`/`.pgt` to a flat summary of the values the importer is responsible for. Alignment, profile and deck edges are evaluated at the pier and mid-span stations, so an alignment defined from a different reference point still compares equal. Alignments with spirals are not evaluated yet.
 - `compare_bridge.py`: compares a project to expected values with a tolerance for each kind of value, and writes a Markdown report in US units.
+- `ifc_strands.py`: reduces the strands of an IFC model to the same kind of summary, for each girder: the count of straight, harped and temporary strands, their material, prestress, centerlines in girder coordinates, debonding, and the harp points. The round trip exports the imported project again (`results/reexport/`) and compares its strands with the first export's, so the comparison is physical and doesn't depend on how PGSuper defines the strands (grid fill, rows, or individual strands). Strand paths match when every strand has a strand within 1/8 in at each point.
   - A *default match* equals the expected value only because the import template has the same value, so it doesn't show the importer set it.
   - Values measured differently (e.g. girder spacing along vs normal to the pier) are *not comparable*.
 - `check_table_ids.py`: the standard table <-> general IDS round trip (can also run alone).
