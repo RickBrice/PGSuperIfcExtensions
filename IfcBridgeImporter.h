@@ -53,7 +53,8 @@ private:
    const GirderLibraryEntry* MatchLibraryEntry(const std::string& beam_name, const std::vector<std::string>& girder_type_names, const SectionMeasures& section);
 
    // A new library entry (in the project's library) made by a beam factory with fitted dimensions and a generated strand
-   // grid (G1 step 4), named for the girder type (else the beam), with " (2)", and so on, if the name is taken
+   // grid (G1 step 4), named for the girder type (else the beam) with " (IFC)" (e.g. "WF42G (IFC)", so it doesn't conflict with
+   // a master library entry of that name), with " (2)", and so on, if the name is taken
    const GirderLibraryEntry* CreateFittedEntry(std::shared_ptr<PGS::Beams::BeamFactory> factory, const std::vector<std::string>& girder_type_names, const std::string& beam_name, const DimensionFit& fit, std::string& grid_description);
 
    // The library entries the import may use: the ones from the master library (not editable in the project) and the ones

@@ -44,6 +44,7 @@ KINDS = {
     "spacing": (0.003, lambda v: f"{v['value'] / FT:.3f} ft ({v['datum']})"),
     "count": (0, str),
     "text": (None, str),
+    "girder_type": (None, str),  # a library entry the import created has " (IFC)" after the type name (see same)
     "unsupported": (None, str),
     "lengths": (0.003, lambda v: ", ".join(f"{x / FT:.3f}" for x in v) + " ft"),
     "length_pairs": (0.003, lambda v: ", ".join(f"({a / FT:.3f}, {b / FT:.3f})" for a, b in v) + " ft"),
@@ -106,6 +107,10 @@ def same(a, b, kind, tol=None):
         return a["datum"] == b["datum"] and abs(a["value"] - b["value"]) <= tol
     if kind == "angle":
         return abs(math.atan2(math.sin(a - b), math.cos(a - b))) <= tol
+    if kind == "girder_type":
+        # the import names the library entries it creates "<type> (IFC)", with " (2)", and so on, when that's taken
+        base = lambda name: re.sub(r"( \(IFC\))?( \(\d+\))?$", "", str(name))
+        return base(a) == base(b)
     if kind == "paths":
         return len(a) == len(b) and match_paths(a, b, tol)[:2] == (0, 0)
     if kind in ("lengths", "length_pairs"):

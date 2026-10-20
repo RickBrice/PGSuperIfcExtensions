@@ -1226,8 +1226,11 @@ const GirderLibraryEntry* CIfcBridgeImporter::CreateFittedEntry(std::shared_ptr<
    GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
    auto& library = pLibrary->GetGirderLibrary();
 
-   // the name: the girder type name from the model (else the beam's name), with " (2)", and so on, if it's taken
+   // the name: the girder type name from the model (else the beam's name) with " (IFC)", so it doesn't conflict with an
+   // entry of a master library the project is opened with later (e.g. WSDOT's WF42G for a project imported under another
+   // configuration), and " (2)", and so on, if it's taken
    std::_tstring base(A2T((girder_type_names.empty() ? beam_name : girder_type_names.front()).c_str()));
+   base += _T(" (IFC)");
    std::_tstring name = base;
    for (int n = 2; pLibrary->GetGirderEntry(name.c_str()); n++)
    {

@@ -95,7 +95,7 @@ G1 first: the strand elevations are measured from the girder's top or bottom and
 1. **Where the code lives:** in the extension, with the existing PGSuper API (option i).
 2. **Matching tolerances:** 1/8 in for depth, flange widths, and thicknesses; 1% for area and I. The same for every family for now, but kept as data so they can differ by family later.
 3. **Fitting:** all of the family's dimensions. Girders of the same family can differ in more than depth (an Iowa and a WSDOT girder can both be WF girders with very different flanges).
-4. **Names:** the IFC type name (e.g. "BTB45"), with " (2)", and so on, when the name is already used by a different girder.
+4. **Names:** the IFC type name with " (IFC)" (e.g. "BTB45 (IFC)"; the suffix added by the user, 2026-10-20, so a project opened later under a configuration with an entry of the type's name doesn't stop at a library conflict), with " (2)", and so on, when the name is already used by a different girder.
 5. **Generated strand grid:** 2 in spacing with 2 in cover to the strand center. Straight strands in the bottom flange, harped strands in the web, temporary strands in the top flange. No strands are debondable (harping is assumed, not debonding; harping and debonding could become a configuration option later).
 6. **The user's intent isn't known** when a project is created from an IFC file, so:
    - **The girder has strands:** if they're all on the grid of the girder's library entry, a grid fill; otherwise individual strands.

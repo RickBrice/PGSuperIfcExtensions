@@ -356,7 +356,7 @@ def extract(path, stations=None):
         put(f"group[{i}].girder_count", len(girders), "count")
         for j, girder in enumerate(girders):
             # with UseSameGirderForEntireBridge, the girder type is only stored for the bridge
-            put(f"group[{i}].girder[{j}].type", _t(girder, "GirderType", _t(bridge, "Girder")), "text")
+            put(f"group[{i}].girder[{j}].type", _t(girder, "GirderType", _t(bridge, "Girder")), "girder_type")
             segment = girder.find("PrecastSegment")
             concrete = segment.find(".//Concrete") if segment is not None else None
             # effective slab offset at the ends of the girder, wherever it is stored for the slab offset type
