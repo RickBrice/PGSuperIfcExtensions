@@ -373,7 +373,8 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
          if (!closest.empty())
             os << " No library traffic barrier has its section (the closest is " << closest << ", outlines " << std::setprecision(3) << inches(closest_distance) << " in apart).";
 
-         // a new entry, named for the barrier type in the model, else the element's type, else the element
+         // a new entry, named for the barrier type in the model, else the element's type, else the element, with " (IFC)" so
+         // it doesn't conflict with an entry of a master library the project is opened with later (as girder entries)
          std::string base = type_name.value_or("");
          if (base.empty())
          {
@@ -386,6 +387,7 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
          }
          if (base.empty())
             base = cut.name;
+         base += " (IFC)";
          std::_tstring name(A2T(base.c_str()));
          for (int n = 2; pLibrary->GetTrafficBarrierEntry(name.c_str()); n++)
          {
