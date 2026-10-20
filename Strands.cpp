@@ -681,13 +681,74 @@ namespace
       return collection;
    }
 
+   // Where PGSuper puts the harp points of a grid fill, from the left end of the girder: the library entry's harping point
+   // location, measured as the entry says (as WBFL's CStrandModelBase::GetHarpPointLocation). Lg is the girder length. The
+   // end distances (girder end to CL bearing) come from the girder's bearings in the model; nullopt if they're needed and
+   // the model doesn't have them
+   std::optional<std::pair<Float64, Float64>> library_harp_points(const GirderLibraryEntry* pEntry, const GirderCenterline& girder, Float64 Lg)
+   {
+      Eigen::Vector2d direction = (girder.end - girder.start).normalized();
+      std::optional<Float64> left, right; // end distances
+      if (girder.start_bearing)
+         left = (*girder.start_bearing - girder.start).dot(direction);
+      if (girder.end_bearing)
+         right = (girder.end - *girder.end_bearing).dot(direction);
+
+      auto reference = pEntry->GetHarpingPointReference();
+      auto measure = pEntry->GetHarpingPointMeasure();
+      if ((reference == GirderLibraryEntry::mlBearing || measure == GirderLibraryEntry::mtFractionOfSpanLength) && !(left && right))
+         return std::nullopt;
+
+      auto location = [&](bool bRight)
+         {
+            Float64 hp = pEntry->GetHarpingPointLocation();
+            if (measure == GirderLibraryEntry::mtFractionOfGirderLength)
+               hp *= Lg;
+            else if (measure == GirderLibraryEntry::mtFractionOfSpanLength)
+               hp *= Lg - *left - *right;
+            if (pEntry->IsMinHarpingPointLocationUsed() && hp < pEntry->GetMinHarpingPointLocation())
+               hp = pEntry->GetMinHarpingPointLocation();
+
+            Float64 x;
+            switch (reference)
+            {
+            case GirderLibraryEntry::mlEndOfGirder:        x = (bRight ? Lg - hp : hp); break;
+            case GirderLibraryEntry::mlCenterlineOfGirder: x = (bRight ? Lg / 2 + hp : Lg / 2 - hp); break;
+            default:                                       x = (bRight ? Lg - *right - hp : *left + hp); break; // bearing
+            }
+            return std::clamp(x, 0.0, Lg);
+         };
+      return std::make_pair(location(false), location(true));
+   }
+
    // Fills the library entry's strand grid with a girder's strands (pgsTypes::sdtDirectSelection). False, with the reason,
    // unless every strand is at a grid position (the harped strands with a common vertical offset at each end and harp
    // point that the entry allows), both strands of a pair are debonded alike, and debonded strands are at debondable
    // positions. The harped strand offsets are input as PGSuper measures them, from the strands: the top harped strand to
    // the top of the girder at the ends, and the bottom harped strand to the bottom of the girder at the harp points
-   bool fill_strand_grid(const GirderLibraryEntry* pEntry, const std::array<std::vector<const Strand*>, 3>& by_type, const std::array<Float64, 4>& X, CStrandData& strand_data, std::string& reason)
+   bool fill_strand_grid(const GirderLibraryEntry* pEntry, const GirderCenterline& girder, const std::array<std::vector<const Strand*>, 3>& by_type, const std::array<Float64, 4>& X, CStrandData& strand_data, std::string& reason)
    {
+      // the harp points of a grid fill come from the library entry: they must be the model's
+      if (!by_type[pgsTypes::Harped].empty())
+      {
+         if (auto hp = library_harp_points(pEntry, girder, X[End]))
+         {
+            if (!IsEqual(hp->first, X[LeftHP], position_tolerance) || !IsEqual(hp->second, X[RightHP], position_tolerance))
+            {
+               std::ostringstream os;
+               os << std::fixed << std::setprecision(3) << "the harp points of the library entry's grid (" << WBFL::Units::ConvertFromSysUnits(hp->first, WBFL::Units::Measure::Feet)
+                  << " and " << WBFL::Units::ConvertFromSysUnits(hp->second, WBFL::Units::Measure::Feet) << " ft) aren't the model's ("
+                  << WBFL::Units::ConvertFromSysUnits(X[LeftHP], WBFL::Units::Measure::Feet) << " and " << WBFL::Units::ConvertFromSysUnits(X[RightHP], WBFL::Units::Measure::Feet) << " ft)";
+               reason = os.str();
+               return false;
+            }
+         }
+         else
+         {
+            WBFL::System::Logger::Info("The harp points of the library entry's grid are measured from the bearings or by the span length, and the model's bearings aren't known, so they aren't checked against the model's.");
+         }
+      }
+
       auto factory = pEntry->GetBeamFactory();
       Float64 Hstart = factory->GetBeamHeight(pEntry->GetDimensions(), pgsTypes::metStart);
       Float64 Hend = factory->GetBeamHeight(pEntry->GetDimensions(), pgsTypes::metEnd);
@@ -1155,7 +1216,7 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       std::array<Float64, 4> X{ 0.0, X1, X2, Ls };
       const GirderLibraryEntry* pEntry = bridge_desc.UseSameGirderForEntireBridge() ? bridge_desc.GetGirderLibraryEntry() : pGirder->GetGirderLibraryEntry();
       std::string reason = "the girder has no library entry";
-      bool bGrid = pEntry && fill_strand_grid(pEntry, by_type, X, strand_data, reason);
+      bool bGrid = pEntry && fill_strand_grid(pEntry, girder, by_type, X, strand_data, reason);
       if (!bGrid)
       {
          WBFL::System::Logger::Info("Strands of " + girder_name + ": " + reason + ", so they are input as individual strands.");
