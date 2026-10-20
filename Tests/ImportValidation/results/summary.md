@@ -1,21 +1,21 @@
 # IFC import validation
 
-- Run: 2026-10-16 14:09
-- Configuration: Regression:Regression
+- Run: 2026-10-20 09:11
+- Configuration: Regression
 
 | Run | Result | Match | Default match | Mismatch | Not imported | Not comparable | Missing |
 |---|---|---|---|---|---|---|---|
-| [PGSuper-Display](PGSuper-Display.md) | 4 s, export same as baseline, IDS same as baseline, usBridge IDS: 9 of 599 specifications fail (see PGSuper-Display.usBridge-ids.txt) | 130 of 253 | 115 | 0 | 8 | 0 | 0 |
-| [PGSuper-System](PGSuper-System.md) | 4 s, export same as baseline, IDS same as baseline, usBridge IDS: 9 of 599 specifications fail (see PGSuper-System.usBridge-ids.txt) | 130 of 253 | 115 | 0 | 8 | 0 | 0 |
-| [PGSuper-Skew-System](PGSuper-Skew-System.md) | 5 s, export same as baseline, IDS same as baseline, usBridge IDS: 8 of 599 specifications fail (see PGSuper-Skew-System.usBridge-ids.txt) | 50 of 312 | 238 | 8 | 16 | 0 | 0 |
-| [PGSuper-Skew-Bearings-System](PGSuper-Skew-Bearings-System.md) | 5 s, export same as baseline, IDS same as baseline, usBridge IDS: 8 of 599 specifications fail (see PGSuper-Skew-Bearings-System.usBridge-ids.txt) | 78 of 312 | 230 | 0 | 4 | 0 | 0 |
-| [PGSuper-Skew-AlongPier-System](PGSuper-Skew-AlongPier-System.md) | 6 s, export same as baseline, IDS same as baseline, usBridge IDS: 8 of 599 specifications fail (see PGSuper-Skew-AlongPier-System.usBridge-ids.txt) | 79 of 312 | 229 | 0 | 4 | 0 | 0 |
-| [PGSuper-Superelevation-System](PGSuper-Superelevation-System.md) | 8 s, export same as baseline, IDS same as baseline, usBridge IDS: 9 of 599 specifications fail (see PGSuper-Superelevation-System.usBridge-ids.txt) | 143 of 253 | 102 | 0 | 8 | 0 | 0 |
-| [PGSuper-Superelevation-NoProfile-System](PGSuper-Superelevation-NoProfile-System.md) | 4 s, export same as baseline, IDS same as baseline, usBridge IDS: 9 of 599 specifications fail (see PGSuper-Superelevation-NoProfile-System.usBridge-ids.txt), removed IfcAlignmentVertical before the import | 143 of 253 | 102 | 0 | 8 | 0 | 0 |
-| [PGSuper-ExteriorGirders-System](PGSuper-ExteriorGirders-System.md) | 7 s, export same as baseline, IDS same as baseline, usBridge IDS: 9 of 599 specifications fail (see PGSuper-ExteriorGirders-System.usBridge-ids.txt) | 132 of 253 | 115 | 0 | 6 | 0 | 0 |
-| [PennDOT](PennDOT.md) | 5 s, no expected values: 72 of 108 values set by the import | | | | | | |
-| [PennDOT-StandardTable](PennDOT-StandardTable.md) | 5 s, log check: 2 of 2 found, no expected values: 62 of 108 values set by the import | | | | | | |
-| [Iowa](Iowa.md) | 14 s, no expected values: 208 of 274 values set by the import | | | | | | |
-| [Iowa-StandardTable](Iowa-StandardTable.md) | 10 s, log check: 3 of 3 found, no expected values: 146 of 274 values set by the import | | | | | | |
+| [PGSuper-Display](PGSuper-Display.md) | 35 s, export baseline saved, IDS baseline saved, usBridge IDS: 9 of 599 specifications fail (see PGSuper-Display.usBridge-ids.txt) | 311 of 473 | 154 | 0 | 8 | 0 | 0 |
+| [PGSuper-System](PGSuper-System.md) | 14 s, export baseline saved, IDS baseline saved, usBridge IDS: 9 of 599 specifications fail (see PGSuper-System.usBridge-ids.txt) | 311 of 473 | 154 | 0 | 8 | 0 | 0 |
+| [PGSuper-Skew-System](PGSuper-Skew-System.md) | 28 s, export baseline saved, IDS baseline saved, usBridge IDS: 8 of 599 specifications fail (see PGSuper-Skew-System.usBridge-ids.txt) | 50 of 392 | 318 | 8 | 16 | 0 | 0 |
+| [PGSuper-Skew-Bearings-System](PGSuper-Skew-Bearings-System.md) | 19 s, export baseline saved, IDS baseline saved, usBridge IDS: 8 of 599 specifications fail (see PGSuper-Skew-Bearings-System.usBridge-ids.txt) | 78 of 392 | 310 | 0 | 4 | 0 | 0 |
+| [PGSuper-Skew-AlongPier-System](PGSuper-Skew-AlongPier-System.md) | 28 s, export baseline saved, IDS baseline saved, usBridge IDS: 8 of 599 specifications fail (see PGSuper-Skew-AlongPier-System.usBridge-ids.txt) | 79 of 392 | 309 | 0 | 4 | 0 | 0 |
+| [PGSuper-Superelevation-System](PGSuper-Superelevation-System.md) | 18 s, export baseline saved, IDS baseline saved, usBridge IDS: 9 of 599 specifications fail (see PGSuper-Superelevation-System.usBridge-ids.txt) | 324 of 473 | 141 | 0 | 8 | 0 | 0 |
+| [PGSuper-Superelevation-NoProfile-System](PGSuper-Superelevation-NoProfile-System.md) | 17 s, export baseline saved, IDS baseline saved, usBridge IDS: 9 of 599 specifications fail (see PGSuper-Superelevation-NoProfile-System.usBridge-ids.txt), removed IfcAlignmentVertical before the import | 324 of 473 | 141 | 0 | 8 | 0 | 0 |
+| [PGSuper-ExteriorGirders-System](PGSuper-ExteriorGirders-System.md) | 25 s, export baseline saved, IDS baseline saved, usBridge IDS: 9 of 599 specifications fail (see PGSuper-ExteriorGirders-System.usBridge-ids.txt) | 313 of 473 | 154 | 0 | 6 | 0 | 0 |
+| [PennDOT](PennDOT.md) | 22 s, no expected values: 72 of 108 values set by the import | | | | | | |
+| [PennDOT-StandardTable](PennDOT-StandardTable.md) | 25 s, log check: 2 of 2 found, no expected values: 62 of 108 values set by the import | | | | | | |
+| [Iowa](Iowa.md) | 41 s, no expected values: 208 of 274 values set by the import | | | | | | |
+| [Iowa-StandardTable](Iowa-StandardTable.md) | 33 s, log check: 3 of 3 found, no expected values: 146 of 274 values set by the import | | | | | | |
 | Standard table <-> IDS | OK: same: 326 declarations (material property sets not compared) | | | | | | |
 | Standard table vs usBridge workbook | DIFFERS: 4 CLASS, 3 REQUIRED, 38 NO-VALUE, 13 VALUE, 54 TYPE, 1 NAME, 17 ENUM (20 PSET, 23 RESTRICTED, 36 OPTIONAL, 27 EXTRA, 1 NO-CLASS) (see Standard-vs-usBridge-workbook.txt) | | | | | | |

@@ -1,97 +1,98 @@
-[Info] [2026-10-16 14:03:41] Starting IFC import from file
-[Info] [2026-10-16 14:03:41] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
-[Info] [2026-10-16 14:03:42] Initializing units and precision from IFC file.
-[Info] [2026-10-16 14:03:42] Importing alignment data from IFC file...
-[Info] [2026-10-16 14:03:42] Importing from bridge IFC file.
-[Info] [2026-10-16 14:03:42] Abutment 1 orientation 20 L (from positioning referent)
-[Info] [2026-10-16 14:03:42] Pier 2 orientation NORMAL (from positioning referent)
-[Info] [2026-10-16 14:03:42] Pier 3 orientation 15 R (from positioning referent)
-[Info] [2026-10-16 14:03:42] Pier 4 orientation 30 R (from positioning referent)
-[Info] [2026-10-16 14:03:42] Abutment 5 orientation 25 L (from positioning referent)
-[Info] [2026-10-16 14:03:42] Uniform girder spacing 6.000 ft, measured along the CL piers at the pier lines
-[Info] [2026-10-16 14:03:42] 2 of 2 library girders have a section to compare with.
-[Info] [2026-10-16 14:03:42] Section of Span 1, Girder 1: height 42.000 in, width 49.000 in, area 727.5 in^2, I 183642 in^4. No library girder has this section. The closest is azdrcared (height 42.000 in vs 58.000 in, centroid (from the top) 21.640 in vs 30.042 in, area 727.5 vs 604.5 in^2, I 183642.4 vs 265373.7 in^4, width differs over 39.000 in of depth (the most 38.938 in below the top: 38.375 in vs 6.000 in)). Unknown_Girder_Type (I-Beam) was cloned as WF42G with its dimensions fitted to the section (the flanges match, only the height is fitted, 0.0 s): H 66.000 -> 42.000 in.
-[Info] [2026-10-16 14:03:42] Section of Span 1, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 1, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 1, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 1, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 2, Girder 1: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 2, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 2, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 2, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 2, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 3, Girder 1: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 3, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 3, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 3, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 3, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 4, Girder 1: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 4, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 4, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 4, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] Section of Span 4, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
-[Info] [2026-10-16 14:03:42] f'ci of Span 1, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 1, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 1, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 1, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 1, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 1, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 1, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 1, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 1, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 1, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 2, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 2, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 2, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 2, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 2, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 2, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 2, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 2, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 2, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 2, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 3, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 3, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 3, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 3, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 3, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 3, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 3, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 3, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 3, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 3, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 4, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 4, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 4, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 4, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 4, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 4, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 4, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 4, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'ci of Span 4, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] f'c of Span 4, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-16 14:03:42] Abutment 1 ahead face: end distance 15 in, bearing offset 20 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Pier 2 ahead face: end distance 18 in, bearing offset 30 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Pier 2 back face: end distance 15 in, bearing offset 15 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Pier 3 ahead face: end distance 10 in, bearing offset 15 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Pier 3 back face: end distance 18 in, bearing offset 30 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Pier 4 ahead face: end distance 6 in, bearing offset 6 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Pier 4 back face: end distance 6 in, bearing offset 6 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Abutment 5 back face: end distance 25 in, bearing offset 18 in (from the CL bearings)
-[Info] [2026-10-16 14:03:42] Bearings: the same bearing everywhere, rectangular, 12.000 in x 12.000 in, height 2.000 in
-[Info] [2026-10-16 14:03:44] Profile from the top of the deck at the alignment at 41 stations: elevation -0.000 ft at station 0.000 ft, a grade of 0.00% from station 0.000 ft to 440.000 ft (within 0.007 in). At station 90.000 ft the top of the deck is out of line with its neighbors and is left out. At station 110.000 ft the top of the deck is out of line with its neighbors and is left out. At station 120.000 ft the top of the deck is out of line with its neighbors and is left out. The alignment has a profile, which is used.
-[Info] [2026-10-16 14:03:44] Roadway section from the top of the deck at 14 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left 2.00%, ridge at the alignment, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 8.000 ft the section has 13 ridge points, not 1, and is left out: left 2.00%, ridge at -9.249 ft, -342.67% for 0.181 ft, ridge at -9.068 ft, 49916.35% for 0.001 ft, ridge at -9.066 ft, 2.00% for 1.354 ft, ridge at -7.712 ft, -139.24% for 0.443 ft, ridge at -7.270 ft, 50.40% for 1.291 ft, ridge at -5.979 ft, 2.00% for 0.629 ft, ridge at -5.349 ft, -56.92% for 1.061 ft, ridge at -4.289 ft, 96.75% for 0.660 ft, ridge at -3.629 ft, 2.00% for 3.629 ft, ridge at the alignment, -2.00% for 5.840 ft, ridge at 5.840 ft, -36.23% for 1.826 ft, ridge at 7.666 ft, 1867.81% for 0.033 ft, ridge at 7.700 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 27.500 ft the section has 14 ridge points, not 1, and is left out: left 2.00%, ridge at -13.518 ft, -50.53% for 1.288 ft, ridge at -12.230 ft, 3.64% for 0.679 ft, ridge at -11.552 ft, 41878.32% for 0.002 ft, ridge at -11.550 ft, 2.00% for 11.550 ft, ridge at the alignment, -2.00% for 3.160 ft, ridge at 3.160 ft, -93703.66% for 0.001 ft, ridge at 3.161 ft, 134.24% for 0.459 ft, ridge at 3.619 ft, -2.00% for 1.618 ft, ridge at 5.237 ft, -242.75% for 0.260 ft, ridge at 5.497 ft, 64.72% for 0.937 ft, ridge at 6.434 ft, -2.00% for 1.394 ft, ridge at 7.828 ft, -100.43% for 0.635 ft, ridge at 8.463 ft, 71.89% for 0.846 ft, ridge at 9.308 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 55.000 ft the section has 4 ridge points, not 1, and is left out: left 2.00%, ridge at the alignment, -2.00% for 3.678 ft, ridge at 3.678 ft, -134007.56% for 0.000 ft, ridge at 3.678 ft, 1867.38% for 0.033 ft, ridge at 3.711 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 82.500 ft the section has 4 ridge points, not 1, and is left out: left 2.00%, ridge at the alignment, -2.00% for 2.104 ft, ridge at 2.104 ft, -88.30% for 0.724 ft, ridge at 2.828 ft, 62.08% for 0.975 ft, ridge at 3.804 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 412.500 ft the section has 7 ridge points, not 1, and is left out: left 2.00%, ridge at the alignment, -2.00% for 7.479 ft, ridge at 7.479 ft, -687.45% for 0.091 ft, ridge at 7.570 ft, 57.23% for 1.055 ft, ridge at 8.626 ft, -2.00% for 3.427 ft, ridge at 12.052 ft, -144.98% for 0.487 ft, ridge at 12.540 ft, 786.93% for 0.088 ft, ridge at 12.628 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft).
-[Info] [2026-10-16 14:03:44] The left exterior traffic barrier is Left Barrier (#5634): area 623.0 in^2, 6 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
-[Info] [2026-10-16 14:03:44] The right exterior traffic barrier is Right Barrier (#5774): area 623.0 in^2, 7 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
-[Info] [2026-10-16 14:03:45] Deck gross depth 7.500 in (from deck geometry)
-[Info] [2026-10-16 14:03:45] Left overhang edge depth 7.001 in (from deck geometry)
-[Info] [2026-10-16 14:03:45] Left overhang taper: taper to top of girder top flange (from deck geometry)
-[Info] [2026-10-16 14:03:45] Right overhang edge depth 7.000 in (from deck geometry)
-[Info] [2026-10-16 14:03:45] Right overhang taper: taper to top of girder top flange (from deck geometry)
-[Info] [2026-10-16 14:03:45] Haunch shape: filleted (from deck geometry)
-[Info] [2026-10-16 14:03:45] Fillet 0.750 in (from deck geometry)
-[Info] [2026-10-16 14:03:45] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-10-16 14:03:45] Slab offset for the bridge 11.000 in (from deck geometry)
-[Info] [2026-10-16 14:03:45] Done IFC import from file
+[Info] [2026-10-20 08:55:11] Starting IFC import from file
+[Info] [2026-10-20 08:55:12] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
+[Info] [2026-10-20 08:55:13] Initializing units and precision from IFC file.
+[Info] [2026-10-20 08:55:13] Importing alignment data from IFC file...
+[Info] [2026-10-20 08:55:13] Importing from bridge IFC file.
+[Info] [2026-10-20 08:55:14] Abutment 1 orientation 20 L (from positioning referent)
+[Info] [2026-10-20 08:55:14] Pier 2 orientation NORMAL (from positioning referent)
+[Info] [2026-10-20 08:55:14] Pier 3 orientation 15 R (from positioning referent)
+[Info] [2026-10-20 08:55:14] Pier 4 orientation 30 R (from positioning referent)
+[Info] [2026-10-20 08:55:14] Abutment 5 orientation 25 L (from positioning referent)
+[Info] [2026-10-20 08:55:14] Uniform girder spacing 6.000 ft, measured along the CL piers at the pier lines
+[Info] [2026-10-20 08:55:14] 2 of 2 library girders have a section to compare with.
+[Info] [2026-10-20 08:55:14] Section of Span 1, Girder 1: height 42.000 in, width 49.000 in, area 727.5 in^2, I 183642 in^4. No library girder has this section. The closest is azdrcared (height 42.000 in vs 58.000 in, centroid (from the top) 21.640 in vs 30.042 in, area 727.5 vs 604.5 in^2, I 183642.4 vs 265373.7 in^4, width differs over 39.000 in of depth (the most 38.938 in below the top: 38.375 in vs 6.000 in)). Unknown_Girder_Type (I-Beam) was cloned as WF42G with its dimensions fitted to the section (the flanges match, only the height is fitted, 0.0 s): H 66.000 -> 42.000 in.
+[Info] [2026-10-20 08:55:14] Section of Span 1, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 1, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 1, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 1, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 2, Girder 1: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 2, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 2, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 2, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 2, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 3, Girder 1: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 3, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 3, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 3, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 3, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 4, Girder 1: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 4, Girder 2: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 4, Girder 3: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 4, Girder 4: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] Section of Span 4, Girder 5: the same as an earlier girder's, so WF42G is used without fitting again.
+[Info] [2026-10-20 08:55:14] f'ci of Span 1, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 1, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 1, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 1, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 1, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 1, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 1, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 1, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 1, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 1, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 2, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 2, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 2, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 2, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 2, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 2, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 2, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 2, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 2, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 2, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 3, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 3, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 3, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 3, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 3, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 3, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 3, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 3, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 3, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 3, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 4, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 4, Girder 1 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 4, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 4, Girder 2 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 4, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 4, Girder 3 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 4, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 4, Girder 4 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'ci of Span 4, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] f'c of Span 4, Girder 5 = 6.000 ksi, "4.13685e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-20 08:55:14] Abutment 1 ahead face: end distance 15 in, bearing offset 20 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Pier 2 ahead face: end distance 18 in, bearing offset 30 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Pier 2 back face: end distance 15 in, bearing offset 15 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Pier 3 ahead face: end distance 10 in, bearing offset 15 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Pier 3 back face: end distance 18 in, bearing offset 30 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Pier 4 ahead face: end distance 6 in, bearing offset 6 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Pier 4 back face: end distance 6 in, bearing offset 6 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Abutment 5 back face: end distance 25 in, bearing offset 18 in (from the CL bearings)
+[Info] [2026-10-20 08:55:14] Bearings: the same bearing everywhere, rectangular, 12.000 in x 12.000 in, height 2.000 in
+[Info] [2026-10-20 08:55:14] The model has no strands (IfcTendon.STRAND). The girders keep the template's strands.
+[Info] [2026-10-20 08:55:17] Profile from the top of the deck at the alignment at 41 stations: elevation -0.000 ft at station 0.000 ft, a grade of 0.00% from station 0.000 ft to 440.000 ft (within 0.007 in). At station 90.000 ft the top of the deck is out of line with its neighbors and is left out. At station 110.000 ft the top of the deck is out of line with its neighbors and is left out. At station 120.000 ft the top of the deck is out of line with its neighbors and is left out. The alignment has a profile, which is used.
+[Info] [2026-10-20 08:55:17] Roadway section from the top of the deck at 14 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left 2.00%, ridge at the alignment, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 8.000 ft the section has 13 ridge points, not 1, and is left out: left 2.00%, ridge at -9.249 ft, -342.67% for 0.181 ft, ridge at -9.068 ft, 49916.35% for 0.001 ft, ridge at -9.066 ft, 2.00% for 1.354 ft, ridge at -7.712 ft, -139.24% for 0.443 ft, ridge at -7.270 ft, 50.40% for 1.291 ft, ridge at -5.979 ft, 2.00% for 0.629 ft, ridge at -5.349 ft, -56.92% for 1.061 ft, ridge at -4.289 ft, 96.75% for 0.660 ft, ridge at -3.629 ft, 2.00% for 3.629 ft, ridge at the alignment, -2.00% for 5.840 ft, ridge at 5.840 ft, -36.23% for 1.826 ft, ridge at 7.666 ft, 1867.81% for 0.033 ft, ridge at 7.700 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 27.500 ft the section has 14 ridge points, not 1, and is left out: left 2.00%, ridge at -13.518 ft, -50.53% for 1.288 ft, ridge at -12.230 ft, 3.64% for 0.679 ft, ridge at -11.552 ft, 41878.32% for 0.002 ft, ridge at -11.550 ft, 2.00% for 11.550 ft, ridge at the alignment, -2.00% for 3.160 ft, ridge at 3.160 ft, -93703.66% for 0.001 ft, ridge at 3.161 ft, 134.24% for 0.459 ft, ridge at 3.619 ft, -2.00% for 1.618 ft, ridge at 5.237 ft, -242.75% for 0.260 ft, ridge at 5.497 ft, 64.72% for 0.937 ft, ridge at 6.434 ft, -2.00% for 1.394 ft, ridge at 7.828 ft, -100.43% for 0.635 ft, ridge at 8.463 ft, 71.89% for 0.846 ft, ridge at 9.308 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 55.000 ft the section has 4 ridge points, not 1, and is left out: left 2.00%, ridge at the alignment, -2.00% for 3.678 ft, ridge at 3.678 ft, -134007.56% for 0.000 ft, ridge at 3.678 ft, 1867.38% for 0.033 ft, ridge at 3.711 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 82.500 ft the section has 4 ridge points, not 1, and is left out: left 2.00%, ridge at the alignment, -2.00% for 2.104 ft, ridge at 2.104 ft, -88.30% for 0.724 ft, ridge at 2.828 ft, 62.08% for 0.975 ft, ridge at 3.804 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft). At station 412.500 ft the section has 7 ridge points, not 1, and is left out: left 2.00%, ridge at the alignment, -2.00% for 7.479 ft, ridge at 7.479 ft, -687.45% for 0.091 ft, ridge at 7.570 ft, 57.23% for 1.055 ft, ridge at 8.626 ft, -2.00% for 3.427 ft, ridge at 12.052 ft, -144.98% for 0.487 ft, ridge at 12.540 ft, 786.93% for 0.088 ft, ridge at 12.628 ft, right -2.00% (rise to the right, measured from -13.834 ft to 13.834 ft).
+[Info] [2026-10-20 08:55:17] The left exterior traffic barrier is Left Barrier (#5634): area 623.0 in^2, 6 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
+[Info] [2026-10-20 08:55:17] The right exterior traffic barrier is Right Barrier (#5774): area 623.0 in^2, 7 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
+[Info] [2026-10-20 08:55:20] Deck gross depth 7.500 in (from deck geometry)
+[Info] [2026-10-20 08:55:20] Left overhang edge depth 7.001 in (from deck geometry)
+[Info] [2026-10-20 08:55:20] Left overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-10-20 08:55:20] Right overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-10-20 08:55:20] Right overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-10-20 08:55:20] Haunch shape: filleted (from deck geometry)
+[Info] [2026-10-20 08:55:20] Fillet 0.750 in (from deck geometry)
+[Info] [2026-10-20 08:55:20] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-10-20 08:55:20] Slab offset for the bridge 11.000 in (from deck geometry)
+[Info] [2026-10-20 08:55:20] Done IFC import from file
 IFC import succeeded
-Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Skew-AlongPier-System.pgs
+Project saved to D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Skew-AlongPier-System.pgs

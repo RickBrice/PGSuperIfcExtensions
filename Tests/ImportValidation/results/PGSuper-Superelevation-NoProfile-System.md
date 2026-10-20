@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 20+00.00, at[1] = 20+50.00, at[2] = 21+00.00, at[3] = 21+65.00, at[4] = 22+30.00, at[5] = 22+80.00, at[6] = 23+30.00
 
-**143 of 253 match** - mismatch: 0, not imported: 8, missing: 0, not comparable: 0, default match: 102, extra: 0
+**324 of 473 match** - mismatch: 0, not imported: 8, missing: 0, not comparable: 0, default match: 141, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -22,7 +22,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[2].type` | WF66G | Unknown_Girder_Type | template default |
 | `group[2].girder[3].type` | WF66G | Unknown_Girder_Type | template default |
 
-## default match (102)
+## default match (141)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -128,8 +128,47 @@ A *default match* equals the expected value only because the template has the sa
 | `at[5].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[6].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[6].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
+| `group[0].girder[0].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[0].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[0].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.temporary.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.temporary.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.temporary.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.temporary.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.temporary.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.temporary.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.straight.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.harped.debonded.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.temporary.count` | 0 | 0 | template default |
 
-## match (143)
+## match (324)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -276,3 +315,184 @@ A *default match* equals the expected value only because the template has the sa
 | `at[6].profile.grade` | -0.4620 % | -0.4647 % |  |
 | `at[6].roadway.at_left_edge` | 0.600 ft | 0.603 ft |  |
 | `at[6].roadway.at_right_edge` | -0.600 ft | -0.597 ft |  |
+| `group[0].girder[0].strands.count` | 28 | 28 |  |
+| `group[0].girder[0].strands.straight.count` | 20 | 20 |  |
+| `group[0].girder[0].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[0].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[0].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[0].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[0].girder[0].strands.harped.count` | 8 | 8 |  |
+| `group[0].girder[0].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[0].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[0].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[0].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[0].girder[0].strands.harp_points` | 39.117, 58.675 ft | 39.117, 58.675 ft |  |
+| `group[0].girder[1].strands.count` | 28 | 28 |  |
+| `group[0].girder[1].strands.straight.count` | 20 | 20 |  |
+| `group[0].girder[1].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[1].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[1].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[1].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[0].girder[1].strands.harped.count` | 8 | 8 |  |
+| `group[0].girder[1].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[1].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[1].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[1].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[0].girder[1].strands.harp_points` | 39.173, 58.757 ft | 39.173, 58.757 ft |  |
+| `group[0].girder[2].strands.count` | 28 | 28 |  |
+| `group[0].girder[2].strands.straight.count` | 20 | 20 |  |
+| `group[0].girder[2].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[2].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[2].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[2].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[0].girder[2].strands.harped.count` | 8 | 8 |  |
+| `group[0].girder[2].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[2].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[2].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[2].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[0].girder[2].strands.harp_points` | 39.229, 58.842 ft | 39.229, 58.842 ft |  |
+| `group[0].girder[3].strands.count` | 28 | 28 |  |
+| `group[0].girder[3].strands.straight.count` | 20 | 20 |  |
+| `group[0].girder[3].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[3].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[3].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[3].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[0].girder[3].strands.harped.count` | 8 | 8 |  |
+| `group[0].girder[3].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[0].girder[3].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[0].girder[3].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[0].girder[3].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[0].girder[3].strands.harp_points` | 39.285, 58.924 ft | 39.285, 58.924 ft |  |
+| `group[1].girder[0].strands.count` | 29 | 29 |  |
+| `group[1].girder[0].strands.straight.count` | 18 | 18 |  |
+| `group[1].girder[0].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[0].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[0].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[0].strands.straight.paths` | 18 strands | 18 strands |  |
+| `group[1].girder[0].strands.harped.count` | 9 | 9 |  |
+| `group[1].girder[0].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[0].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[0].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[0].strands.harped.paths` | 9 strands | 9 strands |  |
+| `group[1].girder[0].strands.temporary.count` | 2 | 2 |  |
+| `group[1].girder[0].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[0].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[0].strands.temporary.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[0].strands.temporary.paths` | 2 strands | 2 strands |  |
+| `group[1].girder[0].strands.harp_points` | 51.073, 76.611 ft | 51.073, 76.611 ft |  |
+| `group[1].girder[1].strands.count` | 29 | 29 |  |
+| `group[1].girder[1].strands.straight.count` | 18 | 18 |  |
+| `group[1].girder[1].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[1].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[1].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[1].strands.straight.paths` | 18 strands | 18 strands |  |
+| `group[1].girder[1].strands.harped.count` | 9 | 9 |  |
+| `group[1].girder[1].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[1].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[1].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[1].strands.harped.paths` | 9 strands | 9 strands |  |
+| `group[1].girder[1].strands.temporary.count` | 2 | 2 |  |
+| `group[1].girder[1].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[1].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[1].strands.temporary.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[1].strands.temporary.paths` | 2 strands | 2 strands |  |
+| `group[1].girder[1].strands.harp_points` | 51.135, 76.703 ft | 51.135, 76.703 ft |  |
+| `group[1].girder[2].strands.count` | 29 | 29 |  |
+| `group[1].girder[2].strands.straight.count` | 18 | 18 |  |
+| `group[1].girder[2].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[2].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[2].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[2].strands.straight.paths` | 18 strands | 18 strands |  |
+| `group[1].girder[2].strands.harped.count` | 9 | 9 |  |
+| `group[1].girder[2].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[2].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[2].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[2].strands.harped.paths` | 9 strands | 9 strands |  |
+| `group[1].girder[2].strands.temporary.count` | 2 | 2 |  |
+| `group[1].girder[2].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[2].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[2].strands.temporary.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[2].strands.temporary.paths` | 2 strands | 2 strands |  |
+| `group[1].girder[2].strands.harp_points` | 51.198, 76.798 ft | 51.198, 76.798 ft |  |
+| `group[1].girder[3].strands.count` | 29 | 29 |  |
+| `group[1].girder[3].strands.straight.count` | 18 | 18 |  |
+| `group[1].girder[3].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[3].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[3].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[3].strands.straight.paths` | 18 strands | 18 strands |  |
+| `group[1].girder[3].strands.harped.count` | 9 | 9 |  |
+| `group[1].girder[3].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[3].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[3].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[3].strands.harped.paths` | 9 strands | 9 strands |  |
+| `group[1].girder[3].strands.temporary.count` | 2 | 2 |  |
+| `group[1].girder[3].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[3].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[3].strands.temporary.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[3].strands.temporary.paths` | 2 strands | 2 strands |  |
+| `group[1].girder[3].strands.harp_points` | 51.260, 76.890 ft | 51.260, 76.890 ft |  |
+| `group[1].girder[4].strands.count` | 29 | 29 |  |
+| `group[1].girder[4].strands.straight.count` | 18 | 18 |  |
+| `group[1].girder[4].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[4].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[4].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[4].strands.straight.paths` | 18 strands | 18 strands |  |
+| `group[1].girder[4].strands.harped.count` | 9 | 9 |  |
+| `group[1].girder[4].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[4].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[4].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[4].strands.harped.paths` | 9 strands | 9 strands |  |
+| `group[1].girder[4].strands.temporary.count` | 2 | 2 |  |
+| `group[1].girder[4].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[1].girder[4].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[1].girder[4].strands.temporary.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[1].girder[4].strands.temporary.paths` | 2 strands | 2 strands |  |
+| `group[1].girder[4].strands.harp_points` | 51.322, 76.985 ft | 51.322, 76.985 ft |  |
+| `group[2].girder[0].strands.count` | 28 | 28 |  |
+| `group[2].girder[0].strands.straight.count` | 20 | 20 |  |
+| `group[2].girder[0].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[0].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[0].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[0].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[2].girder[0].strands.harped.count` | 8 | 8 |  |
+| `group[2].girder[0].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[0].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[0].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[0].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[2].girder[0].strands.harp_points` | 39.114, 58.675 ft | 39.114, 58.675 ft |  |
+| `group[2].girder[1].strands.count` | 28 | 28 |  |
+| `group[2].girder[1].strands.straight.count` | 20 | 20 |  |
+| `group[2].girder[1].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[1].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[1].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[1].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[2].girder[1].strands.harped.count` | 8 | 8 |  |
+| `group[2].girder[1].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[1].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[1].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[1].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[2].girder[1].strands.harp_points` | 39.170, 58.757 ft | 39.170, 58.757 ft |  |
+| `group[2].girder[2].strands.count` | 28 | 28 |  |
+| `group[2].girder[2].strands.straight.count` | 20 | 20 |  |
+| `group[2].girder[2].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[2].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[2].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[2].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[2].girder[2].strands.harped.count` | 8 | 8 |  |
+| `group[2].girder[2].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[2].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[2].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[2].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[2].girder[2].strands.harp_points` | 39.229, 58.842 ft | 39.229, 58.842 ft |  |
+| `group[2].girder[3].strands.count` | 28 | 28 |  |
+| `group[2].girder[3].strands.straight.count` | 20 | 20 |  |
+| `group[2].girder[3].strands.straight.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[3].strands.straight.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[3].strands.straight.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[3].strands.straight.paths` | 20 strands | 20 strands |  |
+| `group[2].girder[3].strands.harped.count` | 8 | 8 |  |
+| `group[2].girder[3].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
+| `group[2].girder[3].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
+| `group[2].girder[3].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
+| `group[2].girder[3].strands.harped.paths` | 8 strands | 8 strands |  |
+| `group[2].girder[3].strands.harp_points` | 39.285, 58.924 ft | 39.285, 58.924 ft |  |

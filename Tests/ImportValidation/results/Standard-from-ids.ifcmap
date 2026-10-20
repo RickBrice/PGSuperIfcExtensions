@@ -346,7 +346,7 @@
     {
       "name": "usBrPset_Common", "applies_to": "tendon", "attach": "type",
       "properties": [
-        {"name": "Status", "type": "IfcLabel", "value": "NEW", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"},
+        {"name": "Status", "type": "IfcLabel", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}, "target": "tendon.status", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"},
         {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"},
         {"name": "Note", "type": "IfcText", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"},
         {"name": "SNBIElementNumber", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"},

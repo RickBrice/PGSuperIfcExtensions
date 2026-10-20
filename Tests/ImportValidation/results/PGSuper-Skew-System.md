@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**50 of 312 match** - mismatch: 8, not imported: 16, missing: 0, not comparable: 0, default match: 238, extra: 0
+**50 of 392 match** - mismatch: 8, not imported: 16, missing: 0, not comparable: 0, default match: 318, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -43,7 +43,7 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].back.end_distance` | 25.000 in | 20.500 in | template default |
 | `pier[4].ahead.end_distance` | 25.000 in | 20.500 in | template default |
 
-## default match (238)
+## default match (318)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -285,6 +285,86 @@ A *default match* equals the expected value only because the template has the sa
 | `at[8].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[8].roadway.at_left_edge` | -0.300 ft | -0.300 ft | template default |
 | `at[8].roadway.at_right_edge` | -0.300 ft | -0.300 ft | template default |
+| `group[0].girder[0].strands.count` | 0 | 0 | template default |
+| `group[0].girder[0].strands.straight.count` | 0 | 0 | template default |
+| `group[0].girder[0].strands.harped.count` | 0 | 0 | template default |
+| `group[0].girder[0].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.straight.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.harped.count` | 0 | 0 | template default |
+| `group[0].girder[1].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.straight.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.harped.count` | 0 | 0 | template default |
+| `group[0].girder[2].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.straight.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.harped.count` | 0 | 0 | template default |
+| `group[0].girder[3].strands.temporary.count` | 0 | 0 | template default |
+| `group[0].girder[4].strands.count` | 0 | 0 | template default |
+| `group[0].girder[4].strands.straight.count` | 0 | 0 | template default |
+| `group[0].girder[4].strands.harped.count` | 0 | 0 | template default |
+| `group[0].girder[4].strands.temporary.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.straight.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.harped.count` | 0 | 0 | template default |
+| `group[1].girder[0].strands.temporary.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.straight.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.harped.count` | 0 | 0 | template default |
+| `group[1].girder[1].strands.temporary.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.straight.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.harped.count` | 0 | 0 | template default |
+| `group[1].girder[2].strands.temporary.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.straight.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.harped.count` | 0 | 0 | template default |
+| `group[1].girder[3].strands.temporary.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.straight.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.harped.count` | 0 | 0 | template default |
+| `group[1].girder[4].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.straight.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.harped.count` | 0 | 0 | template default |
+| `group[2].girder[0].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.straight.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.harped.count` | 0 | 0 | template default |
+| `group[2].girder[1].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.straight.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.harped.count` | 0 | 0 | template default |
+| `group[2].girder[2].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.straight.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.harped.count` | 0 | 0 | template default |
+| `group[2].girder[3].strands.temporary.count` | 0 | 0 | template default |
+| `group[2].girder[4].strands.count` | 0 | 0 | template default |
+| `group[2].girder[4].strands.straight.count` | 0 | 0 | template default |
+| `group[2].girder[4].strands.harped.count` | 0 | 0 | template default |
+| `group[2].girder[4].strands.temporary.count` | 0 | 0 | template default |
+| `group[3].girder[0].strands.count` | 0 | 0 | template default |
+| `group[3].girder[0].strands.straight.count` | 0 | 0 | template default |
+| `group[3].girder[0].strands.harped.count` | 0 | 0 | template default |
+| `group[3].girder[0].strands.temporary.count` | 0 | 0 | template default |
+| `group[3].girder[1].strands.count` | 0 | 0 | template default |
+| `group[3].girder[1].strands.straight.count` | 0 | 0 | template default |
+| `group[3].girder[1].strands.harped.count` | 0 | 0 | template default |
+| `group[3].girder[1].strands.temporary.count` | 0 | 0 | template default |
+| `group[3].girder[2].strands.count` | 0 | 0 | template default |
+| `group[3].girder[2].strands.straight.count` | 0 | 0 | template default |
+| `group[3].girder[2].strands.harped.count` | 0 | 0 | template default |
+| `group[3].girder[2].strands.temporary.count` | 0 | 0 | template default |
+| `group[3].girder[3].strands.count` | 0 | 0 | template default |
+| `group[3].girder[3].strands.straight.count` | 0 | 0 | template default |
+| `group[3].girder[3].strands.harped.count` | 0 | 0 | template default |
+| `group[3].girder[3].strands.temporary.count` | 0 | 0 | template default |
+| `group[3].girder[4].strands.count` | 0 | 0 | template default |
+| `group[3].girder[4].strands.straight.count` | 0 | 0 | template default |
+| `group[3].girder[4].strands.harped.count` | 0 | 0 | template default |
+| `group[3].girder[4].strands.temporary.count` | 0 | 0 | template default |
 
 ## match (50)
 

@@ -1,54 +1,55 @@
-[Info] [2026-10-16 14:08:42] Starting IFC import from file
-[Info] [2026-10-16 14:08:42] IFC mapping table "PennDOT" (version 1): F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\mappings\PennDOT.ifcmap, chosen by the command line (/IfcMapping)
-[Info] [2026-10-16 14:08:42] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
-[Info] [2026-10-16 14:08:42] Initializing units and precision from IFC file.
-[Info] [2026-10-16 14:08:42] IFC model does not contain an IfcMapConversion. Map conversion will be computed for this model.
-[Info] [2026-10-16 14:08:42] Importing alignment data from IFC file...
-[Info] [2026-10-16 14:08:42] Importing from bridge IFC file.
-[Info] [2026-10-16 14:08:42] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
-[Info] [2026-10-16 14:08:42] Expected Pier 1 #24=IfcBridgePart('1d9RH4z8fBLecnKnmtEis7',$,'Abutment1','',$,#27,$,$,.ELEMENT.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-10-16 14:08:42] Expected Pier 2 #32=IfcBridgePart('2FCI8sjAn9ER9R5W0DnDWU',$,'Abutment2','',$,#35,$,$,.COMPLEX.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
-[Info] [2026-10-16 14:08:43] The girder designation (e.g. "Span 1, Girder 2") of Beam1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
-[Info] [2026-10-16 14:08:43] Beam designation: Beam1 is not expected.
-[Info] [2026-10-16 14:08:43] Beam designation: Beam2 is not expected.
-[Info] [2026-10-16 14:08:43] Beam designation: Beam3 is not expected.
-[Info] [2026-10-16 14:08:43] Beam designation: Beam4 is not expected.
-[Info] [2026-10-16 14:08:43] Beam designation: Beam5 is not expected.
-[Info] [2026-10-16 14:08:43] Abutment 1 orientation NORMAL (from CL bearing line)
-[Info] [2026-10-16 14:08:43] Abutment 2 orientation NORMAL (from CL bearing line)
-[Info] [2026-10-16 14:08:43] Uniform girder spacing 6.500 ft, measured normal to the alignment at the pier lines
-[Info] [2026-10-16 14:08:43] 2 of 2 library girders have a section to compare with.
-[Info] [2026-10-16 14:08:45] Section of Beam1: height 31.307 in, width 42.000 in, area 716.1 in^2, I 81670 in^4. No library girder has this section. The closest is azdrcared (height 31.307 in vs 58.000 in, centroid (from the top) 16.294 in vs 30.042 in, area 716.1 vs 604.5 in^2, I 81670.4 vs 265373.7 in^4, width differs over 31.000 in of depth (the most 30.438 in below the top: 33.000 in vs 6.000 in)). azdrcared (I-Beam) was cloned as PA Bulb-Tee 33/31.25 with its dimensions fitted to the section (all dimensions fitted, 5 of 39 beam factories fully fitted after screening; the closest: Tapered I Beam (BridgeSight) 1.1, Tapered I-Beam 1.1, Precast I-Beam (BridgeSight) 1.1, Precast I-Beam 1.1, FIB Girder (BridgeSight) 1.5, 2.4 s): D1 5.000 -> 4.519 in, D2 2.000 -> 1.287 in, D3 0.000 -> 1.999 in, D4 0.000 -> 3.533 in, D6 6.000 -> 8.998 in, H 58.000 -> 31.306 in, T1 6.000 -> 7.998 in, T2 6.000 -> 7.999 in, W2 9.500 -> 15.002 in, W3 0.000 -> 2.000 in, W4 0.000 -> 3.502 in, W5 9.500 -> 8.998 in, C1 0.000 -> 0.766 in. It differs locally: width differs over 0.875 in of depth (the most 4.562 in below the top: 41.448 in vs 40.998 in), but the outlines are within 0.055 in of each other.
-[Info] [2026-10-16 14:08:45] Section of Beam2: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
-[Info] [2026-10-16 14:08:45] Section of Beam3: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
-[Info] [2026-10-16 14:08:45] Section of Beam4: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
-[Info] [2026-10-16 14:08:45] Section of Beam5: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
-[Info] [2026-10-16 14:08:45] f'ci of Beam1 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'c of Beam1 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'ci of Beam2 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'c of Beam2 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'ci of Beam3 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'c of Beam3 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'ci of Beam4 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'c of Beam4 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'ci of Beam5 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] f'c of Beam5 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
-[Info] [2026-10-16 14:08:45] Abutment 1 ahead face: end distance 12 in, bearing offset 0 in (from the CL bearings)
-[Info] [2026-10-16 14:08:45] Abutment 2 back face: end distance 12 in, bearing offset 0 in (from the CL bearings)
-[Info] [2026-10-16 14:08:45] Bearings: the same bearing everywhere, rectangular, 12.000 in x 31.500 in, height 0.750 in, fixed
-[Info] [2026-10-16 14:08:45] Profile from the top of the deck at the alignment at 7 stations: elevation 1008.598 ft at station -6.000 ft, a grade of 0.50% from station -6.000 ft to 54.000 ft (within 0.020 in).
-[Info] [2026-10-16 14:08:45] Roadway section from the top of the deck at 5 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left 2.00%, ridge at the alignment, right -2.00% (rise to the right, measured from -13.698 ft to 13.698 ft).
-[Info] [2026-10-16 14:08:45] The left exterior traffic barrier is Barrier_Left_Deck (#14015): area 287.4 in^2, 11 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). No library traffic barrier has its section (the closest is zzzarcecdz, outlines 20.660 in apart). A new library entry, Barrier_Left_Deck, is made from it (its weight is computed from the section). Its points (x, y in inches): (17.971, -1.610) (17.820, 14.453) (17.784, 14.712) (17.634, 15.025) (17.507, 15.171) (17.211, 15.365) (16.869, 15.443) (1.074, 16.210) (0.310, 15.497) (0.030, 1.500) (0.759, 0.652).
-[Info] [2026-10-16 14:08:45] The right exterior traffic barrier is Barrier_Right_Deck (#21263): area 287.4 in^2, 12 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's Barrier_Left_Deck (outlines within 0.012 in).
-[Info] [2026-10-16 14:08:45] Deck gross depth 8.000 in (from deck geometry)
-[Info] [2026-10-16 14:08:45] Left overhang edge depth 10.019 in (from deck geometry)
-[Info] [2026-10-16 14:08:45] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-10-16 14:08:45] Right overhang edge depth 10.020 in (from deck geometry)
-[Info] [2026-10-16 14:08:45] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
-[Info] [2026-10-16 14:08:45] Haunch shape: square (from deck geometry)
-[Info] [2026-10-16 14:08:45] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-10-16 14:08:45] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
-[Info] [2026-10-16 14:08:46] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 4 more elements.
-[Info] [2026-10-16 14:08:46] Done IFC import from file
+[Info] [2026-10-20 09:09:01] Starting IFC import from file
+[Info] [2026-10-20 09:09:02] IFC mapping table "PennDOT" (version 1): D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\mappings\PennDOT.ifcmap, chosen by the command line (/IfcMapping)
+[Info] [2026-10-20 09:09:02] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
+[Info] [2026-10-20 09:09:02] Initializing units and precision from IFC file.
+[Info] [2026-10-20 09:09:02] IFC model does not contain an IfcMapConversion. Map conversion will be computed for this model.
+[Info] [2026-10-20 09:09:02] Importing alignment data from IFC file...
+[Info] [2026-10-20 09:09:02] Importing from bridge IFC file.
+[Info] [2026-10-20 09:09:02] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
+[Info] [2026-10-20 09:09:02] Expected Pier 1 #24=IfcBridgePart('1d9RH4z8fBLecnKnmtEis7',$,'Abutment1','',$,#27,$,$,.ELEMENT.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-10-20 09:09:02] Expected Pier 2 #32=IfcBridgePart('2FCI8sjAn9ER9R5W0DnDWU',$,'Abutment2','',$,#35,$,$,.COMPLEX.,.NOTDEFINED.,.ABUTMENT.) to be positioned with an IfcReferent and have stationing defined with Pset_Stationing. Attempting to estimate station from all IfcBearing in the spatial structure of the IfcBridgePart.PIER
+[Info] [2026-10-20 09:09:03] The girder designation (e.g. "Span 1, Girder 2") of Beam1 wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
+[Info] [2026-10-20 09:09:03] Beam designation: Beam1 is not expected.
+[Info] [2026-10-20 09:09:03] Beam designation: Beam2 is not expected.
+[Info] [2026-10-20 09:09:03] Beam designation: Beam3 is not expected.
+[Info] [2026-10-20 09:09:03] Beam designation: Beam4 is not expected.
+[Info] [2026-10-20 09:09:03] Beam designation: Beam5 is not expected.
+[Info] [2026-10-20 09:09:03] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-10-20 09:09:03] Abutment 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-10-20 09:09:03] Uniform girder spacing 6.500 ft, measured normal to the alignment at the pier lines
+[Info] [2026-10-20 09:09:03] 2 of 2 library girders have a section to compare with.
+[Info] [2026-10-20 09:09:11] Section of Beam1: height 31.307 in, width 42.000 in, area 716.1 in^2, I 81670 in^4. No library girder has this section. The closest is azdrcared (height 31.307 in vs 58.000 in, centroid (from the top) 16.294 in vs 30.042 in, area 716.1 vs 604.5 in^2, I 81670.4 vs 265373.7 in^4, width differs over 31.000 in of depth (the most 30.438 in below the top: 33.000 in vs 6.000 in)). azdrcared (I-Beam) was cloned as PA Bulb-Tee 33/31.25 with its dimensions fitted to the section (all dimensions fitted, 5 of 39 beam factories fully fitted after screening; the closest: Tapered I Beam (BridgeSight) 1.1, Tapered I-Beam 1.1, Precast I-Beam (BridgeSight) 1.1, Precast I-Beam 1.1, FIB Girder (BridgeSight) 1.5, 8.0 s): D1 5.000 -> 4.519 in, D2 2.000 -> 1.287 in, D3 0.000 -> 1.999 in, D4 0.000 -> 3.533 in, D6 6.000 -> 8.998 in, H 58.000 -> 31.306 in, T1 6.000 -> 7.998 in, T2 6.000 -> 7.999 in, W2 9.500 -> 15.002 in, W3 0.000 -> 2.000 in, W4 0.000 -> 3.502 in, W5 9.500 -> 8.998 in, C1 0.000 -> 0.766 in. It differs locally: width differs over 0.875 in of depth (the most 4.562 in below the top: 41.448 in vs 40.998 in), but the outlines are within 0.055 in of each other.
+[Info] [2026-10-20 09:09:11] Section of Beam2: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
+[Info] [2026-10-20 09:09:11] Section of Beam3: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
+[Info] [2026-10-20 09:09:11] Section of Beam4: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
+[Info] [2026-10-20 09:09:11] Section of Beam5: the same as an earlier girder's, so PA Bulb-Tee 33/31.25 is used without fitting again.
+[Info] [2026-10-20 09:09:11] f'ci of Beam1 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'c of Beam1 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'ci of Beam2 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'c of Beam2 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'ci of Beam3 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'c of Beam3 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'ci of Beam4 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'c of Beam4 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'ci of Beam5 = 6.800 ksi, "6.8" from _PS Concrete Beams.Concrete Strength at Strand Release (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] f'c of Beam5 = 8.000 ksi, "8" from _PS Concrete Beams.Concrete Strength at 28 days (ksi) [ksi] in mapping table "PennDOT"
+[Info] [2026-10-20 09:09:11] Abutment 1 ahead face: end distance 12 in, bearing offset 0 in (from the CL bearings)
+[Info] [2026-10-20 09:09:11] Abutment 2 back face: end distance 12 in, bearing offset 0 in (from the CL bearings)
+[Info] [2026-10-20 09:09:11] Bearings: the same bearing everywhere, rectangular, 12.000 in x 31.500 in, height 0.750 in, fixed
+[Info] [2026-10-20 09:09:11] The model has no strands (IfcTendon.STRAND). The girders keep the template's strands.
+[Info] [2026-10-20 09:09:12] Profile from the top of the deck at the alignment at 7 stations: elevation 1008.598 ft at station -6.000 ft, a grade of 0.50% from station -6.000 ft to 54.000 ft (within 0.020 in).
+[Info] [2026-10-20 09:09:12] Roadway section from the top of the deck at 5 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left 2.00%, ridge at the alignment, right -2.00% (rise to the right, measured from -13.698 ft to 13.698 ft).
+[Info] [2026-10-20 09:09:12] The left exterior traffic barrier is Barrier_Left_Deck (#14015): area 287.4 in^2, 11 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). No library traffic barrier has its section (the closest is zzzarcecdz, outlines 20.660 in apart). A new library entry, Barrier_Left_Deck, is made from it (its weight is computed from the section). Its points (x, y in inches): (17.971, -1.610) (17.820, 14.453) (17.784, 14.712) (17.634, 15.025) (17.507, 15.171) (17.211, 15.365) (16.869, 15.443) (1.074, 16.210) (0.310, 15.497) (0.030, 1.500) (0.759, 0.652).
+[Info] [2026-10-20 09:09:12] The right exterior traffic barrier is Barrier_Right_Deck (#21263): area 287.4 in^2, 12 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's Barrier_Left_Deck (outlines within 0.012 in).
+[Info] [2026-10-20 09:09:12] Deck gross depth 8.000 in (from deck geometry)
+[Info] [2026-10-20 09:09:12] Left overhang edge depth 10.019 in (from deck geometry)
+[Info] [2026-10-20 09:09:12] Left overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-10-20 09:09:12] Right overhang edge depth 10.020 in (from deck geometry)
+[Info] [2026-10-20 09:09:12] Right overhang taper: taper to bottom of girder top flange (from deck geometry)
+[Info] [2026-10-20 09:09:12] Haunch shape: square (from deck geometry)
+[Info] [2026-10-20 09:09:12] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-10-20 09:09:12] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-10-20 09:09:12] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 4 more elements.
+[Info] [2026-10-20 09:09:12] Done IFC import from file
 IFC import succeeded
-Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PennDOT.pgs
+Project saved to D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PennDOT.pgs
