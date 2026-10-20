@@ -5,15 +5,14 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**208 of 274 values set by the import**, 66 are template defaults
+**230 of 274 values set by the import**, 44 are template defaults
 
-## template default (66)
+## template default (44)
 
 | Value | Template | Imported |
 |---|---|---|
 | `bridge.girder_family` | I-Beam | I-Beam |
 | `bridge.girder_orientation` | 0 | 0 |
-| `bridge.same_girder_for_entire_bridge` | -1 | -1 |
 | `bridge.girder_spacing_type` | 0 | 0 |
 | `bridge.fillet` | 0.750 in | 0.750 in |
 | `pier[0].connection_type` | 1 | 1 |
@@ -49,27 +48,6 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[3].ahead.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier |
 | `pier[3].ahead.bearing_offset_measure` | NormalToPier | NormalToPier |
 | `group[0].piers` | 0-1 | 0-1 |
-| `group[0].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[0].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[1].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
-| `group[2].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `deck.type` | 0 | 0 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
@@ -78,10 +56,11 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg |
 
-## set by the import (208)
+## set by the import (230)
 
 | Value | Template | Imported |
 |---|---|---|
+| `bridge.same_girder_for_entire_bridge` | -1 | 0 |
 | `bridge.girder_spacing` | 6.000 ft (type 0, location 0) | 6.694 ft (type 0, location 0) |
 | `bridge.slab_offset_type` | 0 | 2 |
 | `bridge.slab_offset` | 11.000 in |  |
@@ -138,90 +117,111 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[3].ahead.bearing_offset` | 32.500 in | 0.000 in |
 | `bridge.group_count` | 1 | 3 |
 | `group[0].girder_count` | 5 | 7 |
+| `group[0].girder[0].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[0].girder[0].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[0].fci` | 5.000 ksi | 4.500 ksi |
+| `group[0].girder[1].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[1].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[1].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[0].girder[1].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[1].fci` | 5.000 ksi | 4.500 ksi |
+| `group[0].girder[2].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[2].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[2].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[0].girder[2].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[2].fci` | 5.000 ksi | 4.500 ksi |
+| `group[0].girder[3].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[3].slab_offset_start` | 11.000 in | 8.663 in |
 | `group[0].girder[3].slab_offset_end` | 11.000 in | 10.267 in |
 | `group[0].girder[3].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[3].fci` | 5.000 ksi | 4.500 ksi |
+| `group[0].girder[4].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[4].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[4].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[0].girder[4].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[4].fci` | 5.000 ksi | 4.500 ksi |
+| `group[0].girder[5].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[5].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[5].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[0].girder[5].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[5].fci` | 5.000 ksi | 4.500 ksi |
+| `group[0].girder[6].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[0].girder[6].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[6].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[0].girder[6].fc` | 6.000 ksi | 5.000 ksi |
 | `group[0].girder[6].fci` | 5.000 ksi | 4.500 ksi |
 | `group[1].piers` | 0-1 | 1-2 |
 | `group[1].girder_count` | 5 | 7 |
+| `group[1].girder[0].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[0].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[0].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[1].girder[0].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[0].fci` | 5.000 ksi | 8.500 ksi |
+| `group[1].girder[1].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[1].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[1].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[1].girder[1].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[1].fci` | 5.000 ksi | 8.500 ksi |
+| `group[1].girder[2].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[2].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[2].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[1].girder[2].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[2].fci` | 5.000 ksi | 8.500 ksi |
+| `group[1].girder[3].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[3].slab_offset_start` | 11.000 in | 10.449 in |
 | `group[1].girder[3].slab_offset_end` | 11.000 in | 10.318 in |
 | `group[1].girder[3].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[3].fci` | 5.000 ksi | 8.500 ksi |
+| `group[1].girder[4].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[4].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[4].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[1].girder[4].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[4].fci` | 5.000 ksi | 8.500 ksi |
+| `group[1].girder[5].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[5].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[5].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[1].girder[5].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[5].fci` | 5.000 ksi | 8.500 ksi |
+| `group[1].girder[6].type` | Unknown_Girder_Type | BTB105 (IFC) |
 | `group[1].girder[6].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[6].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[1].girder[6].fc` | 6.000 ksi | 10.000 ksi |
 | `group[1].girder[6].fci` | 5.000 ksi | 8.500 ksi |
 | `group[2].piers` | 0-1 | 2-3 |
 | `group[2].girder_count` | 5 | 7 |
+| `group[2].girder[0].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[0].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[0].slab_offset_end` | 11.000 in | 8.992 in |
 | `group[2].girder[0].fc` | 6.000 ksi | 5.000 ksi |
 | `group[2].girder[0].fci` | 5.000 ksi | 4.500 ksi |
+| `group[2].girder[1].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[1].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[1].slab_offset_end` | 11.000 in | 8.992 in |
 | `group[2].girder[1].fc` | 6.000 ksi | 5.000 ksi |
 | `group[2].girder[1].fci` | 5.000 ksi | 4.500 ksi |
+| `group[2].girder[2].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[2].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[2].slab_offset_end` | 11.000 in | 8.992 in |
 | `group[2].girder[2].fc` | 6.000 ksi | 5.000 ksi |
 | `group[2].girder[2].fci` | 5.000 ksi | 4.500 ksi |
+| `group[2].girder[3].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[3].slab_offset_start` | 11.000 in | 10.456 in |
 | `group[2].girder[3].slab_offset_end` | 11.000 in | 8.596 in |
 | `group[2].girder[3].fc` | 6.000 ksi | 5.000 ksi |
 | `group[2].girder[3].fci` | 5.000 ksi | 4.500 ksi |
+| `group[2].girder[4].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[4].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[4].slab_offset_end` | 11.000 in | 8.992 in |
 | `group[2].girder[4].fc` | 6.000 ksi | 5.000 ksi |
 | `group[2].girder[4].fci` | 5.000 ksi | 4.500 ksi |
+| `group[2].girder[5].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[5].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[5].slab_offset_end` | 11.000 in | 8.992 in |
 | `group[2].girder[5].fc` | 6.000 ksi | 5.000 ksi |
 | `group[2].girder[5].fci` | 5.000 ksi | 4.500 ksi |
+| `group[2].girder[6].type` | Unknown_Girder_Type | BTB45 (IFC) |
 | `group[2].girder[6].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[6].slab_offset_end` | 11.000 in | 8.992 in |
 | `group[2].girder[6].fc` | 6.000 ksi | 5.000 ksi |
@@ -232,8 +232,8 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.left_overhang_taper` | 1 | 2 |
 | `deck.right_overhang_taper` | 1 | 2 |
 | `deck.haunch_shape` | 1 | 0 |
-| `railing.left.exterior` | 42&dq; Single Slope | West Barrier |
-| `railing.right.exterior` | 42&dq; Single Slope | West Barrier |
+| `railing.left.exterior` | 42&dq; Single Slope | West Barrier (IFC) |
+| `railing.right.exterior` | 42&dq; Single Slope | West Barrier (IFC) |
 | `at[0].alignment.point` | (-1.500, 0.000) ft | (16590744.323, 6958091.803) ft |
 | `at[0].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[0].profile.elevation` | 0.000 ft | 1220.072 ft |

@@ -73,27 +73,27 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `pier[1].back.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[1].ahead.end_distance` | 20.500 in | 12.000 in |
 | `pier[1].ahead.bearing_offset` | 32.500 in | 0.000 in |
-| `group[0].girder[0].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
+| `group[0].girder[0].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 (IFC) |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.172 in |
 | `group[0].girder[0].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[0].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[1].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
+| `group[0].girder[1].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 (IFC) |
 | `group[0].girder[1].slab_offset_start` | 11.000 in | 9.983 in |
 | `group[0].girder[1].slab_offset_end` | 11.000 in | 10.098 in |
 | `group[0].girder[1].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[1].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[2].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
+| `group[0].girder[2].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 (IFC) |
 | `group[0].girder[2].slab_offset_start` | 11.000 in | 10.036 in |
 | `group[0].girder[2].slab_offset_end` | 11.000 in | 10.133 in |
 | `group[0].girder[2].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[2].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[3].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
+| `group[0].girder[3].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 (IFC) |
 | `group[0].girder[3].slab_offset_start` | 11.000 in | 9.983 in |
 | `group[0].girder[3].slab_offset_end` | 11.000 in | 10.098 in |
 | `group[0].girder[3].fc` | 6.000 ksi | 8.000 ksi |
 | `group[0].girder[3].fci` | 5.000 ksi | 6.800 ksi |
-| `group[0].girder[4].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 |
+| `group[0].girder[4].type` | Unknown_Girder_Type | PA Bulb-Tee 33/31.25 (IFC) |
 | `group[0].girder[4].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[4].slab_offset_end` | 11.000 in | 10.172 in |
 | `group[0].girder[4].fc` | 6.000 ksi | 8.000 ksi |
@@ -104,8 +104,8 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `deck.left_overhang_taper` | 1 | 2 |
 | `deck.right_overhang_taper` | 1 | 2 |
 | `deck.haunch_shape` | 1 | 0 |
-| `railing.left.exterior` | 42&dq; Single Slope | Barrier_Left_Deck |
-| `railing.right.exterior` | 42&dq; Single Slope | Barrier_Left_Deck |
+| `railing.left.exterior` | 42&dq; Single Slope | Barrier_Left_Deck (IFC) |
+| `railing.right.exterior` | 42&dq; Single Slope | Barrier_Left_Deck (IFC) |
 | `at[0].alignment.point` | (-6.000, 0.000) ft | (1526519.628, 459886.167) ft |
 | `at[0].alignment.direction` | 0.0000 deg | -34.1725 deg |
 | `at[0].profile.elevation` | 0.000 ft | 1008.598 ft |

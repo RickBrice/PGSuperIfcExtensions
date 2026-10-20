@@ -79,19 +79,19 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `pier[1].back.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[1].ahead.end_distance` | 20.500 in | 12.000 in |
 | `pier[1].ahead.bearing_offset` | 32.500 in | 0.000 in |
-| `group[0].girder[0].type` | Unknown_Girder_Type | Beam1 |
+| `group[0].girder[0].type` | Unknown_Girder_Type | Beam1 (IFC) |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.172 in |
-| `group[0].girder[1].type` | Unknown_Girder_Type | Beam1 |
+| `group[0].girder[1].type` | Unknown_Girder_Type | Beam1 (IFC) |
 | `group[0].girder[1].slab_offset_start` | 11.000 in | 9.983 in |
 | `group[0].girder[1].slab_offset_end` | 11.000 in | 10.098 in |
-| `group[0].girder[2].type` | Unknown_Girder_Type | Beam1 |
+| `group[0].girder[2].type` | Unknown_Girder_Type | Beam1 (IFC) |
 | `group[0].girder[2].slab_offset_start` | 11.000 in | 10.036 in |
 | `group[0].girder[2].slab_offset_end` | 11.000 in | 10.133 in |
-| `group[0].girder[3].type` | Unknown_Girder_Type | Beam1 |
+| `group[0].girder[3].type` | Unknown_Girder_Type | Beam1 (IFC) |
 | `group[0].girder[3].slab_offset_start` | 11.000 in | 9.983 in |
 | `group[0].girder[3].slab_offset_end` | 11.000 in | 10.098 in |
-| `group[0].girder[4].type` | Unknown_Girder_Type | Beam1 |
+| `group[0].girder[4].type` | Unknown_Girder_Type | Beam1 (IFC) |
 | `group[0].girder[4].slab_offset_start` | 11.000 in | 10.067 in |
 | `group[0].girder[4].slab_offset_end` | 11.000 in | 10.172 in |
 | `deck.gross_depth` | 7.500 in | 8.000 in |

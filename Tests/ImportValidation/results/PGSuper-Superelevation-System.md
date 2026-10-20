@@ -5,22 +5,27 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 20+00.00, at[1] = 20+50.00, at[2] = 21+00.00, at[3] = 21+65.00, at[4] = 22+30.00, at[5] = 22+80.00, at[6] = 23+30.00
 
-**324 of 473 match** - mismatch: 0, not imported: 8, missing: 0, not comparable: 0, default match: 141, extra: 0
+**319 of 473 match** - mismatch: 13, not imported: 0, missing: 0, not comparable: 0, default match: 141, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
-## not imported (8)
+## mismatch (13)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
-| `group[0].girder[0].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[0].girder[1].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[0].girder[2].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[0].girder[3].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[2].girder[0].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[2].girder[1].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[2].girder[2].type` | WF66G | Unknown_Girder_Type | template default |
-| `group[2].girder[3].type` | WF66G | Unknown_Girder_Type | template default |
+| `group[0].girder[0].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[0].girder[1].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[0].girder[2].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[0].girder[3].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[1].girder[0].strands.harped.paths` | 9 strands | 9 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[1].girder[1].strands.harped.paths` | 9 strands | 9 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[1].girder[2].strands.harped.paths` | 9 strands | 9 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[1].girder[3].strands.harped.paths` | 9 strands | 9 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[1].girder[4].strands.harped.paths` | 9 strands | 9 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[2].girder[0].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[2].girder[1].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[2].girder[2].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
+| `group[2].girder[3].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
 
 ## default match (141)
 
@@ -168,7 +173,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[3].strands.harped.debonded.count` | 0 | 0 | template default |
 | `group[2].girder[3].strands.temporary.count` | 0 | 0 | template default |
 
-## match (324)
+## match (319)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -214,62 +219,70 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[3].back.spacing[2]` | 7.000 ft (type 0, location 0) | 7.000 ft (type 0, location 0) |  |
 | `bridge.group_count` | 3 | 3 |  |
 | `group[0].girder_count` | 4 | 4 |  |
+| `group[0].girder[0].type` | WF66G | WF66G (IFC) |  |
 | `group[0].girder[0].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[0].girder[0].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[0].girder[0].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[0].girder[0].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[0].girder[1].type` | WF66G | WF66G (IFC) |  |
 | `group[0].girder[1].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[0].girder[1].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[0].girder[1].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[0].girder[1].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[0].girder[2].type` | WF66G | WF66G (IFC) |  |
 | `group[0].girder[2].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[0].girder[2].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[0].girder[2].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[0].girder[2].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[0].girder[3].type` | WF66G | WF66G (IFC) |  |
 | `group[0].girder[3].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[0].girder[3].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[0].girder[3].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[0].girder[3].fci` | 4.000 ksi | 4.000 ksi |  |
 | `group[1].piers` | 1-2 | 1-2 |  |
-| `group[1].girder[0].type` | WF100G | WF100G |  |
+| `group[1].girder[0].type` | WF100G | WF100G (IFC) |  |
 | `group[1].girder[0].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[1].girder[0].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[1].girder[0].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[0].fci` | 4.000 ksi | 4.000 ksi |  |
-| `group[1].girder[1].type` | WF100G | WF100G |  |
+| `group[1].girder[1].type` | WF100G | WF100G (IFC) |  |
 | `group[1].girder[1].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[1].girder[1].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[1].girder[1].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[1].fci` | 4.000 ksi | 4.000 ksi |  |
-| `group[1].girder[2].type` | WF100G | WF100G |  |
+| `group[1].girder[2].type` | WF100G | WF100G (IFC) |  |
 | `group[1].girder[2].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[1].girder[2].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[1].girder[2].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[2].fci` | 4.000 ksi | 4.000 ksi |  |
-| `group[1].girder[3].type` | WF100G | WF100G |  |
+| `group[1].girder[3].type` | WF100G | WF100G (IFC) |  |
 | `group[1].girder[3].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[1].girder[3].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[1].girder[3].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[3].fci` | 4.000 ksi | 4.000 ksi |  |
-| `group[1].girder[4].type` | WF100G | WF100G |  |
+| `group[1].girder[4].type` | WF100G | WF100G (IFC) |  |
 | `group[1].girder[4].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[1].girder[4].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[1].girder[4].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[1].girder[4].fci` | 4.000 ksi | 4.000 ksi |  |
 | `group[2].piers` | 2-3 | 2-3 |  |
 | `group[2].girder_count` | 4 | 4 |  |
+| `group[2].girder[0].type` | WF66G | WF66G (IFC) |  |
 | `group[2].girder[0].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[2].girder[0].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[2].girder[0].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[2].girder[0].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[2].girder[1].type` | WF66G | WF66G (IFC) |  |
 | `group[2].girder[1].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[2].girder[1].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[2].girder[1].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[2].girder[1].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[2].girder[2].type` | WF66G | WF66G (IFC) |  |
 | `group[2].girder[2].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[2].girder[2].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[2].girder[2].fc` | 5.000 ksi | 5.000 ksi |  |
 | `group[2].girder[2].fci` | 4.000 ksi | 4.000 ksi |  |
+| `group[2].girder[3].type` | WF66G | WF66G (IFC) |  |
 | `group[2].girder[3].slab_offset_start` | 9.500 in | 9.497 in |  |
 | `group[2].girder[3].slab_offset_end` | 9.500 in | 9.497 in |  |
 | `group[2].girder[3].fc` | 5.000 ksi | 5.000 ksi |  |
@@ -325,7 +338,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[0].girder[0].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[0].girder[0].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[0].girder[0].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[0].girder[0].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[0].girder[0].strands.harp_points` | 39.117, 58.675 ft | 39.117, 58.675 ft |  |
 | `group[0].girder[1].strands.count` | 28 | 28 |  |
 | `group[0].girder[1].strands.straight.count` | 20 | 20 |  |
@@ -337,7 +349,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[0].girder[1].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[0].girder[1].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[0].girder[1].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[0].girder[1].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[0].girder[1].strands.harp_points` | 39.173, 58.757 ft | 39.173, 58.757 ft |  |
 | `group[0].girder[2].strands.count` | 28 | 28 |  |
 | `group[0].girder[2].strands.straight.count` | 20 | 20 |  |
@@ -349,7 +360,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[0].girder[2].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[0].girder[2].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[0].girder[2].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[0].girder[2].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[0].girder[2].strands.harp_points` | 39.229, 58.842 ft | 39.229, 58.842 ft |  |
 | `group[0].girder[3].strands.count` | 28 | 28 |  |
 | `group[0].girder[3].strands.straight.count` | 20 | 20 |  |
@@ -361,7 +371,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[0].girder[3].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[0].girder[3].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[0].girder[3].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[0].girder[3].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[0].girder[3].strands.harp_points` | 39.285, 58.924 ft | 39.285, 58.924 ft |  |
 | `group[1].girder[0].strands.count` | 29 | 29 |  |
 | `group[1].girder[0].strands.straight.count` | 18 | 18 |  |
@@ -373,7 +382,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[1].girder[0].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[0].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[1].girder[0].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[1].girder[0].strands.harped.paths` | 9 strands | 9 strands |  |
 | `group[1].girder[0].strands.temporary.count` | 2 | 2 |  |
 | `group[1].girder[0].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[0].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
@@ -390,7 +398,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[1].girder[1].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[1].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[1].girder[1].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[1].girder[1].strands.harped.paths` | 9 strands | 9 strands |  |
 | `group[1].girder[1].strands.temporary.count` | 2 | 2 |  |
 | `group[1].girder[1].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[1].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
@@ -407,7 +414,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[1].girder[2].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[2].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[1].girder[2].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[1].girder[2].strands.harped.paths` | 9 strands | 9 strands |  |
 | `group[1].girder[2].strands.temporary.count` | 2 | 2 |  |
 | `group[1].girder[2].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[2].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
@@ -424,7 +430,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[1].girder[3].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[3].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[1].girder[3].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[1].girder[3].strands.harped.paths` | 9 strands | 9 strands |  |
 | `group[1].girder[3].strands.temporary.count` | 2 | 2 |  |
 | `group[1].girder[3].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[3].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
@@ -441,7 +446,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[1].girder[4].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[4].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[1].girder[4].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[1].girder[4].strands.harped.paths` | 9 strands | 9 strands |  |
 | `group[1].girder[4].strands.temporary.count` | 2 | 2 |  |
 | `group[1].girder[4].strands.temporary.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[1].girder[4].strands.temporary.prestress` | 202.500 ksi | 202.500 ksi |  |
@@ -458,7 +462,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[0].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[2].girder[0].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[2].girder[0].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[2].girder[0].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[2].girder[0].strands.harp_points` | 39.114, 58.675 ft | 39.114, 58.675 ft |  |
 | `group[2].girder[1].strands.count` | 28 | 28 |  |
 | `group[2].girder[1].strands.straight.count` | 20 | 20 |  |
@@ -470,7 +473,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[1].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[2].girder[1].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[2].girder[1].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[2].girder[1].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[2].girder[1].strands.harp_points` | 39.170, 58.757 ft | 39.170, 58.757 ft |  |
 | `group[2].girder[2].strands.count` | 28 | 28 |  |
 | `group[2].girder[2].strands.straight.count` | 20 | 20 |  |
@@ -482,7 +484,6 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[2].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[2].girder[2].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[2].girder[2].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[2].girder[2].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[2].girder[2].strands.harp_points` | 39.229, 58.842 ft | 39.229, 58.842 ft |  |
 | `group[2].girder[3].strands.count` | 28 | 28 |  |
 | `group[2].girder[3].strands.straight.count` | 20 | 20 |  |
@@ -494,5 +495,4 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[3].strands.harped.material` | Grade 270 Low Relaxation 0.6" | Grade 270 Low Relaxation 0.6" |  |
 | `group[2].girder[3].strands.harped.prestress` | 202.500 ksi | 202.500 ksi |  |
 | `group[2].girder[3].strands.harped.tension_force` | 43.943 kip | 43.943 kip |  |
-| `group[2].girder[3].strands.harped.paths` | 8 strands | 8 strands |  |
 | `group[2].girder[3].strands.harp_points` | 39.285, 58.924 ft | 39.285, 58.924 ft |  |

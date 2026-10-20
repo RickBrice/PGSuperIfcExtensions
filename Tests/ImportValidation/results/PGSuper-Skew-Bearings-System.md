@@ -371,29 +371,29 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].ahead.end_distance` | 25.000 in | 25.000 in |  |
 | `pier[4].ahead.bearing_offset` | 18.000 in | 18.000 in |  |
 | `bridge.group_count` | 4 | 4 |  |
-| `group[0].girder[0].type` | WF42G | WF42G |  |
-| `group[0].girder[1].type` | WF42G | WF42G |  |
-| `group[0].girder[2].type` | WF42G | WF42G |  |
-| `group[0].girder[3].type` | WF42G | WF42G |  |
-| `group[0].girder[4].type` | WF42G | WF42G |  |
+| `group[0].girder[0].type` | WF42G | WF42G (IFC) |  |
+| `group[0].girder[1].type` | WF42G | WF42G (IFC) |  |
+| `group[0].girder[2].type` | WF42G | WF42G (IFC) |  |
+| `group[0].girder[3].type` | WF42G | WF42G (IFC) |  |
+| `group[0].girder[4].type` | WF42G | WF42G (IFC) |  |
 | `group[1].piers` | 1-2 | 1-2 |  |
-| `group[1].girder[0].type` | WF42G | WF42G |  |
-| `group[1].girder[1].type` | WF42G | WF42G |  |
-| `group[1].girder[2].type` | WF42G | WF42G |  |
-| `group[1].girder[3].type` | WF42G | WF42G |  |
-| `group[1].girder[4].type` | WF42G | WF42G |  |
+| `group[1].girder[0].type` | WF42G | WF42G (IFC) |  |
+| `group[1].girder[1].type` | WF42G | WF42G (IFC) |  |
+| `group[1].girder[2].type` | WF42G | WF42G (IFC) |  |
+| `group[1].girder[3].type` | WF42G | WF42G (IFC) |  |
+| `group[1].girder[4].type` | WF42G | WF42G (IFC) |  |
 | `group[2].piers` | 2-3 | 2-3 |  |
-| `group[2].girder[0].type` | WF42G | WF42G |  |
-| `group[2].girder[1].type` | WF42G | WF42G |  |
-| `group[2].girder[2].type` | WF42G | WF42G |  |
-| `group[2].girder[3].type` | WF42G | WF42G |  |
-| `group[2].girder[4].type` | WF42G | WF42G |  |
+| `group[2].girder[0].type` | WF42G | WF42G (IFC) |  |
+| `group[2].girder[1].type` | WF42G | WF42G (IFC) |  |
+| `group[2].girder[2].type` | WF42G | WF42G (IFC) |  |
+| `group[2].girder[3].type` | WF42G | WF42G (IFC) |  |
+| `group[2].girder[4].type` | WF42G | WF42G (IFC) |  |
 | `group[3].piers` | 3-4 | 3-4 |  |
-| `group[3].girder[0].type` | WF42G | WF42G |  |
-| `group[3].girder[1].type` | WF42G | WF42G |  |
-| `group[3].girder[2].type` | WF42G | WF42G |  |
-| `group[3].girder[3].type` | WF42G | WF42G |  |
-| `group[3].girder[4].type` | WF42G | WF42G |  |
+| `group[3].girder[0].type` | WF42G | WF42G (IFC) |  |
+| `group[3].girder[1].type` | WF42G | WF42G (IFC) |  |
+| `group[3].girder[2].type` | WF42G | WF42G (IFC) |  |
+| `group[3].girder[3].type` | WF42G | WF42G (IFC) |  |
+| `group[3].girder[4].type` | WF42G | WF42G (IFC) |  |
 | `pier[0].skew` | 20.0000 deg | 20.0000 deg |  |
 | `pier[2].skew` | -15.0000 deg | -15.0000 deg |  |
 | `pier[3].skew` | -30.0000 deg | -30.0000 deg |  |

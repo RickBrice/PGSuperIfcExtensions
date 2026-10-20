@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**146 of 274 values set by the import**, 128 are template defaults
+**167 of 274 values set by the import**, 107 are template defaults
 
-## template default (128)
+## template default (107)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -61,72 +61,51 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[3].ahead.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier |
 | `pier[3].ahead.bearing_offset_measure` | NormalToPier | NormalToPier |
 | `group[0].piers` | 0-1 | 0-1 |
-| `group[0].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[0].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[0].fci` | 5.000 ksi | 5.000 ksi |
-| `group[0].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[1].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[1].fci` | 5.000 ksi | 5.000 ksi |
-| `group[0].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[2].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[2].fci` | 5.000 ksi | 5.000 ksi |
-| `group[0].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[3].slab_offset_start` | 11.000 in | 11.000 in |
 | `group[0].girder[3].slab_offset_end` | 11.000 in | 11.000 in |
 | `group[0].girder[3].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[3].fci` | 5.000 ksi | 5.000 ksi |
-| `group[0].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[4].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[4].fci` | 5.000 ksi | 5.000 ksi |
-| `group[0].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[5].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[5].fci` | 5.000 ksi | 5.000 ksi |
-| `group[0].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[0].girder[6].fc` | 6.000 ksi | 6.000 ksi |
 | `group[0].girder[6].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[0].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[0].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[1].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[1].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[2].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[2].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[3].slab_offset_start` | 11.000 in | 11.000 in |
 | `group[1].girder[3].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[3].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[4].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[4].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[5].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[5].fci` | 5.000 ksi | 5.000 ksi |
-| `group[1].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[1].girder[6].fc` | 6.000 ksi | 6.000 ksi |
 | `group[1].girder[6].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[0].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[0].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[0].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[1].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[1].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[1].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[2].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[2].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[2].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[3].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[3].slab_offset_start` | 11.000 in | 11.000 in |
 | `group[2].girder[3].slab_offset_end` | 11.000 in | 11.000 in |
 | `group[2].girder[3].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[3].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[4].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[4].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[4].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[5].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[5].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[5].fci` | 5.000 ksi | 5.000 ksi |
-| `group[2].girder[6].type` | Unknown_Girder_Type | Unknown_Girder_Type |
 | `group[2].girder[6].fc` | 6.000 ksi | 6.000 ksi |
 | `group[2].girder[6].fci` | 5.000 ksi | 5.000 ksi |
 | `deck.type` | 0 | 0 |
@@ -140,7 +119,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg |
 
-## set by the import (146)
+## set by the import (167)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -188,45 +167,66 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[3].ahead.bearing_offset` | 32.500 in | 0.000 in |
 | `bridge.group_count` | 1 | 3 |
 | `group[0].girder_count` | 5 | 7 |
+| `group[0].girder[0].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[0].girder[0].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[0].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[1].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[0].girder[1].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[1].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[2].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[0].girder[2].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[2].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[3].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
+| `group[0].girder[4].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[0].girder[4].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[4].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[5].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[0].girder[5].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[5].slab_offset_end` | 11.000 in | 10.585 in |
+| `group[0].girder[6].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[0].girder[6].slab_offset_start` | 11.000 in | 9.025 in |
 | `group[0].girder[6].slab_offset_end` | 11.000 in | 10.585 in |
 | `group[1].piers` | 0-1 | 1-2 |
 | `group[1].girder_count` | 5 | 7 |
+| `group[1].girder[0].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[0].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[0].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[1].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[1].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[1].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[2].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[2].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[2].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[3].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[3].slab_offset_end` | 11.000 in | 10.322 in |
+| `group[1].girder[4].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[4].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[4].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[5].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[5].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[5].slab_offset_end` | 11.000 in | 10.601 in |
+| `group[1].girder[6].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[1].girder[6].slab_offset_start` | 11.000 in | 10.765 in |
 | `group[1].girder[6].slab_offset_end` | 11.000 in | 10.601 in |
 | `group[2].piers` | 0-1 | 2-3 |
 | `group[2].girder_count` | 5 | 7 |
+| `group[2].girder[0].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[2].girder[0].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[0].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[1].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[2].girder[1].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[1].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[2].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[2].girder[2].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[2].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[3].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
+| `group[2].girder[4].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[2].girder[4].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[4].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[5].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[2].girder[5].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[5].slab_offset_end` | 11.000 in | 8.992 in |
+| `group[2].girder[6].type` | Unknown_Girder_Type | Beam 1 Span 1 (IFC) |
 | `group[2].girder[6].slab_offset_start` | 11.000 in | 10.746 in |
 | `group[2].girder[6].slab_offset_end` | 11.000 in | 8.992 in |
 | `deck.gross_depth` | 7.500 in | 8.470 in |
