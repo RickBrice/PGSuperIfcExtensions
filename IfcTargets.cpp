@@ -367,6 +367,15 @@ const std::vector<TargetDef>& GetTargetDefs()
             USES_CONVERSION;
             return ExportValue(std::string("ASTM A416 Grade ") + T2A(WBFL::Materials::PsStrand::GetGrade(c.strand->GetGrade(), true/*US units*/).c_str()));
          } },
+      { .name = "tendon.diameter", .element = ElementKind::Tendon, .kind = ValueKind::Length, .description = "strand nominal diameter", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return ExportValue(c.strand->GetNominalDiameter()); } },
+      { .name = "tendon.tension_force", .element = ElementKind::Tendon, .kind = ValueKind::Force, .description = "jacking force of the strand (Pjack / number of strands of its type)",
+        .get = [](const ExportContext& c)
+         {
+            GET_IFACE2(c.broker, IStrandGeometry, pStrandGeom);
+            auto nStrands = pStrandGeom->GetStrandCount(c.segment, c.strand_type);
+            return nStrands == 0 ? ExportValue::Absent() : ExportValue(pStrandGeom->GetPjack(c.segment, c.strand_type) / nStrands);
+         } },
       { .name = "tendon.corrosion_treatment", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand corrosion treatment (NONE or EPOXYCOATED)",
         .get = [](const ExportContext& c) { return ExportValue(std::string(c.strand->GetCoating() == WBFL::Materials::PsStrand::Coating::None ? "NONE" : "EPOXYCOATED")); } },
       { .name = "tendon.status", .element = ElementKind::Tendon, .kind = ValueKind::Text, .description = "strand status (TEMPORARY for temporary strands, else NEW)",

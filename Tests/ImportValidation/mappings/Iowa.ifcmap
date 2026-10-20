@@ -1,12 +1,13 @@
 {
-  "comment": "Iowa DOT mapping table for the ADCMS pilot model (US 59 over IA 92). The IaDOT property values have no units: strengths are in ksi, and the deck thickness is text in inches (e.g. 8.5\").",
+  "comment": "Iowa DOT mapping table for the ADCMS pilot model (US 59 over IA 92). The IaDOT property values have no units: strengths are in ksi, and the deck thickness is text in inches (e.g. 8.5\"). Strands are found by name: the model's prestressing strands are partly STRAND and partly NOTDEFINED, and its lifting loops are also STRAND tendons.",
   "format": "PGSuperIfcMapping",
   "version": 1,
   "name": "Iowa DOT",
   "extends": "standard",
   "elements": {
     "barrier": {"any_of": [{"entity": "IfcWall", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "BARRIER"}}, {"entity": "IfcWall", "predefined_type": "PARAPET"}]},
-    "haunch": {"entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "Haunch"}}
+    "haunch": {"entity": "IfcSlab", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "Haunch"}},
+    "tendon": {"entity": "IfcTendon", "attributes": {"Name": "Prestressing Strand"}}
   },
   "targets": {
     "girder.type_names": [
@@ -23,6 +24,15 @@
     ],
     "bearing.fixed_y": [
       {"property": {"pset": "Bearing Item - ItemTypes", "name": "3_Fixity"}, "map": {"Fixed": true, "Expansion": false}}
+    ],
+    "tendon.diameter": [
+      {"property": {"pset": "IaDOT_Strand", "name": "01-Strand Diameter"}, "parse": "feet_inches", "unit": "in"}
+    ],
+    "tendon.grade": [
+      {"property": {"pset": "IaDOT_Strand", "name": "04-Grade"}}
+    ],
+    "tendon.tension_force": [
+      {"property": {"pset": "IaDOT_Strand", "name": "07-Initial Prestress"}, "parse": {"regex": "([0-9]+(\\.[0-9]+)?)", "group": 1}, "unit": "kip"}
     ],
     "deck.gross_depth": [
       {"property": {"pset": "IaDOT_Deck", "name": "3_Minimum Thickness"}, "parse": "feet_inches", "unit": "in"}
