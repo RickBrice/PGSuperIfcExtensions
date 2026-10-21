@@ -117,7 +117,7 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg | template default |
 | `at[0].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[0].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
-| `at[0].roadway.at_left_edge` | -0.300 ft | -0.295 ft | template default |
+| `at[0].roadway.at_left_edge` | -0.300 ft | -0.294 ft | template default |
 | `at[1].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[1].deck.right_edge` | 15.000 ft | 15.000 ft | template default |
 | `at[2].deck.left_edge` | 15.000 ft | 15.000 ft | template default |
@@ -296,13 +296,13 @@ A *default match* equals the expected value only because the template has the sa
 | `at[1].alignment.direction` | 18.5761 deg | 18.5761 deg |  |
 | `at[1].profile.elevation` | 105.117 ft | 105.117 ft |  |
 | `at[1].profile.grade` | 0.4900 % | 0.4900 % |  |
-| `at[1].roadway.at_left_edge` | -0.164 ft | -0.159 ft |  |
+| `at[1].roadway.at_left_edge` | -0.164 ft | -0.158 ft |  |
 | `at[1].roadway.at_right_edge` | -0.269 ft | -0.269 ft |  |
 | `at[2].alignment.point` | (50094.789, 50031.856) ft | (50094.789, 50031.856) ft |  |
 | `at[2].alignment.direction` | 19.1490 deg | 19.1490 deg |  |
 | `at[2].profile.elevation` | 105.320 ft | 105.320 ft |  |
 | `at[2].profile.grade` | 0.3200 % | 0.3200 % |  |
-| `at[2].roadway.at_left_edge` | -0.027 ft | -0.023 ft |  |
+| `at[2].roadway.at_left_edge` | -0.027 ft | -0.022 ft |  |
 | `at[2].roadway.at_right_edge` | -0.328 ft | -0.327 ft |  |
 | `at[3].alignment.point` | (50156.052, 50053.576) ft | (50156.052, 50053.576) ft |  |
 | `at[3].alignment.direction` | 19.8939 deg | 19.8939 deg |  |
@@ -320,7 +320,7 @@ A *default match* equals the expected value only because the template has the sa
 | `at[5].alignment.direction` | 21.2117 deg | 21.2117 deg |  |
 | `at[5].profile.elevation` | 105.345 ft | 105.345 ft |  |
 | `at[5].profile.grade` | -0.2920 % | -0.2920 % |  |
-| `at[5].roadway.at_left_edge` | 0.464 ft | 0.467 ft |  |
+| `at[5].roadway.at_left_edge` | 0.464 ft | 0.466 ft |  |
 | `at[5].roadway.at_right_edge` | -0.541 ft | -0.538 ft |  |
 | `at[6].alignment.point` | (50310.251, 50112.272) ft | (50310.251, 50112.272) ft |  |
 | `at[6].alignment.direction` | 21.7846 deg | 21.7846 deg |  |

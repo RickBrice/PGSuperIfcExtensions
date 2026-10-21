@@ -104,23 +104,23 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `at[0].alignment.direction` | 0.0000 deg | -34.1725 deg |
 | `at[0].profile.elevation` | 0.000 ft | 1008.598 ft |
 | `at[0].profile.grade` | 0.0000 % | 0.4970 % |
-| `at[0].deck.left_edge` | 15.000 ft | 15.219 ft |
-| `at[0].deck.right_edge` | 15.000 ft | 15.219 ft |
-| `at[0].roadway.at_left_edge` | -0.300 ft | -0.116 ft |
-| `at[0].roadway.at_right_edge` | -0.300 ft | -0.116 ft |
+| `at[0].deck.left_edge` | 15.000 ft | 15.281 ft |
+| `at[0].deck.right_edge` | 15.000 ft | 15.281 ft |
+| `at[0].roadway.at_left_edge` | -0.300 ft | -0.109 ft |
+| `at[0].roadway.at_right_edge` | -0.300 ft | -0.109 ft |
 | `at[1].alignment.point` | (24.000, 0.000) ft | (1526544.449, 459869.316) ft |
 | `at[1].alignment.direction` | 0.0000 deg | -34.1725 deg |
 | `at[1].profile.elevation` | 0.000 ft | 1008.747 ft |
 | `at[1].profile.grade` | 0.0000 % | 0.4970 % |
-| `at[1].deck.left_edge` | 15.000 ft | 15.219 ft |
-| `at[1].deck.right_edge` | 15.000 ft | 15.219 ft |
-| `at[1].roadway.at_left_edge` | -0.300 ft | -0.116 ft |
-| `at[1].roadway.at_right_edge` | -0.300 ft | -0.116 ft |
+| `at[1].deck.left_edge` | 15.000 ft | 15.281 ft |
+| `at[1].deck.right_edge` | 15.000 ft | 15.281 ft |
+| `at[1].roadway.at_left_edge` | -0.300 ft | -0.109 ft |
+| `at[1].roadway.at_right_edge` | -0.300 ft | -0.109 ft |
 | `at[2].alignment.point` | (54.000, 0.000) ft | (1526569.269, 459852.465) ft |
 | `at[2].alignment.direction` | 0.0000 deg | -34.1725 deg |
 | `at[2].profile.elevation` | 0.000 ft | 1008.896 ft |
 | `at[2].profile.grade` | 0.0000 % | 0.4970 % |
-| `at[2].deck.left_edge` | 15.000 ft | 15.219 ft |
-| `at[2].deck.right_edge` | 15.000 ft | 15.219 ft |
-| `at[2].roadway.at_left_edge` | -0.300 ft | -0.116 ft |
-| `at[2].roadway.at_right_edge` | -0.300 ft | -0.116 ft |
+| `at[2].deck.left_edge` | 15.000 ft | 15.281 ft |
+| `at[2].deck.right_edge` | 15.000 ft | 15.281 ft |
+| `at[2].roadway.at_left_edge` | -0.300 ft | -0.109 ft |
+| `at[2].roadway.at_right_edge` | -0.300 ft | -0.109 ft |

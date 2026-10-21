@@ -302,13 +302,13 @@ A *default match* equals the expected value only because the template has the sa
 | `at[2].alignment.direction` | 19.1490 deg | 19.1490 deg |  |
 | `at[2].profile.elevation` | 105.320 ft | 105.320 ft |  |
 | `at[2].profile.grade` | 0.3200 % | 0.3200 % |  |
-| `at[2].roadway.at_left_edge` | -0.027 ft | -0.027 ft |  |
+| `at[2].roadway.at_left_edge` | -0.027 ft | -0.026 ft |  |
 | `at[2].roadway.at_right_edge` | -0.328 ft | -0.327 ft |  |
 | `at[3].alignment.point` | (50156.052, 50053.576) ft | (50156.052, 50053.576) ft |  |
 | `at[3].alignment.direction` | 19.8939 deg | 19.8939 deg |  |
 | `at[3].profile.elevation` | 105.456 ft | 105.456 ft |  |
 | `at[3].profile.grade` | 0.0990 % | 0.0990 % |  |
-| `at[3].roadway.at_left_edge` | 0.150 ft | 0.151 ft |  |
+| `at[3].roadway.at_left_edge` | 0.150 ft | 0.152 ft |  |
 | `at[3].roadway.at_right_edge` | -0.405 ft | -0.403 ft |  |
 | `at[4].alignment.point` | (50217.027, 50076.091) ft | (50217.027, 50076.091) ft |  |
 | `at[4].alignment.direction` | 20.6387 deg | 20.6387 deg |  |

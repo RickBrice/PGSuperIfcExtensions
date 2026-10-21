@@ -248,7 +248,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `at[1].profile.grade` | 0.0000 % | 0.8761 % |
 | `at[1].deck.left_edge` | 15.000 ft | 23.583 ft |
 | `at[1].deck.right_edge` | 15.000 ft | 23.583 ft |
-| `at[1].roadway.at_left_edge` | -0.300 ft | -0.408 ft |
+| `at[1].roadway.at_left_edge` | -0.300 ft | -0.410 ft |
 | `at[1].roadway.at_right_edge` | -0.300 ft | -0.410 ft |
 | `at[2].alignment.point` | (44.500, 0.000) ft | (16590744.323, 6958137.803) ft |
 | `at[2].alignment.direction` | 0.0000 deg | 89.9995 deg |
@@ -256,37 +256,37 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `at[2].profile.grade` | 0.0000 % | 0.8157 % |
 | `at[2].deck.left_edge` | 15.000 ft | 23.583 ft |
 | `at[2].deck.right_edge` | 15.000 ft | 23.583 ft |
-| `at[2].roadway.at_left_edge` | -0.300 ft | -0.406 ft |
-| `at[2].roadway.at_right_edge` | -0.300 ft | -0.409 ft |
+| `at[2].roadway.at_left_edge` | -0.300 ft | -0.410 ft |
+| `at[2].roadway.at_right_edge` | -0.300 ft | -0.410 ft |
 | `at[3].alignment.point` | (98.000, 0.000) ft | (16590744.324, 6958191.303) ft |
 | `at[3].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[3].profile.elevation` | 0.000 ft | 1220.874 ft |
 | `at[3].profile.grade` | 0.0000 % | 0.6750 % |
 | `at[3].deck.left_edge` | 15.000 ft | 23.583 ft |
 | `at[3].deck.right_edge` | 15.000 ft | 23.583 ft |
-| `at[3].roadway.at_left_edge` | -0.300 ft | -0.411 ft |
-| `at[3].roadway.at_right_edge` | -0.300 ft | -0.412 ft |
+| `at[3].roadway.at_left_edge` | -0.300 ft | -0.410 ft |
+| `at[3].roadway.at_right_edge` | -0.300 ft | -0.410 ft |
 | `at[4].alignment.point` | (151.500, 0.000) ft | (16590744.324, 6958244.803) ft |
 | `at[4].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[4].profile.elevation` | 0.000 ft | 1221.197 ft |
 | `at[4].profile.grade` | 0.0000 % | 0.5344 % |
 | `at[4].deck.left_edge` | 15.000 ft | 23.583 ft |
 | `at[4].deck.right_edge` | 15.000 ft | 23.583 ft |
-| `at[4].roadway.at_left_edge` | -0.300 ft | -0.407 ft |
-| `at[4].roadway.at_right_edge` | -0.300 ft | -0.409 ft |
+| `at[4].roadway.at_left_edge` | -0.300 ft | -0.410 ft |
+| `at[4].roadway.at_right_edge` | -0.300 ft | -0.410 ft |
 | `at[5].alignment.point` | (174.500, 0.000) ft | (16590744.324, 6958267.803) ft |
 | `at[5].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[5].profile.elevation` | 0.000 ft | 1221.313 ft |
 | `at[5].profile.grade` | 0.0000 % | 0.4739 % |
 | `at[5].deck.left_edge` | 15.000 ft | 23.583 ft |
 | `at[5].deck.right_edge` | 15.000 ft | 23.583 ft |
-| `at[5].roadway.at_left_edge` | -0.300 ft | -0.405 ft |
-| `at[5].roadway.at_right_edge` | -0.300 ft | -0.407 ft |
+| `at[5].roadway.at_left_edge` | -0.300 ft | -0.410 ft |
+| `at[5].roadway.at_right_edge` | -0.300 ft | -0.410 ft |
 | `at[6].alignment.point` | (197.500, 0.000) ft | (16590744.325, 6958290.803) ft |
 | `at[6].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[6].profile.elevation` | 0.000 ft | 1221.415 ft |
 | `at[6].profile.grade` | 0.0000 % | 0.4134 % |
 | `at[6].deck.left_edge` | 15.000 ft | 23.583 ft |
 | `at[6].deck.right_edge` | 15.000 ft | 23.583 ft |
-| `at[6].roadway.at_left_edge` | -0.300 ft | -0.404 ft |
-| `at[6].roadway.at_right_edge` | -0.300 ft | -0.407 ft |
+| `at[6].roadway.at_left_edge` | -0.300 ft | -0.410 ft |
+| `at[6].roadway.at_right_edge` | -0.300 ft | -0.410 ft |
