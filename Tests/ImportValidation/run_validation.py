@@ -6,7 +6,7 @@ For a model with a "pgs" file (round trip):
    classes removed from the export before the import, with what they nest (e.g. "IfcAlignmentVertical",
    so the import measures the profile from the deck); "tolerances" replaces the comparison tolerance
    (SI) for the keys matching each pattern (e.g. "at[*].profile.grade", for values measured from geometry).
-   The strands and the longitudinal girder bars are compared physically (ifc_strands.py, ifc_rebar.py): the
+   The strands, the longitudinal girder bars, and the stirrups are compared physically (ifc_strands.py, ifc_rebar.py): the
    imported project is exported again (results/reexport/, not tracked), and its strands and bars are compared
    with those of the first export. The template's girders have no strands, so a strand count of 0 is reported
    as the template default.
@@ -268,14 +268,14 @@ def template_has_strands(template):
 
 
 def reinforcement(ifc):
-    """the strands and longitudinal girder bars of an export (ifc_strands and ifc_rebar summaries in one)"""
+    """the strands, longitudinal girder bars, and stirrups of an export (ifc_strands and ifc_rebar summaries in one)"""
     summary = ifc_strands.extract(ifc)
     summary["values"].update(ifc_rebar.extract(ifc)["values"])
     return summary
 
 
 def compare_strands(exe, run, pgs, units, expected_strands, config, tolerances):
-    """Compares the strands and longitudinal girder bars of the source export (expected_strands, see reinforcement) with
+    """Compares the strands and girder bars of the source export (expected_strands, see reinforcement) with
     those of an export of the imported project pgs. Returns (comparison rows, message for the summary)."""
     reexport = RESULTS / "reexport" / f"{run}.ifc"
     reexport.parent.mkdir(exist_ok=True)

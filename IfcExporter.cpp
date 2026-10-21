@@ -918,6 +918,10 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    GET_IFACE2(pBroker, IStirrupGeometry, pStirrupGeometry);
    ZoneIndexType nZones = pStirrupGeometry->GetPrimaryZoneCount(segmentKey);
 
+   GET_IFACE2(pBroker, IShear, pShear);
+   bool bSymmetric = pShear->GetSegmentShearData(segmentKey)->bAreZonesSymmetrical;
+   Float64 Ls = pBridge->GetSegmentLength(segmentKey); // the zone bounds are along the segment
+
    for (ZoneIndexType zoneIdx = 0; zoneIdx < nZones; zoneIdx++)
    {
       Float64 start, end;
@@ -934,13 +938,41 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          continue;
       Float64 db = pRebar->GetNominalDimension();
 
-      Float64 offset = start + (start < Lg / 2.0 ? 1.0 : -1.0) * spacing;
-      Float64 sign = (offset < Lg / 2.0 ? 1.0 : -1.0);
-      IndexType nBars = (IndexType)((end - start) / spacing);
+      // The stirrups are at the ends of the zone's spaces, measured from the girder's start. With symmetric zones the second
+      // half mirrors the first: a zone there is measured from the girder's end, and the zone over midspan from both ends,
+      // with a stirrup at midspan if the space left at the center is wider than the spacing
+      std::vector<Float64> positions;
+      IndexType nSpaces = (IndexType)floor((end - start) / spacing + 1.0e-6);
+      if (bSymmetric && IsLE(Ls / 2, start))
+      {
+         for (IndexType i = 1; i <= nSpaces; i++)
+            positions.push_back(end - i * spacing);
+      }
+      else if (bSymmetric && IsLT(Ls / 2, end))
+      {
+         Float64 last = start;
+         for (Float64 x = start + spacing; IsLE(x, Ls / 2); x += spacing)
+         {
+            positions.push_back(x);
+            if (!IsEqual(x, Ls - x))
+               positions.push_back(Ls - x);
+            last = x;
+         }
+         if (IsLT(spacing, Ls - 2 * last))
+            positions.push_back(Ls / 2);
+      }
+      else
+      {
+         for (IndexType i = 1; i <= nSpaces; i++)
+            positions.push_back(start + i * spacing);
+      }
+      std::sort(positions.begin(), positions.end());
 
       std::vector<PlacedBar<Schema>> g2_bars, g3_bars, g9_bars, g10_bars;
-      for (IndexType barIdx = 0; barIdx < nBars; barIdx++, offset += spacing)
+      for (IndexType barIdx = 0; barIdx < positions.size(); barIdx++)
       {
+         Float64 offset = positions[barIdx];
+         Float64 sign = (offset < Lg / 2.0 ? 1.0 : -1.0);
          Float64 bar_angle = fn_bar_angle(offset); // angle of bar in plan view, measured from horizontal
          std::array<double, 3> X_direction{ sin(bar_angle), -cos(bar_angle), 0.0 };
          std::array<double, 3> Y_direction{ cos(bar_angle), sin(bar_angle), 0.0 };

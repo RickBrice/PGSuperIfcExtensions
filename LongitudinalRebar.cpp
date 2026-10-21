@@ -22,16 +22,12 @@
 
 #include "stdafx.h"
 #include "LongitudinalRebar.h"
-#include "GirderReinforcement.h"
 #include "IfcImporter.h"
-#include "IfcImportUnits.h"
-#include "IfcTargetReader.h"
 
 #include <psgLib/LongitudinalRebarData.h>
 #include <LRFD/RebarPool.h>
 
 #include <iomanip>
-#include <regex>
 
 #undef min // undef our version of min in MathEx.h so std::min is used correctly in this file
 #undef max
@@ -45,10 +41,6 @@ namespace
    const Float64 end_tolerance = WBFL::Units::ConvertToSysUnits(3.0, WBFL::Units::Measure::Inch); // a bar end this close to the girder end is at the end
    const Float64 min_length = WBFL::Units::ConvertToSysUnits(2.0, WBFL::Units::Measure::Feet);
    const Float64 max_slope = tan(WBFL::Units::ConvertToSysUnits(2.0, WBFL::Units::Measure::Degree));
-
-
-   const std::array<Rebar::Size, 11> bar_sizes{ Rebar::Size::bs3, Rebar::Size::bs4, Rebar::Size::bs5, Rebar::Size::bs6, Rebar::Size::bs7, Rebar::Size::bs8,
-      Rebar::Size::bs9, Rebar::Size::bs10, Rebar::Size::bs11, Rebar::Size::bs14, Rebar::Size::bs18 };
 
    // A longitudinal bar in its girder
    struct Bar
@@ -97,95 +89,6 @@ namespace
          bar.projects[1] = reinforcement.projects[1];
       }
       return bar;
-   }
-
-   // the nominal diameter of a bar size (sizes are the same for every type and grade), 0 if the pool doesn't have it
-   Float64 nominal_diameter(Rebar::Size size)
-   {
-      const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(Rebar::Type::A615, Rebar::Grade60, size);
-      return pRebar ? pRebar->GetNominalDimension() : 0.0;
-   }
-
-   // The bar size: rebar.bar_size (a number, e.g. "#5", "5", "No. 5"), else the nominal diameter of the bar type or the
-   // bar, else the diameter as drawn. bsNone if no size has the diameter (within 0.1 in)
-   Rebar::Size get_bar_size(IfcSchema::IfcReinforcingBar bar, std::optional<Float64> drawn_diameter, std::string& source)
-   {
-      USES_CONVERSION;
-      const auto& reader = CIfcImporter::GetTargetReader();
-      const auto& units = CIfcImporter::GetUnits();
-      if (auto reading = reader.Read("rebar.bar_size", bar))
-      {
-         std::smatch match;
-         const auto& text = std::get<std::string>(reading->value);
-         if (std::regex_search(text, match, std::regex("[0-9]+")))
-         {
-            auto size = WBFL::LRFD::RebarPool::GetBarSize(A2T(("#" + match.str()).c_str()));
-            if (size != Rebar::Size::bsNone)
-            {
-               source = "rebar.bar_size";
-               return size;
-            }
-         }
-      }
-
-      std::optional<Float64> diameter;
-      for (const auto& rel : bar.IsTypedBy())
-      {
-         auto bar_type = rel.RelatingType().as<IfcSchema::IfcReinforcingBarType>();
-         if (bar_type && bar_type.NominalDiameter())
-            diameter = ConvertToSysUnits<IfcSchema::IfcPositiveLengthMeasure>(units, *bar_type.NominalDiameter());
-      }
-      source = "the bar type's nominal diameter";
-      if (!diameter && bar.NominalDiameter())
-      {
-         diameter = ConvertToSysUnits<IfcSchema::IfcPositiveLengthMeasure>(units, *bar.NominalDiameter());
-         source = "the bar's nominal diameter";
-      }
-      if (!diameter)
-      {
-         diameter = drawn_diameter;
-         source = "the geometry";
-      }
-      if (!diameter)
-         return Rebar::Size::bsNone;
-
-      auto best = std::min_element(bar_sizes.begin(), bar_sizes.end(), [&diameter](auto a, auto b) {return fabs(nominal_diameter(a) - *diameter) < fabs(nominal_diameter(b) - *diameter); });
-      return fabs(nominal_diameter(*best) - *diameter) <= WBFL::Units::ConvertToSysUnits(0.1, WBFL::Units::Measure::Inch) ? *best : Rebar::Size::bsNone;
-   }
-
-   // The bar material: the type from rebar.grade (A615 unless the text says A706 or A1035), the grade from rebar.fy, else a
-   // grade number in rebar.grade. nullopt if the model says neither
-   std::optional<std::pair<Rebar::Type, Rebar::Grade>> get_bar_material(IfcSchema::IfcReinforcingBar bar)
-   {
-      const auto& reader = CIfcImporter::GetTargetReader();
-      std::optional<std::string> text;
-      if (auto reading = reader.Read("rebar.grade", bar))
-         text = std::get<std::string>(reading->value);
-      std::optional<Float64> fy;
-      if (auto reading = reader.Read("rebar.fy", bar))
-         fy = WBFL::Units::ConvertFromSysUnits(std::get<Float64>(reading->value), WBFL::Units::Measure::KSI);
-      if (!text && !fy)
-         return std::nullopt;
-
-      auto type = Rebar::Type::A615;
-      if (text && text->find("A706") != std::string::npos)
-         type = Rebar::Type::A706;
-      else if (text && text->find("A1035") != std::string::npos)
-         type = Rebar::Type::A1035;
-
-      const std::array<std::pair<Float64, Rebar::Grade>, 6> grades{ { {40, Rebar::Grade40}, {60, Rebar::Grade60}, {75, Rebar::Grade75}, {80, Rebar::Grade80}, {100, Rebar::Grade100}, {120, Rebar::Grade120} } };
-      if (!fy && text)
-      {
-         // the grade number in the text (e.g. "AASHTO M31 (A615) - Grade 60", or just "60")
-         std::smatch match;
-         std::string rest = std::regex_replace(*text, std::regex("A(615|706|1035)"), "");
-         if (std::regex_search(rest, match, std::regex("[0-9]+")))
-            fy = std::stod(match.str());
-      }
-      auto grade = Rebar::Grade60;
-      if (fy)
-         grade = std::min_element(grades.begin(), grades.end(), [&fy](const auto& a, const auto& b) {return fabs(a.first - *fy) < fabs(b.first - *fy); })->second;
-      return std::make_pair(type, grade);
    }
 
    // Bars of the same size that lap (collinear within 1.5 bar diameters, overlapping along the girder) as one bar
@@ -326,117 +229,66 @@ namespace
    }
 }
 
-void import_longitudinal_rebar(ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc)
+void import_longitudinal_rebar(const GirderBars& girder_bars, CBridgeDescription2& bridge_desc)
 {
    USES_CONVERSION;
 
    // The girders' bars come from the template, which has the library entries' bars. Those are seed values, not the
    // girder's reinforcement, so a girder gets only the bars in the model.
-   for (GroupIndexType grpIdx = 0; grpIdx < bridge_desc.GetGirderGroupCount(); grpIdx++)
+   for_each_segment(bridge_desc, [](CPrecastSegmentData* pSegment) {pSegment->LongitudinalRebarData.RebarRows.clear(); });
+   if (!girder_bars.HasBars())
    {
-      auto* pGroup = bridge_desc.GetGirderGroup(grpIdx);
-      for (GirderIndexType gdrIdx = 0; gdrIdx < pGroup->GetGirderCount(); gdrIdx++)
-      {
-         auto* pGirder = pGroup->GetGirder(gdrIdx);
-         for (SegmentIndexType segIdx = 0; segIdx < pGirder->GetSegmentCount(); segIdx++)
-            pGirder->GetSegment(segIdx)->LongitudinalRebarData.RebarRows.clear();
-      }
-   }
-
-   const auto& reader = CIfcImporter::GetTargetReader();
-   if (!reader.HasSelector(ElementKind::Rebar))
-   {
-      WBFL::System::Logger::Info("The mapping table has no rebar role, so longitudinal girder bars aren't imported. The girders have no longitudinal reinforcement.");
+      WBFL::System::Logger::Info("Longitudinal girder bars aren't imported: " + girder_bars.GetReason() + ". The girders have no longitudinal reinforcement.");
       return;
    }
 
-   auto elements = reader.Select(ElementKind::Rebar, file);
-   if (elements.empty())
-   {
-      WBFL::System::Logger::Info("The model has no reinforcing bars (" + reader.GetTable().GetSelector(ElementKind::Rebar)->Describe() + "). The girders have no longitudinal reinforcement.");
-      return;
-   }
-
-   GirderReinforcementReader geometry(file, layout);
-
-   // the longitudinal bars of each girder, and the girders that have bars
-   std::map<int, std::vector<Bar>> girder_bars;
-   std::set<int> girders_with_bars;
-   std::map<int, std::map<std::pair<Rebar::Type, Rebar::Grade>, IndexType>> girder_materials; // number of bars of each material
-   IndexType nWithoutGeometry = 0, nWithoutSize = 0;
-   for (const auto& object : elements)
-   {
-      auto element = object.as<IfcSchema::IfcReinforcingBar>();
-      std::vector<GirderReinforcement> centerlines; // more than one for a group of bars
-      auto result = element ? geometry.Read(element, centerlines) : GirderReinforcementReader::Status::NoGeometry;
-      if (result == GirderReinforcementReader::Status::NoGeometry)
-         nWithoutGeometry++;
-      if (result != GirderReinforcementReader::Status::Read)
-         continue; // bars of other elements (deck, piers) aren't in a girder
-
-      std::optional<std::pair<Rebar::Type, Rebar::Grade>> material;
-      bool bMaterial = false;
-      for (const auto& reinforcement : centerlines)
-      {
-         girders_with_bars.insert(reinforcement.beam_id);
-         auto bar = longitudinal_piece(reinforcement);
-         if (!bar)
-            continue; // stirrups and other bars
-
-         std::string size_source;
-         bar->element = element;
-         bar->size = get_bar_size(element, reinforcement.diameter, size_source);
-         if (bar->size == Rebar::Size::bsNone)
-         {
-            nWithoutSize++;
-            continue;
-         }
-         if (!bMaterial)
-         {
-            material = get_bar_material(element);
-            bMaterial = true;
-         }
-         if (material)
-            girder_materials[reinforcement.beam_id][*material]++;
-         girder_bars[reinforcement.beam_id].push_back(*bar);
-      }
-   }
-
-   if (0 < nWithoutGeometry)
-      WBFL::System::Logger::Info(std::to_string(nWithoutGeometry) + " reinforcing bars were skipped: their geometry has no straight pieces that make a centerline (circular profiles extruded along a line, or swept disks along a polyline or an indexed poly curve).");
-   if (0 < nWithoutSize)
-      WBFL::System::Logger::Warning(std::to_string(nWithoutSize) + " longitudinal girder bars were skipped: their size isn't known (rebar.bar_size, the nominal diameter, or a drawn diameter of a bar size).");
-
-   IndexType nWithoutBars = 0;
+   const auto& geometry = girder_bars.GetGeometry();
+   IndexType nWithoutBars = 0, nWithoutSize = 0;
    for (const auto& [beam_id, girder] : geometry.GetGirders())
    {
-      if (!girders_with_bars.count(beam_id))
+      const auto& all_bars = girder_bars.GetBars(beam_id);
+      if (all_bars.empty())
       {
          nWithoutBars++;
          continue;
       }
 
-      auto beam = file.instance_by_id(beam_id).as<IfcSchema::IfcBeam>();
-      std::string girder_name = beam.Name().value_or("unnamed beam");
-      auto* pSegment = bridge_desc.GetGirderGroup(girder->girder_key.groupIndex)->GetGirder(girder->girder_key.girderIndex)->GetSegment(0);
+      // the longitudinal bars (stirrups and other bars aren't)
+      std::vector<Bar> longitudinal;
+      std::map<BarMaterial, IndexType> materials; // number of bars of each material
+      for (const auto& girder_bar : all_bars)
+      {
+         auto bar = longitudinal_piece(girder_bar.centerline);
+         if (!bar)
+            continue;
+         if (girder_bar.size == Rebar::Size::bsNone)
+         {
+            nWithoutSize++;
+            continue;
+         }
+         bar->element = girder_bar.element;
+         bar->size = girder_bar.size;
+         if (girder_bar.material)
+            materials[*girder_bar.material]++;
+         longitudinal.push_back(*bar);
+      }
+
+      std::string girder_name = girder_bars.GetGirderName(beam_id);
+      auto* pSegment = GirderBars::GetSegment(bridge_desc, *girder);
       CLongitudinalRebarData rebar_data(pSegment->LongitudinalRebarData); // the material if the model doesn't say
       rebar_data.RebarRows.clear();
 
-      const auto& materials = girder_materials[beam_id];
-      if (!materials.empty())
+      bool bMixed;
+      if (auto material = most_common_material(materials, bMixed))
       {
-         auto most = std::max_element(materials.begin(), materials.end(), [](const auto& a, const auto& b) {return a.second < b.second; });
-         if (WBFL::LRFD::RebarPool::GetInstance()->GetRebar(most->first.first, most->first.second, Rebar::Size::bs5))
-         {
-            rebar_data.BarType = most->first.first;
-            rebar_data.BarGrade = most->first.second;
-         }
-         if (1 < materials.size())
-            WBFL::System::Logger::Warning("Longitudinal bars of " + girder_name + ": the bars have different materials. PGSuper has one for the girder, so the most common is used.");
+         rebar_data.BarType = material->first;
+         rebar_data.BarGrade = material->second;
       }
+      if (bMixed)
+         WBFL::System::Logger::Warning("Longitudinal bars of " + girder_name + ": the bars have different materials. PGSuper has one for the girder, so the most common is used.");
 
       IndexType nLaps = 0, nUnpaired = 0, nTop = 0, nBottom = 0, nBars = 0;
-      std::vector<Bar> bars = merge_laps(girder_bars[beam_id], nLaps);
+      std::vector<Bar> bars = merge_laps(longitudinal, nLaps);
       Float64 Lg = geometry.GetLength(beam_id);
 
       // group the bars by their row data
@@ -471,6 +323,8 @@ void import_longitudinal_rebar(ifcopenshell::file& file, const GirderLayout& lay
          WBFL::System::Logger::Warning("Longitudinal bars of " + girder_name + ": " + std::to_string(nUnpaired) + " bars were skipped. PGSuper centers the bars of a row on the CL girder, and these bars have no bar opposite them.");
    }
 
+   if (0 < nWithoutSize)
+      WBFL::System::Logger::Warning(std::to_string(nWithoutSize) + " longitudinal girder bars were skipped: their size isn't known (rebar.bar_size, the nominal diameter, or a drawn diameter of a bar size).");
    if (0 < nWithoutBars)
       WBFL::System::Logger::Info(std::to_string(nWithoutBars) + " girders have no reinforcing bars in the model, so they have no longitudinal reinforcement.");
 }

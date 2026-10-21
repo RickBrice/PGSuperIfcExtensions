@@ -127,29 +127,29 @@ The context carries the `WBFL::Materials::PsStrand`, the strand type, and the st
 | Target | Kind | Export: PGSuper data | Import |
 |---|---|---|---|
 | `tendon.fy` | Stress | `PsStrand::GetYieldStrength` | – |
-| `tendon.fpu` | Stress | `PsStrand::GetUltimateStrength` | – |
-| `tendon.grade` | Text | "ASTM A416 Grade " + `PsStrand::GetGrade(grade, US units)` | – |
-| `tendon.diameter` | Length | `PsStrand::GetNominalDiameter`; the import prefers it to the geometry, since models may draw strands at another size (Iowa draws 0.6" strands as 5/8" circles) | Deflection |
-| `tendon.tension_force` | Force | the strand's jacking force, `IStrandGeometry::GetPjack` / strand count of its type (as `IfcTendon.TensionForce`); the import uses it when the model has neither `PreStress` nor `TensionForce` | – |
-| `tendon.corrosion_treatment` | Text | "NONE" or "EPOXYCOATED" from `PsStrand::GetCoating` | – |
-| `tendon.status` | Text | "TEMPORARY" for `pgsTypes::Temporary` strands, else "NEW" (`Pset_ElementComponentCommon.Status` on the strand and `usBrPset_Common.Status` on its type, so temporary strands get their own type) | – |
-| `tendon.debond_start`, `tendon.debond_end` | Length | `IStrandGeometry::IsStrandDebonded` start and end lengths (with usBridge classification only) | – |
+| `tendon.fpu` | Stress | `PsStrand::GetUltimateStrength` | `get_strand_material` (`Strands.cpp`): the strand grade (Grade 250 below 260 ksi, Grade 300 from 285 ksi, else Grade 270), before `tendon.grade` |
+| `tendon.grade` | Text | "ASTM A416 Grade " + `PsStrand::GetGrade(grade, US units)` | `get_strand_material`: the grade when there's no `tendon.fpu` ("250" or "300" in the text, else Grade 270), and stress relieved when the text says so (else low relaxation) |
+| `tendon.diameter` | Length | `PsStrand::GetNominalDiameter`; the import prefers it to the geometry, since models may draw strands at another size (Iowa draws 0.6" strands as 5/8" circles) | `get_strand_material`: the strand size, before the `IfcTendonType.NominalDiameter` and the drawn diameter; the nearest strand in the pool within 0.5 mm |
+| `tendon.tension_force` | Force | the strand's jacking force, `IStrandGeometry::GetPjack` / strand count of its type (as `IfcTendon.TensionForce`); the import uses it when the model has neither `PreStress` nor `TensionForce` | `get_jacking_force` (`Strands.cpp`): a strand's jacking force when it has neither `PreStress` nor `TensionForce` |
+| `tendon.corrosion_treatment` | Text | "NONE" or "EPOXYCOATED" from `PsStrand::GetCoating` | `get_strand_material`: "EPOXYCOATED" picks a smooth epoxy coated strand (IFC doesn't say smooth or grit impregnated) |
+| `tendon.status` | Text | "TEMPORARY" for `pgsTypes::Temporary` strands, else "NEW" (`Pset_ElementComponentCommon.Status` on the strand and `usBrPset_Common.Status` on its type, so temporary strands get their own type) | `import_strands` (`Strands.cpp`): "TEMPORARY" makes a temporary strand |
+| `tendon.debond_start`, `tendon.debond_end` | Length | `IStrandGeometry::IsStrandDebonded` start and end lengths (with usBridge classification only) | `import_strands`: the debonded lengths at the start and end |
 | `tendon.debond_midspan_to_start`, `tendon.debond_midspan_to_end` | Length | temporary strands only: half the plan length less 10 ft (assumes the WSDOT detail, bonded for 10 ft at each end) | – |
 
 ### Reinforcing bars (`IfcReinforcingBar`) and their material
 
 The context carries the `WBFL::Materials::Rebar` and a `BarDefinition` (`BarShape.h`, made from PGSuper's longitudinal and transverse reinforcement by `GetBarType` in `Rebar.h`).
 
-The longitudinal girder bar import (`LongitudinalRebar.h`) reads `rebar.bar_size` (the number in the text, e.g. "#5", "5"), and `rebar.grade` and `rebar.fy` for the girder's bar material (`CLongitudinalRebarData::BarType`, `BarGrade`): ASTM A615 unless the grade text says A706 or A1035, and the grade from `rebar.fy`, else the number in the grade text.
+The girder bar imports (`GirderBars.h`, for `LongitudinalRebar.h` and `Stirrups.h`) read `rebar.bar_size` (the number in the text, e.g. "#5", "5"), and `rebar.grade` and `rebar.fy` for the girder's bar materials (`CLongitudinalRebarData::BarType`, `BarGrade`; `CShearData2::ShearBarType`, `ShearBarGrade`): ASTM A615 unless the grade text says A706 or A1035, and the grade from `rebar.fy`, else the number in the grade text.
 
 | Target | Kind | Export: PGSuper data | Import |
 |---|---|---|---|
-| `rebar.fy`, `rebar.fu` | Stress | `Rebar::GetYieldStrength`, `GetUltimateStrength` | – |
+| `rebar.fy`, `rebar.fu` | Stress | `Rebar::GetYieldStrength`, `GetUltimateStrength` | `rebar.fy` only, `get_bar_material` (`GirderBars.cpp`): the bar grade, nearest of 40, 60, 75, 80, 100, and 120 ksi |
 | `rebar.elongation` | Ratio | `Rebar::GetElongation` | – |
-| `rebar.grade` | Text | `WBFL::LRFD::RebarPool::GetMaterialName(type, grade)` | – |
+| `rebar.grade` | Text | `WBFL::LRFD::RebarPool::GetMaterialName(type, grade)` | `get_bar_material`: the bar type (A615 unless the text says A706 or A1035), and the grade from the number in the text when there's no `rebar.fy` |
 | `rebar.specification`, `rebar.specification_edition` | Text | `GetRebarSpecification`, `GetRebarSpecificationEdition` (`SteelSpecifications.h`) | – |
 | `rebar.bar_mark` | Text | `BarDefinition::mark` | – |
-| `rebar.bar_size` | Text | `RebarPool::GetBarSize(rebar size)`, e.g. "#5" | – |
+| `rebar.bar_size` | Text | `RebarPool::GetBarSize(rebar size)`, e.g. "#5" | `get_bar_size` (`GirderBars.cpp`): the bar size from the number in the text, before the nominal diameter of the bar type or the bar and the drawn diameter |
 | `rebar.bar_mass` | Mass | `BarDefinition::GetMass()` (centerline length × nominal area × density) | – |
 | `rebar.bar_element`, `rebar.bar_use`, `rebar.bar_position` | Text | `BarDefinition::element`, `use`, `position` (no value when empty) | – |
 | `rebar.cover_top`, `cover_side`, `cover_bottom`, `cover_end` | Length | `BarDefinition::cover_*` (absent when the bar has none) | – |

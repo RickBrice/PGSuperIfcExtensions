@@ -133,6 +133,12 @@
     <ClCompile Include="LongitudinalRebar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GirderBars.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Stirrups.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Strands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -340,6 +346,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="LongitudinalRebar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GirderBars.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Stirrups.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Strands.h">

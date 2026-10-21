@@ -22,15 +22,14 @@
 
 #pragma once
 
-#include "BeamSpacing.h"
-#include <psgLib/BridgeDescription2.h>
+#include "GirderBars.h"
 
 // Imports the longitudinal reinforcement of the girders (G3 of devdocs/GirderImportPlan.md, CLongitudinalRebarData).
 //
 // The bars are the elements of the rebar role of the mapping table, assigned to girders and read as strands are (see
-// GirderReinforcement.h). A longitudinal bar is a bar whose longest straight piece in the girder runs along it (within 2
-// degrees) and is at least 2 ft long. Bars of the same size that lap (collinear within 1.5 bar diameters, overlapping
-// along the girder) are one bar, since PGSuper doesn't model laps.
+// GirderBars.h and GirderReinforcement.h). A longitudinal bar is a bar whose longest straight piece in the girder runs
+// along it (within 2 degrees) and is at least 2 ft long. Bars of the same size that lap (collinear within 1.5 bar
+// diameters, overlapping along the girder) are one bar, since PGSuper doesn't model laps.
 //
 // Each bar is referenced to the nearer face of the girder (top or bottom, from the girder's depth in the model), with its
 // clear cover. Its layout: full length when both ends are within 3 in of the girder's end faces (measured along the bar,
@@ -41,8 +40,7 @@
 // are split into pairs at +/-z (and a bar at the center); a bar without a mirror bar can't be input and is skipped with a
 // warning.
 //
-// The bar size is from rebar.bar_size (e.g. "#5", "5"), else the bar type's nominal diameter, else the geometry. The bar
-// material (one per girder) is from rebar.grade (ASTM A615, A706, or A1035 in the text) and rebar.fy, else the template's.
-// Each girder gets exactly the model's longitudinal bars, none if it has none: the bars of the girder library entry (and
-// of the template, which has them) are seed values the user copies into a girder, not the girder's reinforcement.
-void import_longitudinal_rebar(ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc);
+// The bar material (one per girder) is the most common of the bars', else the template's. Each girder gets exactly the
+// model's longitudinal bars, none if it has none: the bars of the girder library entry (and of the template, which has
+// them) are seed values the user copies into a girder, not the girder's reinforcement.
+void import_longitudinal_rebar(const GirderBars& girder_bars, CBridgeDescription2& bridge_desc);

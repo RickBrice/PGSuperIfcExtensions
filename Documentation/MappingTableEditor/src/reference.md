@@ -40,12 +40,16 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 
 | Target | Element role | Kind | Description |
 |---|---|---|---|
+| `project.job_number` | `project` | text | job number (project properties) |
+| `project.export_date` | `project` | text | date of the export (YYYY-MM-DD, for IfcDate) |
 | `bridge.number_of_spans` | `bridge` | count | number of spans |
 | `bridge.length` | `bridge` | length | bridge length |
 | `bridge.roadway_width` | `bridge` | length | roadway width at the start of the bridge |
 | `bridge.start_station` | `bridge` | length | station of the start of the bridge |
 | `bridge.end_station` | `bridge` | length | station of the end of the bridge |
 | `bridge.max_skew` | `bridge` | angle | largest pier skew |
+| `bridge.name` | `bridge` | text | bridge name (project properties) |
+| `bridge.id` | `bridge` | text | bridge identification (project properties) |
 | `bridge.design_live_load` | `bridge` | text | design vehicular live load |
 | `pier.station` | `pier` | length | station of the CL pier |
 | `pier.skew` | `pier` | angle | pier skew |
@@ -88,8 +92,10 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `tendon.fy` | `tendon` | stress | strand yield strength |
 | `tendon.fpu` | `tendon` | stress | strand ultimate strength |
 | `tendon.grade` | `tendon` | text | strand grade (e.g. ASTM A416 Grade 270) |
+| `tendon.diameter` | `tendon` | length | strand nominal diameter |
+| `tendon.tension_force` | `tendon` | force | jacking force of the strand (Pjack / number of strands of its type) |
 | `tendon.corrosion_treatment` | `tendon` | text | strand corrosion treatment (NONE or EPOXYCOATED) |
-| `tendon.status` | `tendon` | text | strand status (TEMPORARY for temporary strands) |
+| `tendon.status` | `tendon` | text | strand status (TEMPORARY for temporary strands, else NEW) |
 | `tendon.debond_start` | `tendon` | length | debond length at the start of a debonded strand |
 | `tendon.debond_end` | `tendon` | length | debond length at the end of a debonded strand |
 | `tendon.debond_midspan_to_start` | `tendon` | length | debonded length from mid-span toward the start of a temporary strand |
@@ -100,5 +106,28 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `rebar.grade` | `rebar` | text | reinforcing bar material (e.g. AASHTO M31 (A615) - Grade 60) |
 | `rebar.specification` | `rebar` | text | reinforcing bar specification (e.g. ASTM A615 (AASHTO M31)) |
 | `rebar.specification_edition` | `rebar` | text | edition of the reinforcing bar specification |
+| `rebar.bar_mark` | `rebar` | text | bar mark (e.g. G2) |
+| `rebar.bar_size` | `rebar` | text | bar size (e.g. #5) |
+| `rebar.bar_mass` | `rebar` | Mass | total mass of a bar, from its centerline length and nominal diameter |
+| `rebar.bar_element` | `rebar` | text | element the bar reinforces (e.g. BEAM) |
+| `rebar.bar_use` | `rebar` | text | use of the bar (e.g. STIRRUP) |
+| `rebar.bar_position` | `rebar` | text | position of the bar in the element (e.g. TOP) |
+| `rebar.cover_top` | `rebar` | length | cover to the top face |
+| `rebar.cover_side` | `rebar` | length | cover to the side faces |
+| `rebar.cover_bottom` | `rebar` | length | cover to the bottom face |
+| `rebar.cover_end` | `rebar` | length | cover to the end faces |
 | `bearing.fixed_x` | `bearing` | true/false | bearing fixed along the girder |
 | `bearing.fixed_y` | `bearing` | true/false | bearing fixed across the girder |
+| `bearing.displacement_accommodated` | `bearing` | true/false | list of the displacements accommodated along, across, and normal to the girder |
+| `bearing.rotation_accommodated` | `bearing` | true/false | list of the rotations accommodated about the axes along, across, and normal to the girder (all of them for an elastomeric bearing) |
+| `bearing.height` | `bearing` | length | bearing height |
+| `bearing.length` | `bearing` | length | length of a rectangular bearing, along the girder |
+| `bearing.width` | `bearing` | length | width of a rectangular bearing, across the girder |
+| `bearing.diameter` | `bearing` | length | diameter of a round bearing |
+| `bearing.plate_count` | `bearing` | count | number of steel shims (one more than the internal elastomer layers) |
+| `bearing.plate_thickness` | `bearing` | length | list of the steel shim thicknesses |
+| `bearing.cover_thickness` | `bearing` | length | thickness of the external elastomer layers |
+| `bearing.layer_thickness` | `bearing` | length | thickness of the internal elastomer layers |
+| `bearing.top_elevation` | `bearing` | length | elevation of the top of the bearing |
+| `bearing.bottom_elevation` | `bearing` | length | elevation of the bottom of the bearing (bearing seat) |
+| `bearing.girder_slope` | `bearing` | ratio | longitudinal slope of the girder at the bearing |

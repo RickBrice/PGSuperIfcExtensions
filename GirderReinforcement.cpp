@@ -475,8 +475,8 @@ namespace
       return std::nullopt;
    }
 
-   // the path (sorted by x) without points within the position tolerance of the previous point, and without interior points
-   // on the line through their neighbors, so a path has its ends and its bends
+   // the path without points within the position tolerance of the previous point, and without interior points on the line
+   // through their neighbors, so a path has its ends and its bends (a path may go across the girder, e.g. a stirrup)
    std::vector<GirderPoint> simplify(const std::vector<GirderPoint>& path)
    {
       const auto tolerance = reinforcement_position_tolerance;
@@ -489,13 +489,15 @@ namespace
       if (distinct.size() < 3)
          return distinct;
 
+      auto vector = [](const GirderPoint& p) {return Eigen::Vector3d(p.x, p.z, p.y); };
       std::vector<GirderPoint> simplified{ distinct.front() };
       for (size_t i = 1; i + 1 < distinct.size(); i++)
       {
-         const auto& a = simplified.back();
-         const auto& b = distinct[i + 1];
-         Float64 t = IsEqual(a.x, b.x) ? 0.0 : (distinct[i].x - a.x) / (b.x - a.x);
-         if (tolerance < fabs(distinct[i].y - (a.y + t * (b.y - a.y))) || tolerance < fabs(distinct[i].z - (a.z + t * (b.z - a.z))))
+         Eigen::Vector3d a = vector(simplified.back());
+         Eigen::Vector3d ab = vector(distinct[i + 1]) - a;
+         Eigen::Vector3d ap = vector(distinct[i]) - a;
+         Float64 t = IsZero(ab.squaredNorm()) ? 0.0 : ap.dot(ab) / ab.squaredNorm();
+         if (tolerance < (ap - t * ab).norm())
             simplified.push_back(distinct[i]);
       }
       simplified.push_back(distinct.back());
@@ -600,6 +602,19 @@ const GirderReinforcementReader::Profile& GirderReinforcementReader::GetProfile(
    return *found->second;
 }
 
+const Eigen::AlignedBox3d& GirderReinforcementReader::GetBounds(int beam_id) const
+{
+   auto found = m_Bounds.find(beam_id);
+   if (found == m_Bounds.end())
+   {
+      Eigen::AlignedBox3d bounds;
+      for (const auto& v : m_Girders.at(beam_id)->mesh->verts)
+         bounds.extend(v);
+      found = m_Bounds.emplace(beam_id, bounds).first;
+   }
+   return found->second;
+}
+
 Float64 GirderReinforcementReader::GetLength(int beam_id) const
 {
    return GirderFrame(*m_Girders.at(beam_id)).length;
@@ -655,6 +670,32 @@ GirderReinforcementReader::Status GirderReinforcementReader::ReadPiece(std::vect
          {
             beam_id = id;
             break;
+         }
+      }
+   }
+   if (!beam_id)
+   {
+      // the girder that contains the most of it (e.g. a stirrup whose middle is above the girder, in the deck)
+      auto points = densify(centerline, 0.1 /*m*/);
+      IndexType most = 0;
+      for (const auto& [id, girder] : m_Girders)
+      {
+         if (!girder->mesh)
+            continue;
+         const auto& bounds = GetBounds(id);
+         IndexType n = 0;
+         for (const auto& p : points)
+         {
+            if (!bounds.contains(p))
+               continue;
+            auto range = girder->mesh->z_range_at(p.x(), p.y());
+            if (range && range->first <= p.z() && p.z() <= range->second)
+               n++;
+         }
+         if (most < n)
+         {
+            most = n;
+            beam_id = id;
          }
       }
    }

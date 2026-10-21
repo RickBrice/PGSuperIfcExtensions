@@ -36,3 +36,16 @@ The Iowa DOT models each haunch as an `IfcSlab` with the `ObjectType` Haunch. Th
 | Attributes | `ObjectType=Haunch` |
 
 PGSuper measures these slabs with the deck, because the haunches are cast with the deck.
+
+Strands and reinforcing bars
+----------------------------
+
+The import reads the girders' strands (the `tendon` role) and reinforcing bars (the `rebar` role) from their geometry: the centerline of each strand or bar, from its body representation. An element with a body item for each bar (bars of one type written as one element) is several bars. A strand or bar belongs to the girder it's part of through its assemblies, else to the girder whose geometry contains it.
+
+- **Strands:** the strand positions, harping, debonding, and extended strands. The targets of the `tendon` role give the material, the jacking force, the temporary strands, and the debond lengths.
+- **Longitudinal bars:** bars along the girder, as rows referenced to the top or bottom of the girder.
+- **Stirrups:** bars with vertical legs, as shear zones. A leg that extends above the girder engages the deck.
+
+The bar size is read from `rebar.bar_size`, else from the bar's nominal diameter or its geometry. The bar material is read from `rebar.grade` and `rebar.fy`. A girder gets only the strands and bars that are in the model. Confinement and splitting reinforcement aren't imported yet.
+
+The import log describes what was read for each girder, and why any strand or bar was left out.

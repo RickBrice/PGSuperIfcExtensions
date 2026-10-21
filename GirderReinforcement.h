@@ -50,7 +50,7 @@ inline Float64 depth_at(const std::vector<GirderPoint>& path, Float64 x) { retur
 struct GirderReinforcement
 {
    int beam_id;                             // the girder's IfcBeam
-   std::vector<GirderPoint> path;           // inside the girder, sorted by x, with its ends and bends only
+   std::vector<GirderPoint> path;           // inside the girder, from the end at the lesser x, with its ends and bends only
    std::array<bool, 2> projects{ false, false }; // it projects beyond the girder at the start and end (pgsTypes::MemberEndType)
    std::optional<Float64> diameter;         // as drawn (swept disk or circular profile)
    std::array<std::optional<Float64>, 2> end_distance; // from each end to the girder's end face along the centerline (0 if it
@@ -74,9 +74,10 @@ public:
    // The centerline of a strand or bar: the straight pieces of its body geometry (circular profiles extruded along a line,
    // swept disks along polylines and indexed poly curves; mapped items are followed) chained end to end through the bends
    // between them, clipped to the plan footprint of its girder, and put in girder coordinates. Its girder is the one it's
-   // part of (through its assemblies), else the one whose geometry contains the point halfway along it. An element with
-   // more than one representation item whose pieces make a line is a group (e.g. bars of one type written as one element
-   // with a mapped item for each bar): each of those items is a strand or bar. Read if at least one is in a girder
+   // part of (through its assemblies), else the one whose geometry contains the point halfway along it, else the one that
+   // contains the most of it. An element with more than one representation item whose pieces make a line is a group (e.g.
+   // bars of one type written as one element with a mapped item for each bar): each of those items is a strand or bar.
+   // Read if at least one is in a girder
    Status Read(IfcSchema::IfcElement element, std::vector<GirderReinforcement>& reinforcement);
 
    // the imported girders, by IfcBeam id
@@ -93,9 +94,11 @@ private:
 
    class Profile;
    const Profile& GetProfile(int beam_id) const;
+   const Eigen::AlignedBox3d& GetBounds(int beam_id) const; // of a girder's geometry (it must have a mesh)
 
    std::unique_ptr<ifcopenshell::geom::abstract_mapping> m_Mapping;
    std::map<int, const GirderCenterline*> m_Girders;
    std::set<int> m_BeamIds;
    mutable std::map<int, std::unique_ptr<Profile>> m_Profiles; // made when first needed
+   mutable std::map<int, Eigen::AlignedBox3d> m_Bounds;          // made when first needed
 };
