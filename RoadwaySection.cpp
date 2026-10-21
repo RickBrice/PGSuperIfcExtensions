@@ -23,6 +23,7 @@
 #include "stdafx.h"
 #include "RoadwaySection.h"
 #include "GirderSection.h"
+#include "TrafficBarriers.h" // get_alignment_cut
 
 #include <IFace\Project.h>
 #include <IFace/Alignment.h>
@@ -36,6 +37,7 @@
 namespace
 {
    const double inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+   const double max_edge_slope = 0.25; // a steeper segment at an edge of the deck is a chamfer or drip, not roadway
 
    // The section of the roadway at a station. Offsets are from the alignment, positive to the right
    struct StationSection
@@ -80,15 +82,15 @@ namespace
          return s;
       }
 
-      // the same ridge points, and surfaces within 1/16 in of each other over the roadways measured
-      bool same(const StationSection& other) const
+      // the same ridge points, and surfaces within the tolerance of each other over the roadways measured
+      bool same(const StationSection& other, double tolerance) const
       {
          if (ridges.size() != other.ridges.size() || alignment_point() != other.alignment_point())
             return false;
          std::vector<double> offsets{ from, to, other.from, other.to };
          offsets.insert(offsets.end(), ridges.begin(), ridges.end());
          offsets.insert(offsets.end(), other.ridges.begin(), other.ridges.end());
-         return std::all_of(offsets.begin(), offsets.end(), [&](double o) {return IsEqual(surface(o), other.surface(o), inch / 16); });
+         return std::all_of(offsets.begin(), offsets.end(), [&](double o) {return IsEqual(surface(o), other.surface(o), tolerance); });
       }
    };
 
@@ -117,7 +119,7 @@ namespace
       return a.y() + (o - a.x()) * (b.y() - a.y()) / (b.x() - a.x());
    }
 
-   std::optional<StationSection> measure(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, Float64 station)
+   std::optional<StationSection> measure(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, Float64 station)
    {
       auto cut = get_alignment_cut(pBroker, station);
       // the deck section in (offset, elevation), as the segments of the cut (the deck mesh may have haunches that touch
@@ -136,39 +138,20 @@ namespace
       deck_from += inch; // clear of the edges
       deck_to -= inch;
 
-      // the offsets the barriers cover (and an inch more): the deck there isn't roadway
-      std::vector<std::pair<double, double>> covered;
-      for (const auto& barrier : barriers)
-      {
-         for (const auto& barrier_loop : CutMesh(barrier.mesh, cut.point, cut.axis))
-         {
-            double from = DBL_MAX, to = -DBL_MAX;
-            for (const auto& p : barrier_loop)
-            {
-               from = std::min(from, -p.x());
-               to = std::max(to, -p.x());
-            }
-            covered.emplace_back(from - inch, to + inch);
-         }
-      }
-      auto is_covered = [&covered](double o) {return std::any_of(covered.begin(), covered.end(), [o](const auto& c) {return c.first < o && o < c.second; }); };
-
-      // the top of the deck at its corners, the edges of the barriers, and the ends
+      // The top of the deck at its corners and the ends. The roadway surface goes to the edges of the deck, under the
+      // barriers too: PGSuper sets a barrier on it, turned to its slope at the edge (e.g. a deck that rises under a
+      // barrier with a sloped base)
       std::vector<double> offsets{ deck_from, deck_to };
       for (const auto& [a, b] : segments)
       {
          offsets.push_back(a.x());
          offsets.push_back(b.x());
       }
-      for (const auto& c : covered)
-      {
-         offsets.push_back(c.first);
-         offsets.push_back(c.second);
-      }
       std::sort(offsets.begin(), offsets.end());
       offsets.erase(std::unique(offsets.begin(), offsets.end(), [](double a, double b) {return IsEqual(a, b, 1e-6); }), offsets.end());
 
-      // the uncovered stretches of the top of the deck; the roadway is the one at the alignment, else the longest
+      // the stretches of the top of the deck (a cut may miss part of it); the roadway is the one at the alignment, else
+      // the longest
       std::vector<std::vector<Eigen::Vector2d>> stretches;
       std::vector<Eigen::Vector2d> stretch;
       for (size_t i = 0; i < offsets.size(); i++)
@@ -176,15 +159,16 @@ namespace
          double o = offsets[i];
          bool in_deck = deck_from - 1e-9 <= o && o <= deck_to + 1e-9;
          auto top = in_deck ? top_at(segments, o) : std::nullopt;
-         bool continues = !stretch.empty() && !is_covered((stretch.back().x() + o) / 2);
-         if (!top || is_covered(o) || (!stretch.empty() && !continues))
+         if (!top)
          {
             if (1 < stretch.size())
                stretches.push_back(stretch);
             stretch.clear();
          }
-         if (top && !is_covered(o))
+         else
+         {
             stretch.emplace_back(o, *top);
+         }
       }
       if (1 < stretch.size())
          stretches.push_back(stretch);
@@ -201,8 +185,14 @@ namespace
       if (length(*roadway) < 36 * inch)
          return std::nullopt;
 
-      // its corners are the ridge points, with one at the alignment (a corner within 1/2 in of it moves there)
+      // its corners are the ridge points, with one at the alignment (a corner within 1/2 in of it moves there), without a
+      // chamfer or drip at an edge of the deck wider than the inch left out
       auto corners = SimplifyPolyline(*roadway, inch / 16);
+      auto steep = [](const Eigen::Vector2d& a, const Eigen::Vector2d& b) {return max_edge_slope < fabs((b.y() - a.y()) / (b.x() - a.x())); };
+      while (2 < corners.size() && steep(corners[0], corners[1]))
+         corners.erase(corners.begin());
+      while (2 < corners.size() && steep(corners[corners.size() - 2], corners.back()))
+         corners.pop_back();
       for (size_t i = 1; i + 1 < corners.size(); i++)
       {
          if (IsZero(corners[i].x(), inch / 2))
@@ -417,7 +407,7 @@ namespace
    }
 }
 
-void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations)
+void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<Float64>& pier_stations)
 {
    if (pier_stations.size() < 2)
       return;
@@ -429,7 +419,7 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
    {
       for (double fraction : { 0.25, 0.5, 0.75 })
       {
-         if (auto section = measure(pBroker, deck, barriers, pier_stations[span] + fraction * (pier_stations[span + 1] - pier_stations[span])))
+         if (auto section = measure(pBroker, deck, pier_stations[span] + fraction * (pier_stations[span + 1] - pier_stations[span])))
             sections.push_back(*section);
          else
             not_measured++;
@@ -451,7 +441,7 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
             {
                if (span / 4 <= distance * 12 * inch)
                   break;
-               auto section = measure(pBroker, deck, barriers, end + direction * distance * 12 * inch);
+               auto section = measure(pBroker, deck, end + direction * distance * 12 * inch);
                if (section && full_width <= section->to - section->from)
                   return section;
             }
@@ -501,6 +491,10 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
    for (const auto& s : sections)
       (is_common(s) ? used : different).push_back(s);
 
+   // One template if the section is the same everywhere within 1/8 in (a model's facets, e.g. a rounded crown, vary by a
+   // few hundredths of an inch along a deck)
+   bool all_same = std::all_of(used.begin(), used.end(), [&](const auto& s) {return s.same(used.front(), inch / 8); });
+
    // In a transition (the sections at the first two, or last two, stations differ), the first and last sections are
    // extended linearly to the ends of the bridge, as PGSuper interpolates between templates
    size_t extrapolated = 0;
@@ -518,27 +512,26 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
             s.slopes[i] = lerp(a.slopes[i], b.slopes[i]);
          return s;
       };
-   if (2 <= used.size() && pier_stations.front() < used.front().station && !used[0].same(used[1]))
+   if (!all_same && 2 <= used.size() && pier_stations.front() < used.front().station && !used[0].same(used[1], inch / 16))
    {
       used.insert(used.begin(), extrapolate(used[1], used[0], pier_stations.front()));
       extrapolated++;
    }
-   if (2 <= used.size() && used.back().station < pier_stations.back() && !used[used.size() - 1].same(used[used.size() - 2]))
+   if (!all_same && 2 <= used.size() && used.back().station < pier_stations.back() && !used[used.size() - 1].same(used[used.size() - 2], inch / 16))
    {
       used.push_back(extrapolate(used[used.size() - 2], used.back(), pier_stations.back()));
       extrapolated++;
    }
 
-   // A template where the section changes: at the first and last stations, and where the section isn't the one PGSuper
-   // interpolates between the templates on either side (so a linear transition has a template at each end). One
-   // template if the section is the same everywhere
+   // Otherwise a template where the section changes: at the first and last stations, and where the section isn't the one
+   // PGSuper interpolates between the templates on either side within 1/16 in (so a linear transition has a template at
+   // each end; the templates are chosen one after another, so the differences add up and need the smaller tolerance)
    std::vector<const StationSection*> templates;
-   bool all_same = std::all_of(used.begin(), used.end(), [&](const auto& s) {return s.same(used.front()); });
    for (size_t i = 0; i < used.size(); i++)
    {
       if (all_same && i != 0)
          break;
-      if (i == 0 || i + 1 == used.size() || !extrapolate(*templates.back(), used[i + 1], used[i].station).same(used[i]))
+      if (i == 0 || i + 1 == used.size() || !extrapolate(*templates.back(), used[i + 1], used[i].station).same(used[i], inch / 16))
          templates.push_back(&used[i]);
    }
 
@@ -588,7 +581,7 @@ void import_roadway_section(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Me
    WBFL::System::Logger::Info(os.str());
 }
 
-void import_profile(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<ElementMesh>& barriers, const std::vector<Float64>& pier_stations, bool bReplace)
+void import_profile(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck, const std::vector<Float64>& pier_stations, bool bReplace)
 {
    if (pier_stations.size() < 2)
       return;
@@ -613,7 +606,7 @@ void import_profile(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck
             if (0 < distance && (!(first || last) || length / n <= distance * 12 * inch))
                break;
             double at = station + (first ? 1 : -1) * distance * 12 * inch;
-            if (auto section = measure(pBroker, deck, barriers, at))
+            if (auto section = measure(pBroker, deck, at))
             {
                (section->from <= 0 && 0 <= section->to ? on_deck : extended).emplace_back(at, section->elevation);
                break;

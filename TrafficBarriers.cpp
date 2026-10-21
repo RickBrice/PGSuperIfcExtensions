@@ -294,8 +294,8 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
       // roadway. Offsets are positive to the right
       double slope = sign * pAlignment->GetSlope(station, -edge.x());
 
-      // The slope of the top of the deck just inside the barrier (6 to 18 in from it) is a check: if it isn't the
-      // roadway's, PGSuper's roadway section doesn't match the model, and the barrier is turned by the wrong slope
+      // The slope of the top of the deck under the barrier (an inch in from the deck edge and from the barrier's inner
+      // side) is a check: if it isn't PGSuper's slope at the edge, the barrier is turned by the wrong slope
       std::optional<double> deck_slope;
       {
          auto barrier_points = from_edge(cut.loop, edge, side);
@@ -304,10 +304,11 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
             inside = std::max(inside, p.x());
          const double inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
          auto deck_points = from_edge(deck_loops.front(), edge, side);
-         auto y1 = top_at(deck_points, inside + 6 * inch);
-         auto y2 = top_at(deck_points, inside + 18 * inch);
-         if (y1 && y2)
-            deck_slope = (*y2 - *y1) / (12 * inch);
+         double x1 = inch, x2 = inside - inch;
+         auto y1 = top_at(deck_points, x1);
+         auto y2 = top_at(deck_points, x2);
+         if (x1 < x2 && y1 && y2)
+            deck_slope = (*y2 - *y1) / (x2 - x1);
       }
       auto model = SimplifyLoop(barrier_coordinates(cut.loop, edge, side, slope), WBFL::Units::ConvertToSysUnits(1.0 / 64.0, WBFL::Units::Measure::Inch));
       auto model_outline = outline_of(model);
@@ -317,8 +318,8 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
          << std::fixed << std::setprecision(1) << WBFL::Units::ConvertFromSysUnits(fabs(loop_area(model)), WBFL::Units::Measure::Inch2) << " in^2, "
          << model.size() << " corners, turned back " << std::setprecision(2) << 100 * slope << "% (the roadway cross slope at the edge of the deck, rising toward the roadway).";
       if (deck_slope && !IsEqual(*deck_slope, slope, 0.0025))
-         os << " The top of the deck inside the barrier slopes " << std::setprecision(2) << 100 * *deck_slope
-            << "%, so the roadway section doesn't match the model (it isn't imported yet), and the barrier is turned by the wrong slope.";
+         os << " The top of the deck under the barrier slopes " << std::setprecision(2) << 100 * *deck_slope
+            << "%, so the roadway section doesn't match the model there, and the barrier is turned by the wrong slope.";
       for (size_t i = 1; i < cuts.size(); i++)
          os << " " << cuts[i].name << " (#" << cuts[i].element.id() << ") is also on the " << side_name << " side (sidewalks and interior barriers aren't imported yet).";
 

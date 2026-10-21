@@ -26,7 +26,10 @@
 #include "IfcImporter.h"
 #include "IfcTargetReader.h"
 #include "IfcTargetHints.h"
+#include "GirderSection.h" // CutMeshSegments
+#include "TrafficBarriers.h" // get_alignment_cut
 
+#include <iomanip>
 #include <map>
 #include <numeric>
 
@@ -374,10 +377,63 @@ std::vector<CDeckPoint> get_deck_edge_points(std::shared_ptr<WBFL::EAF::Broker> 
    // 6. The left edge has the smaller offsets (offsets are positive to the right)
    auto average_offset = [](const EdgeProfile& edge) {return std::accumulate(edge.begin(), edge.end(), 0.0, [](double sum, const auto& point) {return sum + point.second; }) / edge.size(); };
    bool bEdge1IsLeft = average_offset(edge1) < average_offset(edge2);
-   const EdgeProfile& left = bEdge1IsLeft ? edge1 : edge2;
-   const EdgeProfile& right = bEdge1IsLeft ? edge2 : edge1;
+   EdgeProfile left = bEdge1IsLeft ? edge1 : edge2;
+   EdgeProfile right = bEdge1IsLeft ? edge2 : edge1;
 
-   // 7. Fewest deck points that reproduce the edges
+   // 7. The top of the deck can stop short of the deck's edges (e.g. a chamfer or a drip): the edges are the outermost
+   // points of the deck. How far out they are is measured at the quarter points of the deck (where a cut normal to the
+   // alignment crosses the whole deck, also on a skewed bridge), and the edge is moved out by it if the three agree
+   // within 1/8 in (up to 6 in; more isn't a detail of the edge)
+   {
+      const double inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+      double from = std::max(left.front().first, right.front().first);
+      double to = std::min(left.back().first, right.back().first);
+      std::array<std::vector<double>, 2> outward; // left, right
+      for (double fraction : { 0.25, 0.5, 0.75 })
+      {
+         double station = from + fraction * (to - from);
+         auto cut = get_alignment_cut(pBroker, station);
+         double min_offset = DBL_MAX, max_offset = -DBL_MAX;
+         for (const auto& [a, b] : CutMeshSegments(m, cut.point, cut.axis))
+         {
+            for (const auto* p : { &a, &b })
+            {
+               min_offset = std::min(min_offset, -p->x()); // offsets are positive to the right
+               max_offset = std::max(max_offset, -p->x());
+            }
+         }
+         if (min_offset < max_offset)
+         {
+            outward[0].push_back(get_edge_offset(left, station) - min_offset);
+            outward[1].push_back(max_offset - get_edge_offset(right, station));
+         }
+      }
+      std::array<double, 2> moved{ 0.0, 0.0 };
+      for (int side = 0; side < 2; side++)
+      {
+         const auto& d = outward[side];
+         if (d.size() != 3)
+            continue;
+         auto [lo, hi] = std::minmax_element(d.begin(), d.end());
+         double median = d[0] + d[1] + d[2] - *lo - *hi;
+         if (IsGE(inch / 16, median) && IsLE(median, 6 * inch) && IsLE(*hi - *lo, inch / 8))
+         {
+            moved[side] = median;
+            for (auto& [station, offset] : (side == 0 ? left : right))
+               offset += (side == 0 ? -median : median);
+         }
+      }
+      if (0 < moved[0] || 0 < moved[1])
+      {
+         std::ostringstream os;
+         os << std::fixed << std::setprecision(3) << "The top of the deck stops " << WBFL::Units::ConvertFromSysUnits(moved[0], WBFL::Units::Measure::Inch)
+            << " in (left) and " << WBFL::Units::ConvertFromSysUnits(moved[1], WBFL::Units::Measure::Inch)
+            << " in (right) short of the deck's edges (e.g. a chamfer or a drip). The deck edges are its outermost points.";
+         WBFL::System::Logger::Info(os.str());
+      }
+   }
+
+   // 8. Fewest deck points that reproduce the edges
    double tolerance = WBFL::Units::ConvertToSysUnits(0.125, WBFL::Units::Measure::Inch);
    return create_deck_points(left, right, tolerance);
 }
