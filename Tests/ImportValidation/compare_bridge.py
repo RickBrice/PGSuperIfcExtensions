@@ -49,6 +49,7 @@ KINDS = {
     "lengths": (0.003, lambda v: ", ".join(f"{x / FT:.3f}" for x in v) + " ft"),
     "length_pairs": (0.003, lambda v: ", ".join(f"({a / FT:.3f}, {b / FT:.3f})" for a, b in v) + " ft"),
     "paths": (0.003, lambda v: f"{len(v)} strands"),  # strand centerlines, matched point by point (see match_paths)
+    "bar_paths": (0.003, lambda v: f"{len(v)} bars"),  # bar centerlines, matched as paths are
 }
 
 
@@ -69,13 +70,14 @@ def match_paths(a, b, tol):
 
 def difference(e, i, kind, tol=None):
     """a note on how a mismatched value differs, for kinds where the formatted values don't show it"""
-    if kind == "paths" and isinstance(e, list) and isinstance(i, list):
-        tol = KINDS["paths"][0] if tol is None else tol
+    if kind in ("paths", "bar_paths") and isinstance(e, list) and isinstance(i, list):
+        tol = KINDS[kind][0] if tol is None else tol
+        what = "strand" if kind == "paths" else "bar"
         unmatched, left_over, _ = match_paths(e, i, tol)
         closest = [min((max(math.dist(u, v) for u, v in zip(p, q)) for q in i if len(q) == len(p)), default=math.inf) for p in e]
         worst = max(closest, default=0.0)
-        return f"{unmatched} expected strands without a match within {tol / IN:.3f} in, {left_over} imported strands left over" + \
-            (f", largest distance to the closest strand {worst / IN:.3f} in" if worst < math.inf else "")
+        return f"{unmatched} expected {what}s without a match within {tol / IN:.3f} in, {left_over} imported {what}s left over" + \
+            (f", largest distance to the closest {what} {worst / IN:.3f} in" if worst < math.inf else "")
     return ""
 
 
@@ -111,7 +113,7 @@ def same(a, b, kind, tol=None):
         # the import names the library entries it creates "<name> (IFC)", with " (2)", and so on, when that's taken
         base = lambda name: re.sub(r"( \(IFC\))?( \(\d+\))?$", "", str(name))
         return base(a) == base(b)
-    if kind == "paths":
+    if kind in ("paths", "bar_paths"):
         return len(a) == len(b) and match_paths(a, b, tol)[:2] == (0, 0)
     if kind in ("lengths", "length_pairs"):
         flat = lambda v: [x for item in v for x in (item if isinstance(item, (list, tuple)) else [item])]

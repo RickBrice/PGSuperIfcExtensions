@@ -127,6 +127,12 @@
     <ClCompile Include="TrafficBarriers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GirderReinforcement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LongitudinalRebar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Strands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -328,6 +334,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TrafficBarriers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GirderReinforcement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LongitudinalRebar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Strands.h">

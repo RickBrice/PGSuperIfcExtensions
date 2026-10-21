@@ -34,6 +34,12 @@
     "tendon.tension_force": [
       {"property": {"pset": "IaDOT_Strand", "name": "07-Initial Prestress"}, "parse": {"regex": "([0-9]+(\\.[0-9]+)?)", "group": 1}, "unit": "kip"}
     ],
+    "rebar.bar_size": [
+      {"property": {"pset": "ProStructures_Rebar_Properties", "name": "02-Size"}}
+    ],
+    "rebar.grade": [
+      {"property": {"pset": "ProStructures_Rebar_Properties", "name": "03-Grade"}}
+    ],
     "deck.gross_depth": [
       {"property": {"pset": "IaDOT_Deck", "name": "3_Minimum Thickness"}, "parse": "feet_inches", "unit": "in"}
     ]

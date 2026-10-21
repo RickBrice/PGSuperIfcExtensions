@@ -424,7 +424,7 @@
       "properties": [
         {"name": "BarMark", "type": "IfcLabel", "target": "rebar.bar_mark", "import": false, "uri": "bsdd"},
         {"name": "BarMass", "type": "IfcMassMeasure", "target": "rebar.bar_mass", "import": false, "uri": "bsdd"},
-        {"name": "BarSize", "type": "IfcLabel", "target": "rebar.bar_size", "import": false, "uri": "bsdd"},
+        {"name": "BarSize", "type": "IfcLabel", "target": "rebar.bar_size", "uri": "bsdd"},
         {"name": "EndEndPrep", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "StartEndPrep", "type": "IfcLabel", "uri": "bsdd"}
       ]

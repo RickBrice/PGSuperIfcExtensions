@@ -22,6 +22,7 @@
 
 #include "stdafx.h"
 #include "Strands.h"
+#include "GirderReinforcement.h"
 #include "IfcImporter.h"
 #include "IfcImportUnits.h"
 #include "IfcTargetReader.h"
@@ -46,13 +47,6 @@ namespace
 
    const Float64 position_tolerance = WBFL::Units::ConvertToSysUnits(1.0 / 8.0, WBFL::Units::Measure::Inch);
 
-   // a strand centerline in girder coordinates: x is the distance from the start of the girder in plan, z the offset
-   // from the CL girder (positive to the right looking ahead), and y the depth below the top of the girder
-   struct GirderPoint
-   {
-      Float64 x, z, y;
-   };
-
    struct Strand
    {
       IfcSchema::IfcTendon tendon;
@@ -68,394 +62,6 @@ namespace
          return projects[end] && type == pgsTypes::Straight && IsZero(debond[end]);
       }
    };
-
-   // The girder coordinate system of a girder: the origin is the top of the CL girder at the start, the x axis is along
-   // the top line to the top of the CL girder at the end, and the y axis is up, normal to the x axis
-   struct GirderFrame
-   {
-      Eigen::Vector3d origin, x_axis, left_axis, up_axis;
-      Float64 plan_factor; // plan distance per distance along the top line
-      Float64 length;      // in plan
-
-      GirderFrame(const GirderCenterline& girder)
-      {
-         origin = Eigen::Vector3d(girder.start.x(), girder.start.y(), girder.start_top);
-         Eigen::Vector3d end(girder.end.x(), girder.end.y(), girder.end_top);
-         x_axis = (end - origin).normalized();
-         left_axis = Eigen::Vector3d::UnitZ().cross(x_axis).normalized();
-         up_axis = x_axis.cross(left_axis);
-         length = (girder.end - girder.start).norm();
-         plan_factor = length / (end - origin).norm();
-      }
-
-      GirderPoint ToGirder(const Eigen::Vector3d& p) const
-      {
-         Eigen::Vector3d d = p - origin;
-         return { d.dot(x_axis) * plan_factor, -d.dot(left_axis), -d.dot(up_axis) };
-      }
-   };
-
-   // The elevation of the top of a girder along its length: the highest point of the girder's geometry across the girder,
-   // sampled at stations along the CL girder and interpolated (extrapolated beyond the first and last station). Depths below
-   // it follow a girder that isn't straight, e.g. one drawn along the profile or cambered, so strands parallel to its top
-   // have a constant depth. The top of an open-top section (U-beam) is at its webs
-   class TopProfile
-   {
-   public:
-      TopProfile(const GirderCenterline& girder, const GirderFrame& frame)
-      {
-         if (!girder.mesh)
-            return;
-         Eigen::Vector2d left = frame.left_axis.head<2>().normalized();
-         const Float64 half_width = 1.6, step = 0.05; // m, wide enough for the widest girders (e.g. deck bulb tees)
-         for (int i = 0; i <= 20; i++)
-         {
-            Float64 t = 0.02 + 0.96 * i / 20.0;
-            Eigen::Vector2d cl = girder.start + t * (girder.end - girder.start);
-            std::optional<Float64> top;
-            for (Float64 offset = -half_width; offset <= half_width; offset += step)
-            {
-               Eigen::Vector2d p = cl + offset * left;
-               if (auto range = girder.mesh->z_range_at(p.x(), p.y()))
-                  top = std::max(top.value_or(range->second), range->second);
-            }
-            if (top)
-               m_Points.emplace_back(t * frame.length, *top);
-         }
-      }
-
-      std::optional<Float64> At(Float64 x) const
-      {
-         if (m_Points.size() < 2)
-            return std::nullopt;
-         size_t i = 1;
-         while (i + 1 < m_Points.size() && m_Points[i].first < x)
-            i++;
-         const auto& [x0, z0] = m_Points[i - 1];
-         const auto& [x1, z1] = m_Points[i];
-         return z0 + (x - x0) * (z1 - z0) / (x1 - x0);
-      }
-
-   private:
-      std::vector<std::pair<Float64, Float64>> m_Points; // distance from the start of the girder in plan, top elevation
-   };
-
-   // The 4x4 transformation of a placement (object placement, axis placement, or cartesian transformation operator), in metres
-   template <typename Placement>
-   Eigen::Matrix4d placement_matrix(ifcopenshell::geom::abstract_mapping& mapping, Placement placement)
-   {
-      if (!placement)
-         return Eigen::Matrix4d::Identity();
-      auto matrix = ifcopenshell::geom::taxonomy::dcast<ifcopenshell::geom::taxonomy::matrix4>(mapping.map(placement));
-      return matrix ? matrix->ccomponents() : Eigen::Matrix4d::Identity();
-   }
-
-   // A straight piece of a strand's centerline (global coordinates, system units)
-   struct Segment
-   {
-      Eigen::Vector3d a, b;
-   };
-
-   Eigen::Vector3d transform(const Eigen::Matrix4d& m, const Eigen::Vector3d& p)
-   {
-      return (m * Eigen::Vector4d(p.x(), p.y(), p.z(), 1.0)).head<3>();
-   }
-
-   Float64 to_system_length(Float64 value)
-   {
-      return ConvertToSysUnits<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), value);
-   }
-
-   // The center of a circular profile (in profile coordinates, system units), or nullopt if the profile isn't a circle
-   std::optional<Eigen::Vector2d> circle_center(IfcSchema::IfcProfileDef profile)
-   {
-      auto center = [](IfcSchema::IfcAxis2Placement2D position) -> Eigen::Vector2d
-         {
-            if (!position)
-               return Eigen::Vector2d::Zero();
-            auto c = position.Location().as<IfcSchema::IfcCartesianPoint>().Coordinates();
-            return Eigen::Vector2d(to_system_length(c[0]), to_system_length(c[1]));
-         };
-
-      if (auto circle = profile.as<IfcSchema::IfcCircleProfileDef>())
-         return center(circle.Position());
-
-      if (auto arbitrary = profile.as<IfcSchema::IfcArbitraryClosedProfileDef>())
-      {
-         auto conic = arbitrary.OuterCurve().as<IfcSchema::IfcConic>();
-         auto ellipse = conic.as<IfcSchema::IfcEllipse>();
-         if (conic && (conic.as<IfcSchema::IfcCircle>() || (ellipse && IsEqual(ellipse.SemiAxis1(), ellipse.SemiAxis2()))))
-            return center(conic.Position().as<IfcSchema::IfcAxis2Placement2D>());
-      }
-      return std::nullopt;
-   }
-
-   // The straight pieces of a strand's centerline in a representation item (m: from the item's coordinates to global):
-   // the axes of circular profiles extruded along a straight line, and the polylines of swept disks. Revolved solids are
-   // the bends between the straight pieces, so they're left out. Mapped items are followed
-   void collect_segments(ifcopenshell::geom::abstract_mapping& mapping, IfcSchema::IfcRepresentationItem item, const Eigen::Matrix4d& m, std::vector<Segment>& segments)
-   {
-      if (auto mapped = item.as<IfcSchema::IfcMappedItem>())
-      {
-         auto source = mapped.MappingSource();
-         Eigen::Matrix4d to_global = m * placement_matrix(mapping, mapped.MappingTarget()) * placement_matrix(mapping, source.MappingOrigin());
-         for (const auto& mapped_item : source.MappedRepresentation().Items())
-            collect_segments(mapping, mapped_item, to_global, segments);
-      }
-      else if (auto extrusion = item.as<IfcSchema::IfcExtrudedAreaSolid>())
-      {
-         auto center = circle_center(extrusion.SweptArea());
-         if (!center)
-            return;
-         Eigen::Matrix4d to_global = m * (extrusion.Position() ? placement_matrix(mapping, extrusion.Position()) : Eigen::Matrix4d::Identity());
-         auto ratios = extrusion.ExtrudedDirection().DirectionRatios();
-         Eigen::Vector3d direction = Eigen::Vector3d(ratios[0], ratios[1], ratios[2]).normalized();
-         Eigen::Vector3d a(center->x(), center->y(), 0.0);
-         segments.push_back({ transform(to_global, a), transform(to_global, a + direction * to_system_length(extrusion.Depth())) });
-      }
-      else if (auto swept_disk = item.as<IfcSchema::IfcSweptDiskSolid>())
-      {
-         auto polyline = swept_disk.Directrix().as<IfcSchema::IfcPolyline>();
-         if (!polyline)
-            return;
-         std::vector<Eigen::Vector3d> points;
-         for (const auto& point : polyline.Points())
-         {
-            auto c = point.Coordinates();
-            points.push_back(transform(m, Eigen::Vector3d(to_system_length(c[0]), to_system_length(1 < c.size() ? c[1] : 0.0), to_system_length(2 < c.size() ? c[2] : 0.0))));
-         }
-         for (size_t i = 1; i < points.size(); i++)
-            segments.push_back({ points[i - 1], points[i] });
-      }
-   }
-
-   // The straight pieces chained end to end into a polyline, starting at the open end farthest from the other pieces. Where
-   // two pieces don't meet (a bend between them), the polyline goes through the middle of the gap. Empty if a gap is wider
-   // than max_gap
-   std::vector<Eigen::Vector3d> chain(std::vector<Segment> segments, Float64 max_gap)
-   {
-      std::vector<Eigen::Vector3d> points;
-      if (segments.empty())
-         return points;
-
-      // the start: the segment end whose nearest other segment end is farthest away
-      auto nearest_other = [&segments](size_t i, const Eigen::Vector3d& p)
-         {
-            Float64 d = std::numeric_limits<Float64>::max();
-            for (size_t j = 0; j < segments.size(); j++)
-               if (j != i)
-                  d = std::min({ d, (segments[j].a - p).norm(), (segments[j].b - p).norm() });
-            return d;
-         };
-      size_t first = 0;
-      bool bReverse = false;
-      Float64 farthest = -1;
-      for (size_t i = 0; i < segments.size(); i++)
-      {
-         for (bool bEnd : {false, true})
-         {
-            Float64 d = nearest_other(i, bEnd ? segments[i].b : segments[i].a);
-            if (farthest < d)
-            {
-               farthest = d;
-               first = i;
-               bReverse = bEnd;
-            }
-         }
-      }
-      if (bReverse)
-         std::swap(segments[first].a, segments[first].b);
-      points = { segments[first].a, segments[first].b };
-      segments.erase(segments.begin() + first);
-
-      while (!segments.empty())
-      {
-         const auto& end = points.back();
-         size_t next = 0;
-         bool bFlip = false;
-         Float64 gap = std::numeric_limits<Float64>::max();
-         for (size_t i = 0; i < segments.size(); i++)
-         {
-            for (bool bEnd : {false, true})
-            {
-               Float64 d = ((bEnd ? segments[i].b : segments[i].a) - end).norm();
-               if (d < gap)
-               {
-                  gap = d;
-                  next = i;
-                  bFlip = bEnd;
-               }
-            }
-         }
-         if (max_gap < gap)
-            return {};
-         if (bFlip)
-            std::swap(segments[next].a, segments[next].b);
-         points.back() = (points.back() + segments[next].a) / 2;
-         points.push_back(segments[next].b);
-         segments.erase(segments.begin() + next);
-      }
-      return points;
-   }
-
-   // The centerline of a strand (global coordinates, system units) from the straight pieces of its body representation
-   // (see collect_segments), or empty if it has none or they don't make one line
-   std::vector<Eigen::Vector3d> get_centerline(ifcopenshell::geom::abstract_mapping& mapping, IfcSchema::IfcTendon tendon)
-   {
-      if (!tendon.Representation())
-         return {};
-
-      Eigen::Matrix4d to_global = placement_matrix(mapping, tendon.ObjectPlacement());
-      for (const auto& representation : tendon.Representation().Representations())
-      {
-         auto identifier = representation.RepresentationIdentifier();
-         if (identifier && *identifier != "Body")
-            continue;
-         std::vector<Segment> segments;
-         for (const auto& item : representation.Items())
-            collect_segments(mapping, item, to_global, segments);
-         if (!segments.empty())
-            return chain(segments, WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet));
-      }
-      return {};
-   }
-
-   // The polyline with points added so they're no more than step apart (the vertices of a centerline are only at the ends of
-   // its straight pieces, which may all be outside the girder, e.g. a strand projecting beyond both ends)
-   std::vector<Eigen::Vector3d> densify(const std::vector<Eigen::Vector3d>& points, Float64 step)
-   {
-      std::vector<Eigen::Vector3d> dense;
-      for (size_t i = 0; i < points.size(); i++)
-      {
-         if (0 < i)
-         {
-            auto n = (int)ceil((points[i] - points[i - 1]).norm() / step);
-            for (int j = 1; j < n; j++)
-               dense.push_back(points[i - 1] + (points[i] - points[i - 1]) * j / (Float64)n);
-         }
-         dense.push_back(points[i]);
-      }
-      return dense;
-   }
-
-   // the point halfway along a polyline
-   Eigen::Vector3d halfway(const std::vector<Eigen::Vector3d>& points)
-   {
-      Float64 length = 0;
-      for (size_t i = 1; i < points.size(); i++)
-         length += (points[i] - points[i - 1]).norm();
-      Float64 remaining = length / 2;
-      for (size_t i = 1; i < points.size(); i++)
-      {
-         Float64 l = (points[i] - points[i - 1]).norm();
-         if (remaining <= l && 0 < l)
-            return points[i - 1] + (points[i] - points[i - 1]) * (remaining / l);
-         remaining -= l;
-      }
-      return points.back();
-   }
-
-   // The part of a strand's centerline (densified) inside the girder's plan footprint, from where it enters to where it
-   // leaves (found by bisection), and whether the strand projects beyond the girder at its first and last point (by more
-   // than 1 in, e.g. strands bent up into the diaphragms). Empty if no point is inside
-   std::vector<Eigen::Vector3d> clip_to_girder(const std::vector<Eigen::Vector3d>& points, const Mesh& mesh, std::array<bool, 2>& projects)
-   {
-      auto inside = [&mesh](const Eigen::Vector3d& p) {return mesh.z_range_at(p.x(), p.y()).has_value(); };
-      auto boundary = [&](Eigen::Vector3d in, Eigen::Vector3d out)
-         {
-            for (int i = 0; i < 30; i++)
-            {
-               Eigen::Vector3d mid = (in + out) / 2;
-               (inside(mid) ? in : out) = mid;
-            }
-            return Eigen::Vector3d((in + out) / 2);
-         };
-
-      std::vector<bool> is_inside;
-      for (const auto& p : points)
-         is_inside.push_back(inside(p));
-      auto first = std::find(is_inside.begin(), is_inside.end(), true);
-      if (first == is_inside.end())
-         return {};
-      size_t i0 = std::distance(is_inside.begin(), first);
-      size_t i1 = is_inside.size() - 1 - std::distance(is_inside.rbegin(), std::find(is_inside.rbegin(), is_inside.rend(), true));
-
-      const Float64 projection_tolerance = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
-      std::vector<Eigen::Vector3d> clipped;
-      projects = { false, false };
-      if (0 < i0)
-      {
-         auto b = boundary(points[i0], points[i0 - 1]);
-         projects[0] = projection_tolerance < (points[i0 - 1] - b).norm() || 1 < i0;
-         clipped.push_back(b);
-      }
-      clipped.insert(clipped.end(), points.begin() + i0, points.begin() + i1 + 1);
-      if (i1 + 1 < points.size())
-      {
-         auto b = boundary(points[i1], points[i1 + 1]);
-         projects[1] = projection_tolerance < (points[i1 + 1] - b).norm() || i1 + 2 < points.size();
-         clipped.push_back(b);
-      }
-      return clipped;
-   }
-
-   // The girder (IfcBeam id in beam_ids) that the object is a part of, through its assemblies
-   std::optional<int> get_assembly_girder(IfcSchema::IfcObjectDefinition object, const std::set<int>& beam_ids, int depth = 0)
-   {
-      if (!object || 5 < depth)
-         return std::nullopt;
-      for (const auto& rel : object.Decomposes())
-      {
-         auto whole = rel.RelatingObject();
-         if (beam_ids.count(whole.id()))
-            return whole.id();
-         if (auto id = get_assembly_girder(whole, beam_ids, depth + 1))
-            return id;
-      }
-      return std::nullopt;
-   }
-
-   // the strand at x, by linear interpolation along its path and extrapolation of its first and last segments
-   GirderPoint point_at(const std::vector<GirderPoint>& path, Float64 x)
-   {
-      if (path.size() == 1)
-         return path.front();
-      size_t i = 1;
-      while (i + 1 < path.size() && path[i].x < x)
-         i++;
-      const auto& a = path[i - 1];
-      const auto& b = path[i];
-      Float64 t = IsEqual(a.x, b.x) ? 1.0 : (x - a.x) / (b.x - a.x);
-      return { x, a.z + t * (b.z - a.z), a.y + t * (b.y - a.y) };
-   }
-
-   Float64 depth_at(const std::vector<GirderPoint>& path, Float64 x) { return point_at(path, x).y; }
-
-   // the path (sorted by x) without points within the position tolerance of the previous point, and without interior points
-   // on the line through their neighbors, so a harped strand has its ends and its bends
-   std::vector<GirderPoint> simplify(const std::vector<GirderPoint>& path)
-   {
-      std::vector<GirderPoint> distinct;
-      for (const auto& p : path)
-      {
-         if (distinct.empty() || position_tolerance < Eigen::Vector3d(p.x - distinct.back().x, p.z - distinct.back().z, p.y - distinct.back().y).norm())
-            distinct.push_back(p);
-      }
-      if (distinct.size() < 3)
-         return distinct;
-
-      std::vector<GirderPoint> simplified{ distinct.front() };
-      for (size_t i = 1; i + 1 < distinct.size(); i++)
-      {
-         const auto& a = simplified.back();
-         const auto& b = distinct[i + 1];
-         Float64 t = IsEqual(a.x, b.x) ? 0.0 : (distinct[i].x - a.x) / (b.x - a.x);
-         if (position_tolerance < fabs(distinct[i].y - (a.y + t * (b.y - a.y))) || position_tolerance < fabs(distinct[i].z - (a.z + t * (b.z - a.z))))
-            simplified.push_back(distinct[i]);
-      }
-      simplified.push_back(distinct.back());
-      return simplified;
-   }
 
    // true if the path bends: an interior point is off the line through the ends
    bool is_harped(const std::vector<GirderPoint>& path)
@@ -1124,114 +730,68 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       return;
    }
 
-   std::map<int, const GirderCenterline*> girders; // by IfcBeam id
-   std::set<int> beam_ids;
-   for (const auto& span : layout)
-   {
-      if (span.size() < 2)
-         continue; // the girders of the span weren't imported
-      for (const auto& girder : span)
-      {
-         girders[girder.beam_id] = &girder;
-         beam_ids.insert(girder.beam_id);
-      }
-   }
-
-   ifcopenshell::geom::settings settings;
-   std::unique_ptr<ifcopenshell::geom::abstract_mapping> mapping(ifcopenshell::geom::impl::mapping_implementations().construct(&file, settings));
+   GirderReinforcementReader geometry(file, layout);
+   const auto& girders = geometry.GetGirders();
 
    // the strands of each girder, in girder coordinates
    std::map<int, std::vector<Strand>> girder_strands;
    IndexType nWithoutGeometry = 0, nWithoutGirder = 0, nShort = 0;
-   std::map<int, TopProfile> top_profiles; // of each girder, made when its first strand is read
    for (const auto& object : tendons)
    {
       auto tendon = object.as<IfcSchema::IfcTendon>();
-      auto centerline = tendon ? get_centerline(*mapping, tendon) : std::vector<Eigen::Vector3d>();
-      if (centerline.size() < 2)
+      std::vector<GirderReinforcement> centerlines;
+      auto result = tendon ? geometry.Read(tendon, centerlines) : GirderReinforcementReader::Status::NoGeometry;
+      if (result == GirderReinforcementReader::Status::NoGeometry)
       {
          nWithoutGeometry++;
          continue;
       }
-
-      auto beam_id = get_assembly_girder(tendon, beam_ids);
-      if (!beam_id)
-      {
-         // the girder whose geometry contains the point halfway along the strand
-         Eigen::Vector3d mid = halfway(centerline);
-         for (const auto& [id, girder] : girders)
-         {
-            auto range = girder->mesh ? girder->mesh->z_range_at(mid.x(), mid.y()) : std::nullopt;
-            if (range && range->first <= mid.z() && mid.z() <= range->second)
-            {
-               beam_id = id;
-               break;
-            }
-         }
-      }
-      if (!beam_id)
+      if (result == GirderReinforcementReader::Status::NoGirder)
       {
          nWithoutGirder++;
          continue;
       }
-
-      // the part of the strand in the girder: strands may project beyond the girder ends (e.g. bent up into the diaphragms)
-      const auto& girder = *girders[*beam_id];
-      std::array<bool, 2> projects{ false, false }; // at the first and last point of the centerline
-      if (girder.mesh)
-         centerline = clip_to_girder(densify(centerline, 0.25 /*m*/), *girder.mesh, projects);
-      if (centerline.size() < 2)
-      {
-         nShort++;
-         continue;
-      }
-
-      GirderFrame frame(girder);
-      auto profile = top_profiles.find(*beam_id);
-      if (profile == top_profiles.end())
-         profile = top_profiles.emplace(*beam_id, TopProfile(girder, frame)).first;
-      Strand strand;
-      strand.tendon = tendon;
-      for (const auto& p : centerline)
-      {
-         auto point = frame.ToGirder(p);
-         if (auto top = profile->second.At(point.x))
-            point.y = *top - p.z(); // the depth below the girder's top there
-         strand.path.push_back(point);
-      }
-      if (strand.path.back().x < strand.path.front().x)
-      {
-         std::reverse(strand.path.begin(), strand.path.end());
-         std::swap(projects[0], projects[1]);
-      }
-      strand.path = simplify(strand.path);
-      strand.projects = projects;
-
-      // a prestressing strand runs the length of the girder (a debonded strand too). Shorter tendons are something
-      // else, e.g. lifting loops when the tendon role selects them
-      if (strand.path.size() < 2 || 0.1 * frame.length < strand.path.front().x || strand.path.back().x < 0.9 * frame.length)
+      if (result == GirderReinforcementReader::Status::Outside)
       {
          nShort++;
          continue;
       }
 
       auto status = reader.Read("tendon.status", tendon);
-      if (status && std::get<std::string>(status->value) == "TEMPORARY")
-         strand.type = pgsTypes::Temporary;
-      else if (is_harped(strand.path))
-         strand.type = pgsTypes::Harped;
-
+      std::array<Float64, 2> debond{ 0, 0 };
       for (auto [end, target] : { std::make_pair(pgsTypes::metStart, "tendon.debond_start"), std::make_pair(pgsTypes::metEnd, "tendon.debond_end") })
       {
          if (auto reading = reader.Read(target, tendon); reading && IsGT(0.0, std::get<Float64>(reading->value)))
-            strand.debond[end] = std::get<Float64>(reading->value);
+            debond[end] = std::get<Float64>(reading->value);
       }
 
-      girder_strands[*beam_id].push_back(std::move(strand));
+      for (const auto& centerline : centerlines)
+      {
+         // a prestressing strand runs the length of the girder (a debonded strand too). Shorter tendons are something
+         // else, e.g. lifting loops when the tendon role selects them
+         Float64 Lg = geometry.GetLength(centerline.beam_id);
+         if (centerline.path.size() < 2 || 0.1 * Lg < centerline.path.front().x || centerline.path.back().x < 0.9 * Lg)
+         {
+            nShort++;
+            continue;
+         }
+
+         Strand strand;
+         strand.tendon = tendon;
+         strand.path = centerline.path;
+         strand.projects = centerline.projects;
+         strand.debond = debond;
+         if (status && std::get<std::string>(status->value) == "TEMPORARY")
+            strand.type = pgsTypes::Temporary;
+         else if (is_harped(strand.path))
+            strand.type = pgsTypes::Harped;
+
+         girder_strands[centerline.beam_id].push_back(std::move(strand));
+      }
    }
 
    if (0 < nWithoutGeometry)
-      WBFL::System::Logger::Warning(std::to_string(nWithoutGeometry) + " strands were skipped: their geometry has no straight pieces that make a centerline (circular profiles extruded along a line, or swept disks along a polyline).");
+      WBFL::System::Logger::Warning(std::to_string(nWithoutGeometry) + " strands were skipped: their geometry has no straight pieces that make a centerline (circular profiles extruded along a line, or swept disks along a polyline or an indexed poly curve).");
    if (0 < nWithoutGirder)
       WBFL::System::Logger::Warning(std::to_string(nWithoutGirder) + " strands were skipped: they aren't part of an imported girder and aren't inside one.");
    if (0 < nShort)
@@ -1248,8 +808,8 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
    std::map<std::_tstring, std::vector<GirderHarpPoints>> entry_harp_points; // the girders with harped strands of each library entry the import created
    for (const auto& [beam_id, strands] : girder_strands)
    {
-      const auto& girder = *girders[beam_id];
-      Float64 Ls = GirderFrame(girder).length;
+      const auto& girder = *girders.at(beam_id);
+      Float64 Ls = geometry.GetLength(beam_id);
       std::vector<const Strand*> harped;
       for (const auto& strand : strands)
       {
@@ -1317,7 +877,7 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
 
    for (const auto& [beam_id, strands] : girder_strands)
    {
-      const auto& girder = *girders[beam_id];
+      const auto& girder = *girders.at(beam_id);
       auto beam = file.instance_by_id(beam_id).as<IfcSchema::IfcBeam>();
       std::string girder_name = beam.Name().value_or("unnamed beam");
 

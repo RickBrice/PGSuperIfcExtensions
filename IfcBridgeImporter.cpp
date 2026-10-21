@@ -34,6 +34,7 @@
 #include "RoadwaySection.h"
 #include "Piers.h"
 #include "Strands.h"
+#include "LongitudinalRebar.h"
 
 #include <chrono>
 #include <numeric>
@@ -259,6 +260,9 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
 
    // Prestressing strands, after the library entries are set
    import_strands(m_Importer.GetBroker(), file, layout, m_CreatedEntries, bridge_desc);
+
+   // Longitudinal girder bars, after the library entries are set (they come with the entry's bars)
+   import_longitudinal_rebar(file, layout, bridge_desc);
 
    ImportSlab(file, bridge_desc, layout, pier_stations);
 

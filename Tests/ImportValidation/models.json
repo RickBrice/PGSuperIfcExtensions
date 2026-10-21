@@ -14,6 +14,12 @@
       "property_units": [ "System" ]
     },
     {
+      "name": "PGSuper-LongitudinalRebar",
+      "comment": "The PGSuper model with five rows of longitudinal girder bars (top and bottom faces; full length, from the left and right ends, and centered layouts; #4, #5, and #6 bars) instead of the library's single top row",
+      "pgs": "models/PGSuper_LongitudinalRebar.pgs",
+      "property_units": [ "System" ]
+    },
+    {
       "name": "PGSuper-Skew",
       "pgs": "models/PGSuper_Skew_Straight.pgs",
       "property_units": [ "System" ]

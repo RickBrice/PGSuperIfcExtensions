@@ -140,6 +140,8 @@ The context carries the `WBFL::Materials::PsStrand`, the strand type, and the st
 
 The context carries the `WBFL::Materials::Rebar` and a `BarDefinition` (`BarShape.h`, made from PGSuper's longitudinal and transverse reinforcement by `GetBarType` in `Rebar.h`).
 
+The longitudinal girder bar import (`LongitudinalRebar.h`) reads `rebar.bar_size` (the number in the text, e.g. "#5", "5"), and `rebar.grade` and `rebar.fy` for the girder's bar material (`CLongitudinalRebarData::BarType`, `BarGrade`): ASTM A615 unless the grade text says A706 or A1035, and the grade from `rebar.fy`, else the number in the grade text.
+
 | Target | Kind | Export: PGSuper data | Import |
 |---|---|---|---|
 | `rebar.fy`, `rebar.fu` | Stress | `Rebar::GetYieldStrength`, `GetUltimateStrength` | – |

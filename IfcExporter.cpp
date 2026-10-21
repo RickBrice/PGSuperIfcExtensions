@@ -616,6 +616,11 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
          IndexType nBars;
          rebar_pattern->get_Count(&nBars);
 
+         // the face the row is referenced to
+         FaceType face = ftTopFace;
+         if (CComQIPtr<IRebarRowFacePattern> face_pattern(rebar_pattern); face_pattern)
+            face_pattern->get_Face(&face);
+
          std::vector<PlacedBar<Schema>> bars;
          for (IndexType barIdx = 0; barIdx < nBars; barIdx++)
          {
@@ -634,6 +639,7 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
 
             Float64 start_offset = 0.0;
             Float64 end_offset = 0.0;
+            Float64 end_cover = 0.0;
 
             if (IsEqual(segment_length, centerline_bar_length))
             {
@@ -650,10 +656,12 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
 
                // The bar is actually 2*cover shorter and starts "cover" in from the end face
                // the rebar modeling doesn't account for that, so we do it here
-               X += cover;
+               end_cover = cover;
+               X += end_cover;
             }
 
-            Float64 actual_bar_length = -start_offset + centerline_bar_length + end_offset - 2*cover;
+            // a partial length bar is where the rebar model has it
+            Float64 actual_bar_length = -start_offset + centerline_bar_length + end_offset - 2*end_cover;
 
             BarDefinition bar;
             bar.name = "Girder_Longitudinal_Bar_" + size_label;
@@ -663,7 +671,7 @@ void CreateLongitudinalRebars(hierarchy_helper<Schema>& file, std::shared_ptr<WB
             bar.path = BarPath::Straight({ 0.0, 0.0, 0.0 }, { actual_bar_length, 0.0, 0.0 });
             bar.element = "BEAM";
             bar.use = "HORIZONTAL";
-            bar.position = "TOP"; // Again need to have different types for top and bottom.
+            bar.position = (face == ftBottomFace ? "BOTTOM" : "TOP");
             bar.cover_top = bar.cover_side = bar.cover_bottom = bar.cover_end = cover;
             bar.shape_code = "STRAIGHT";
             bar.bend_radius = gs_InsideBendRadius;

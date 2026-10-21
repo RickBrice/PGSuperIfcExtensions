@@ -6,9 +6,10 @@ For a model with a "pgs" file (round trip):
    classes removed from the export before the import, with what they nest (e.g. "IfcAlignmentVertical",
    so the import measures the profile from the deck); "tolerances" replaces the comparison tolerance
    (SI) for the keys matching each pattern (e.g. "at[*].profile.grade", for values measured from geometry).
-   The strands are compared physically (ifc_strands.py): the imported project is exported again
-   (results/reexport/, not tracked), and its strands are compared with the strands of the first export.
-   The template's girders have no strands, so a strand count of 0 is reported as the template default.
+   The strands and the longitudinal girder bars are compared physically (ifc_strands.py, ifc_rebar.py): the
+   imported project is exported again (results/reexport/, not tracked), and its strands and bars are compared
+   with those of the first export. The template's girders have no strands, so a strand count of 0 is reported
+   as the template default.
 For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
    otherwise report which values the import set (inventory).
@@ -66,6 +67,7 @@ import compare_export
 import compare_ids
 import check_standard
 import check_table_ids
+import ifc_rebar
 import ifc_strands
 
 HERE = Path(__file__).resolve().parent
@@ -265,20 +267,27 @@ def template_has_strands(template):
     return False
 
 
+def reinforcement(ifc):
+    """the strands and longitudinal girder bars of an export (ifc_strands and ifc_rebar summaries in one)"""
+    summary = ifc_strands.extract(ifc)
+    summary["values"].update(ifc_rebar.extract(ifc)["values"])
+    return summary
+
+
 def compare_strands(exe, run, pgs, units, expected_strands, config, tolerances):
-    """Compares the strands of the source export (expected_strands, an ifc_strands summary) with the strands of an export
-    of the imported project pgs. Returns (comparison rows, message for the summary)."""
+    """Compares the strands and longitudinal girder bars of the source export (expected_strands, see reinforcement) with
+    those of an export of the imported project pgs. Returns (comparison rows, message for the summary)."""
     reexport = RESULTS / "reexport" / f"{run}.ifc"
     reexport.parent.mkdir(exist_ok=True)
     reexport.unlink(missing_ok=True)
     ok, message = run_bridgelink(exe, [quote(f"/IfcExport={reexport}"), quote(pgs), f"/IfcPropertyUnits={units}"])
     if not ok or not reexport.exists():
-        return [], f", strands not compared: the export of the imported project failed ({message})"
+        return [], f", strands and bars not compared: the export of the imported project failed ({message})"
     # the template's girders have no strands, so a strand count of 0 is the template default
     template = None
     if not config["template_has_strands"]:
-        template = {"values": {key: {"value": 0, "kind": "count"} for key, v in expected_strands["values"].items() if v["kind"] == "count"}}
-    return compare_bridge.compare(ifc_strands.extract(reexport), expected_strands, template, tolerances), ""
+        template = {"values": {key: {"value": 0, "kind": "count"} for key, v in expected_strands["values"].items() if v["kind"] == "count" and ".strands." in key}}
+    return compare_bridge.compare(reinforcement(reexport), expected_strands, template, tolerances), ""
 
 
 def round_trip(model, config, exe):
@@ -300,7 +309,7 @@ def round_trip(model, config, exe):
         if not ok or not ifc.exists():
             rows.append((run, f"export failed: {message}", None))
             continue
-        expected_strands = ifc_strands.extract(ifc)  # before anything is removed from the export
+        expected_strands = reinforcement(ifc)  # before anything is removed from the export
         export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
         for standard in config["standards"]:
             export_message += check_standard.ids_message(standard, ifc, run)
