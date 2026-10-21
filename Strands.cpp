@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////
 // IFC Extension for PGSuper
-// Copyright © 1999-2026  Washington State Department of Transportation
+// Copyright Â© 1999-2026  Washington State Department of Transportation
 //                        Bridge and Structures Office
 //
 // This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,8 @@
 #include <psgLib/StrandData.h>
 #include <psgLib/GirderLibraryEntry.h>
 #include <IFace/BeamFactory.h>
+#include <IFace/Project.h>
+#include <psgLib/LibraryManager.h>
 #include <LRFD/StrandPool.h>
 
 #include <iomanip>
@@ -721,6 +723,69 @@ namespace
       return std::make_pair(location(false), location(true));
    }
 
+   // the harp points (from the left end) of a girder with harped strands
+   struct GirderHarpPoints
+   {
+      const GirderCenterline* girder;
+      Float64 Lg, X1, X2;
+   };
+
+   // Sets the harping point location of a library entry the import created so its harp points are the model's for each
+   // girder that uses it. PGSuper's harp points are symmetric, measured one way for every girder of the entry: the first
+   // of these that fits all the girders is used. A fraction of the girder length from the girder ends, a fraction of the
+   // span length from the CL bearings, a distance from the girder ends, from the CL bearings, or from the CL girder. Each is
+   // tried rounded (to 0.001 or 1/8 in) first. False if none fits (e.g. the model's harp points aren't symmetric)
+   bool fit_harp_points(GirderLibraryEntry& entry, const std::vector<GirderHarpPoints>& girders)
+   {
+      const auto& first = girders.front();
+      std::optional<Float64> left;
+      if (first.girder->start_bearing)
+         left = (*first.girder->start_bearing - first.girder->start).dot((first.girder->end - first.girder->start).normalized());
+      std::optional<Float64> right;
+      if (first.girder->end_bearing)
+         right = (first.girder->end - *first.girder->end_bearing).dot((first.girder->end - first.girder->start).normalized());
+
+      using Choice = std::tuple<GirderLibraryEntry::MeasurementLocation, GirderLibraryEntry::MeasurementType, std::optional<Float64>>;
+      std::vector<Choice> choices{
+         { GirderLibraryEntry::mlEndOfGirder, GirderLibraryEntry::mtFractionOfGirderLength, first.X1 / first.Lg },
+         { GirderLibraryEntry::mlBearing, GirderLibraryEntry::mtFractionOfSpanLength, left && right ? std::optional<Float64>((first.X1 - *left) / (first.Lg - *left - *right)) : std::nullopt },
+         { GirderLibraryEntry::mlEndOfGirder, GirderLibraryEntry::mtAbsoluteDistance, first.X1 },
+         { GirderLibraryEntry::mlBearing, GirderLibraryEntry::mtAbsoluteDistance, left ? std::optional<Float64>(first.X1 - *left) : std::nullopt },
+         { GirderLibraryEntry::mlCenterlineOfGirder, GirderLibraryEntry::mtAbsoluteDistance, first.Lg / 2 - first.X1 },
+      };
+
+      auto fits = [&girders](const GirderLibraryEntry& entry)
+         {
+            return std::all_of(girders.begin(), girders.end(), [&entry](const auto& g)
+               {
+                  auto hp = library_harp_points(&entry, *g.girder, g.Lg);
+                  return hp && IsEqual(hp->first, g.X1, position_tolerance) && IsEqual(hp->second, g.X2, position_tolerance);
+               });
+         };
+
+      GirderLibraryEntry trial(entry);
+      trial.SetMinHarpingPointLocation(false, entry.GetMinHarpingPointLocation());
+      for (const auto& [reference, measure, value] : choices)
+      {
+         if (!value || IsLT(*value, 0.0) || (measure != GirderLibraryEntry::mtAbsoluteDistance && IsGE(0.5, *value)))
+            continue; // the library entry's harping point location is zero or more, and a fraction less than 0.5
+
+         Float64 step = (measure == GirderLibraryEntry::mtAbsoluteDistance ? position_tolerance : 0.001);
+         trial.SetHarpingPointReference(reference);
+         trial.SetHarpingPointMeasure(measure);
+         for (Float64 hp : { RoundOff(std::max(*value, 0.0), step), std::max(*value, 0.0) })
+         {
+            trial.SetHarpingPointLocation(hp);
+            if (fits(trial))
+            {
+               entry = trial;
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
    // Fills the library entry's strand grid with a girder's strands (pgsTypes::sdtDirectSelection). False, with the reason,
    // unless every strand is at a grid position (the harped strands with a common vertical offset at each end and harp
    // point that the entry allows), both strands of a pair are debonded alike, and debonded strands are at debondable
@@ -1042,7 +1107,7 @@ namespace
    }
 }
 
-void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc)
+void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, const std::set<std::_tstring>& created_entries, CBridgeDescription2& bridge_desc)
 {
    USES_CONVERSION;
    const auto& reader = CIfcImporter::GetTargetReader();
@@ -1172,40 +1237,93 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
    if (0 < nShort)
       WBFL::System::Logger::Info(std::to_string(nShort) + " tendons were skipped: they don't run the length of their girder, so they aren't prestressing strands (e.g. lifting loops).");
 
+   auto girder_entry = [&bridge_desc](const GirderCenterline& girder)
+      {
+         auto* pGirder = bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex);
+         return bridge_desc.UseSameGirderForEntireBridge() ? bridge_desc.GetGirderLibraryEntry() : pGirder->GetGirderLibraryEntry();
+      };
+
+   // the harp points are common to the harped strands: the first and last bend of each strand, averaged
+   std::map<int, std::array<Float64, 4>> girder_X; // girder start, left and right harp points, and girder end, by IfcBeam id
+   std::map<std::_tstring, std::vector<GirderHarpPoints>> entry_harp_points; // the girders with harped strands of each library entry the import created
+   for (const auto& [beam_id, strands] : girder_strands)
+   {
+      const auto& girder = *girders[beam_id];
+      Float64 Ls = GirderFrame(girder).length;
+      std::vector<const Strand*> harped;
+      for (const auto& strand : strands)
+      {
+         if (strand.type == pgsTypes::Harped)
+            harped.push_back(&strand);
+      }
+
+      Float64 X1 = 0, X2 = Ls;
+      if (!harped.empty())
+      {
+         Float64 sum1 = 0, sum2 = 0, spread = 0;
+         for (const auto* strand : harped)
+         {
+            sum1 += strand->path[1].x;
+            sum2 += strand->path[strand->path.size() - 2].x;
+         }
+         auto n = (Float64)harped.size();
+         X1 = sum1 / n;
+         X2 = sum2 / n;
+         for (const auto* strand : harped)
+            spread = std::max({ spread, fabs(strand->path[1].x - X1), fabs(strand->path[strand->path.size() - 2].x - X2) });
+         if (position_tolerance < spread)
+         {
+            std::ostringstream os;
+            os << "Strands of " << file.instance_by_id(beam_id).as<IfcSchema::IfcBeam>().Name().value_or("unnamed beam") << ": the harp points of the harped strands differ by up to "
+               << std::fixed << std::setprecision(3) << inches(spread) << " in. PGSuper's harped strands share their harp points, so the average is used.";
+            WBFL::System::Logger::Warning(os.str());
+         }
+
+         if (const auto* pEntry = girder_entry(girder); pEntry && created_entries.count(pEntry->GetName()))
+            entry_harp_points[pEntry->GetName()].push_back({ &girder, Ls, X1, X2 });
+      }
+      girder_X[beam_id] = { 0.0, X1, X2, Ls };
+   }
+
+   // the library entries the import created get the model's harp points, so their strand grids can be filled, and a
+   // designer who later moves the strands to the grid keeps them
+   if (!entry_harp_points.empty())
+   {
+      GET_IFACE2(pBroker, ILibrary, pLibrary);
+      auto& library = pLibrary->GetGirderLibrary();
+      for (const auto& [name, harp_points] : entry_harp_points)
+      {
+         GirderLibraryEntry entry(*pLibrary->GetGirderEntry(name.c_str()));
+         std::string entry_name(T2A(name.c_str()));
+         if (fit_harp_points(entry, harp_points))
+         {
+            library.UpdateEntry(entry, name.c_str());
+            static const std::map<GirderLibraryEntry::MeasurementLocation, std::string> references{ { GirderLibraryEntry::mlEndOfGirder, "the girder ends" }, { GirderLibraryEntry::mlBearing, "the CL bearings" }, { GirderLibraryEntry::mlCenterlineOfGirder, "the CL girder" } };
+            std::ostringstream os;
+            os << "Library entry " << entry_name << ": the harping point location is ";
+            if (entry.GetHarpingPointMeasure() == GirderLibraryEntry::mtAbsoluteDistance)
+               os << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(entry.GetHarpingPointLocation(), WBFL::Units::Measure::Feet) << " ft";
+            else
+               os << std::setprecision(4) << entry.GetHarpingPointLocation() << (entry.GetHarpingPointMeasure() == GirderLibraryEntry::mtFractionOfGirderLength ? " of the girder length" : " of the span length");
+            os << " from " << references.at(entry.GetHarpingPointReference()) << ", the model's harp points.";
+            WBFL::System::Logger::Info(os.str());
+         }
+         else
+         {
+            WBFL::System::Logger::Info("Library entry " + entry_name + ": no harping point location gives the model's harp points for all of its girders (PGSuper's are symmetric and measured alike for every girder of an entry), so it keeps the default.");
+         }
+      }
+   }
+
    for (const auto& [beam_id, strands] : girder_strands)
    {
       const auto& girder = *girders[beam_id];
       auto beam = file.instance_by_id(beam_id).as<IfcSchema::IfcBeam>();
       std::string girder_name = beam.Name().value_or("unnamed beam");
-      Float64 Ls = GirderFrame(girder).length;
 
       std::array<std::vector<const Strand*>, 3> by_type;
       for (const auto& strand : strands)
          by_type[strand.type].push_back(&strand);
-
-      // the harp points are common to the harped strands: the first and last bend of each strand, averaged
-      Float64 X1 = 0, X2 = Ls;
-      if (!by_type[pgsTypes::Harped].empty())
-      {
-         Float64 sum1 = 0, sum2 = 0, spread = 0;
-         for (const auto* strand : by_type[pgsTypes::Harped])
-         {
-            sum1 += strand->path[1].x;
-            sum2 += strand->path[strand->path.size() - 2].x;
-         }
-         auto n = (Float64)by_type[pgsTypes::Harped].size();
-         X1 = sum1 / n;
-         X2 = sum2 / n;
-         for (const auto* strand : by_type[pgsTypes::Harped])
-            spread = std::max({ spread, fabs(strand->path[1].x - X1), fabs(strand->path[strand->path.size() - 2].x - X2) });
-         if (position_tolerance < spread)
-         {
-            std::ostringstream os;
-            os << "Strands of " << girder_name << ": the harp points of the harped strands differ by up to " << std::fixed << std::setprecision(3) << inches(spread)
-               << " in. PGSuper's harped strands share their harp points, so the average is used.";
-            WBFL::System::Logger::Warning(os.str());
-         }
-      }
 
       // the template's strand data, for what the model doesn't say (e.g. the temporary strand usage)
       auto* pGirder = bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex);
@@ -1213,8 +1331,9 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       CStrandData strand_data(pSegment->Strands);
 
       // the library entry's strand grid when every strand is on it (G2, decision 2), else individual strands
-      std::array<Float64, 4> X{ 0.0, X1, X2, Ls };
-      const GirderLibraryEntry* pEntry = bridge_desc.UseSameGirderForEntireBridge() ? bridge_desc.GetGirderLibraryEntry() : pGirder->GetGirderLibraryEntry();
+      const auto& X = girder_X[beam_id];
+      Float64 X1 = X[LeftHP], X2 = X[RightHP];
+      const GirderLibraryEntry* pEntry = girder_entry(girder);
       std::string reason = "the girder has no library entry";
       bool bGrid = pEntry && fill_strand_grid(pEntry, girder, by_type, X, strand_data, reason);
       if (!bGrid)

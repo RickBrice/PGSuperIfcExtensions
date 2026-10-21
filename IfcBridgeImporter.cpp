@@ -258,7 +258,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    set_bearing_data(m_Importer.GetBroker(), file, layout, bridge_desc);
 
    // Prestressing strands, after the library entries are set
-   import_strands(m_Importer.GetBroker(), file, layout, bridge_desc);
+   import_strands(m_Importer.GetBroker(), file, layout, m_CreatedEntries, bridge_desc);
 
    ImportSlab(file, bridge_desc, layout, pier_stations);
 

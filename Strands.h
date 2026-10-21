@@ -44,9 +44,10 @@ namespace WBFL { namespace EAF { class Broker; }; };
 // every strand is at a position of the girder library entry's strand grid (harped strands with a common vertical offset at
 // each end and harp point), the grid is filled (pgsTypes::sdtDirectSelection) with the harped strand offsets, also when the
 // import created the entry with a generated grid. Otherwise the strands are input as individual strands
-// (pgsTypes::sdtDirectStrandInput) with the harped strands' common harp points.
+// (pgsTypes::sdtDirectStrandInput) with the harped strands' common harp points. The library entries the import created
+// (created_entries) first get the model's harp points (their harping point location), when one location fits all their girders.
 // Both have the debonding of each strand (tendon.debond_start and tendon.debond_end), the strand material of each strand type (from
 // tendon.diameter, else the type's nominal diameter, else the geometry, and tendon.fpu, tendon.grade, and
 // tendon.corrosion_treatment), and the jacking force (IfcTendon.PreStress, else IfcTendon.TensionForce, else
 // tendon.tension_force). Girders without strands keep the template's strands.
-void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc);
+void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, const std::set<std::_tstring>& created_entries, CBridgeDescription2& bridge_desc);
