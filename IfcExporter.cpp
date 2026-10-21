@@ -1653,6 +1653,43 @@ void CreateClosureJointRepresentation(hierarchy_helper<Schema>& file, std::share
    closureJoint.setRepresentation(product_definition_shape);
 }
 
+// true if two points of a section are within 0.001 m of each other
+bool HasCoincidentPoints(IPoint2dCollection* polyPoints)
+{
+   IndexType nPoints;
+   polyPoints->get_Count(&nPoints);
+   std::vector<std::pair<Float64, Float64>> points;
+   for (IndexType idx = 0; idx < nPoints; idx++)
+   {
+      CComPtr<IPoint2d> point;
+      polyPoints->get_Item(idx, &point);
+      Float64 x, y;
+      point->Location(&x, &y);
+      points.emplace_back(x, y);
+   }
+   if (1 < points.size() && IsEqual(points.front().first, points.back().first, 0.001) && IsEqual(points.front().second, points.back().second, 0.001))
+      points.pop_back(); // a closed polygon, closed by repeating the first point
+   for (size_t i = 0; i < points.size(); i++)
+   {
+      for (size_t j = i + 1; j < points.size(); j++)
+      {
+         if (IsZero(sqrt(pow(points[j].first - points[i].first, 2) + pow(points[j].second - points[i].second, 2)), 0.001))
+            return true;
+      }
+   }
+   return false;
+}
+
+// The cut line of a deck or barrier section, to the left, at cut_angle from the alignment's normal to the right
+// (normal_angle); cut_angle is PI_OVER_2 for a cut normal to the alignment
+CComPtr<IDirection> GetCutDirection(Float64 normal_angle, Float64 cut_angle)
+{
+   CComPtr<IDirection> objCutDirection;
+   objCutDirection.CoCreateInstance(CLSID_Direction);
+   objCutDirection->put_Value(normal_angle + cut_angle + PI_OVER_2);
+   return objCutDirection;
+}
+
 template <typename Schema>
 void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart deck, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)
 {
@@ -1681,7 +1718,7 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
    Float64 end_skew;
    objAngle->get_Value(&end_skew);
 
-   auto fn_cut_angle = [start_skew, end_skew, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return PI_OVER_2 + std::lerp(start_skew, end_skew, x / L); };
+   auto fn_cut_angle = [start_skew, end_skew, startBrgStation, L = endBrgStation - startBrgStation](Float64 station)->Float64 { return PI_OVER_2 + std::lerp(start_skew, end_skew, (station - startBrgStation) / L); };
 
    // get the directrix line of the alignment
    auto directrix = GetAlignmentDirectrix(file,options);
@@ -1691,7 +1728,7 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
    IndexType nDeckSections = NUM_DECK_SECTIONS;
 
-   IndexType point_count = 0;
+   IndexType point_count = INVALID_INDEX; // the number of points of the deck sections, set by the first one
 
    GET_IFACE2(pBroker, IShapes, pShapes);
    GET_IFACE2(pBroker, IRoadway, pAlignment);
@@ -1701,49 +1738,43 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
    {
       auto station = i * (endBrgStation - startBrgStation) / nDeckSections + startBrgStation;
 
-      // This code, and the objDir in GetSlabShape, are trying to account for skew by sweeping the cut line angle
-      // between the start and end of the bridge. However, there appears to be an issue in WBFL::CoordinateGeometry 
-      // that causes the top of deck section from the roadway to have duplicate points. Duplicate points are
-      // not valid for the IFC section shape so we will just use a normal section cut for now.
-      // NOTE: Below, we skew the normal cut section polygon similar to what we do for girders.
-      //auto dir = i * (endDir - startDir) / nDeckSections + startDir;
-      //objDir->put_Value(dir);
-
-
+      // The deck is cut along a line whose skew goes from the start pier's to the end pier's, so the sections at the ends
+      // are along the CL bearings and each section has the deck's elevations along its own cut line
+      CComPtr<IDirection> objNormal;
+      pAlignment->GetBearingNormal(station, &objNormal); // normal to the right
+      Float64 normal_angle;
+      objNormal->get_Value(&normal_angle);
+      auto cut_angle = fn_cut_angle(station);
 
       CComPtr<IShape> slab_shape;
-      pShapes->GetSlabShapeWithoutHaunches(station, nullptr/*objDir*/, &slab_shape);
+      pShapes->GetSlabShapeWithoutHaunches(station, GetCutDirection(normal_angle, cut_angle), &slab_shape);
 
-      // All of the deck cross sections must have exactly the same number of points or it is an invalid IFC representation
-      // Capture the number of points for the first deck section, then compare all other deck sections
-      // If the point count is different, just skip it.
-      // It is typically different between spans at continuous piers... this is a hack, see note above about
-      // modeling skews
+      // All of the deck cross sections must have exactly the same number of points, and no two points of a section may be
+      // at the same place, or it is an invalid IFC representation. The slab shape without haunches has the same points at
+      // every station; a section that doesn't, or that has coincident points, is left out (a safeguard)
       CComPtr<IPoint2dCollection> polyPoints;
       slab_shape->get_PolyPoints(&polyPoints);
       IndexType nPoints;
       polyPoints->get_Count(&nPoints);
-      if (i == 0)
+      std::string problem;
+      if (point_count != INVALID_INDEX && point_count != nPoints)
+         problem = "it has " + std::to_string(nPoints) + " points instead of " + std::to_string(point_count);
+      if (problem.empty() && HasCoincidentPoints(polyPoints))
+         problem = "two of its points are at the same place";
+      if (!problem.empty())
       {
-         point_count = nPoints;
+         std::ostringstream os;
+         os << "The deck section at station " << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str()) << " is left out of the deck solid: " << problem << ".";
+         WBFL::System::Logger::Warning(os.str());
+         continue;
       }
-      else
-      {
-         if (point_count != nPoints)
-            continue;
-      }
+      point_count = nPoints;
 
       double elev = pAlignment->GetElevation(station, 0.0);
       CComQIPtr<IXYPosition> pos(slab_shape);
       pos->Offset(0.0, -elev);
 
-      auto cut_angle = fn_cut_angle(station);
-      auto polyline = CreatePolyline<Schema>(file, slab_shape, options, cut_angle);
-
-      CComPtr<IDirection> objDir;
-      pAlignment->GetBearingNormal(station, &objDir);
-      Float64 normal_angle;
-      objDir->get_Value(&normal_angle);
+      auto polyline = CreatePolyline<Schema>(file, slab_shape, options); // the offsets are along the cut line
 
       std::ostringstream os;
       os << "Deck Section at Station " << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str());
@@ -1989,20 +2020,30 @@ void CreateBarrierSystemRepresentation(hierarchy_helper<Schema>& file, std::shar
    Float64 end_skew;
    objAngle->get_Value(&end_skew);
 
-   auto fn_cut_angle = [start_skew, end_skew, L = endBrgStation - startBrgStation](Float64 x)->Float64 { return PI_OVER_2 + std::lerp(start_skew, end_skew, x / L); };
+   auto fn_cut_angle = [start_skew, end_skew, startBrgStation, L = endBrgStation - startBrgStation](Float64 station)->Float64 { return PI_OVER_2 + std::lerp(start_skew, end_skew, (station - startBrgStation) / L); };
 
    IndexType nSections = NUM_DECK_SECTIONS;
    std::vector<std::pair<Float64,CComPtr<IShape>>> barrier_shapes;
 
    GET_IFACE2(pBroker, IShapes, pShapes);
    GET_IFACE2(pBroker, IRoadway, pAlignment);
+
+   // the barriers are cut along the deck's cut lines (see CreateSlab), so each section has the deck edge's elevation
+   auto barrier_cut_direction = [&](Float64 station)
+      {
+         CComPtr<IDirection> objNormal;
+         pAlignment->GetBearingNormal(station, &objNormal); // normal to the right
+         Float64 normal_angle;
+         objNormal->get_Value(&normal_angle);
+         return GetCutDirection(normal_angle, fn_cut_angle(station));
+      };
    if (tbOrientation == pgsTypes::tboLeft)
    {
       for (IndexType i = 0; i <= nSections; i++)
       {
          auto station = i * (endBrgStation - startBrgStation) / nSections + startBrgStation;
          CComPtr<IShape> shape;
-         pShapes->GetLeftTrafficBarrierShape(station, nullptr, &shape);
+         pShapes->GetLeftTrafficBarrierShape(station, barrier_cut_direction(station), &shape);
 
          double elev = pAlignment->GetElevation(station, 0.0);
          CComQIPtr<IXYPosition> pos(shape);
@@ -2017,7 +2058,7 @@ void CreateBarrierSystemRepresentation(hierarchy_helper<Schema>& file, std::shar
       {
          auto station = i * (endBrgStation - startBrgStation) / nSections + startBrgStation;
          CComPtr<IShape> shape;
-         pShapes->GetRightTrafficBarrierShape(station, nullptr, &shape);
+         pShapes->GetRightTrafficBarrierShape(station, barrier_cut_direction(station), &shape);
 
          double elev = pAlignment->GetElevation(station, 0.0);
          CComQIPtr<IXYPosition> pos(shape);
@@ -2081,7 +2122,7 @@ void CreateBarrierSystemRepresentation(hierarchy_helper<Schema>& file, std::shar
          CComPtr<IShape> shape;
          shape_item->get_Shape(&shape);
 
-         auto polyline = CreatePolyline<Schema>(file, shape, options, cut_angle);
+         auto polyline = CreatePolyline<Schema>(file, shape, options); // the shape is cut along the skewed cut line
          if (polyline)
          {
             std::ostringstream os;

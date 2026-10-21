@@ -47,6 +47,12 @@
       "tolerances": { "at[*].profile.grade": 0.0002 }
     },
     {
+      "name": "PGSuper-Superelevation-Skew",
+      "comment": "The superelevation model with skewed piers (20 L, 10 L, normal, 15 R): the deck is cut along skewed lines across the superelevation transition",
+      "pgs": "models/PGSuper_Superelevation_Skew.pgs",
+      "property_units": [ "System" ]
+    },
+    {
       "name": "PGSuper-ExteriorGirders",
       "pgs": "models/PGSuper_ExteriorGirders.pgs",
       "property_units": [ "System" ]
