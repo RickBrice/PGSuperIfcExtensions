@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**78 of 392 match** - mismatch: 0, not imported: 4, missing: 0, not comparable: 0, default match: 310, extra: 0
+**158 of 472 match** - mismatch: 0, not imported: 4, missing: 0, not comparable: 0, default match: 310, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -333,7 +333,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[3].girder[4].strands.harped.count` | 0 | 0 | template default |
 | `group[3].girder[4].strands.temporary.count` | 0 | 0 | template default |
 
-## match (78)
+## match (158)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -415,3 +415,83 @@ A *default match* equals the expected value only because the template has the sa
 | `at[7].alignment.direction` | 120.0000 deg | 120.0000 deg |  |
 | `at[8].alignment.point` | (-220.000, 381.051) ft | (-220.000, 381.051) ft |  |
 | `at[8].alignment.direction` | 120.0000 deg | 120.0000 deg |  |
+| `group[0].girder[0].longitudinal_bars.count` | 6 | 6 |  |
+| `group[0].girder[0].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[0].girder[0].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[0].girder[0].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[0].girder[1].longitudinal_bars.count` | 6 | 6 |  |
+| `group[0].girder[1].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[0].girder[1].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[0].girder[1].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[0].girder[2].longitudinal_bars.count` | 6 | 6 |  |
+| `group[0].girder[2].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[0].girder[2].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[0].girder[2].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[0].girder[3].longitudinal_bars.count` | 6 | 6 |  |
+| `group[0].girder[3].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[0].girder[3].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[0].girder[3].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[0].girder[4].longitudinal_bars.count` | 6 | 6 |  |
+| `group[0].girder[4].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[0].girder[4].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[0].girder[4].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[1].girder[0].longitudinal_bars.count` | 6 | 6 |  |
+| `group[1].girder[0].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[1].girder[0].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[1].girder[0].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[1].girder[1].longitudinal_bars.count` | 6 | 6 |  |
+| `group[1].girder[1].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[1].girder[1].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[1].girder[1].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[1].girder[2].longitudinal_bars.count` | 6 | 6 |  |
+| `group[1].girder[2].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[1].girder[2].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[1].girder[2].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[1].girder[3].longitudinal_bars.count` | 6 | 6 |  |
+| `group[1].girder[3].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[1].girder[3].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[1].girder[3].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[1].girder[4].longitudinal_bars.count` | 6 | 6 |  |
+| `group[1].girder[4].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[1].girder[4].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[1].girder[4].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[2].girder[0].longitudinal_bars.count` | 6 | 6 |  |
+| `group[2].girder[0].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[2].girder[0].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[2].girder[0].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[2].girder[1].longitudinal_bars.count` | 6 | 6 |  |
+| `group[2].girder[1].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[2].girder[1].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[2].girder[1].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[2].girder[2].longitudinal_bars.count` | 6 | 6 |  |
+| `group[2].girder[2].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[2].girder[2].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[2].girder[2].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[2].girder[3].longitudinal_bars.count` | 6 | 6 |  |
+| `group[2].girder[3].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[2].girder[3].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[2].girder[3].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[2].girder[4].longitudinal_bars.count` | 6 | 6 |  |
+| `group[2].girder[4].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[2].girder[4].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[2].girder[4].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[3].girder[0].longitudinal_bars.count` | 6 | 6 |  |
+| `group[3].girder[0].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[3].girder[0].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[3].girder[0].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[3].girder[1].longitudinal_bars.count` | 6 | 6 |  |
+| `group[3].girder[1].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[3].girder[1].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[3].girder[1].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[3].girder[2].longitudinal_bars.count` | 6 | 6 |  |
+| `group[3].girder[2].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[3].girder[2].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[3].girder[2].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[3].girder[3].longitudinal_bars.count` | 6 | 6 |  |
+| `group[3].girder[3].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[3].girder[3].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[3].girder[3].longitudinal_bars.paths` | 6 bars | 6 bars |  |
+| `group[3].girder[4].longitudinal_bars.count` | 6 | 6 |  |
+| `group[3].girder[4].longitudinal_bars.sizes` | 6 #5 | 6 #5 |  |
+| `group[3].girder[4].longitudinal_bars.material` | AASHTO M31 (A615) - Grade 60 | AASHTO M31 (A615) - Grade 60 |  |
+| `group[3].girder[4].longitudinal_bars.paths` | 6 bars | 6 bars |  |

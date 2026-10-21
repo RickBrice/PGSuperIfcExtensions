@@ -455,7 +455,7 @@
       "properties": [
         {"name": "BarMark", "type": "IfcLabel", "target": "rebar.bar_mark", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BarMark"},
         {"name": "BarMass", "type": "IfcMassMeasure", "target": "rebar.bar_mass", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BarMass"},
-        {"name": "BarSize", "type": "IfcLabel", "target": "rebar.bar_size", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BarSize"},
+        {"name": "BarSize", "type": "IfcLabel", "target": "rebar.bar_size", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BarSize"},
         {"name": "EndEndPrep", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/EndEndPrep"},
         {"name": "StartEndPrep", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StartEndPrep"}
       ]
