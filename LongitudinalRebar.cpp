@@ -329,17 +329,31 @@ namespace
 void import_longitudinal_rebar(ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc)
 {
    USES_CONVERSION;
+
+   // The girders' bars come from the template, which has the library entries' bars. Those are seed values, not the
+   // girder's reinforcement, so a girder gets only the bars in the model.
+   for (GroupIndexType grpIdx = 0; grpIdx < bridge_desc.GetGirderGroupCount(); grpIdx++)
+   {
+      auto* pGroup = bridge_desc.GetGirderGroup(grpIdx);
+      for (GirderIndexType gdrIdx = 0; gdrIdx < pGroup->GetGirderCount(); gdrIdx++)
+      {
+         auto* pGirder = pGroup->GetGirder(gdrIdx);
+         for (SegmentIndexType segIdx = 0; segIdx < pGirder->GetSegmentCount(); segIdx++)
+            pGirder->GetSegment(segIdx)->LongitudinalRebarData.RebarRows.clear();
+      }
+   }
+
    const auto& reader = CIfcImporter::GetTargetReader();
    if (!reader.HasSelector(ElementKind::Rebar))
    {
-      WBFL::System::Logger::Info("The mapping table has no rebar role, so longitudinal girder bars aren't imported.");
+      WBFL::System::Logger::Info("The mapping table has no rebar role, so longitudinal girder bars aren't imported. The girders have no longitudinal reinforcement.");
       return;
    }
 
    auto elements = reader.Select(ElementKind::Rebar, file);
    if (elements.empty())
    {
-      WBFL::System::Logger::Info("The model has no reinforcing bars (" + reader.GetTable().GetSelector(ElementKind::Rebar)->Describe() + "). The girders keep their library entries' longitudinal reinforcement.");
+      WBFL::System::Logger::Info("The model has no reinforcing bars (" + reader.GetTable().GetSelector(ElementKind::Rebar)->Describe() + "). The girders have no longitudinal reinforcement.");
       return;
    }
 
@@ -458,5 +472,5 @@ void import_longitudinal_rebar(ifcopenshell::file& file, const GirderLayout& lay
    }
 
    if (0 < nWithoutBars)
-      WBFL::System::Logger::Info(std::to_string(nWithoutBars) + " girders have no reinforcing bars in the model, so they keep their library entries' longitudinal reinforcement.");
+      WBFL::System::Logger::Info(std::to_string(nWithoutBars) + " girders have no reinforcing bars in the model, so they have no longitudinal reinforcement.");
 }

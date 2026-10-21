@@ -43,6 +43,6 @@
 //
 // The bar size is from rebar.bar_size (e.g. "#5", "5"), else the bar type's nominal diameter, else the geometry. The bar
 // material (one per girder) is from rebar.grade (ASTM A615, A706, or A1035 in the text) and rebar.fy, else the template's.
-// Girders with bars in the model get the model's longitudinal bars (none if it has none); girders without bars keep their
-// library entry's.
+// Each girder gets exactly the model's longitudinal bars, none if it has none: the bars of the girder library entry (and
+// of the template, which has them) are seed values the user copies into a girder, not the girder's reinforcement.
 void import_longitudinal_rebar(ifcopenshell::file& file, const GirderLayout& layout, CBridgeDescription2& bridge_desc);
