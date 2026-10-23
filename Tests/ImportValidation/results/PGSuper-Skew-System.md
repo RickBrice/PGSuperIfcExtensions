@@ -5,15 +5,14 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**270 of 612 match** - mismatch: 10, not imported: 16, missing: 0, not comparable: 0, default match: 316, extra: 0
+**270 of 612 match** - mismatch: 8, not imported: 16, missing: 0, not comparable: 0, default match: 318, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
-## mismatch (10)
+## mismatch (8)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
-| `bridge.fillet` | 0.750 in | 1.078 in |  |
 | `pier[0].back.bearing_offset` | 20.000 in | 25.500 in |  |
 | `pier[0].ahead.bearing_offset` | 20.000 in | 25.500 in |  |
 | `pier[1].back.bearing_offset` | 15.000 in | 20.500 in |  |
@@ -22,7 +21,6 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[3].ahead.bearing_offset` | 6.000 in | 20.500 in |  |
 | `pier[4].back.bearing_offset` | 18.000 in | 13.500 in |  |
 | `pier[4].ahead.bearing_offset` | 18.000 in | 13.500 in |  |
-| `deck.gross_depth` | 7.500 in | 7.618 in |  |
 
 ## not imported (16)
 
@@ -45,7 +43,7 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].back.end_distance` | 25.000 in | 20.500 in | template default |
 | `pier[4].ahead.end_distance` | 25.000 in | 20.500 in | template default |
 
-## default match (316)
+## default match (318)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -56,6 +54,7 @@ A *default match* equals the expected value only because the template has the sa
 | `bridge.girder_spacing` | 6.000 ft (type 0, location 0) | 6.000 ft (type 0, location 0) | template default |
 | `bridge.slab_offset_type` | 0 | 0 | template default |
 | `bridge.slab_offset` | 11.000 in | 11.000 in | template default |
+| `bridge.fillet` | 0.750 in | 0.719 in | template default |
 | `pier[0].station` | 0+00.00 | 0+00.00 | template default |
 | `pier[0].connection_type` | 1 | 1 | template default |
 | `pier[0].back.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier | template default |
@@ -220,6 +219,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[3].girder[4].fc` | 6.000 ksi | 6.000 ksi | template default |
 | `group[3].girder[4].fci` | 5.000 ksi | 5.000 ksi | template default |
 | `deck.type` | 0 | 0 | template default |
+| `deck.gross_depth` | 7.500 in | 7.500 in | template default |
 | `deck.left_overhang_edge_depth` | 7.000 in | 7.000 in | template default |
 | `deck.right_overhang_edge_depth` | 7.000 in | 7.000 in | template default |
 | `deck.left_overhang_taper` | 1 | 1 | template default |
@@ -227,8 +227,8 @@ A *default match* equals the expected value only because the template has the sa
 | `deck.haunch_shape` | 1 | 1 | template default |
 | `deck.fc` | 4.000 ksi | 4.000 ksi | template default |
 | `deck.edge_point_count` | 1 | 1 | template default |
-| `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope (IFC) | template default |
-| `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope (IFC) | template default |
+| `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope | template default |
+| `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope | template default |
 | `pier[1].skew` | 0.0000 deg | 0.0000 deg | template default |
 | `at[0].alignment.point` | (0.000, 0.000) ft | (0.000, 0.000) ft | template default |
 | `at[0].profile.elevation` | 0.000 ft | 0.000 ft | template default |
