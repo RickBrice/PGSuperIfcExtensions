@@ -42,6 +42,7 @@
 
 #include <MFCTools\Prompts.h>
 #include <EAF/EAFProgress.h>
+#include <EAF/EAFDisplayUnits.h>
 #include <boost/range/combine.hpp>
 #include <psgLib/BridgeDescription2.h>
 #include <psgLib/GirderLabel.h>
@@ -1340,6 +1341,36 @@ const GirderLibraryEntry* CIfcBridgeImporter::CreateFittedEntry(std::shared_ptr<
    entry.SetBeamFactory(factory); // its default dimensions
    for (const auto& [dimension, value] : fit.dimensions)
       entry.SetDimension(dimension, value, false /*the strand grid is generated below*/);
+
+   // The fitted lengths are rounded, since a fit has measurement noise (e.g. D1 = 3.868 in for a drawn 3 7/8 in): to the
+   // nearest 1/16 in with US units, else to the nearest millimeter. Not to the 1/8 in of PGSuper's Details Report (the
+   // "<girder> Dimensions" table), which would lose real 1/16 in dimensions (WSDOT's WF66G W2 is 18 7/16 in). The
+   // factory's default dimensions aren't fitted and are left as they are
+   GET_IFACE2(m_Importer.GetBroker(), IEAFDisplayUnits, pDisplayUnits);
+   bool bSIUnits = IS_SI_UNITS(pDisplayUnits);
+   const auto& dimension_units = factory->GetDimensionUnits(bSIUnits);
+   const auto& rounding_unit = (bSIUnits ? WBFL::Units::Measure::Millimeter : WBFL::Units::Measure::Inch);
+   const Float64 increment = (bSIUnits ? 1.0 : 0.0625);
+   std::ostringstream rounded;
+   auto entry_dimensions = entry.GetDimensions();
+   for (IndexType i = 0; i < entry_dimensions.size() && i < dimension_units.size(); i++)
+   {
+      const auto& [dimension, value] = entry_dimensions[i];
+      auto pUnit = dimension_units[i];
+      if (pUnit == (const WBFL::Units::Length*)BFDIMUNITBOOLEAN || pUnit == (const WBFL::Units::Length*)BFDIMUNITSCALAR)
+         continue;
+      if (std::none_of(fit.dimensions.begin(), fit.dimensions.end(), [&dimension](const auto& d) {return d.first == dimension; }))
+         continue;
+
+      Float64 rounded_value = WBFL::Units::ConvertToSysUnits(RoundOff(WBFL::Units::ConvertFromSysUnits(value, rounding_unit), increment), rounding_unit);
+      entry.SetDimension(dimension, rounded_value, false);
+      if (IsEqual(rounded_value, value))
+         continue; // round-off noise, not worth reporting
+      rounded <<(rounded.tellp() == 0 ? "" : ", ") << T2A(dimension.c_str()) << " " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(value, rounding_unit)
+         << " to " << WBFL::Units::ConvertFromSysUnits(rounded_value, rounding_unit);
+   }
+   if (rounded.tellp() != 0)
+      WBFL::System::Logger::Info("New library entry " + std::string(T2A(name.c_str())) + ": the fitted dimensions are rounded to the nearest " + (bSIUnits ? "millimeter" : "1/16 in") + " (" + rounded.str() + (bSIUnits ? " mm" : " in") + ").");
 
    auto counts = GenerateStrandGrid(entry, fit.section.outline);
    std::ostringstream os;
