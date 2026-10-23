@@ -685,23 +685,87 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
       WBFL::System::Logger::Info(_T("The haunches are not part of the deck geometry. The default haunch shape and fillet are used."));
    }
 
-   // Slab offset ("A" dimension) at CL bearings
-   std::vector<Float64> all_slab_offsets;
-   for (const auto& girders : section.slab_offset)
+   // Slab offset ("A" dimension) at CL bearings. PGSuper requires at least the gross slab depth plus the fillet (plus the
+   // panel depth for stay-in-place panels). The measured slab offsets are kept: when one is smaller, the fillet is reduced
+   // to the thinnest haunch in the model (with square haunches, the fillet is the template's, not the model's). Only a
+   // slab offset less than the deck itself, which no fillet fits, is raised
+   auto slab_offset = section.slab_offset;
+   std::optional<Float64> min_measured;
+   for (const auto& girders : slab_offset)
    {
       for (const auto& ends : girders)
       {
          for (const auto& value : ends)
          {
             if (value)
-               all_slab_offsets.push_back(*value);
+               min_measured = min_measured ? Min(*min_measured, *value) : *value;
          }
       }
+   }
+
+   if (min_measured && IsLT(*min_measured, bridge_desc.GetMinSlabOffset()))
+   {
+      Float64 fillet = bridge_desc.GetFillet();
+      Float64 deck_depth = bridge_desc.GetMinSlabOffset() - fillet; // gross slab depth, and panels
+      Float64 thinnest_haunch = Max(0.0, *min_measured - deck_depth);
+      bridge_desc.SetFillet(thinnest_haunch);
+
+      std::ostringstream os;
+      os << std::fixed << std::setprecision(3) << "The smallest slab offset measured, " << WBFL::Units::ConvertFromSysUnits(*min_measured, WBFL::Units::Measure::Inch)
+         << " in, is less than PGSuper's minimum, the gross slab depth plus the fillet (" << WBFL::Units::ConvertFromSysUnits(deck_depth, WBFL::Units::Measure::Inch)
+         << " + " << WBFL::Units::ConvertFromSysUnits(fillet, WBFL::Units::Measure::Inch) << " in). The fillet is reduced to "
+         << WBFL::Units::ConvertFromSysUnits(thinnest_haunch, WBFL::Units::Measure::Inch) << " in, the thinnest haunch in the model, so the measured slab offsets are kept.";
+      WBFL::System::Logger::Warning(os.str());
+   }
+
+   const Float64 min_slab_offset = bridge_desc.GetMinSlabOffset();
+   IndexType nRaised = 0;
+   Float64 max_raise = 0.0;
+   std::vector<Float64> all_slab_offsets;
+   for (auto& girders : slab_offset)
+   {
+      for (auto& ends : girders)
+      {
+         for (auto& value : ends)
+         {
+            if (!value)
+               continue;
+
+            if (IsLT(*value, min_slab_offset))
+            {
+               nRaised++;
+               max_raise = Max(max_raise, min_slab_offset - *value);
+               value = min_slab_offset;
+            }
+            all_slab_offsets.push_back(*value);
+         }
+      }
+   }
+
+   if (0 < nRaised)
+   {
+      std::ostringstream os;
+      os << std::fixed << std::setprecision(3) << "The slab offset measured at " << nRaised << " girder end(s) is less than the gross slab depth ("
+         << WBFL::Units::ConvertFromSysUnits(min_slab_offset, WBFL::Units::Measure::Inch) << " in). It is raised to the slab depth (by up to "
+         << WBFL::Units::ConvertFromSysUnits(max_raise, WBFL::Units::Measure::Inch) << " in).";
+      WBFL::System::Logger::Warning(os.str());
    }
 
    if (all_slab_offsets.empty())
    {
       log_default(_T("Slab offset"));
+
+      // the template's slab offset may be less than the minimum for the imported deck. It isn't the model's, so it's the
+      // one that changes (the fillet may have been measured)
+      if (bridge_desc.GetSlabOffsetType() == pgsTypes::sotBridge && IsLT(bridge_desc.GetSlabOffset(), min_slab_offset))
+      {
+         std::ostringstream os;
+         os << std::fixed << std::setprecision(3) << "The default slab offset " << WBFL::Units::ConvertFromSysUnits(bridge_desc.GetSlabOffset(), WBFL::Units::Measure::Inch)
+            << " in is less than PGSuper's minimum, the gross slab depth plus the fillet. It is raised to the minimum, "
+            << WBFL::Units::ConvertFromSysUnits(min_slab_offset, WBFL::Units::Measure::Inch) << " in.";
+         WBFL::System::Logger::Warning(os.str());
+         bridge_desc.SetSlabOffset(min_slab_offset);
+      }
       return;
    }
 
@@ -716,9 +780,9 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
 
    // slab offsets on each bearing line (pier face)
    std::map<std::pair<PierIndexType, pgsTypes::PierFaceType>, std::vector<Float64>> bearing_lines;
-   for (SpanIndexType spanIdx = 0; spanIdx < section.slab_offset.size(); spanIdx++)
+   for (SpanIndexType spanIdx = 0; spanIdx < slab_offset.size(); spanIdx++)
    {
-      for (const auto& ends : section.slab_offset[spanIdx])
+      for (const auto& ends : slab_offset[spanIdx])
       {
          if (ends[pgsTypes::metStart]) bearing_lines[{spanIdx, pgsTypes::Ahead}].push_back(*ends[pgsTypes::metStart]);
          if (ends[pgsTypes::metEnd]) bearing_lines[{spanIdx + 1, pgsTypes::Back}].push_back(*ends[pgsTypes::metEnd]);
@@ -746,11 +810,11 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
    else
    {
       bridge_desc.SetSlabOffsetType(pgsTypes::sotSegment);
-      for (SpanIndexType spanIdx = 0; spanIdx < section.slab_offset.size(); spanIdx++)
+      for (SpanIndexType spanIdx = 0; spanIdx < slab_offset.size(); spanIdx++)
       {
-         for (GirderIndexType gdrIdx = 0; gdrIdx < section.slab_offset[spanIdx].size(); gdrIdx++)
+         for (GirderIndexType gdrIdx = 0; gdrIdx < slab_offset[spanIdx].size(); gdrIdx++)
          {
-            const auto& ends = section.slab_offset[spanIdx][gdrIdx];
+            const auto& ends = slab_offset[spanIdx][gdrIdx];
             if (layout[spanIdx].size() < 2)
                continue; // girders weren't imported for this span
 
