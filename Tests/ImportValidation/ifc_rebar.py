@@ -25,6 +25,13 @@ Values for the stirrups of each girder (group[i].girder[j].stirrups):
   places      where the stirrups are along the girder (x of each place)
   legs        the number of places with each number of legs (e.g. "64 x 2"), and of legs above the top of the girder
 
+A confinement bar is a bar across the girder (not longitudinal, not a stirrup) whose centerline is all below 40% of the
+girder's depth (taken from the lowest bar of the girder), e.g. the exporter's G9 and G10 bars. Values for each girder
+(group[i].girder[j].confinement):
+  count       number of confinement bars
+  sizes       the number of confinement bars of each size
+  places      where they are along the girder (x of each place, bars within 1 in at one place)
+
 Values are SI.
 
 Usage: python ifc_rebar.py <file.ifc> [--out summary.json]
@@ -148,6 +155,13 @@ def places_of(stirrups):
     return [(sum(xs) / len(xs), legs, above) for xs, legs, above, _ in places]
 
 
+def is_confinement(points, depth):
+    """the bar (its centerline points) is across the girder and all below 40% of its depth"""
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return 3 <= len(points) and max(xs) - min(xs) <= 2 * (max(ys) - min(ys)) and all(p[2] <= -0.4 * depth for p in points)
+
+
 def bar_size(bar, scale):
     """the bar size from the bar's type name (e.g. "Girder_Longitudinal_Bar_#5"), else from its nominal diameter"""
     bar_type = element.get_type(bar)
@@ -179,14 +193,27 @@ def extract(path_to_ifc):
 
         longitudinal = []
         stirrups = []
+        others = []  # neither longitudinal nor stirrups
         for bar in bars:
             for points in centerlines(bar, to_girder, scale):
                 if is_longitudinal(points):
                     longitudinal.append((bar, sorted(points)))  # start first
-            for segments in centerlines(bar, to_girder, scale, pieces=True):
+            for segments, points in zip(centerlines(bar, to_girder, scale, pieces=True), centerlines(bar, to_girder, scale)):
                 stirrup = stirrup_of(segments)
                 if stirrup:
                     stirrups.append((bar, stirrup))
+                elif not is_longitudinal(points):
+                    others.append((bar, points))
+
+        depth = -min((p[2] for _, points in others for p in points), default=0.0)
+        confinement = [(b, points) for b, points in others if is_confinement(points, depth)]
+        put(f"{girder_key(beam)}.confinement.count", len(confinement), "count")
+        if confinement:
+            ckey = f"{girder_key(beam)}.confinement"
+            sizes = collections.Counter(bar_size(b, scale) for b, _ in confinement)
+            put(f"{ckey}.sizes", "; ".join(f"{n} {size}" for size, n in sorted(sizes.items())), "text")
+            places = places_of([(sum(p[0] for p in points) / len(points), 1, 0) for _, points in confinement])
+            put(f"{ckey}.places", [x for x, _, _ in places], "lengths")
 
         put(f"{girder_key(beam)}.stirrups.count", len(stirrups), "count")
         if stirrups:

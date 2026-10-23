@@ -37,8 +37,18 @@
 // with the same bars: then they're made from the stations in the first half, and the last zone goes to midspan, with the
 // odd space at the center left out. Zones that are physically the same (e.g. two zones of one spacing) come out as one.
 //
+// Confinement bars give the zones' confinement bar size (PGSuper's confinement bars are at the stirrups, at the zone's
+// spacing). A confinement bar is a bar of the girder that isn't a stirrup, lies below 40% of the girder's depth, and whose
+// path in the girder's section, its ends joined, encloses the bottom row of strands where it is (strands within 1 in of
+// the lowest; without strands in the model, the CL girder 1 in above the bar's lowest point). Nothing in it is
+// agency-specific: bars around the bottom flange (e.g. Iowa's IA56 bars, the exporter's G9 bars) and closed bottom flange
+// ties (Iowa's S10 bars, the exporter's G10 bars) both enclose the strands. A confinement bar is at the station nearest to
+// it within 3 in and half the spacing there; the station's confinement bar size is the bar that encloses the most (the
+// others are reported), and bars that aren't at a station are reported and skipped. The confinement bar size is part of a
+// station's bars, so a zone ends where the confinement starts or stops.
+//
 // The bar material (one per girder) is the most common of the stirrups', else the template's. Each girder gets exactly
 // the model's stirrups, none if it has none: the girder library entry's transverse reinforcement (and the template's,
-// which has it) is a seed value the user copies into a girder. Confinement and splitting reinforcement aren't imported
-// yet; the girders have none.
+// which has it) is a seed value the user copies into a girder. Splitting reinforcement isn't imported yet; the girders
+// have none.
 void import_stirrups(const GirderBars& girder_bars, CBridgeDescription2& bridge_desc);

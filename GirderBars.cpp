@@ -183,6 +183,25 @@ GirderBars::GirderBars(ifcopenshell::file& file, const GirderLayout& layout) :
 
    if (0 < nWithoutGeometry)
       WBFL::System::Logger::Info(std::to_string(nWithoutGeometry) + " reinforcing bars were skipped: their geometry has no straight pieces that make a centerline (circular profiles extruded along a line, or swept disks along a polyline or an indexed poly curve).");
+
+   // the strands, which confinement bars enclose. A prestressing strand runs the length of its girder (shorter tendons are
+   // something else, e.g. lifting loops), as in the strand import
+   if (reader.HasSelector(ElementKind::Tendon))
+   {
+      for (const auto& object : reader.Select(ElementKind::Tendon, file))
+      {
+         auto tendon = object.as<IfcSchema::IfcTendon>();
+         std::vector<GirderReinforcement> centerlines;
+         if (!tendon || m_Geometry.Read(tendon, centerlines) != GirderReinforcementReader::Status::Read)
+            continue;
+         for (const auto& centerline : centerlines)
+         {
+            Float64 Lg = m_Geometry.GetLength(centerline.beam_id);
+            if (2 <= centerline.path.size() && centerline.path.front().x <= 0.1 * Lg && 0.9 * Lg <= centerline.path.back().x)
+               m_Strands[centerline.beam_id].push_back(centerline.path);
+         }
+      }
+   }
 }
 
 const std::vector<GirderBar>& GirderBars::GetBars(int beam_id) const
@@ -190,6 +209,13 @@ const std::vector<GirderBar>& GirderBars::GetBars(int beam_id) const
    static const std::vector<GirderBar> none;
    auto found = m_Bars.find(beam_id);
    return found == m_Bars.end() ? none : found->second;
+}
+
+const std::vector<std::vector<GirderPoint>>& GirderBars::GetStrands(int beam_id) const
+{
+   static const std::vector<std::vector<GirderPoint>> none;
+   auto found = m_Strands.find(beam_id);
+   return found == m_Strands.end() ? none : found->second;
 }
 
 std::string GirderBars::GetGirderName(int beam_id) const

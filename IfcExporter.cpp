@@ -757,9 +757,8 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          return bar;
       };
 
-   // G9 #3 bottom confinement bars
-   const auto* pConfinementRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, WBFL::Materials::Rebar::Size::bs3);
-   auto g9_bar = [&](Float64 scaleY)
+   // G9 bottom confinement bars, in the zones that have confinement bars (CShearZoneData2::ConfinementBarSize), at their size
+   auto g9_bar = [&](const WBFL::Materials::Rebar* pConfinementRebar, Float64 scaleY)
       {
          // This is a totally hard coded G9 bar without curves - need to update this later
          BarPath path;
@@ -797,8 +796,8 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          return bar;
       };
 
-   // G10 #3 bottom confinement bars
-   auto g10_bar = [&](Float64 scaleY)
+   // G10 bottom confinement bars, with the G9 bars
+   auto g10_bar = [&](const WBFL::Materials::Rebar* pConfinementRebar, Float64 scaleY)
       {
          auto db = pConfinementRebar->GetNominalDimension();
 
@@ -936,6 +935,10 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, bar_size);
       if (!pRebar)
          continue;
+
+      // confinement bars at the stirrups of the zone, if it has them
+      auto confinement_size = pStirrupGeometry->GetPrimaryConfinementBarSize(segmentKey, zoneIdx);
+      const auto* pConfinementRebar = (confinement_size == WBFL::Materials::Rebar::Size::bsNone ? nullptr : WBFL::LRFD::RebarPool::GetInstance()->GetRebar(bar_type, bar_grade, confinement_size));
       Float64 db = pRebar->GetNominalDimension();
 
       // The stirrups are at the ends of the zone's spaces, measured from the girder's start. With symmetric zones the second
@@ -992,8 +995,11 @@ void CreateStirrups(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
          // Offset the G3 bars 1-db towards the center of the beam (+1 db in left half, and -1 db in right half)
          // There really isn't a good predefined type for the G3 bars. This is the main reinforcement to resist transverse bending moment in the top flange
          place(g3_bars, g3_bar(scaleY), Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_MAIN, { offset + sign * db, 0., -cover }, "Top Bar");
-         place(g9_bars, g9_bar(scaleY), Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, { offset + sign * db, 0., -(Hg - cover/* - db#3*/) }, "G9 Bottom Confinement Bar");
-         place(g10_bars, g10_bar(scaleY), Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, { offset + sign * db, 0., -(Hg - cover/* - db#3*/) }, "G10 Bottom Confinement Bar");
+         if (pConfinementRebar)
+         {
+            place(g9_bars, g9_bar(pConfinementRebar, scaleY), Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, { offset + sign * db, 0., -(Hg - cover/* - db#3*/) }, "G9 Bottom Confinement Bar");
+            place(g10_bars, g10_bar(pConfinementRebar, scaleY), Schema::IfcReinforcingBarTypeEnum::IfcReinforcingBarType_RING, { offset + sign * db, 0., -(Hg - cover/* - db#3*/) }, "G10 Bottom Confinement Bar");
+         }
       } // next bar
 
       std::string zone = "Zone " + std::to_string(LABEL_STIRRUP_ZONE(zoneIdx));

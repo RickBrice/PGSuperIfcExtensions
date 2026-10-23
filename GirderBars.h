@@ -58,6 +58,10 @@ public:
    // the bars of a girder (IfcBeam id), empty if it has none
    const std::vector<GirderBar>& GetBars(int beam_id) const;
 
+   // The centerlines of a girder's strands (IfcBeam id): the elements of the tendon role that run its length (as in
+   // Strands.h), for the bars that enclose them (confinement). Empty if it has none
+   const std::vector<std::vector<GirderPoint>>& GetStrands(int beam_id) const;
+
    // the name of a girder (IfcBeam)
    std::string GetGirderName(int beam_id) const;
 
@@ -70,6 +74,7 @@ private:
    bool m_bHasBars = false;
    std::string m_Reason;
    std::map<int, std::vector<GirderBar>> m_Bars;
+   std::map<int, std::vector<std::vector<GirderPoint>>> m_Strands;
 };
 
 // the nominal diameter of a bar size (sizes are the same for every type and grade), 0 if the pool doesn't have it
