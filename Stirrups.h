@@ -22,6 +22,8 @@
 
 #pragma once
 
+namespace WBFL { namespace EAF { class Broker; }; };
+
 #include "GirderBars.h"
 
 // Imports the stirrups of the girders (G3 of devdocs/GirderImportPlan.md): the primary shear zones of CShearData2.
@@ -36,6 +38,9 @@
 // make a zone. The zones are symmetric when every station has one at the same distance from the other end (within 1 in)
 // with the same bars: then they're made from the stations in the first half, and the last zone goes to midspan, with the
 // odd space at the center left out. Zones that are physically the same (e.g. two zones of one spacing) come out as one.
+// The spacings are rounded to 1/8 in (1 mm with SI display units), as a designer gives them, and a zone is its number of
+// spaces at that spacing long (zone lengths rounded on their own would move the zones after them, e.g. PGSuper's 1.5 in
+// first zone).
 //
 // Confinement bars give the zones' confinement bar size (PGSuper's confinement bars are at the stirrups, at the zone's
 // spacing). A confinement bar is a bar of the girder that isn't a stirrup, lies below 40% of the girder's depth, and whose
@@ -51,4 +56,4 @@
 // the model's stirrups, none if it has none: the girder library entry's transverse reinforcement (and the template's,
 // which has it) is a seed value the user copies into a girder. Splitting reinforcement isn't imported yet; the girders
 // have none.
-void import_stirrups(const GirderBars& girder_bars, CBridgeDescription2& bridge_desc);
+void import_stirrups(std::shared_ptr<WBFL::EAF::Broker> pBroker, const GirderBars& girder_bars, CBridgeDescription2& bridge_desc);

@@ -25,6 +25,7 @@
 
 #include <psgLib/ShearData.h>
 #include <LRFD/RebarPool.h>
+#include <EAF/EAFDisplayUnits.h>
 
 #include <iomanip>
 #include <numeric>
@@ -259,8 +260,10 @@ namespace
    }
 
    // The zones of the stations: the space before each station (from the girder's start) is a spacing, and consecutive equal
-   // spaces with the same bars make a zone. The last zone is infinitely long, as PGSuper's last zone is
-   std::vector<CShearZoneData2> make_zones(const std::vector<Station>& stations)
+   // spaces with the same bars make a zone. The last zone is infinitely long, as PGSuper's last zone is. The spacings are
+   // rounded to spacing_increment (in the rounding unit), as a designer gives them, and a zone is its number of spaces at
+   // that spacing long, so the zones' ends follow the stirrups
+   std::vector<CShearZoneData2> make_zones(const std::vector<Station>& stations, const WBFL::Units::Length& unit, Float64 spacing_increment)
    {
       std::vector<CShearZoneData2> zones;
       std::vector<IndexType> nSpaces;
@@ -292,15 +295,26 @@ namespace
          }
          pLast = &station;
       }
+      for (size_t i = 0; i < zones.size(); i++)
+      {
+         Float64 spacing = WBFL::Units::ConvertToSysUnits(RoundOff(WBFL::Units::ConvertFromSysUnits(zones[i].BarSpacing, unit), spacing_increment), unit);
+         zones[i].BarSpacing = std::max(spacing, WBFL::Units::ConvertToSysUnits(spacing_increment, unit));
+         zones[i].ZoneLength = nSpaces[i] * zones[i].BarSpacing;
+      }
       if (!zones.empty())
          zones.back().ZoneLength = Float64_Max;
       return zones;
    }
 }
 
-void import_stirrups(const GirderBars& girder_bars, CBridgeDescription2& bridge_desc)
+void import_stirrups(std::shared_ptr<WBFL::EAF::Broker> pBroker, const GirderBars& girder_bars, CBridgeDescription2& bridge_desc)
 {
    USES_CONVERSION;
+
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   bool bSIUnits = IS_SI_UNITS(pDisplayUnits);
+   const auto& rounding_unit = (bSIUnits ? WBFL::Units::Measure::Millimeter : WBFL::Units::Measure::Inch);
+   const Float64 spacing_increment = (bSIUnits ? 1.0 : 0.125);
 
    // The girders' stirrups come from the template, which has the library entries' transverse reinforcement. That's a seed
    // value, not the girder's reinforcement, so a girder gets only the stirrups in the model.
@@ -386,7 +400,7 @@ void import_stirrups(const GirderBars& girder_bars, CBridgeDescription2& bridge_
          // the first half (the stirrups at the center are in the last zone, which goes to midspan)
          stations.erase(std::remove_if(stations.begin(), stations.end(), [Lg](const auto& s) {return Lg / 2 - symmetry_tolerance < s.x; }), stations.end());
       }
-      shear_data.ShearZones = make_zones(stations);
+      shear_data.ShearZones = make_zones(stations, rounding_unit, spacing_increment);
       if (shear_data.ShearZones.empty())
          shear_data.ShearZones = CShearData2().ShearZones; // only a stirrup at the center: PGSuper needs a zone
 

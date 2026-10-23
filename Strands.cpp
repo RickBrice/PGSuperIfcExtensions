@@ -939,7 +939,8 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       WBFL::System::Logger::Info(os.str());
 
       // the strands that project beyond the girder ends: extended strands, as far as PGSuper can say so
-      std::array<IndexType, 2> nExtended{ 0, 0 }, nNotExtended{ 0, 0 };
+      std::array<IndexType, 2> nExtended{ 0, 0 };
+      std::map<std::string, std::array<IndexType, 2>> not_extended; // projecting strands PGSuper can't extend, by the reason
       for (const auto& strand : strands)
       {
          for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
@@ -947,18 +948,29 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
             if (strand.IsExtended(end))
                nExtended[end]++;
             else if (strand.projects[end])
-               nNotExtended[end]++;
+               not_extended[strand.type == pgsTypes::Harped ? "harped (they bend inside the girder)" : strand.type == pgsTypes::Temporary ? "temporary" : "debonded there"][end]++;
          }
       }
-      if (0 < nExtended[0] + nExtended[1] + nNotExtended[0] + nNotExtended[1])
+      if (0 < nExtended[0] + nExtended[1])
       {
          std::ostringstream os_ext;
          os_ext << "Strands of " << girder_name << ": " << nExtended[pgsTypes::metStart] << " strands are extended at the start and " << nExtended[pgsTypes::metEnd]
             << " at the end (they project beyond the girder; PGSuper keeps that a strand is extended, not the shape of the extension).";
-         if (0 < nNotExtended[0] + nNotExtended[1])
-            os_ext << " " << nNotExtended[pgsTypes::metStart] << " at the start and " << nNotExtended[pgsTypes::metEnd]
-               << " at the end also project, but PGSuper extends only straight strands that aren't debonded there, so only their part in the girder is imported.";
          WBFL::System::Logger::Info(os_ext.str());
+      }
+      if (!not_extended.empty())
+      {
+         // e.g. Iowa's Beam 1 Span 1, whose projecting strands have a kink at midspan that the other girders' don't
+         std::ostringstream os_ext;
+         os_ext << "Strands of " << girder_name << ": strands that project beyond the girder aren't extended: ";
+         bool bFirst = true;
+         for (const auto& [reason, count] : not_extended)
+         {
+            os_ext << (bFirst ? "" : "; ") << count[pgsTypes::metStart] << " at the start and " << count[pgsTypes::metEnd] << " at the end are " << reason;
+            bFirst = false;
+         }
+         os_ext << ". PGSuper extends only straight strands that aren't debonded, so only their part in the girder is imported.";
+         WBFL::System::Logger::Warning(os_ext.str());
       }
    }
 }

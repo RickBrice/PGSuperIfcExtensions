@@ -267,7 +267,7 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    {
       GirderBars girder_bars(file, layout);
       import_longitudinal_rebar(girder_bars, bridge_desc);
-      import_stirrups(girder_bars, bridge_desc);
+      import_stirrups(m_Importer.GetBroker(), girder_bars, bridge_desc);
    }
 
    ImportSlab(file, bridge_desc, layout, pier_stations);
