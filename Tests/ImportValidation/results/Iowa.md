@@ -5,16 +5,15 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**230 of 274 values set by the import**, 44 are template defaults
+**231 of 274 values set by the import**, 43 are template defaults
 
-## template default (44)
+## template default (43)
 
 | Value | Template | Imported |
 |---|---|---|
 | `bridge.girder_family` | I-Beam | I-Beam |
 | `bridge.girder_orientation` | 0 | 0 |
 | `bridge.girder_spacing_type` | 0 | 0 |
-| `bridge.fillet` | 0.750 in | 0.750 in |
 | `pier[0].connection_type` | 1 | 1 |
 | `pier[0].back.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier |
 | `pier[0].back.bearing_offset_measure` | NormalToPier | NormalToPier |
@@ -56,7 +55,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg |
 
-## set by the import (230)
+## set by the import (231)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -64,6 +63,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `bridge.girder_spacing` | 6.000 ft (type 0, location 0) | 6.694 ft (type 0, location 0) |
 | `bridge.slab_offset_type` | 0 | 2 |
 | `bridge.slab_offset` | 11.000 in |  |
+| `bridge.fillet` | 0.750 in | 0.126 in |
 | `bridge.pier_count` | 2 | 4 |
 | `pier[0].station` | 0+00.00 | -0+01.50 |
 | `pier[0].back.end_distance` | 20.500 in | 8.000 in |
