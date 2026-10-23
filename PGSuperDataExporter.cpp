@@ -28,6 +28,7 @@
 #include "IdsExporter.h"
 #include "ExportOptionsSheet.h"
 #include "IfcProjectMappingTable.h"
+#include "MenuLogo.h"
 
 #include <IFace/Tools.h>
 #include <IFace/Project.h>
@@ -41,7 +42,7 @@
 CPGSuperDataExporter::CPGSuperDataExporter()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   VERIFY(m_Bitmap.LoadBitmap(IDB_BSI));
+   LoadMenuLogo(m_Bitmap);
 }
 
 STDMETHODIMP CPGSuperDataExporter::Init(UINT nCmdID)

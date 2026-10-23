@@ -131,6 +131,7 @@ END
 //
 
 IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
+IDB_BSI_15              BITMAP                  "IfcExtensions15.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -243,7 +244,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
 CAPTION "IFC Extension"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_MAPPING_LOGO,"Static",SS_BITMAP | SS_CENTERIMAGE,7,7,28,26
+    CONTROL         "",IDC_MAPPING_LOGO,"Static",SS_ICON | SS_CENTERIMAGE,7,7,28,26
     LTEXT           "The mapping table says where IFC imports and exports read and write each value. The configured table applies to PGSuper and PGSplice. An IFC import or export can choose another table, and /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,41,7,297,26
     CONTROL         "Standard table (installed with the IFC extension)",IDC_MAPPING_STANDARD,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,38,331,10

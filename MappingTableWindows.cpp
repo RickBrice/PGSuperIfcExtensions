@@ -25,6 +25,9 @@
 #include "MappingEditorViews.h" // ShowMappingHelp
 #include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
 
+#include <CommCtrl.h>
+#pragma comment(lib, "comctl32.lib") // LoadIconWithScaleDown
+
 namespace
 {
    const TCHAR* const CANT_BE_USED = _T("This mapping table can't be used. See the message in the window, or choose another table.");
@@ -58,19 +61,25 @@ CMappingTableConfigPage::CMappingTableConfigPage() : CPropertyPage(IDD_MAPPING_C
 CMappingTableConfigPage::~CMappingTableConfigPage()
 {
    if (m_hLogo)
-      ::DeleteObject(m_hLogo);
+      ::DestroyIcon(m_hLogo);
 }
 
 BOOL CMappingTableConfigPage::OnInitDialog()
 {
    CPropertyPage::OnInitDialog();
 
-   // the bSI logo is the 13x13 menu bitmap, shown three times as large. LoadImage stretches it; the page runs in the
-   // application's module state, so the bitmap comes from the DLL's resources explicitly
+   // the bSI logo, from the multi-size icon at the size of its control (which follows the dialog font and DPI), so it
+   // isn't stretched. The page runs in the application's module state, so the icon comes from the DLL's resources explicitly
    if (!m_hLogo)
-      m_hLogo = (HBITMAP)::LoadImage(AfxGetStaticModuleState()->m_hCurrentResourceHandle, MAKEINTRESOURCE(IDB_BSI), IMAGE_BITMAP, 39, 39, LR_DEFAULTCOLOR);
+   {
+      CRect rect;
+      GetDlgItem(IDC_MAPPING_LOGO)->GetClientRect(&rect);
+      int size = std::min(rect.Width(), rect.Height());
+      if (FAILED(::LoadIconWithScaleDown(AfxGetStaticModuleState()->m_hCurrentResourceHandle, MAKEINTRESOURCE(IDI_BSI), size, size, &m_hLogo)))
+         m_hLogo = nullptr;
+   }
    if (m_hLogo)
-      SendDlgItemMessage(IDC_MAPPING_LOGO, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)m_hLogo);
+      SendDlgItemMessage(IDC_MAPPING_LOGO, STM_SETICON, (WPARAM)m_hLogo);
 
    m_Chooser.Init(this, _T("Standard table (installed with the IFC extension)"), CIfcMappingTable::STANDARD_TABLE,
       MappingTableSource::InstalledStandard, MappingTableSource::ConfigurationSetting);

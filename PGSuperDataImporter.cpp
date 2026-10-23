@@ -28,13 +28,14 @@
 #include <EAF/AutoProgress.h>
 #include <IFace\Project.h>
 #include "ImportOptions.h"
+#include "MenuLogo.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CPGSuperDataImporter
 CPGSuperDataImporter::CPGSuperDataImporter()
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   VERIFY(m_Bitmap.LoadBitmap(IDB_BSI));
+   LoadMenuLogo(m_Bitmap);
 }
 
 STDMETHODIMP CPGSuperDataImporter::Init(UINT nCmdID)

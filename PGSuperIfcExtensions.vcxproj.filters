@@ -222,6 +222,9 @@
     <ClInclude Include="MappingTableWindows.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MenuLogo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="IfcTableFormat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -433,6 +436,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="IfcExtensions.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="IfcExtensions15.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="IfcProjectImporter.ico">

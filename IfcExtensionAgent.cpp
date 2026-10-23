@@ -36,6 +36,7 @@
 #include "IdsExporter.h"
 #include "IfcTableIds.h"
 #include "IfcTableFormat.h"
+#include "MenuLogo.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -63,7 +64,7 @@ bool CIfcExtensionAgent::Init()
    CREATE_LOGFILE(_T("IfcExtensionAgent"));
 
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
-   VERIFY(m_bmpMenu.LoadBitmap(IDB_BSI));
+   LoadMenuLogo(m_bmpMenu);
 
    return true;
 }

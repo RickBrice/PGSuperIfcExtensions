@@ -8,6 +8,7 @@
 #define IDC_4X3_ADD1                    202
 #define IDC_4X3_ADD2                    203
 #define IDB_BSI                         205
+#define IDB_BSI_15                      411
 #define IDD_EXPORT_OPTIONS              206
 #define IDD_DIALOG1                     208
 #define IDD_IMPORT_OPTIONS              208
@@ -234,7 +235,7 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        410
+#define _APS_NEXT_RESOURCE_VALUE        412
 #define _APS_NEXT_COMMAND_VALUE         32779
 #define _APS_NEXT_CONTROL_VALUE         411
 #define _APS_NEXT_SYMED_VALUE           107

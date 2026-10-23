@@ -53,7 +53,7 @@ protected:
 
 private:
    CMappingTableChooser m_Chooser;
-   HBITMAP m_hLogo = nullptr; // the bSI logo (IDB_BSI, enlarged)
+   HICON m_hLogo = nullptr; // the bSI logo (IDI_BSI, at the size of its control)
    bool TakeChoice(bool bReport); // validates the choice and puts it in m_Table
 };
 

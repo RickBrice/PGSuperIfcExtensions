@@ -381,6 +381,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="IfcProjectMappingTable.h" />
     <ClInclude Include="MappingTableChooser.h" />
     <ClInclude Include="MappingTableWindows.h" />
+    <ClInclude Include="MenuLogo.h" />
     <ClInclude Include="IfcTableFormat.h" />
     <ClInclude Include="MappingEditorDoc.h" />
     <ClInclude Include="MappingEditorExportPanes.h" />
@@ -412,6 +413,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
   </ItemGroup>
   <ItemGroup>
     <Image Include="IfcExtensions.bmp" />
+    <Image Include="IfcExtensions15.bmp" />
     <Image Include="IfcProjectImporter.ico" />
   </ItemGroup>
   <ItemGroup>
