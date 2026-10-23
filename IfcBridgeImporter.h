@@ -61,6 +61,12 @@ private:
    // this import created. Entries that came with the import template are left out, so the import doesn't depend on it
    bool IsUsableLibraryEntry(const std::_tstring& name);
 
+   // Removes the girder and traffic barrier entries that came with the import template and the imported bridge doesn't
+   // use (e.g. its Unknown_Girder_Type), so the project library has only what the bridge uses. After the bridge
+   // description is set, since PGSuper's reference counts on the entries say what's used.
+   // Temporary, like the template: remove it when the import builds CBridgeDescription2 from scratch
+   void RemoveUnusedTemplateEntries();
+
    // the library entries this import created (G1 step 4)
    std::set<std::_tstring> m_CreatedEntries;
 

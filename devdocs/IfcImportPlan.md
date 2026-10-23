@@ -59,7 +59,7 @@ The girder import questions (Phase 5) were decided on 2026-10-15; see [GirderImp
 
 **Working conventions:**
 - Commit code and docs separately from `Tests/ImportValidation/results` (code first, then an "Updates IFC import validation results ..." commit). Don't push; the user pushes after PGSuper regression tests. Don't commit WBFL or PGSuper changes until the user says so.
-- The importer starts from `IfcImportTemplate.pgt` on purpose (fault tolerant, handles data drift); building `CBridgeDescription2` from scratch is the long-term goal. Keep import code independent of template values.
+- The importer starts from `IfcImportTemplate.pgt` on purpose (fault tolerant, handles data drift); building `CBridgeDescription2` from scratch is the long-term goal. Keep import code independent of template values. Template-only workarounds go with the template: `CIfcBridgeImporter::RemoveUnusedTemplateEntries` (removes the template's unused girder and traffic barrier library entries, e.g. `Unknown_Girder_Type`).
 - PGSuper configuration may be switched for tests with `/Configuration`; record the current one and switch back (normally `Regression:Regression`).
 - PGSuper system units are SI (kg, m, Pa), in memory and in `.pgs` files.
 - Geometry for the export comes from WBFL GenericBridge tools, exposed through PGSuper interfaces that don't reveal the implementation. New interface methods go at the end of the interface.

@@ -273,6 +273,8 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
 
    pIBridgeDesc->SetBridgeDescription(bridge_desc);
 
+   RemoveUnusedTemplateEntries();
+
    Experiment(file);
 
    return CIfcImporter::ImportResult::Success;
@@ -304,14 +306,13 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
    const GirderLibraryEntry* first_entry = library_entries.begin()->second;
    bool bSameGirder = std::all_of(library_entries.begin(), library_entries.end(), [first_entry](const auto& item) {return item.second == first_entry; });
    bridge_desc.UseSameGirderForEntireBridge(bSameGirder);
-   if (bSameGirder)
-   {
-      // the entry and its name: PGSuper finds the entry by name when the project is loaded (SetGirderLibraryEntry
-      // doesn't set the name, unlike CSplicedGirderData's). The entry first, since setting the name copies the entry's
-      // shear and longitudinal reinforcement to the segments
-      bridge_desc.SetGirderLibraryEntry(first_entry);
-      bridge_desc.SetGirderName(first_entry->GetName().c_str());
-   }
+
+   // the entry and its name: PGSuper finds the entry by name when the project is loaded (SetGirderLibraryEntry
+   // doesn't set the name, unlike CSplicedGirderData's). The entry first, since setting the name copies the entry's
+   // shear and longitudinal reinforcement to the segments. Set with different girders too: PGSuper keeps a reference
+   // to the bridge's entry either way, so the template's entry would otherwise stay in use
+   bridge_desc.SetGirderLibraryEntry(first_entry);
+   bridge_desc.SetGirderName(first_entry->GetName().c_str());
 
    bridge_desc.SetGirderFamilyName(first_entry->GetGirderFamilyName().c_str());
 
@@ -1218,6 +1219,29 @@ const GirderLibraryEntry* CIfcBridgeImporter::MatchLibraryEntry(const std::strin
    }
    WBFL::System::Logger::Info(os.str());
    return entry;
+}
+
+namespace
+{
+   // Removes the library's project entries (editable; master library entries aren't) that nothing references
+   template <class LIBRARY>
+   void remove_unused_project_entries(LIBRARY& library, const std::_tstring& kind)
+   {
+      WBFL::Library::KeyListType keys;
+      library.KeyList(keys);
+      for (const auto& key : keys)
+      {
+         if (library.IsEditingEnabled(key.c_str()) && library.GetEntryRefCount(key.c_str()) == 0 && library.RemoveEntry(key.c_str()) == WBFL::Library::ILibrary::EntryRemoveOutcome::Ok)
+            WBFL::System::Logger::Info(_T("Removed the unused ") + kind + _T(" library entry ") + key + _T(" that came with the import template."));
+      }
+   }
+}
+
+void CIfcBridgeImporter::RemoveUnusedTemplateEntries()
+{
+   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+   remove_unused_project_entries(pLibrary->GetGirderLibrary(), _T("girder"));
+   remove_unused_project_entries(pLibrary->GetTrafficBarrierLibrary(), _T("traffic barrier"));
 }
 
 bool CIfcBridgeImporter::IsUsableLibraryEntry(const std::_tstring& name)
