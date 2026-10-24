@@ -3,5 +3,6 @@ Note: Material property set Pset_MaterialConcrete of the girder isn't in the IDS
 Note: Material property set Pset_MaterialSteel of the tendon isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
 Note: Material property set Pset_MaterialSteel of the rebar isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
 Note: Material property set Pset_MaterialConcrete of the deck isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
+Note: Material property set Pset_MaterialConcrete of the diaphragm isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
 Note: Material property set Pset_MaterialConcrete of the barrier isn't in the IDS: IDS property facets check an element's own and type property sets, not its material's
 IDS written: F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\Standard.ids

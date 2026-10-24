@@ -22,6 +22,7 @@
     "reinforcement_cage": {"entity": "IfcElementAssembly", "predefined_type": "REINFORCEMENT_UNIT"},
     "deck": {"entity": "IfcSlab", "predefined_type": "FLOOR"},
     "bearing": {"entity": "IfcBearing"},
+    "diaphragm": {"entity": "IfcBeam", "predefined_type": "DIAPHRAGM"},
     "barrier": {"entity": "IfcWall", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "BARRIER"}}
   },
   "property_sets": [
@@ -579,7 +580,7 @@
         {"name": "BearingBottomElevation", "type": "IfcLengthMeasure", "target": "bearing.bottom_elevation", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BearingBottomElevation"},
         {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BeamLongitudinalSlope"},
         {"name": "BearingThermalMovement", "type": "IfcNonNegativeLengthMeasure", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BearingThermalMovement"},
-        {"name": "SupportCondition", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SupportCondition"}
+        {"name": "SupportCondition", "type": "IfcLabel", "target": "bearing.support_condition", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SupportCondition"}
       ]
     },
     {
@@ -593,6 +594,44 @@
         {"name": "PlateThickness", "type": "IfcPositiveLengthMeasure", "target": "bearing.plate_thickness", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PlateThickness"},
         {"name": "ExternalLayerThickness", "type": "IfcPositiveLengthMeasure", "target": "bearing.cover_thickness", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/ExternalLayerThickness"},
         {"name": "InternalLayerThickness", "type": "IfcPositiveLengthMeasure", "target": "bearing.layer_thickness", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/InternalLayerThickness"}
+      ]
+    },
+    {
+      "name": "usBrPset_Common", "applies_to": "diaphragm",
+      "properties": [
+        {"name": "Status", "type": "IfcLabel", "value": "NEW", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"},
+        {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/AssociatedStandard"},
+        {"name": "Note", "type": "IfcText", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Note"},
+        {"name": "SNBIElementNumber", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SNBIElementNumber"},
+        {"name": "WorkingDrawingApproval", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/WorkingDrawingApproval"}
+      ]
+    },
+    {
+      "name": "usBrPset_PayItemQuantities", "applies_to": "diaphragm",
+      "properties": [
+        {"name": "PayItemReference", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayItemReference"},
+        {"name": "PayQuantity", "type": "IfcReal", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/PayQuantity"},
+        {"name": "UnitOfMeasure", "type": "IfcLabel", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/UnitOfMeasure"}
+      ]
+    },
+    {
+      "name": "usBrPset_Diaphragm", "applies_to": "diaphragm", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_Diaphragm",
+      "properties": [
+        {"name": "DiaphragmType", "type": "IfcLabel", "value": "End", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DiaphragmType"}
+      ]
+    },
+    {
+      "name": "PGSuperPset_Diaphragm", "applies_to": "diaphragm",
+      "properties": [
+        {"name": "SupportCondition", "type": "IfcLabel", "target": "diaphragm.support_condition"}
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral", "applies_to": "diaphragm",
+      "properties": [
+        {"name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "INSITU", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "StrengthClass", "type": "IfcLabel", "target": "diaphragm.strength_class"}
       ]
     },
     {
@@ -669,6 +708,7 @@
     {"applies_to": "reinforcement_cage", "system": "usBridge", "identification": "usBridge_ReinforcementCage", "name": "ReinforcementCage", "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_ReinforcementCage"},
     {"applies_to": "deck", "system": "usBridge", "identification": "usBridge_DeckSlab", "name": "DeckSlab", "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_DeckSlab"},
     {"applies_to": "bearing", "system": "usBridge", "identification": "usBridge_Bearing", "name": "Bearing", "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Bearing"},
+    {"applies_to": "diaphragm", "system": "usBridge", "identification": "usBridge_DiaphragmConcrete", "name": "DiaphragmConcrete", "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_DiaphragmConcrete"},
     {"applies_to": "barrier", "system": "usBridge", "identification": "usBridge_Barrier", "name": "Barrier", "location": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBridge_Barrier"}
   ]
 }

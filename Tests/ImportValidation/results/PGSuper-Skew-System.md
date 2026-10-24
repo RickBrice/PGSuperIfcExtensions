@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**270 of 612 match** - mismatch: 8, not imported: 16, missing: 0, not comparable: 0, default match: 318, extra: 0
+**273 of 612 match** - mismatch: 8, not imported: 12, missing: 0, not comparable: 0, default match: 319, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -22,28 +22,24 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].back.bearing_offset` | 18.000 in | 13.500 in |  |
 | `pier[4].ahead.bearing_offset` | 18.000 in | 13.500 in |  |
 
-## not imported (16)
+## not imported (12)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
 | `pier[0].back.end_distance` | 15.000 in | 20.500 in | template default |
 | `pier[0].ahead.end_distance` | 15.000 in | 20.500 in | template default |
-| `pier[1].connection_type` | 2 | 6 | template default |
 | `pier[1].back.end_distance` | 15.000 in | 20.500 in | template default |
 | `pier[1].ahead.end_distance` | 18.000 in | 20.500 in | template default |
 | `pier[1].ahead.bearing_offset` | 30.000 in | 32.500 in | template default |
-| `pier[2].connection_type` | 2 | 6 | template default |
 | `pier[2].back.end_distance` | 18.000 in | 20.500 in | template default |
 | `pier[2].back.bearing_offset` | 30.000 in | 32.500 in | template default |
 | `pier[2].ahead.end_distance` | 10.000 in | 20.500 in | template default |
-| `pier[3].connection_type` | 2 | 6 | template default |
 | `pier[3].back.end_distance` | 6.000 in | 20.500 in | template default |
 | `pier[3].ahead.end_distance` | 6.000 in | 20.500 in | template default |
-| `pier[4].connection_type` | 1 | 6 | template default |
 | `pier[4].back.end_distance` | 25.000 in | 20.500 in | template default |
 | `pier[4].ahead.end_distance` | 25.000 in | 20.500 in | template default |
 
-## default match (318)
+## default match (319)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -122,6 +118,7 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[3].ahead.bearing.fixed_y` | 0 | 0 | template default |
 | `pier[3].ahead.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier | template default |
 | `pier[3].ahead.bearing_offset_measure` | NormalToPier | NormalToPier | template default |
+| `pier[4].connection_type` | 1 | 1 | template default |
 | `pier[4].back.bearing.shape` | 0 | 0 | template default |
 | `pier[4].back.bearing.length` | 12.000 in | 12.000 in | template default |
 | `pier[4].back.bearing.width` | 12.000 in | 12.000 in | template default |
@@ -366,14 +363,17 @@ A *default match* equals the expected value only because the template has the sa
 | `group[3].girder[4].strands.harped.count` | 0 | 0 | template default |
 | `group[3].girder[4].strands.temporary.count` | 0 | 0 | template default |
 
-## match (270)
+## match (273)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
 | `bridge.pier_count` | 5 | 5 |  |
 | `pier[1].station` | 1+10.00 | 1+10.00 |  |
+| `pier[1].connection_type` | 2 | 2 |  |
 | `pier[2].station` | 2+20.00 | 2+20.00 |  |
+| `pier[2].connection_type` | 2 | 2 |  |
 | `pier[3].station` | 3+30.00 | 3+30.00 |  |
+| `pier[3].connection_type` | 2 | 2 |  |
 | `pier[4].station` | 4+40.00 | 4+40.00 |  |
 | `bridge.group_count` | 4 | 4 |  |
 | `group[0].girder[0].type` | WF42G | WF42G (IFC) |  |

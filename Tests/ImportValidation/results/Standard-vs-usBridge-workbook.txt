@@ -1,6 +1,6 @@
 Standard mapping table compared with the usBridge workbook usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx (categories: see check_standard.py)
 
-Counts: CLASS 4, REQUIRED 3, NO-VALUE 38, VALUE 13, TYPE 54, NAME 1, ENUM 17, PSET 20, RESTRICTED 23, OPTIONAL 36, EXTRA 27, NO-CLASS 1
+Counts: CLASS 4, REQUIRED 3, NO-VALUE 41, VALUE 14, TYPE 57, NAME 1, ENUM 20, PSET 23, RESTRICTED 26, OPTIONAL 37, EXTRA 29, NO-CLASS 1
 
 CLASS | girder_assembly (Girder) |  | the class Girder isn't in the workbook
 CLASS | project (BridgeProject) |  | the class BridgeProject isn't in the workbook
@@ -32,6 +32,9 @@ NO-VALUE | bridge (GirderBridge) | usBrPset_Roadway.RoadwayType | required, but 
 NO-VALUE | deck (DeckSlab) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
 NO-VALUE | deck (DeckSlab) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
 NO-VALUE | deck (DeckSlab) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
+NO-VALUE | diaphragm (DiaphragmConcrete) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
+NO-VALUE | diaphragm (DiaphragmConcrete) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
+NO-VALUE | diaphragm (DiaphragmConcrete) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
 NO-VALUE | girder (GirderPrecastConcrete) | usBrPset_PayItemQuantities.PayItemReference | required, but declared without a target or a value
 NO-VALUE | girder (GirderPrecastConcrete) | usBrPset_PayItemQuantities.PayQuantity | required, but declared without a target or a value
 NO-VALUE | girder (GirderPrecastConcrete) | usBrPset_PayItemQuantities.UnitOfMeasure | required, but declared without a target or a value
@@ -52,6 +55,7 @@ VALUE | abutment (Abutment) | usBrPset_SubstructureCommon.SubstructureType | "Ne
 VALUE | barrier (Barrier) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
 VALUE | bridge (GirderBridge) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
 VALUE | deck_part (Deck) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
+VALUE | diaphragm (DiaphragmConcrete) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
 VALUE | foundation (Foundation) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
 VALUE | girder (GirderPrecastConcrete) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
 VALUE | pier (Pier) | usBrPset_Common.Status | "NEW" isn't one of ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other'] (the workbook has "New")
@@ -82,6 +86,9 @@ TYPE | deck (DeckSlab) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel
 TYPE | deck_part (Deck) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
 TYPE | deck_part (Deck) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
 TYPE | deck_part (Deck) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
+TYPE | diaphragm (DiaphragmConcrete) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
+TYPE | diaphragm (DiaphragmConcrete) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
+TYPE | diaphragm (DiaphragmConcrete) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
 TYPE | foundation (Foundation) | usBrPset_Common.AssociatedStandard | table IfcLabel, workbook IfcText
 TYPE | foundation (Foundation) | usBrPset_Common.SNBIElementNumber | table IfcLabel, workbook IfcIdentifier
 TYPE | foundation (Foundation) | usBrPset_Common.WorkingDrawingApproval | table IfcLabel, workbook IfcText
@@ -122,6 +129,9 @@ ENUM | barrier (Barrier) | Pset_ConcreteElementGeneral.CastingMethod | table ['I
 ENUM | barrier (Barrier) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
 ENUM | bridge (GirderBridge) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
 ENUM | deck_part (Deck) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
+ENUM | diaphragm (DiaphragmConcrete) | Pset_ConcreteElementGeneral.AssemblyPlace | table ['FACTORY', 'OFFSITE', 'SITE', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['FACTORY', 'OFFSITE', 'SITE']
+ENUM | diaphragm (DiaphragmConcrete) | Pset_ConcreteElementGeneral.CastingMethod | table ['INSITU', 'MIXED', 'PRECAST', 'PRINTED', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['INSITU', 'MIXED', 'PRECAST']
+ENUM | diaphragm (DiaphragmConcrete) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
 ENUM | foundation (Foundation) | usBrPset_Common.Status | table ['NEW', 'EXISTING - REMAIN', 'EXISTING - REMOVE', 'TEMPORARY', 'OTHER'], workbook ['New', 'Existing - Remain', 'Existing - Remove', 'Temporary', 'Other']
 ENUM | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.AssemblyPlace | table ['FACTORY', 'OFFSITE', 'SITE', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['FACTORY', 'OFFSITE', 'SITE']
 ENUM | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.CastingMethod | table ['INSITU', 'MIXED', 'PRECAST', 'PRINTED', 'OTHER', 'UNKNOWN', 'UNSET'], workbook ['INSITU', 'MIXED', 'PRECAST']
@@ -145,6 +155,9 @@ PSET | bridge (GirderBridge) | usBrPset_Railroad | not declared (4 properties, 0
 PSET | deck (DeckSlab) | Pset_PrecastConcreteElementGeneral | not declared (6 properties, 1 required)
 PSET | deck (DeckSlab) | usBrPset_ConcretePour | not declared (9 properties, 0 required)
 PSET | deck_part (Deck) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
+PSET | diaphragm (DiaphragmConcrete) | Pset_BeamCommon | not declared (2 properties, 0 required)
+PSET | diaphragm (DiaphragmConcrete) | Pset_PrecastConcreteElementGeneral | not declared (8 properties, 3 required)
+PSET | diaphragm (DiaphragmConcrete) | Qto_BeamBaseQuantities | not declared (4 properties, 0 required)
 PSET | foundation (Foundation) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | pier (Pier) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | rebar (ReinforcingBar) | Qto_ReinforcingElementBaseQuantities | not declared (2 properties, 0 required)
@@ -157,6 +170,9 @@ RESTRICTED | deck (DeckSlab) | usBrPset_CulvertSlab | not declared; the workbook
 RESTRICTED | deck (DeckSlab) | usBrPset_Haunch | not declared; the workbook says "Applies only to Haunch"
 RESTRICTED | deck (DeckSlab) | usBrPset_SlopePaving | not declared; the workbook says "Applies only to Slope Protection Surface"
 RESTRICTED | deck_part (Deck) | usBrPset_SubstructureCommon | not declared; the workbook says "Only applies to Abutment and Pier entities"
+RESTRICTED | diaphragm (DiaphragmConcrete) | usBrPset_BeamSeatElevations | not declared; the workbook says "Applies only to Cap Beam"
+RESTRICTED | diaphragm (DiaphragmConcrete) | usBrPset_PierCap | not declared; the workbook says "Applies only to Pier Cap"
+RESTRICTED | diaphragm (DiaphragmConcrete) | usBrPset_PrecastConcreteBeam | not declared; the workbook says "Applies only to Pretensioned/Prestressed Concrete Girder) and Precast Girder Segment"
 RESTRICTED | foundation (Foundation) | usBrPset_BridgePartCommon | not declared; the workbook says "Only applies to Superstructure, Deck, Deck Segment, Approach, Culverts, Culvert Barrel"
 RESTRICTED | foundation (Foundation) | usBrPset_SubstructureCommon | not declared; the workbook says "Only applies to Abutment and Pier entities"
 RESTRICTED | girder (GirderPrecastConcrete) | usBrPset_BeamSeatElevations | not declared; the workbook says "Applies only to Cap Beam"
@@ -193,6 +209,7 @@ OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.NetWeight | IfcQuantityWeigh
 OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.Width | IfcQuantityLength not declared
 OPTIONAL | deck (DeckSlab) | usBrPset_RoadwaySlab.SacrificialWearingThickness | IfcLengthMeasure not declared
 OPTIONAL | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionArea | IfcAreaMeasure not declared
+OPTIONAL | diaphragm (DiaphragmConcrete) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetVolume | IfcQuantityVolume not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetWeight | IfcQuantityWeight not declared
@@ -218,6 +235,8 @@ EXTRA | deck (DeckSlab) | Qto_SlabBaseQuantities.Perimeter | not in the workbook
 EXTRA | deck (DeckSlab) | usBrPset_RoadwaySlab.SacrificialWearingSurface | not in the workbook's property set for this class
 EXTRA | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionalArea | not in the workbook's property set for this class
 EXTRA | deck (DeckSlab) | usBrPset_SlabCommon.CrossSlope | not in the workbook's property set for this class
+EXTRA | diaphragm (DiaphragmConcrete) | PGSuperPset_Diaphragm | property set not in the workbook for this class
+EXTRA | diaphragm (DiaphragmConcrete) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Pset_BeamCommon.Slope | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Pset_BeamCommon.Status | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class

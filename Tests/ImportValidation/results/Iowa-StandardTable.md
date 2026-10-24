@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**168 of 274 values set by the import**, 106 are template defaults
+**170 of 274 values set by the import**, 104 are template defaults
 
-## template default (106)
+## template default (104)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -24,7 +24,6 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[0].ahead.bearing.fixed_y` | 0 | 0 |
 | `pier[0].ahead.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier |
 | `pier[0].ahead.bearing_offset_measure` | NormalToPier | NormalToPier |
-| `pier[1].connection_type` | 1 | 6 |
 | `pier[1].back.bearing.shape` | 0 | 0 |
 | `pier[1].back.bearing.count` | 1 | 1 |
 | `pier[1].back.bearing.fixed_x` | 0 | 0 |
@@ -37,7 +36,6 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[1].ahead.bearing.fixed_y` | 0 | 0 |
 | `pier[1].ahead.end_distance_measure` | FromBearingNormalToPier | FromBearingNormalToPier |
 | `pier[1].ahead.bearing_offset_measure` | NormalToPier | NormalToPier |
-| `pier[2].connection_type` | 1 | 6 |
 | `pier[2].back.bearing.shape` | 0 | 0 |
 | `pier[2].back.bearing.count` | 1 | 1 |
 | `pier[2].back.bearing.fixed_x` | 0 | 0 |
@@ -118,7 +116,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg |
 
-## set by the import (168)
+## set by the import (170)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -136,6 +134,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[0].ahead.end_distance` | 20.500 in | 8.000 in |
 | `pier[0].ahead.bearing_offset` | 32.500 in | 0.000 in |
 | `pier[1].station` | 0+00.00 | 0+44.50 |
+| `pier[1].connection_type` | 1 | 2 |
 | `pier[1].back.bearing.length` | 12.000 in | 9.000 in |
 | `pier[1].back.bearing.width` | 12.000 in | 28.500 in |
 | `pier[1].back.bearing.height` | 0.000 in | 1.000 in |
@@ -147,6 +146,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[1].ahead.end_distance` | 20.500 in | 8.000 in |
 | `pier[1].ahead.bearing_offset` | 32.500 in | 12.000 in |
 | `pier[2].station` | 0+00.00 | 1+51.50 |
+| `pier[2].connection_type` | 1 | 2 |
 | `pier[2].back.bearing.length` | 12.000 in | 9.000 in |
 | `pier[2].back.bearing.width` | 12.000 in | 28.500 in |
 | `pier[2].back.bearing.height` | 0.000 in | 1.000 in |
