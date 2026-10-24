@@ -2704,6 +2704,321 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
    }
 }
 
+// A point on the top of a pier diaphragm: x along the CL pier and the top elevation
+struct DiaphragmPoint { Float64 x; Float64 top; };
+
+// Creates a closed IfcPolygonalFaceSet for a pier diaphragm in the local coordinates of its pier: x along the CL pier,
+// y normal to it, z up. The diaphragm's top follows the points (sorted by x), its bottom is height below the top,
+// and it extends from y0 to y1. The top, bottom, and sides are planar because the elevations only vary with x.
+template <typename Schema>
+typename Schema::IfcPolygonalFaceSet CreateDiaphragmFaceSet(hierarchy_helper<Schema>& file, const std::vector<DiaphragmPoint>& points, Float64 height, Float64 y0, Float64 y1)
+{
+   // four points at each x: bottom at y0, bottom at y1, top at y1, top at y0
+   std::vector<std::vector<double>> point_list;
+   for (const auto& p : points)
+   {
+      point_list.push_back({ p.x, y0, p.top - height });
+      point_list.push_back({ p.x, y1, p.top - height });
+      point_list.push_back({ p.x, y1, p.top });
+      point_list.push_back({ p.x, y0, p.top });
+   }
+   auto coordinates = file.create<typename Schema::IfcCartesianPointList3D>().initialize(point_list, std::nullopt);
+
+   // faces are counter-clockwise when viewed from outside
+   std::vector<typename Schema::IfcIndexedPolygonalFace> faces;
+   auto add_face = [&](std::vector<int64_t> indices) { faces.push_back(file.create<typename Schema::IfcIndexedPolygonalFace>().initialize(indices)); };
+   int64_t n = (int64_t)points.size();
+   add_face({ 1, 4, 3, 2 }); // end at the first point
+   int64_t last = 4 * (n - 1);
+   add_face({ last + 1, last + 2, last + 3, last + 4 }); // end at the last point
+   for (int64_t i = 0; i < n - 1; i++)
+   {
+      int64_t a = 4 * i, b = 4 * (i + 1);
+      add_face({ a + 1, a + 2, b + 2, b + 1 }); // bottom
+      add_face({ a + 4, b + 4, b + 3, a + 3 }); // top
+      add_face({ a + 1, b + 1, b + 4, a + 4 }); // y0 side
+      add_face({ a + 2, a + 3, b + 3, b + 2 }); // y1 side
+   }
+
+   return file.create<typename Schema::IfcPolygonalFaceSet>().initialize(coordinates, true, faces, std::nullopt);
+}
+
+// Creates an IfcBeam::DIAPHRAGM for the pier diaphragms (PGSuper's connection diaphragms) at every pier and abutment.
+// The diaphragms are contained in the superstructure, as usBridge's "Concrete Diaphragm" requires.
+// IfcBridgePart::SUPERSTRUCTURE <-> IfcRelContainedInSpatialStructure <-> IfcBeam::DIAPHRAGM
+//
+// The diaphragms carry the boundary condition of the pier (decided 2026-10-23, see devdocs/IfcImportPlan.md, Phase 2):
+// - Hinge and roller: one diaphragm for each pier face, centered on the CL bearings, as wide as the diaphragm width
+//   (the width of the support, PGSuper's Technical Guide "Computing Pier Diaphragm Dimensions")
+// - Continuous and integral: one diaphragm across the CL pier, from the back side width to the ahead side width
+//   (measured from the CL pier). Integral connections are exported as continuous for now: the diaphragm isn't
+//   extended down to the support, so the import can't tell them apart
+// The height is down from the bottom of the slab. The diaphragm extends across the bridge from half the top width of the
+// exterior girders outside of them. Its top follows the bottom of the slab at the girders, measured on the CL pier or CL bearing line.
+// The placement is at the intersection of the alignment and the CL pier at elevation 0, with x along the CL pier
+// (positive to the right), y normal to the CL pier (positive ahead on station), and z up, the same as the bearing seat survey point set.
+template <typename Schema>
+void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart superstructure, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)
+{
+   USES_CONVERSION;
+
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   GET_IFACE2(pBroker, IGirder, pGirder);
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+
+   Float64 startStation, startElevation, startGrade;
+   GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+
+   typename Schema::IfcCurve basis_curve = {};
+   if (options.beam_placement == CIfcExportOptions::BeamPlacement::Linear)
+   {
+      if (auto gc = GetAlignmentDirectrix(file, options).template as<typename Schema::IfcGradientCurve>())
+      {
+         basis_curve = gc.BaseCurve();
+      }
+   }
+
+   auto surface_style = GetSurfaceStyle<Schema>(file, "Diaphragm", DECK_FILL_COLOR);
+
+   std::vector<typename Schema::IfcDefinitionSelect> diaphragms;
+   std::vector<typename Schema::IfcProduct> contained_diaphragms;
+
+   auto nPiers = pBridge->GetPierCount();
+   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
+   {
+      std::string pier_name(T2A(LABEL_PIER_EX(pBridge->IsAbutment(pierIdx), pierIdx)));
+      const CPierData2* pPier = pBridgeDesc->GetPier(pierIdx);
+
+      // local coordinate system of the pier
+      Float64 pierStation = pBridge->GetPierStation(pierIdx);
+      CComPtr<IPoint2d> pntLeft, pntAlignment, pntBridge, pntRight;
+      pBridge->GetPierPoints(pierIdx, pgsTypes::pcGlobal, &pntLeft, &pntAlignment, &pntBridge, &pntRight);
+      Float64 lx, ly, rx, ry;
+      pntLeft->Location(&lx, &ly);
+      pntRight->Location(&rx, &ry);
+      WBFL::Geometry::Vector3d x_dir(rx - lx, ry - ly, 0.0);
+      x_dir.Normalize();
+      WBFL::Geometry::Vector3d z_dir(0, 0, 1);
+      WBFL::Geometry::Vector3d y_dir = z_dir.Cross(x_dir);
+
+      CComPtr<IPoint2d> pntOrigin;
+      pAlignment->GetPoint(pierStation, 0.0, nullptr, pgsTypes::pcGlobal, &pntOrigin);
+      Float64 ox, oy;
+      pntOrigin->Location(&ox, &oy);
+
+      auto to_local = [&](IPoint2d* pnt) -> std::pair<Float64, Float64>
+         {
+            Float64 x, y;
+            pnt->Location(&x, &y);
+            WBFL::Geometry::Vector3d d(x - ox, y - oy, 0.0);
+            return { d.Dot(x_dir), d.Dot(y_dir) };
+         };
+
+      // top of the diaphragm (bottom of the slab) at a local point
+      auto top_elevation = [&](Float64 x, Float64 y, Float64 slab_depth)
+         {
+            CComPtr<IPoint2d> pnt;
+            pnt.CoCreateInstance(CLSID_Point2d);
+            pnt->Move(ox + x * x_dir.X() + y * y_dir.X(), oy + x * x_dir.Y() + y * y_dir.Y());
+            Float64 station, offset;
+            pAlignment->GetStationAndOffset(pgsTypes::pcGlobal, pnt, &station, &offset);
+            return pAlignment->GetElevation(station, offset) - slab_depth;
+         };
+
+      // a girder end at the pier: its point on the line the diaphragm follows, the slab depth there, and half the top width of the girder
+      struct GirderPoint { Float64 x; Float64 y; Float64 slab_depth; Float64 half_width; };
+      auto girder_point = [&](const CSegmentKey& segmentKey, pgsTypes::MemberEndType end, IPoint2d* pnt) -> GirderPoint
+         {
+            pgsPointOfInterest poi(segmentKey, end == pgsTypes::metStart ? 0.0 : pBridge->GetSegmentLength(segmentKey));
+            auto [x, y] = to_local(pnt);
+            return { x, y, pBridge->GetGrossSlabDepth(poi), pGirder->GetTopWidth(poi) / 2 };
+         };
+
+      // the diaphragm through the girder points, from half a top width outside of the exterior girders
+      auto diaphragm_points = [&](std::vector<GirderPoint> girder_points, Float64 y)
+         {
+            std::sort(girder_points.begin(), girder_points.end(), [](const auto& a, const auto& b) {return a.x < b.x; });
+            std::vector<DiaphragmPoint> points;
+            const auto& first = girder_points.front();
+            points.push_back({ first.x - first.half_width, top_elevation(first.x - first.half_width, y, first.slab_depth) });
+            for (const auto& p : girder_points)
+            {
+               if (IsLE(p.x, points.back().x))
+                  continue; // not past the previous point
+               points.push_back({ p.x, top_elevation(p.x, y, p.slab_depth) });
+            }
+            const auto& last = girder_points.back();
+            if (IsLT(points.back().x, last.x + last.half_width))
+               points.push_back({ last.x + last.half_width, top_elevation(last.x + last.half_width, y, last.slab_depth) });
+            return points;
+         };
+
+      // the girder ends on a pier face
+      auto girder_ends = [&](pgsTypes::PierFaceType face)
+         {
+            std::vector<std::pair<CSegmentKey, pgsTypes::MemberEndType>> ends;
+            GroupIndexType backGrpIdx, aheadGrpIdx;
+            pBridge->GetGirderGroupIndex(pierIdx, &backGrpIdx, &aheadGrpIdx);
+            GroupIndexType grpIdx = (face == pgsTypes::Back ? backGrpIdx : aheadGrpIdx);
+            if (grpIdx == INVALID_INDEX)
+               return ends;
+            GirderIndexType nGirders = pBridge->GetGirderCount(grpIdx);
+            for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
+            {
+               CSegmentKey segmentKey = pBridge->GetSegmentAtPier(pierIdx, CGirderKey(grpIdx, gdrIdx));
+               if (segmentKey.segmentIndex == INVALID_INDEX)
+                  continue;
+               ends.emplace_back(segmentKey, face == pgsTypes::Back ? pgsTypes::metEnd : pgsTypes::metStart);
+            }
+            return ends;
+         };
+
+      // a diaphragm at this pier: name suffix, points, height, and extent normal to the CL pier
+      struct Diaphragm { std::string name; std::vector<DiaphragmPoint> points; Float64 height; Float64 y0; Float64 y1; };
+      std::vector<Diaphragm> pier_diaphragms;
+
+      // the CL girders at the CL bearings of a pier face, and the girder ends there
+      auto bearing_points = [&](pgsTypes::PierFaceType face)
+         {
+            std::vector<std::tuple<CSegmentKey, pgsTypes::MemberEndType, CComPtr<IPoint2d>>> points;
+            auto ends = girder_ends(face);
+            auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, false);
+            for (const auto& elevDetails : vElevDetails)
+            {
+               if (elevDetails.BearingIdx != IBridge::sbiCLValue && elevDetails.BearingIdx != IBridge::sbiSingleBearingValue)
+                  continue; // only the CL girder
+
+               auto found = std::find_if(ends.begin(), ends.end(), [&elevDetails](const auto& e) {return e.first.girderIndex == elevDetails.GirderKey.girderIndex; });
+               if (found == ends.end())
+                  continue;
+
+               CComPtr<IDirection> normal;
+               pAlignment->GetBearingNormal(elevDetails.Station, &normal);
+               CComPtr<IPoint2d> pnt;
+               pAlignment->GetPoint(elevDetails.Station, elevDetails.Offset, normal, pgsTypes::pcGlobal, &pnt);
+               points.emplace_back(found->first, found->second, pnt);
+            }
+            return points;
+         };
+
+      bool bContinuous = pPier->IsInteriorPier() || (pPier->IsBoundaryPier() && pPier->GetBoundaryConditionType() != pgsTypes::bctHinge && pPier->GetBoundaryConditionType() != pgsTypes::bctRoller);
+      if (bContinuous)
+      {
+         // one diaphragm across the CL pier, through the intersections of the CL girders and the CL pier
+         std::vector<GirderPoint> girder_points;
+         Float64 y0 = 0, y1 = 0, height = 0;
+         for (auto face : GetBearingLineFaces(pBroker, pierIdx))
+         {
+            auto points = bearing_points(face);
+            if (points.empty())
+               continue;
+
+            Float64 W, H;
+            pBridge->GetPierDiaphragmSize(pierIdx, face, &W, &H);
+            (face == pgsTypes::Back ? y0 : y1) = (face == pgsTypes::Back ? -W : W);
+            height = Max(height, H);
+
+            for (const auto& [segmentKey, end, pnt] : points)
+            {
+               // along the CL girder from the CL bearing to the CL pier
+               CComPtr<IDirection> segment_direction;
+               pGirder->GetSegmentDirection(segmentKey, &segment_direction);
+               Float64 dir;
+               segment_direction->get_Value(&dir);
+               WBFL::Geometry::Vector3d girder_dir(cos(dir), sin(dir), 0.0);
+               Float64 dy = girder_dir.Dot(y_dir);
+               auto p = girder_point(segmentKey, end, pnt);
+               if (IsZero(dy))
+                  continue; // girder parallel to the CL pier
+               p.x -= p.y * girder_dir.Dot(x_dir) / dy;
+               p.y = 0;
+               girder_points.push_back(p);
+            }
+         }
+         if (!girder_points.empty() && IsLT(y0, y1) && IsGT(0.0, height))
+            pier_diaphragms.push_back({ "", diaphragm_points(girder_points, 0.0), height, y0, y1 });
+      }
+      else
+      {
+         // a diaphragm on each pier face, centered on the CL bearings
+         auto faces = GetBearingLineFaces(pBroker, pierIdx);
+         for (auto face : faces)
+         {
+            Float64 W, H;
+            pBridge->GetPierDiaphragmSize(pierIdx, face, &W, &H);
+            if (IsLE(W, 0.0) || IsLE(H, 0.0))
+               continue;
+
+            std::vector<GirderPoint> girder_points;
+            for (const auto& [segmentKey, end, pnt] : bearing_points(face))
+               girder_points.push_back(girder_point(segmentKey, end, pnt));
+            if (girder_points.empty())
+               continue;
+
+            Float64 y = std::accumulate(girder_points.begin(), girder_points.end(), 0.0, [](Float64 sum, const auto& p) {return sum + p.y; }) / girder_points.size();
+            std::string suffix = (faces.size() == 2 ? (face == pgsTypes::Back ? " Back" : " Ahead") : "");
+            pier_diaphragms.push_back({ suffix, diaphragm_points(girder_points, y), H, y - W / 2, y + W / 2 });
+         }
+      }
+
+      for (const auto& d : pier_diaphragms)
+      {
+         if (d.points.size() < 2)
+            continue;
+
+         auto solid = CreateDiaphragmFaceSet<Schema>(file, d.points, d.height, d.y0, d.y1);
+         StyleRepresentationItem<Schema>(file, solid, surface_style);
+
+         std::vector<typename Schema::IfcRepresentationItem> representation_items;
+         representation_items.push_back(solid);
+         std::vector<typename Schema::IfcRepresentation> shape_representation_list;
+         shape_representation_list.push_back(file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("Tessellation"), representation_items));
+         auto product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
+
+         typename Schema::IfcObjectPlacement placement;
+         if (basis_curve)
+         {
+            auto pde = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(pierStation - startStation), std::nullopt, std::nullopt, std::nullopt, basis_curve);
+            auto a2pl = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(pde,
+               file.create<typename Schema::IfcDirection>().initialize({ z_dir.X(), z_dir.Y(), z_dir.Z() }),
+               file.create<typename Schema::IfcDirection>().initialize({ x_dir.X(), x_dir.Y(), x_dir.Z() }));
+            auto fallback_placement = file.addPlacement3d(ox, oy, 0.0, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+            placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, a2pl, fallback_placement);
+         }
+         else
+         {
+            placement = file.addLocalPlacement({}, ox, oy, 0.0, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+         }
+
+         std::string name = pier_name + d.name + " Diaphragm";
+         auto diaphragm = file.create<typename Schema::IfcBeam>().initialize(ifcopenshell::global_id(), {}, name, std::nullopt, std::nullopt,
+            placement, product_definition_shape, std::nullopt, Schema::IfcBeamTypeEnum::IfcBeamType_DIAPHRAGM);
+
+         diaphragms.push_back(diaphragm);
+         contained_diaphragms.push_back(diaphragm);
+
+         ExportContext context{ pBroker, &options };
+         context.pier = pierIdx;
+         Classify<Schema>(file, ElementKind::Diaphragm, diaphragm, options);
+         WritePropertySets<Schema>(file, ElementKind::Diaphragm, diaphragm, context);
+      }
+   }
+
+   if (diaphragms.empty())
+      return;
+
+   for (auto& diaphragm : contained_diaphragms)
+      file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, diaphragm);
+
+   // PGSuper's diaphragm loads use the deck concrete
+   ExportContext context{ pBroker, &options };
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, pMaterials->GetDeckFc28(), pMaterials->GetDeckMaxAggrSize(), ElementKind::Diaphragm, context, "Diaphragm", DECK_FILL_COLOR);
+   file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::string("Associates_Concrete_to_Diaphragms"), std::nullopt, diaphragms, material);
+}
+
 template <typename Schema>
 typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const std::string& name,const CSegmentKey& segmentKey,typename Schema::IfcBeamType beam_type, RebarRelationshipBatch<Schema>& rebar_batch)
 {
@@ -2949,6 +3264,8 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    // associate the material with the slab
    auto rel_associates_materials = file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, barrier_list, material);
+
+   CreatePierDiaphragms<Schema>(file, pBroker, options, superstructure, body_model_representation_subcontext);
 
 
 

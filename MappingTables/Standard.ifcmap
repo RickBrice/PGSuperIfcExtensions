@@ -22,7 +22,8 @@
     "reinforcement_cage": {"entity": "IfcElementAssembly", "predefined_type": "REINFORCEMENT_UNIT"},
     "deck": {"entity": "IfcSlab", "predefined_type": "FLOOR"},
     "barrier": {"entity": "IfcWall", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "BARRIER"}},
-    "bearing": {"entity": "IfcBearing"}
+    "bearing": {"entity": "IfcBearing"},
+    "diaphragm": {"entity": "IfcBeam", "predefined_type": "DIAPHRAGM"}
   },
   "property_sets": [
     {
@@ -59,7 +60,7 @@
       ]
     },
     {
-      "name": "usBrPset_Common", "applies_to": ["bridge", "superstructure", "substructure", "deck_part", "pier", "abutment", "foundation", "deck", "barrier", "girder", "reinforcement_cage", "bearing"],
+      "name": "usBrPset_Common", "applies_to": ["bridge", "superstructure", "substructure", "deck_part", "pier", "abutment", "foundation", "deck", "barrier", "girder", "reinforcement_cage", "bearing", "diaphragm"],
       "properties": [
         {"name": "Status", "type": "IfcLabel", "value": "NEW", "uri": "bsdd", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}},
         {"name": "AssociatedStandard", "type": "IfcLabel", "uri": "bsdd"},
@@ -120,7 +121,7 @@
       ]
     },
     {
-      "name": "usBrPset_PayItemQuantities", "applies_to": ["bridge", "deck", "barrier", "girder", "reinforcement_cage", "bearing"],
+      "name": "usBrPset_PayItemQuantities", "applies_to": ["bridge", "deck", "barrier", "girder", "reinforcement_cage", "bearing", "diaphragm"],
       "properties": [
         {"name": "PayItemReference", "type": "IfcLabel", "uri": "bsdd"},
         {"name": "PayQuantity", "type": "IfcReal", "uri": "bsdd"},
@@ -447,6 +448,34 @@
       ]
     },
     {
+      "name": "usBrPset_Diaphragm", "applies_to": "diaphragm", "uri": "bsdd",
+      "properties": [
+        {"name": "DiaphragmType", "type": "IfcLabel", "value": "End", "uri": "bsdd", "comment": "PGSuper's pier diaphragms are at the girder ends"}
+      ]
+    },
+    {
+      "name": "PGSuperPset_Diaphragm", "applies_to": "diaphragm",
+      "comment": "The pier's boundary condition where the model may have no bearings (decided 2026-10-23). Continuous diaphragms also show it by spanning the CL pier",
+      "properties": [
+        {"name": "SupportCondition", "type": "IfcLabel", "target": "diaphragm.support_condition"}
+      ]
+    },
+    {
+      "name": "Pset_ConcreteElementGeneral", "applies_to": "diaphragm",
+      "properties": [
+        {"name": "AssemblyPlace", "type": "IfcLabel", "value": "SITE", "enumeration": {"name": "PEnum_AssemblyPlace", "values": ["FACTORY", "OFFSITE", "SITE", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "CastingMethod", "type": "IfcLabel", "value": "INSITU", "enumeration": {"name": "PEnum_ConcreteCastingMethod", "values": ["INSITU", "MIXED", "PRECAST", "PRINTED", "OTHER", "UNKNOWN", "UNSET"]}},
+        {"name": "StrengthClass", "type": "IfcLabel", "target": "diaphragm.strength_class"}
+      ]
+    },
+    {
+      "name": "Pset_MaterialConcrete", "applies_to": "diaphragm", "attach": "material", "condition": "always",
+      "properties": [
+        {"name": "CompressiveStrength", "type": "IfcPressureMeasure", "target": "diaphragm.fc"},
+        {"name": "MaxAggregateSize", "type": "IfcPositiveLengthMeasure", "target": "diaphragm.max_aggregate_size"}
+      ]
+    },
+    {
       "name": "Pset_BearingCommon", "applies_to": "bearing", "condition": "always",
       "comment": "Lists of three booleans: along the girder, across it, and vertical. The import reads DisplacementAccommodated [0] and [1] with the locations of bearing.fixed_x and bearing.fixed_y",
       "properties": [
@@ -464,7 +493,7 @@
         {"name": "BearingBottomElevation", "type": "IfcLengthMeasure", "target": "bearing.bottom_elevation", "import": false, "uri": "bsdd"},
         {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope", "import": false, "uri": "bsdd"},
         {"name": "BearingThermalMovement", "type": "IfcNonNegativeLengthMeasure", "uri": "bsdd"},
-        {"name": "SupportCondition", "type": "IfcLabel", "uri": "bsdd"}
+        {"name": "SupportCondition", "type": "IfcLabel", "target": "bearing.support_condition", "uri": "bsdd", "comment": "the pier's boundary condition (Fixed: hinge, Expansion: roller), not the fixity of the elastomeric bearing (DisplacementAccommodated)"}
       ]
     },
     {
@@ -525,7 +554,8 @@
     {"applies_to": "tendon", "system": "usBridge", "identification": "usBridge_Tendon", "name": "Tendon", "location": "bsdd"},
     {"applies_to": "reinforcement_cage", "system": "usBridge", "identification": "usBridge_ReinforcementCage", "name": "ReinforcementCage", "location": "bsdd"},
     {"applies_to": "rebar", "system": "usBridge", "identification": "usBridge_ReinforcingBar", "name": "ReinforcingBar", "location": "bsdd"},
-    {"applies_to": "bearing", "system": "usBridge", "identification": "usBridge_Bearing", "name": "Bearing", "location": "bsdd"}
+    {"applies_to": "bearing", "system": "usBridge", "identification": "usBridge_Bearing", "name": "Bearing", "location": "bsdd"},
+    {"applies_to": "diaphragm", "system": "usBridge", "identification": "usBridge_DiaphragmConcrete", "name": "DiaphragmConcrete", "location": "bsdd"}
   ],
   "targets": {
     "girder.type_names": [

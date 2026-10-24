@@ -175,12 +175,12 @@ namespace
       return n % 2 ? values[n / 2] : (values[n / 2 - 1] + values[n / 2]) / 2;
    }
 
-   // plan outline, center (of the bounding box), and elevation range of each IfcBearing
-   std::vector<BearingGeometry> get_bearing_geometry(ifcopenshell::file& file)
+   // plan outline, center (of the bounding box), and elevation range of each element of a role (e.g. each IfcBearing)
+   std::vector<BearingGeometry> get_element_geometry(ifcopenshell::file& file, ElementKind role)
    {
       std::set<int> bearing_ids;
-      for (auto& bearing : CIfcImporter::GetTargetReader().Select(ElementKind::Bearing, file))
-         bearing_ids.insert(bearing.id());
+      for (auto& element : CIfcImporter::GetTargetReader().Select(role, file))
+         bearing_ids.insert(element.id());
 
       std::vector<BearingGeometry> bearings;
       if (bearing_ids.empty())
@@ -236,7 +236,7 @@ void locate_bearings(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::f
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Locating bearings"));
 
-   auto bearings = get_bearing_geometry(file);
+   auto bearings = get_element_geometry(file, ElementKind::Bearing);
    if (bearings.empty())
    {
       WBFL::System::Logger::Info(_T("No IfcBearing geometry found. Girder end distances and bearing offsets will not be imported."));
@@ -765,6 +765,175 @@ void set_end_distance_and_bearing_offset(std::shared_ptr<WBFL::EAF::Broker> pBro
             << _T(" in) or bearing offsets (") << WBFL::Units::ConvertFromSysUnits(*min_bo, WBFL::Units::Measure::Inch) << _T(" to ") << WBFL::Units::ConvertFromSysUnits(*max_bo, WBFL::Units::Measure::Inch)
             << _T(" in). The median is used");
       }
+      WBFL::System::Logger::Info(os.str().c_str());
+   }
+}
+
+namespace
+{
+   // The boundary condition a support condition names (usBrPset_BearingCommon.SupportCondition examples: Fixed; Expansion; Roller).
+   // Continuous is written on PGSuper's continuous pier diaphragms
+   std::optional<pgsTypes::BoundaryConditionType> parse_support_condition(const std::string& text)
+   {
+      std::string value(text);
+      std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {return (char)std::tolower(c); });
+      for (auto word : { "fixed", "hinge", "hinged", "pinned" })
+         if (value == word) return pgsTypes::bctHinge;
+      for (auto word : { "expansion", "roller", "free", "sliding" })
+         if (value == word) return pgsTypes::bctRoller;
+      if (value == "continuous")
+         return pgsTypes::bctContinuousAfterDeck;
+      return std::nullopt;
+   }
+
+   // The support condition of the first element that has one (target bearing.support_condition or diaphragm.support_condition):
+   // the boundary condition, the element's name, and the text
+   std::optional<std::tuple<pgsTypes::BoundaryConditionType, std::string, std::string>> read_support_condition(ifcopenshell::file& file, const std::vector<int>& ids, std::string_view target)
+   {
+      USES_CONVERSION;
+      const auto& reader = CIfcImporter::GetTargetReader();
+      for (auto id : ids)
+      {
+         auto object = file.instance_by_id(id).as<IfcSchema::IfcObject>();
+         if (!object)
+            continue;
+         auto reading = reader.Read(target, object);
+         if (!reading || !std::holds_alternative<std::string>(reading->value))
+            continue;
+         const auto& text = std::get<std::string>(reading->value);
+         std::string name = object.Name().value_or("unnamed");
+         if (auto bc = parse_support_condition(text))
+            return std::make_tuple(*bc, name, text);
+
+         std::_tostringstream os;
+         os << A2T(name.c_str()) << _T(": the support condition \"") << A2T(text.c_str()) << _T("\" isn't known (Fixed, Expansion, Roller, or Continuous). It's ignored.");
+         WBFL::System::Logger::Warning(os.str().c_str());
+      }
+      return std::nullopt;
+   }
+}
+
+void set_boundary_conditions(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, const std::vector<Float64>& pier_stations, const std::vector<Eigen::Vector2d>& pier_directions, CBridgeDescription2& bridge_desc)
+{
+   USES_CONVERSION;
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+
+   const Float64 inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
+   const Float64 feet = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet);
+
+   auto diaphragms = get_element_geometry(file, ElementKind::Diaphragm);
+   auto pier_faces = get_pier_faces(layout);
+
+   PierIndexType nPiers = bridge_desc.GetPierCount();
+   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
+   {
+      auto* pPier = bridge_desc.GetPier(pierIdx);
+
+      // CL pier: through the alignment at the pier station, with the normal pointing ahead on station
+      CComPtr<IPoint2d> point;
+      pAlignment->GetPoint(pier_stations[pierIdx], 0.0, nullptr, pgsTypes::PlanCoordinateType::pcGlobal, &point);
+      Float64 px, py;
+      point->Location(&px, &py);
+      Eigen::Vector2d pier_point(px, py);
+      const auto& pier_line = pier_directions[pierIdx];
+      Eigen::Vector2d normal(-pier_line.y(), pier_line.x());
+      CComPtr<IDirection> alignment_direction;
+      pAlignment->GetBearing(pier_stations[pierIdx], &alignment_direction);
+      Float64 direction;
+      alignment_direction->get_Value(&direction);
+      if (normal.dot(Eigen::Vector2d(cos(direction), sin(direction))) < 0)
+         normal = -normal;
+
+      // the girder ends at the pier: their distance ahead of the CL pier on each side, and along the CL pier
+      std::vector<Float64> back_ends, ahead_ends, along;
+      for (auto [face, ends] : { std::make_pair(pgsTypes::Back, &back_ends), std::make_pair(pgsTypes::Ahead, &ahead_ends) })
+      {
+         auto found = pier_faces.find({ pierIdx, face });
+         if (found == pier_faces.end())
+            continue;
+         for (const auto& e : found->second)
+         {
+            ends->push_back((e.end - pier_point).dot(normal));
+            along.push_back((e.end - pier_point).dot(pier_line));
+         }
+      }
+      if (along.empty())
+         continue; // no girders at this pier
+
+      // the bearings at the pier
+      std::vector<int> bearing_ids;
+      if (0 < pierIdx && pierIdx - 1 < layout.size())
+         for (const auto& girder : layout[pierIdx - 1])
+            for (const auto& b : girder.bearings[pgsTypes::metEnd])
+               bearing_ids.push_back(b.id);
+      if (pierIdx < layout.size())
+         for (const auto& girder : layout[pierIdx])
+            for (const auto& b : girder.bearings[pgsTypes::metStart])
+               bearing_ids.push_back(b.id);
+
+      // the diaphragms at the pier: across the girder ends, within a few feet of the CL pier. A diaphragm makes the pier
+      // continuous if the girder ends of both spans are in it (within an inch), as PGSuper requires of a continuity diaphragm
+      auto [min_along, max_along] = std::minmax_element(along.begin(), along.end());
+      std::vector<int> diaphragm_ids;
+      std::string continuous_diaphragm;
+      for (const auto& diaphragm : diaphragms)
+      {
+         Float64 dmin = Float64_Max, dmax = -Float64_Max, amin = Float64_Max, amax = -Float64_Max;
+         for (const auto& p : diaphragm.plan)
+         {
+            Float64 d = (p - pier_point).dot(normal);
+            Float64 a = (p - pier_point).dot(pier_line);
+            dmin = std::min(dmin, d); dmax = std::max(dmax, d);
+            amin = std::min(amin, a); amax = std::max(amax, a);
+         }
+         if (dmax < -6 * feet || 6 * feet < dmin || amax < *min_along || *max_along < amin)
+            continue;
+
+         diaphragm_ids.push_back(diaphragm.id);
+         auto engages = [&](const std::vector<Float64>& ends) {return std::all_of(ends.begin(), ends.end(), [&](Float64 d) {return dmin - inch < d && d < dmax + inch; }); };
+         if (continuous_diaphragm.empty() && !back_ends.empty() && !ahead_ends.empty() && engages(back_ends) && engages(ahead_ends))
+            continuous_diaphragm = file.instance_by_id(diaphragm.id).as<IfcSchema::IfcObject>().Name().value_or("unnamed diaphragm");
+      }
+
+      std::optional<pgsTypes::BoundaryConditionType> bc;
+      std::_tostringstream evidence;
+      if (!continuous_diaphragm.empty())
+      {
+         bc = pgsTypes::bctContinuousAfterDeck;
+         evidence << _T("the diaphragm \"") << A2T(continuous_diaphragm.c_str()) << _T("\" engages the girder ends of both spans; continuity after the deck is assumed");
+      }
+      else if (auto bearing_condition = read_support_condition(file, bearing_ids, "bearing.support_condition"))
+      {
+         auto [condition, name, text] = *bearing_condition;
+         bc = (condition == pgsTypes::bctContinuousAfterDeck ? pgsTypes::bctHinge : condition); // bearings alone don't make a continuous connection
+         evidence << _T("support condition \"") << A2T(text.c_str()) << _T("\" of the bearing \"") << A2T(name.c_str()) << _T("\"");
+      }
+      else if (auto diaphragm_condition = read_support_condition(file, diaphragm_ids, "diaphragm.support_condition"))
+      {
+         auto [condition, name, text] = *diaphragm_condition;
+         bc = condition;
+         evidence << _T("support condition \"") << A2T(text.c_str()) << _T("\" of the diaphragm \"") << A2T(name.c_str()) << _T("\"");
+         if (condition == pgsTypes::bctContinuousAfterDeck && (back_ends.empty() || ahead_ends.empty()))
+         {
+            bc = pgsTypes::bctHinge;
+            evidence << _T("; an abutment can't be continuous");
+         }
+         else if (condition == pgsTypes::bctContinuousAfterDeck)
+         {
+            evidence << _T(", although the girder ends aren't all in it; continuity after the deck is assumed");
+         }
+      }
+
+      if (!bc)
+      {
+         bc = (pierIdx == 0 ? pgsTypes::bctHinge : pgsTypes::bctRoller);
+         evidence << _T("assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere");
+      }
+
+      pPier->SetBoundaryConditionType(*bc);
+
+      std::_tostringstream os;
+      os << LABEL_PIER_EX(pPier->IsAbutment(), pierIdx) << _T(" boundary condition: ") << CPierData2::AsString(*bc) << _T(" (") << evidence.str() << _T(")");
       WBFL::System::Logger::Info(os.str().c_str());
    }
 }

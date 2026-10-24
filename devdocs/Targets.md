@@ -174,7 +174,19 @@ The context carries the `CBearingData2` of the girder at the pier face (`CPierDa
 | `bearing.top_elevation` | Length | `BearingElevationDetails::TopBrgElevation` | – |
 | `bearing.bottom_elevation` | Length | `BearingElevationDetails::BrgSeatElevation` | – |
 | `bearing.girder_slope` | Ratio | `BearingElevationDetails::GirderGrade` | – |
+| `bearing.support_condition` | Text | the pier's boundary condition (`CPierData2::GetBoundaryConditionType`), not the elastomeric bearing's fixity: "Fixed" for a hinge, "Expansion" for a roller, "Fixed" for continuous and integral connections (PGSuper's analysis pins the girders there) | `set_boundary_conditions` (`Piers.cpp`): hinge or roller for the pier when no diaphragm makes it continuous ("Fixed", "Hinge", "Pinned" → hinge; "Expansion", "Roller", "Free", "Sliding" → roller), set with `CPierData2::SetBoundaryConditionType` |
+
+### Pier diaphragms (`IfcBeam.DIAPHRAGM`)
+
+The context carries the pier index. PGSuper uses the deck concrete for the diaphragms. The exporter writes the diaphragms from `IBridge::GetPierDiaphragmSize` (`CreatePierDiaphragms`); the import reads continuity from their geometry (a diaphragm that the girder ends of both spans are in makes the pier continuous after the deck), see Phase 2 in [IfcImportPlan.md](IfcImportPlan.md).
+
+| Target | Kind | Export: PGSuper data | Import |
+|---|---|---|---|
+| `diaphragm.support_condition` | Text | the pier's boundary condition: "Fixed" (hinge, and an integral abutment), "Expansion" (roller), or "Continuous" (continuous and integral connections; integral ones are exported as continuous for now) | `set_boundary_conditions`, after the diaphragm geometry and the bearings' `bearing.support_condition`: hinge, roller, or continuous after the deck |
+| `diaphragm.fc` | Stress | `IMaterials::GetDeckFc28` | – |
+| `diaphragm.strength_class` | Text | the same, formatted | – |
+| `diaphragm.max_aggregate_size` | Length | `IMaterials::GetDeckMaxAggrSize` | – |
 
 ## Data imported without targets
 
-Most of the import comes from geometry and IFC structure, not from table targets, and so is not in this list: the alignment and profile, pier stations and skews, girder layout and spacing, end distances and bearing offsets, bearing dimensions, deck edges, depth, haunches and slab offset, roadway section, and the barrier sections. These are described in [IfcImportPlan.md](IfcImportPlan.md).
+Most of the import comes from geometry and IFC structure, not from table targets, and so is not in this list: the alignment and profile, pier stations and skews, girder layout and spacing, end distances and bearing offsets, bearing dimensions, continuity from the pier diaphragms, deck edges, depth, haunches and slab offset, roadway section, and the barrier sections. These are described in [IfcImportPlan.md](IfcImportPlan.md).

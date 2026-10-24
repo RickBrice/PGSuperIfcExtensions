@@ -260,6 +260,9 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    // Bearing data from the bearing geometry and properties
    set_bearing_data(m_Importer.GetBroker(), file, layout, bridge_desc);
 
+   // Boundary conditions from the pier diaphragms and the support conditions
+   set_boundary_conditions(m_Importer.GetBroker(), file, layout, pier_stations, pier_directions, bridge_desc);
+
    // Prestressing strands, after the library entries are set
    import_strands(m_Importer.GetBroker(), file, layout, m_CreatedEntries, bridge_desc);
 

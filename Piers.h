@@ -48,4 +48,10 @@ std::vector<Eigen::Vector2d> set_pier_orientation(std::shared_ptr<WBFL::EAF::Bro
 // Sets the girder end distance and bearing offset for each pier face, measured normal to the CL pier, from the CL bearings.
 // Without bearings, the end distance is kept and the bearing offset locates the ends of the girders. The CL bearing
 // of each girder is then located from the end distance.
+// Boundary condition of each pier from the pier diaphragms and the support conditions of the bearings and diaphragms
+// (see devdocs/IfcImportPlan.md, Phase 2): continuous after deck where a diaphragm across the CL pier engages the girder
+// ends of both spans, else hinge or roller from the support condition of the bearings, then of the diaphragms, else a hinge
+// at the first abutment and rollers elsewhere. Each decision is logged with its evidence
+void set_boundary_conditions(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const GirderLayout& layout, const std::vector<Float64>& pier_stations, const std::vector<Eigen::Vector2d>& pier_directions, CBridgeDescription2& bridge_desc);
+
 void set_end_distance_and_bearing_offset(std::shared_ptr<WBFL::EAF::Broker> pBroker, GirderLayout& layout, const std::vector<Float64>& pier_stations, const std::vector<Eigen::Vector2d>& pier_directions, CBridgeDescription2& bridge_desc);

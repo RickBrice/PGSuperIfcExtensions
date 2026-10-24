@@ -30,7 +30,7 @@ namespace WBFL { namespace EAF { class Broker; }; };
 
 using Spacing = std::map<GroupIndexType, std::vector<double>>;
 std::set<int> get_beam_ids(ifcopenshell::file& file);
-// An IfcBearing: plan outline, center, and elevation range (global coordinates)
+// An IfcBearing (or another element, e.g. a diaphragm): plan outline, center, and elevation range (global coordinates)
 struct BearingGeometry
 {
    int id;                           // IfcBearing

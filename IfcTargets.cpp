@@ -129,6 +129,24 @@ namespace
 
    Float64 deck_fc(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetDeckFc28(); }
    Float64 deck_max_aggregate_size(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetDeckMaxAggrSize(); }
+
+   // The support condition of a pier (its boundary condition): "Fixed" for a hinge, "Expansion" for a roller.
+   // Continuous and integral connections are "Continuous" on a diaphragm (integral ones are exported as continuous for now,
+   // see devdocs/IfcImportPlan.md, Phase 2) and "Fixed" on a bearing (PGSuper's analysis pins the girders there); an integral
+   // abutment is "Fixed"
+   std::string support_condition(const ExportContext& c, bool bDiaphragm)
+   {
+      GET_IFACE2(c.broker, IBridgeDescription, pIBridgeDesc);
+      const CPierData2* pPier = pIBridgeDesc->GetBridgeDescription()->GetPier(c.pier);
+      if (pPier->IsBoundaryPier())
+      {
+         if (pPier->GetBoundaryConditionType() == pgsTypes::bctHinge)
+            return "Fixed";
+         if (pPier->GetBoundaryConditionType() == pgsTypes::bctRoller)
+            return "Expansion";
+      }
+      return bDiaphragm && !pPier->IsAbutment() ? "Continuous" : "Fixed";
+   }
 }
 
 const std::vector<TargetDef>& GetTargetDefs()
@@ -490,6 +508,20 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->BrgSeatElevation); } },
       { .name = "bearing.girder_slope", .element = ElementKind::Bearing, .kind = ValueKind::Ratio, .description = "longitudinal slope of the girder at the bearing",
         .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->GirderGrade); } },
+      { .name = "bearing.support_condition", .element = ElementKind::Bearing, .kind = ValueKind::Text, .description = "support condition of the pier (its boundary condition): Fixed (hinge) or Expansion (roller)",
+        .get = [](const ExportContext& c) { return ExportValue(support_condition(c, false)); } },
+
+      //
+      // Pier diaphragms (PGSuper uses the deck concrete for them)
+      //
+      { .name = "diaphragm.support_condition", .element = ElementKind::Diaphragm, .kind = ValueKind::Text, .description = "support condition of the pier (its boundary condition): Fixed (hinge), Expansion (roller), or Continuous (continuous or integral)",
+        .get = [](const ExportContext& c) { return ExportValue(support_condition(c, true)); } },
+      { .name = "diaphragm.fc", .element = ElementKind::Diaphragm, .kind = ValueKind::Stress, .description = "diaphragm concrete strength, f'c", .display_unit = DU::Stress,
+        .get = [](const ExportContext& c) { return ExportValue(deck_fc(c)); } },
+      { .name = "diaphragm.strength_class", .element = ElementKind::Diaphragm, .kind = ValueKind::Text, .description = "diaphragm concrete strength class",
+        .get = [](const ExportContext& c) { return ExportValue(strength_class(c.broker, deck_fc(c))); } },
+      { .name = "diaphragm.max_aggregate_size", .element = ElementKind::Diaphragm, .kind = ValueKind::Length, .description = "diaphragm concrete maximum aggregate size", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c) { return ExportValue(deck_max_aggregate_size(c)); } },
    };
    return targets;
 }
@@ -527,6 +559,7 @@ namespace
          { ElementKind::Deck, "deck" },
          { ElementKind::Haunch, "haunch" },
          { ElementKind::Bearing, "bearing" },
+         { ElementKind::Diaphragm, "diaphragm" },
          { ElementKind::Barrier, "barrier" },
       };
       return names;

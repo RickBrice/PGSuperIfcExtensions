@@ -64,6 +64,7 @@ enum class ElementKind
    Deck,
    Haunch,
    Bearing,
+   Diaphragm,      // IfcBeam.DIAPHRAGM, a pier diaphragm
    Barrier
 };
 

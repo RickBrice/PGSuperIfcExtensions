@@ -31,6 +31,7 @@ An element role is a kind of IFC element that PGSuper reads or writes. A table's
 | `deck` |
 | `haunch` |
 | `bearing` |
+| `diaphragm` |
 | `barrier` |
 
 Targets
@@ -131,3 +132,8 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `bearing.top_elevation` | `bearing` | length | elevation of the top of the bearing |
 | `bearing.bottom_elevation` | `bearing` | length | elevation of the bottom of the bearing (bearing seat) |
 | `bearing.girder_slope` | `bearing` | ratio | longitudinal slope of the girder at the bearing |
+| `bearing.support_condition` | `bearing` | text | support condition of the pier (its boundary condition): Fixed (hinge) or Expansion (roller) |
+| `diaphragm.support_condition` | `diaphragm` | text | support condition of the pier (its boundary condition): Fixed (hinge), Expansion (roller), or Continuous (continuous or integral) |
+| `diaphragm.fc` | `diaphragm` | stress | diaphragm concrete strength, f'c |
+| `diaphragm.strength_class` | `diaphragm` | text | diaphragm concrete strength class |
+| `diaphragm.max_aggregate_size` | `diaphragm` | length | diaphragm concrete maximum aggregate size |
