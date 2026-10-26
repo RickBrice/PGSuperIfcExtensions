@@ -152,7 +152,8 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    pProgress->UpdateMessage(_T("Exporting bridge model"));
 
    std::map<CSegmentKey, std::string> segment_global_ids;
-   CIfcExportOptions ifc_options = options_sheet.m_IfcPage.options;
+   // a round trip uses the default options: the IFC tab's others don't apply to it, and are disabled
+   CIfcExportOptions ifc_options = source_model.IsEmpty() ? options_sheet.m_IfcPage.options : CIfcExportOptions();
    ifc_options.mapping_file = options_sheet.m_TablePage.m_strTable;
    ifc_options.mapping_source = options_sheet.m_TablePage.m_Source;
    ifc_options.source_model = source_model;

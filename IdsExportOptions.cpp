@@ -36,7 +36,6 @@ IMPLEMENT_DYNAMIC(CIdsExportOptionsDlg, CPropertyPage)
 CIdsExportOptionsDlg::CIdsExportOptionsDlg()
    : CPropertyPage(IDD_IDS_EXPORT_OPTIONS)
 {
-   SetPageLogo(*this);
 }
 
 CIdsExportOptionsDlg::~CIdsExportOptionsDlg()

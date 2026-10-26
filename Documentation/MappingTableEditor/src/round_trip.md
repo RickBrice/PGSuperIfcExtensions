@@ -8,7 +8,7 @@ Exporting a copy of the model
 
 1. Import the IFC model (File > Import > IFC Model Importer). The project remembers the model: where it is, and which of its elements became which girders, piers, bearings, and so on. Save the project to keep it.
 2. Design in PGSuper.
-3. Export (File > Export > Bridge Model to IFC). On the **IFC** tab, under **Round Trip**, **Update a copy of the IFC model this project was imported from** is checked when the model is where it was and hasn't changed since the import. The box below it shows the model.
+3. Export (File > Export > Bridge Model to IFC). At the top of the **IFC** tab, under **Round Trip**, **Update a copy of the IFC model this project was imported from** is checked when the model is where it was and hasn't changed since the import. The box below it shows the model. While it's checked, the tab's other options are disabled: they're for exporting PGSuper's model, and a round trip uses their defaults. The Mapping Table and IDS tabs apply.
 4. Choose the file to write. The default name is the model's name followed by the project's name. The export won't replace the model itself.
 
 If the model has moved or changed, the box says so and the option is off. Use **...** to locate it; the model you choose is used as it is.

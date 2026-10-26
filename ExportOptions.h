@@ -55,6 +55,10 @@ protected:
 	void OnSpanChanged();
 	afx_msg void OnIncludeRebarClicked();
 	afx_msg void OnBrowseSourceModel();
+	afx_msg void OnUpdateSourceModelClicked();
+
+	// A round trip only updates a copy of the model, so the other options don't apply: they're disabled
+	void UpdateRoundTripEnable();
 
 	void UpdateSourceModelControls();
 

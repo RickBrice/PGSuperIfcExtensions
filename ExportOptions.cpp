@@ -43,7 +43,6 @@ IMPLEMENT_DYNAMIC(CExportOptions, CPropertyPage)
 CExportOptions::CExportOptions()
 	: CPropertyPage(IDD_EXPORT_OPTIONS)
 {
-   SetPageLogo(*this);
 
 }
 
@@ -81,6 +80,7 @@ BEGIN_MESSAGE_MAP(CExportOptions, CPropertyPage)
 	ON_CBN_SELCHANGE(IDC_SPAN, OnSpanChanged)
 	ON_BN_CLICKED(IDC_INCLUDE_REBAR, OnIncludeRebarClicked)
 	ON_BN_CLICKED(IDC_SOURCE_MODEL_BROWSE, OnBrowseSourceModel)
+	ON_BN_CLICKED(IDC_UPDATE_SOURCE_MODEL, OnUpdateSourceModelClicked)
 END_MESSAGE_MAP()
 
 
@@ -117,6 +117,7 @@ BOOL CExportOptions::OnInitDialog()
 
 	UpdateRebarRepresentationEnable();
 	UpdateSourceModelControls();
+	UpdateRoundTripEnable();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
@@ -140,6 +141,24 @@ void CExportOptions::UpdateSourceModelControls()
 		((CButton*)GetDlgItem(IDC_UPDATE_SOURCE_MODEL))->SetCheck(BST_UNCHECKED);
 }
 
+void CExportOptions::OnUpdateSourceModelClicked()
+{
+	UpdateRoundTripEnable();
+}
+
+void CExportOptions::UpdateRoundTripEnable()
+{
+	BOOL bRoundTrip = ((CButton*)GetDlgItem(IDC_UPDATE_SOURCE_MODEL))->GetCheck() == BST_CHECKED;
+	for (CWnd* pChild = GetWindow(GW_CHILD); pChild; pChild = pChild->GetNextWindow())
+	{
+		int id = pChild->GetDlgCtrlID();
+		if (id != IDC_UPDATE_SOURCE_MODEL && id != IDC_SOURCE_MODEL && id != IDC_SOURCE_MODEL_BROWSE)
+			pChild->EnableWindow(!bRoundTrip);
+	}
+	if (!bRoundTrip)
+		UpdateRebarRepresentationEnable();
+}
+
 void CExportOptions::OnBrowseSourceModel()
 {
 	CFileDialog dlg(TRUE, _T("ifc"), m_strSourceModel, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, _T("IFC Files (*.ifc)|*.ifc||"), this);
@@ -151,6 +170,7 @@ void CExportOptions::OnBrowseSourceModel()
 	m_strSourceModelProblem.Empty();
 	UpdateSourceModelControls();
 	((CButton*)GetDlgItem(IDC_UPDATE_SOURCE_MODEL))->SetCheck(BST_CHECKED);
+	UpdateRoundTripEnable();
 }
 
 void CExportOptions::OnIncludeRebarClicked()

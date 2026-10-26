@@ -214,7 +214,6 @@ END_MESSAGE_MAP()
 
 CExportTablePage::CExportTablePage() : CPropertyPage(IDD_EXPORT_TABLE_PAGE)
 {
-   SetPageLogo(*this);
    m_DefaultLabel = configured_table_label();
 }
 
