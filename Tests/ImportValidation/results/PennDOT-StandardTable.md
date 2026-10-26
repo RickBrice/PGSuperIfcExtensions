@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+24.00, at[2] = 0+54.00
 
-**62 of 108 values set by the import**, 46 are template defaults
+**62 of 115 values set by the import**, 53 are template defaults
 
-## template default (46)
+## template default (53)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -53,6 +53,13 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+06.00, at[1] = 0+
 | `deck.type` | 0 | 0 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
+| `deck.rebar.top.cover` | 2.000 in | 2.000 in |
+| `deck.rebar.top.lump_sum` | 0.180 in^2/ft | 0.180 in^2/ft |
+| `deck.rebar.top.bar_size` | 4095 | 4095 |
+| `deck.rebar.bottom.cover` | 2.000 in | 2.000 in |
+| `deck.rebar.bottom.lump_sum` | 0.270 in^2/ft | 0.270 in^2/ft |
+| `deck.rebar.bottom.bar_size` | 4095 | 4095 |
+| `deck.rebar.supplemental_count` | 0 | 0 |
 | `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope |
 | `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope |
 | `pier[0].skew` | 0.0000 deg | 0.0000 deg |

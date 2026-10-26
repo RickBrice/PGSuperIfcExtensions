@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 0+00.00, at[1] = 0+55.00, at[2] = 1+10.00, at[3] = 1+65.00, at[4] = 2+20.00, at[5] = 2+75.00, at[6] = 3+30.00, at[7] = 3+85.00, at[8] = 4+40.00
 
-**273 of 612 match** - mismatch: 8, not imported: 12, missing: 0, not comparable: 0, default match: 319, extra: 0
+**273 of 619 match** - mismatch: 8, not imported: 12, missing: 0, not comparable: 0, default match: 326, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -39,7 +39,7 @@ A *default match* equals the expected value only because the template has the sa
 | `pier[4].back.end_distance` | 25.000 in | 20.500 in | template default |
 | `pier[4].ahead.end_distance` | 25.000 in | 20.500 in | template default |
 
-## default match (319)
+## default match (326)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -224,6 +224,13 @@ A *default match* equals the expected value only because the template has the sa
 | `deck.haunch_shape` | 1 | 1 | template default |
 | `deck.fc` | 4.000 ksi | 4.000 ksi | template default |
 | `deck.edge_point_count` | 1 | 1 | template default |
+| `deck.rebar.top.cover` | 2.000 in | 2.000 in | template default |
+| `deck.rebar.top.lump_sum` | 0.180 in^2/ft | 0.180 in^2/ft | template default |
+| `deck.rebar.top.bar_size` | 4095 | 4095 | template default |
+| `deck.rebar.bottom.cover` | 2.000 in | 2.000 in | template default |
+| `deck.rebar.bottom.lump_sum` | 0.270 in^2/ft | 0.270 in^2/ft | template default |
+| `deck.rebar.bottom.bar_size` | 4095 | 4095 | template default |
+| `deck.rebar.supplemental_count` | 0 | 0 | template default |
 | `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope | template default |
 | `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope | template default |
 | `pier[1].skew` | 0.0000 deg | 0.0000 deg | template default |

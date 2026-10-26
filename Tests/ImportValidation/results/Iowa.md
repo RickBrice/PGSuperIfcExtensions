@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**233 of 274 values set by the import**, 41 are template defaults
+**250 of 293 values set by the import**, 43 are template defaults
 
-## template default (41)
+## template default (43)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -48,12 +48,14 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.type` | 0 | 0 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
+| `deck.rebar.top.bar_size` | 4095 | 4095 |
+| `deck.rebar.bottom.bar_size` | 4095 | 4095 |
 | `pier[0].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[1].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg |
 
-## set by the import (233)
+## set by the import (250)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -232,6 +234,23 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.left_overhang_taper` | 1 | 2 |
 | `deck.right_overhang_taper` | 1 | 2 |
 | `deck.haunch_shape` | 1 | 0 |
+| `deck.rebar.top.cover` | 2.000 in | 3.910 in |
+| `deck.rebar.top.lump_sum` | 0.180 in^2/ft | 0.335 in^2/ft |
+| `deck.rebar.bottom.cover` | 2.000 in | 2.738 in |
+| `deck.rebar.bottom.lump_sum` | 0.270 in^2/ft | 0.251 in^2/ft |
+| `deck.rebar.supplemental_count` | 0 | 4 |
+| `deck.rebar.pier[1].top.lump_sum` |  | 1.052 in^2/ft |
+| `deck.rebar.pier[1].top.left_cutoff` |  | 12.834 ft |
+| `deck.rebar.pier[1].top.right_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[1].bottom.lump_sum` |  | 1.200 in^2/ft |
+| `deck.rebar.pier[1].bottom.left_cutoff` |  | 12.834 ft |
+| `deck.rebar.pier[1].bottom.right_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].top.lump_sum` |  | 1.052 in^2/ft |
+| `deck.rebar.pier[2].top.left_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].top.right_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].bottom.lump_sum` |  | 1.200 in^2/ft |
+| `deck.rebar.pier[2].bottom.left_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].bottom.right_cutoff` |  | 12.833 ft |
 | `railing.left.exterior` | 42&dq; Single Slope | West Barrier (IFC) |
 | `railing.right.exterior` | 42&dq; Single Slope | West Barrier (IFC) |
 | `at[0].alignment.point` | (-1.500, 0.000) ft | (16590744.323, 6958091.803) ft |

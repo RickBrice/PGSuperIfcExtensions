@@ -5,9 +5,9 @@
 
 Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+21.50, at[2] = 0+44.50, at[3] = 0+98.00, at[4] = 1+51.50, at[5] = 1+74.50, at[6] = 1+97.50
 
-**170 of 274 values set by the import**, 104 are template defaults
+**187 of 293 values set by the import**, 106 are template defaults
 
-## template default (104)
+## template default (106)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -109,6 +109,8 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.haunch_shape` | 1 | 1 |
 | `deck.fc` | 4.000 ksi | 4.000 ksi |
 | `deck.edge_point_count` | 1 | 1 |
+| `deck.rebar.top.bar_size` | 4095 | 4095 |
+| `deck.rebar.bottom.bar_size` | 4095 | 4095 |
 | `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope |
 | `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope |
 | `pier[0].skew` | 0.0000 deg | 0.0000 deg |
@@ -116,7 +118,7 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `pier[2].skew` | 0.0000 deg | 0.0000 deg |
 | `pier[3].skew` | 0.0000 deg | 0.0000 deg |
 
-## set by the import (170)
+## set by the import (187)
 
 | Value | Template | Imported |
 |---|---|---|
@@ -234,6 +236,23 @@ Alignment, profile, and deck edges are evaluated at at[0] = -0+01.50, at[1] = 0+
 | `deck.right_overhang_edge_depth` | 7.000 in | 9.942 in |
 | `deck.left_overhang_taper` | 1 | 2 |
 | `deck.right_overhang_taper` | 1 | 2 |
+| `deck.rebar.top.cover` | 2.000 in | 3.910 in |
+| `deck.rebar.top.lump_sum` | 0.180 in^2/ft | 0.335 in^2/ft |
+| `deck.rebar.bottom.cover` | 2.000 in | 2.738 in |
+| `deck.rebar.bottom.lump_sum` | 0.270 in^2/ft | 0.251 in^2/ft |
+| `deck.rebar.supplemental_count` | 0 | 4 |
+| `deck.rebar.pier[1].top.lump_sum` |  | 1.052 in^2/ft |
+| `deck.rebar.pier[1].top.left_cutoff` |  | 12.834 ft |
+| `deck.rebar.pier[1].top.right_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[1].bottom.lump_sum` |  | 1.200 in^2/ft |
+| `deck.rebar.pier[1].bottom.left_cutoff` |  | 12.834 ft |
+| `deck.rebar.pier[1].bottom.right_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].top.lump_sum` |  | 1.052 in^2/ft |
+| `deck.rebar.pier[2].top.left_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].top.right_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].bottom.lump_sum` |  | 1.200 in^2/ft |
+| `deck.rebar.pier[2].bottom.left_cutoff` |  | 12.833 ft |
+| `deck.rebar.pier[2].bottom.right_cutoff` |  | 12.833 ft |
 | `at[0].alignment.point` | (-1.500, 0.000) ft | (16590744.323, 6958091.803) ft |
 | `at[0].alignment.direction` | 0.0000 deg | 89.9995 deg |
 | `at[0].profile.elevation` | 0.000 ft | 1220.072 ft |

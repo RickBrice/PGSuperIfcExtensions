@@ -5,7 +5,7 @@
 
 Alignment, profile, and deck edges are compared at at[0] = 20+00.00, at[1] = 20+50.00, at[2] = 21+00.00, at[3] = 21+65.00, at[4] = 22+30.00, at[5] = 22+80.00, at[6] = 23+30.00
 
-**462 of 616 match** - mismatch: 13, not imported: 0, missing: 0, not comparable: 0, default match: 141, extra: 0
+**462 of 623 match** - mismatch: 13, not imported: 0, missing: 0, not comparable: 0, default match: 148, extra: 0
 
 A *default match* equals the expected value only because the template has the same value.
 
@@ -27,7 +27,7 @@ A *default match* equals the expected value only because the template has the sa
 | `group[2].girder[2].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
 | `group[2].girder[3].strands.harped.paths` | 8 strands | 8 strands | 8 expected strands without a match within 0.118 in, 8 imported strands left over, largest distance to the closest strand 1.000 in |
 
-## default match (141)
+## default match (148)
 
 | Value | Expected | Imported | Note |
 |---|---|---|---|
@@ -112,6 +112,13 @@ A *default match* equals the expected value only because the template has the sa
 | `deck.haunch_shape` | 1 | 1 | template default |
 | `deck.fc` | 4.000 ksi | 4.000 ksi | template default |
 | `deck.edge_point_count` | 1 | 1 | template default |
+| `deck.rebar.top.cover` | 2.000 in | 2.000 in | template default |
+| `deck.rebar.top.lump_sum` | 0.180 in^2/ft | 0.180 in^2/ft | template default |
+| `deck.rebar.top.bar_size` | 4095 | 4095 | template default |
+| `deck.rebar.bottom.cover` | 2.000 in | 2.000 in | template default |
+| `deck.rebar.bottom.lump_sum` | 0.270 in^2/ft | 0.270 in^2/ft | template default |
+| `deck.rebar.bottom.bar_size` | 4095 | 4095 | template default |
+| `deck.rebar.supplemental_count` | 0 | 0 | template default |
 | `railing.left.exterior` | 42&dq; Single Slope | 42&dq; Single Slope | template default |
 | `railing.right.exterior` | 42&dq; Single Slope | 42&dq; Single Slope | template default |
 | `pier[0].skew` | 0.0000 deg | 0.0000 deg | template default |
