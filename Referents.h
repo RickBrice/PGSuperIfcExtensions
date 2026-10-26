@@ -326,7 +326,7 @@ typename Schema::IfcReferent CreateKeyPointReferent(hierarchy_helper<Schema>& fi
 // Creates IfcReferent key-point markers for every segment transition in the horizontal alignment and
 // vertical profile (P.O.B., P.O.E., P.C., P.T., P.I., T.S., S.T., S.C., C.S., P.C.C. for horizontal;
 // B.V.C., E.V.C., P.V.I., V.C.C. for vertical) and nests them with two new IfcRelNests: the horizontal
-// key points to 'horizontal', and the vertical key points to 'vertical'.
+// key points to 'horizontal', and the vertical key points to 'vertical' (a nest without key points isn't created).
 //
 // horizontal/nests_horizontal_segments and vertical/nests_vertical_segments are the layouts and
 // segment nests created by CreateHorizontalAlignment/CreateVerticalProfile. The last entry in each
@@ -391,9 +391,11 @@ void UpdateKeyPointReferents(hierarchy_helper<Schema>& file, std::shared_ptr<WBF
 
    auto alignment = file.getSingle<typename Schema::IfcAlignment>();
 
-   auto nests_horizontal_referents = file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::string("Nests horizontal key point referents with alignment"), alignment, new_horizontal_referents);
+   // a nest needs at least one related object; a profile with one grade has no vertical key points
+   if (!new_horizontal_referents.empty())
+      file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::string("Nests horizontal key point referents with alignment"), alignment, new_horizontal_referents);
 
-
-   auto nests_vertical_referents = file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::string("Nests vertical key point referents with alignment"), alignment, new_vertical_referents);
+   if (!new_vertical_referents.empty())
+      file.create<typename Schema::IfcRelNests>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::string("Nests vertical key point referents with alignment"), alignment, new_vertical_referents);
 
 }
