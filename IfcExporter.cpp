@@ -1842,6 +1842,26 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
             return true;
          };
 
+      // The deck's ends: the planes of its first and last sections, through the alignment at the CL bearing stations along
+      // the skewed cut lines. A haunch ends where its segment crosses them, with its end section in that plane, so the haunches
+      // end on the deck's skewed ends
+      struct DeckEnd { WBFL::Geometry::Vector3d point; WBFL::Geometry::Vector3d normal; };
+      auto deck_end = [&](Float64 station)
+         {
+            CComPtr<IPoint2d> pnt;
+            pAlignment->GetPoint(station, 0.0, nullptr, pgsTypes::pcGlobal, &pnt);
+            Float64 x, y;
+            pnt->Location(&x, &y);
+            CComPtr<IDirection> objNormal;
+            pAlignment->GetBearingNormal(station, &objNormal);
+            Float64 normal_angle;
+            objNormal->get_Value(&normal_angle);
+            Float64 angle = normal_angle + fn_cut_angle(station);
+            return DeckEnd{ WBFL::Geometry::Vector3d(x, y, 0.0), WBFL::Geometry::Vector3d(cos(angle), sin(angle), 0.0) }; // the normal points ahead
+         };
+      const DeckEnd deck_start = deck_end(startBrgStation);
+      const DeckEnd deck_finish = deck_end(endBrgStation);
+
       GroupIndexType nGroups = pIBridgeDesc->GetGirderGroupCount();
       for (GroupIndexType grpIdx = 0; grpIdx < nGroups; grpIdx++)
       {
@@ -1856,28 +1876,6 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
                CSegmentKey segmentKey(grpIdx, gdrIdx, segIdx);
                Float64 Ls = pBridge->GetSegmentLength(segmentKey);
 
-               // the haunch is only where the slab is, between the start and end stations of the slab
-               auto station_at = [&](Float64 Xs)
-                  {
-                     Float64 station, offset;
-                     pBridge->GetStationAndOffset(pgsPointOfInterest(segmentKey, Xs), &station, &offset);
-                     return station;
-                  };
-               auto find_Xs = [&](Float64 station) // Xs where the segment is at station, if the segment spans the station
-                  {
-                     Float64 a = 0, b = Ls;
-                     for (int i = 0; i < 50; i++)
-                     {
-                        Float64 m = (a + b) / 2;
-                        (station_at(m) < station ? a : b) = m;
-                     }
-                     return (a + b) / 2;
-                  };
-               Float64 Xs_start = (station_at(0.0) < startBrgStation ? find_Xs(startBrgStation) : 0.0);
-               Float64 Xs_end = (endBrgStation < station_at(Ls) ? find_Xs(endBrgStation) : Ls);
-               if (Xs_end <= Xs_start)
-                  continue; // the segment is beyond the slab
-
                CComPtr<IPoint2d> pntPier1, pntEnd1, pntBrg1, pntBrg2, pntEnd2, pntPier2;
                pGirder->GetSegmentEndPoints(segmentKey, pgsTypes::pcGlobal, &pntPier1, &pntEnd1, &pntBrg1, &pntBrg2, &pntEnd2, &pntPier2);
                Float64 x1, y1, x2, y2;
@@ -1885,6 +1883,21 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
                pntEnd2->Location(&x2, &y2);
                WBFL::Geometry::Vector3d segment_direction(x2 - x1, y2 - y1, 0.0);
                segment_direction.Normalize();
+
+               // the haunch is only where the slab is, between the deck's ends. Xs where the segment crosses a deck end
+               WBFL::Geometry::Vector3d segment_start(x1, y1, 0.0);
+               auto crossing = [&](const DeckEnd& end) { return (end.point - segment_start).Dot(end.normal) / segment_direction.Dot(end.normal); };
+               Float64 Xs_deck_start = crossing(deck_start);
+               Float64 Xs_deck_end = crossing(deck_finish);
+               bool bCutAtStart = (0.0 < Xs_deck_start);
+               bool bCutAtEnd = (Xs_deck_end < Ls);
+               Float64 Xs_start = (bCutAtStart ? Xs_deck_start : 0.0);
+               Float64 Xs_end = (bCutAtEnd ? Xs_deck_end : Ls);
+               if (Xs_end <= Xs_start)
+                  continue; // the segment is beyond the slab
+
+               // the cut angle of a section in a deck end's plane (CreatePolyline's: PI_OVER_2 for a section normal to the segment)
+               auto end_cut_angle = [&](const DeckEnd& end) { return PI_OVER_2 - acos(std::clamp(segment_direction.Dot(end.normal), -1.0, 1.0)); };
 
                for (MatingSurfaceIndexType msIdx = 0; msIdx < nMatingSurfaces; msIdx++)
                {
@@ -1927,13 +1940,16 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
                   std::vector<typename Schema::IfcProfileDef> haunch_sections;
                   std::vector<typename Schema::IfcAxis2PlacementLinear> haunch_section_positions;
-                  for (auto& [Xs, haunch_shape] : shapes)
+                  for (IndexType i = 0; i < shapes.size(); i++)
                   {
-                     auto polyline = CreatePolyline<Schema>(file, haunch_shape, options);
+                     auto& [Xs, haunch_shape] = shapes[i];
+                     const DeckEnd* end = (i == 0 && bCutAtStart ? &deck_start : (i == shapes.size() - 1 && bCutAtEnd ? &deck_finish : nullptr));
+                     auto polyline = CreatePolyline<Schema>(file, haunch_shape, options, end ? end_cut_angle(*end) : PI_OVER_2);
                      haunch_sections.push_back(file.create<typename Schema::IfcArbitraryClosedProfileDef>().initialize(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, haunch_name, polyline));
 
                      auto pde = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(Xs), std::nullopt, std::nullopt, std::nullopt, segment_line);
-                     auto rd = file.create<typename Schema::IfcDirection>().initialize({ segment_direction.X(), segment_direction.Y(), 0.0 }); // normal to the plane of the cross section
+                     const auto& normal = (end ? end->normal : segment_direction);
+                     auto rd = file.create<typename Schema::IfcDirection>().initialize({ normal.X(), normal.Y(), 0.0 }); // normal to the plane of the cross section
                      auto axis = file.create<typename Schema::IfcDirection>().initialize({ 0,0,1 }); // up
                      haunch_section_positions.push_back(file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(pde, axis, rd));
                   }
