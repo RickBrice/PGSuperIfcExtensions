@@ -890,6 +890,7 @@ void set_boundary_conditions(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopen
             continue;
 
          diaphragm_ids.push_back(diaphragm.id);
+         CIfcImporter::GetRoundTripRecorder().RecordDiaphragm(pierIdx, diaphragm.id);
          auto engages = [&](const std::vector<Float64>& ends) {return std::all_of(ends.begin(), ends.end(), [&](Float64 d) {return dmin - inch < d && d < dmax + inch; }); };
          if (continuous_diaphragm.empty() && !back_ends.empty() && !ahead_ends.empty() && engages(back_ends) && engages(ahead_ends))
             continuous_diaphragm = file.instance_by_id(diaphragm.id).as<IfcSchema::IfcObject>().Name().value_or("unnamed diaphragm");

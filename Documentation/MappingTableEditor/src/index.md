@@ -46,6 +46,8 @@ Using a table
 
 PGSuper and PGSplice use the mapping table configured with File > Configure BridgeLink. An IFC import or export can choose another table, and a project remembers its table. See @ref choosing_table.
 
+A project imported from an IFC model can be exported as a copy of that model with PGSuper's design in it. The table decides which values the copy gets. See @ref round_trip.
+
 Topics
 ------
 
@@ -58,4 +60,5 @@ Topics
 - @subpage ids
 - @subpage model
 - @subpage choosing_table
+- @subpage round_trip
 - @subpage reference

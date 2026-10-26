@@ -797,6 +797,9 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
    if (0 < nShort)
       WBFL::System::Logger::Info(std::to_string(nShort) + " tendons were skipped: they don't run the length of their girder, so they aren't prestressing strands (e.g. lifting loops).");
 
+   for (const auto& [beam_id, strands] : girder_strands)
+      CIfcImporter::GetRoundTripRecorder().RecordTendons(CSegmentKey(girders.at(beam_id)->girder_key, 0), beam_id);
+
    auto girder_entry = [&bridge_desc](const GirderCenterline& girder)
       {
          auto* pGirder = bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex);

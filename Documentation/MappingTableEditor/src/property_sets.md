@@ -45,3 +45,5 @@ The Property window {#property_dialog}
 | Comment | Anything you want to say about the property. |
 
 Quantity sets have the same fields. Their properties are quantities (length, area, volume, and so on).
+
+In an export that updates a copy of the model a project was imported from, a property bound to a target replaces the model's value with PGSuper's, while a constant or a property with no value is only added where the model doesn't have it. See @ref round_trip.

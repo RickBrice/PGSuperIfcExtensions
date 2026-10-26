@@ -25,6 +25,7 @@
 #include <string>
 #include <PsgLib\Keys.h>
 #include "IfcMappingTable.h"
+#include "IfcRoundTripMerge.h"
 
 namespace WBFL { namespace EAF { class Broker; }; };
 
@@ -131,6 +132,13 @@ public:
    // by GlobalId. Not owned; must outlive the BuildModel call.
    std::map<CSegmentKey, std::string>* segment_global_ids = nullptr;
 
+   // Optional sink: the exported elements by round trip registry key (IfcRoundTrip.h). Not owned
+   IfcExportIdentities* export_identities = nullptr;
+
+   // Round trips: when set, the export is a copy of this model (the model the project was imported from, IIfcRoundTrip)
+   // with PGSuper's design in it (IfcRoundTripMerge.h). Empty: PGSuper's model
+   CString source_model;
+
    // Mapping table for the property sets: /IfcMapping on the command line, the Mapping Table tab of the export
    // options, or the table the project remembers (mapping_source says which). When empty, the configured table
    // (Configure BridgeLink), else the installed standard table, is used (CIfcMappingTable::LoadActive)
@@ -152,8 +160,12 @@ public:
     // The mapping table files of the last BuildModel, the selected table first, e.g. for the export log
     const std::vector<std::string>& GetMappingTableFiles() const { return m_MappingTableFiles; }
 
+    // What the last BuildModel with a source model changed in the copy of it
+    const RoundTripMergeResult& GetMergeResult() const { return m_MergeResult; }
+
 private:
     std::vector<std::string> m_MappingTableFiles;
+    RoundTripMergeResult m_MergeResult;
 
     template <typename Schema>
     bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath);

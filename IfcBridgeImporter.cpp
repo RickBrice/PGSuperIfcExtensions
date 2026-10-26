@@ -66,6 +66,8 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    auto bridge = GetBridge(file);
    if (!bridge)
       return CIfcImporter::ImportResult::NotFound;
+   auto& recorder = CIfcImporter::GetRoundTripRecorder();
+   recorder.Record(roundtrip_key::Bridge(), bridge.id());
 
    if (bDeriveAlignmentFromDeck)
    {
@@ -127,18 +129,19 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    ASSERT(nPiers == piers.size());
    ASSERT(nPiers == bridge_desc.GetPierCount());
    // station and direction (if the model has it) of each pier, sorted by station because we don't know the order the piers are defined in the model
-   std::vector<std::pair<Float64, std::optional<Eigen::Vector2d>>> pier_locations;
+   std::vector<std::tuple<Float64, std::optional<Eigen::Vector2d>, int>> pier_locations; // station, direction, IfcBridgePart
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
       // get the pier station from the positioning element
-      pier_locations.emplace_back(get_pier_station(m_Importer.GetBroker(), file, pierIdx, piers[pierIdx]), get_referent_direction(piers[pierIdx]));
+      pier_locations.emplace_back(get_pier_station(m_Importer.GetBroker(), file, pierIdx, piers[pierIdx]), get_referent_direction(piers[pierIdx]), piers[pierIdx].id());
    }
-   std::sort(pier_locations.begin(), pier_locations.end(), [](const auto& a, const auto& b) {return a.first < b.first; });
+   std::sort(pier_locations.begin(), pier_locations.end(), [](const auto& a, const auto& b) {return std::get<0>(a) < std::get<0>(b); });
 
    std::vector<Float64> pier_stations;
    std::vector<std::optional<Eigen::Vector2d>> referent_directions;
-   for (const auto& [station, direction] : pier_locations)
+   for (const auto& [station, direction, part_id] : pier_locations)
    {
+      recorder.RecordPier(pier_stations.size(), part_id);
       pier_stations.push_back(station);
       referent_directions.push_back(direction);
    }
@@ -155,6 +158,19 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    // Locate the girders from the model geometry. The location determines the span and girder index
    auto layout = get_girder_layout(m_Importer.GetBroker(), file, pier_stations);
    locate_bearings(m_Importer.GetBroker(), file, layout);
+   for (const auto& girders : layout)
+   {
+      for (const auto& girder : girders)
+      {
+         CSegmentKey segmentKey(girder.girder_key, 0);
+         recorder.RecordGirder(segmentKey, girder.beam_id);
+         for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+         {
+            for (const auto& bearing : girder.bearings[end])
+               recorder.RecordBearing(segmentKey, end, bearing.id);
+         }
+      }
+   }
 
    bool bSameNumGirdersInAllSpans = std::all_of(layout.begin(), layout.end(), [&layout](const auto& girders) {return girders.size() == layout.front().size(); });
    for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++)
@@ -269,6 +285,14 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    // Girder bars, after the library entries are set (girders come with the entry's bars, which are replaced)
    {
       GirderBars girder_bars(file, layout);
+      for (const auto& girders : layout)
+      {
+         for (const auto& girder : girders)
+         {
+            if (!girder_bars.GetBars(girder.beam_id).empty())
+               recorder.RecordBars(CSegmentKey(girder.girder_key, 0), girder.beam_id);
+         }
+      }
       import_longitudinal_rebar(girder_bars, bridge_desc);
       import_stirrups(m_Importer.GetBroker(), girder_bars, bridge_desc);
    }
@@ -566,6 +590,7 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
 {
    if (get_slab_id(file) == 0)
       return; // no deck
+   CIfcImporter::GetRoundTripRecorder().Record(roundtrip_key::Deck(), get_slab_id(file));
 
    auto deck = get_deck_mesh(m_Importer.GetBroker(), file);
    if (!deck)

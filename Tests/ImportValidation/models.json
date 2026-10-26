@@ -4,7 +4,8 @@
     {
       "name": "PGSuper",
       "pgs": "models/PGSuper_Import_Model.pgs",
-      "property_units": [ "Display", "System" ]
+      "property_units": [ "Display", "System" ],
+      "check_added_reinforcement": true
     },
     {
       "name": "PGSuper-WSDOT",

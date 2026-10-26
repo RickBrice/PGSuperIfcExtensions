@@ -37,6 +37,7 @@ Float64 CIfcImporter::m_Precision = 0.001;
 CIfcImportUnits CIfcImporter::m_Units;
 std::unique_ptr<CIfcMappingTable> CIfcImporter::m_pMappingTable;
 std::unique_ptr<CIfcTargetReader> CIfcImporter::m_pTargetReader;
+CRoundTripRecorder CIfcImporter::m_RoundTripRecorder;
 
 const CIfcTargetReader& CIfcImporter::GetTargetReader()
 {
@@ -144,6 +145,7 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
       // The mapping table first, so a table problem is reported before the model is read
       LoadMappingTable();
+      m_RoundTripRecorder.Clear();
 
       std::unique_ptr<ifcopenshell::file> pFile = nullptr;
 
@@ -190,6 +192,8 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
             auto import_result = ImportBridge(*pFile,import_alignment_result == ImportResult::NotFound);
             if (import_result == ImportResult::Fail || import_result == ImportResult::NotFound)
                hr = E_FAIL;
+            else
+               RecordRoundTrip(*pFile, strFilePath);
          }
 
          pEvents->FirePendingEvents();
@@ -255,6 +259,36 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
     m_pMappingTable.reset();
 
    return hr;
+}
+
+void CIfcImporter::RecordRoundTrip(ifcopenshell::file& file, const CString& strFilePath)
+{
+   // the project, site, and bridge parts are one each
+   if (auto projects = file.instances_by_type<IfcSchema::IfcProject>(); !projects.empty())
+      m_RoundTripRecorder.Record(roundtrip_key::Project(), projects.front().id());
+   if (auto sites = file.instances_by_type<IfcSchema::IfcSite>(); !sites.empty())
+      m_RoundTripRecorder.Record(roundtrip_key::Site(), sites.front().id());
+   for (const auto& part : file.instances_by_type<IfcSchema::IfcBridgePart>())
+   {
+      if (!part.PredefinedType())
+         continue;
+      switch (*part.PredefinedType())
+      {
+      case IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE: m_RoundTripRecorder.Record(roundtrip_key::Superstructure(), part.id()); break;
+      case IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_SUBSTRUCTURE: m_RoundTripRecorder.Record(roundtrip_key::Substructure(), part.id()); break;
+      case IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK: m_RoundTripRecorder.Record(roundtrip_key::DeckPart(), part.id()); break;
+      default: break;
+      }
+   }
+
+   GET_IFACE(IBridgeDescription, pIBridgeDesc);
+   auto registry = m_RoundTripRecorder.MakeRegistry(file, *pIBridgeDesc->GetBridgeDescription(), DescribeSourceModel(std::filesystem::path(strFilePath.GetString())));
+   GET_IFACE(IIfcRoundTrip, pRoundTrip);
+   pRoundTrip->SetRoundTripRegistry(registry);
+
+   std::ostringstream os;
+   os << "The project remembers " << registry.elements.size() << " elements of the IFC model, so an export can update a copy of it.";
+   WBFL::System::Logger::Info(os.str());
 }
 
 CIfcImporter::ImportResult CIfcImporter::ImportGeoreferencing(ifcopenshell::file& file)

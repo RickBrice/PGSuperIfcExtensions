@@ -10,9 +10,12 @@ For a model with a "pgs" file (round trip):
    imported project is exported again (results/reexport/, not tracked), and its strands and bars are compared
    with those of the first export. The template's girders have no strands, so a strand count of 0 is reported
    as the template default.
+   With "check_added_reinforcement", the System units run also checks the strands and bars a round trip adds to a model
+   that has none (see check_roundtrip.py).
 For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
-   otherwise report which values the import set (inventory).
+   otherwise report which values the import set (inventory). Then the project is exported as a copy of the model
+   (/IfcSourceModel, a round trip), which must keep the model as it is and pass its design-value IDS (check_roundtrip.py).
 
 A model can name a "mapping" table (/IfcMapping); without one, the configured mapping table (File >
 Configure BridgeLink) is used, or the standard table installed with the extension if none is configured.
@@ -65,6 +68,7 @@ from xml.etree import ElementTree
 import compare_bridge
 import compare_export
 import compare_ids
+import check_roundtrip
 import check_standard
 import check_table_ids
 import ifc_rebar
@@ -328,6 +332,8 @@ def round_trip(model, config, exe):
         strand_rows, strand_message = compare_strands(exe, run, pgs, units, expected_strands, config, model.get("tolerances"))
         comparison += strand_rows
         message += strand_message
+        if model.get("check_added_reinforcement") and units == "System" and not strand_message:
+            message += check_roundtrip.check_added_reinforcement(run_bridgelink, quote, exe, run, ifc, pgs, RESULTS / "reexport" / f"{run}.ifc")
         report = compare_bridge.report(comparison, f"{run}: round trip", rel(pgs), rel(source), stations=stations)
         (RESULTS / f"{run}.md").write_text(report, encoding="utf-8")
         rows.append((run, message, compare_bridge.score(comparison)))
@@ -339,10 +345,12 @@ def ifc_model(model, config, exe):
     run = model["name"]
     pgs = RESULTS / f"{run}.pgs"
     mapping = (config["base"] / model["mapping"]).resolve() if "mapping" in model else None
-    ok, message = import_ifc(exe, unpack(config["base"] / model["ifc"]), config["template"], pgs, mapping)
+    model_ifc = unpack(config["base"] / model["ifc"])
+    ok, message = import_ifc(exe, model_ifc, config["template"], pgs, mapping)
     if not ok:
         return [(run, message, None)]
     message += check_log(model, pgs)
+    message += check_roundtrip.check_ifc_model(run_bridgelink, quote, exe, run, model_ifc, pgs)
 
     expected_file = HERE / "expected" / f"{run}.json"
     if expected_file.exists():

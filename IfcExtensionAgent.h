@@ -40,6 +40,7 @@
 #include "GeoReferencingPage.h"
 #include "GeoReferencing.h"
 #include "IfcProjectMappingTable.h"
+#include "IfcRoundTrip.h"
 
 class CIfcCommandLineInfo;
 
@@ -49,6 +50,7 @@ class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheri
    public WBFL::EAF::IAgentUIIntegration,
    public IGeoreferencing,
    public IIfcProjectMappingTable,
+   public IIfcRoundTrip,
    public IEditAlignmentCallback,
    public WBFL::EAF::ICommandCallback,
    public IEAFProcessCommandLine
@@ -86,6 +88,11 @@ public:
    void SetImportMappingTable(const std::wstring& table) override { m_ImportMappingTable = table; }
    std::wstring GetExportMappingTable() const override { return m_ExportMappingTable; }
    void SetExportMappingTable(const std::wstring& table) override { m_ExportMappingTable = table; }
+
+// IIfcRoundTrip
+public:
+   const CRoundTripRegistry& GetRoundTripRegistry() const override { return m_RoundTripRegistry; }
+   void SetRoundTripRegistry(const CRoundTripRegistry& registry) override { m_RoundTripRegistry = registry; }
 
 // IEditAlignmentCallback
 public:
@@ -136,4 +143,7 @@ private:
    // the mapping tables the project remembers (IIfcProjectMappingTable)
    std::wstring m_ImportMappingTable;
    std::wstring m_ExportMappingTable;
+
+   // the elements of the model the project was imported from (IIfcRoundTrip)
+   CRoundTripRegistry m_RoundTripRegistry;
 };

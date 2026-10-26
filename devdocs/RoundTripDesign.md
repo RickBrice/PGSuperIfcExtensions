@@ -1,6 +1,24 @@
 # Round Trip: Design Note and Plan (R1)
 
-Draft, 2026-09-30. The requirement is R1 in [IfcImportPlan.md](IfcImportPlan.md): importing an IFC model into PGSuper and exporting it again keeps the elements' `GlobalId`s, and loses nothing in the model. This note proposes how, with recommended answers to the open questions (marked **Recommended**; they need your review before implementation).
+Draft, 2026-09-30. The requirement is R1 in [IfcImportPlan.md](IfcImportPlan.md): importing an IFC model into PGSuper and exporting it again keeps the elements' `GlobalId`s, and loses nothing in the model. This note proposes how, with recommended answers to the open questions (marked **Recommended**).
+
+## Status (2026-10-26)
+
+**Decided (the user, 2026-10-26):** the recommended answers below, with the first version's scope: "properties plus missing elements". The original model is never changed; the export is a copy of it, updated with PGSuper's design, so IfcOpenShell's IfcDiff (`src/ifcdiff/ifcdiff.py`) shows what changed. Girders whose model has strands or bars keep the model's.
+
+**Done (first version):**
+- **Registry (RT1):** `IfcRoundTrip.h/.cpp`. The import records (`CIfcImporter::GetRoundTripRecorder`) the project, site, bridge, bridge parts, piers and abutments, girders, deck, exterior barriers, bearings (by girder end), pier diaphragms, and which girders have strands or bars in the model; keys use PGSuper's IDs (`roundtrip_key`). The project saves it with the source model's path, size, and SHA-256 (`CIfcExtensionAgent`, unit version 3).
+- **Export identities instead of registry GlobalIds:** the exporter names each element it writes by its registry key (`IfcExportIdentities`, `CIfcExportOptions::export_identities`), and the merge pairs them with the registry's GlobalIds. PGSuper's model keeps new GlobalIds; the copy has the model's. Plain exports are unchanged (requirement 5, stable GlobalIds without a source model, isn't done).
+- **Merge (RT3, part of RT4):** `IfcRoundTripMerge.h/.cpp`, run by `CIfcExporter::BuildModel` when `CIfcExportOptions::source_model` is set:
+  - The model's elements PGSuper models get the table's property sets, quantity sets, material properties, and classifications: targeted values are PGSuper's, converted to the model property's unit (or the model's project unit); constants and placeholders are added only where missing. A property set shared with other elements is copied for the element before it changes; a type's property set is updated on the type unless elements of that type need different values (then on the element, which overrides it); a shared material whose elements need different values is copied, one copy per set of values (Iowa's span 2 girders, 10 ksi in a 5 ksi material).
+  - Added from PGSuper's model: the strands and bars of girders without them in the model, bearings at girder ends without them, and pier diaphragms at piers without them. They're copied with IfcOpenShell's `add_entity` (which converts IfcLengthMeasure attributes to the model's length unit; property and quantity values are converted by the merge). Their placements are made relative to the model's element they belong to (or the world) wherever they pointed outside the added elements (PGSuper's girder placement, linear placements along PGSuper's alignment), from the computed world matrices; the export's world coordinates are the model's (checked with PennDOT). Their relationships are rebuilt with only the added elements; representation contexts and classification systems are the model's.
+  - Not yet: geometry and placement of the model's elements (question 3; kept), elements deleted in PGSuper (question 2; kept), girders, spans, decks, barriers added in PGSuper (logged, not added), haunches, alignment and georeferencing (the model's are kept).
+- **User interface and command line (part of RT5):** the IFC tab of the export options has a Round Trip group ("Update a copy of the IFC model this project was imported from", on when the model is unchanged since the import; "..." locates a moved or changed model). `/IfcSourceModel` (the project's model, which must be unchanged) or `/IfcSourceModel=<file>` on the command line. The design-value IDS of a round trip pins the girders by GlobalId (the copy keeps the model's names). The export log lists every change.
+- **Validation:** `Tests/ImportValidation/check_roundtrip.py` (see the README): PennDOT and Iowa are exported as copies after their import and checked (the model file unchanged, every GlobalId kept, no entity type with fewer instances, the design-value IDS passes); the PGSuper model's export, stripped of its strands and bars, gets them back exactly where an export of the project puts them.
+
+**Results (2026-10-26):** PennDOT: 25 elements updated, 2 abutment diaphragms added; IfcDiff: 2 added, 0 deleted, 25 changed (properties), no geometry changes; its design-value IDS passes. Iowa (65 MB, about 30 s): 79 elements updated, 1 value changed (span 2 f'c, 10 ksi, in one copy of the 5 ksi material shared by the span 2 girders), its strands and bars kept; IfcDiff: 0 added, 0 deleted, 100 changed (properties and classifications); its design-value IDS passes. PGSuper model stripped of its strands and bars: 26 assemblies added, strands and bars within 0.001 mm of the project's export.
+
+**Design-value IDS of a round trip:** `CIdsExportOptions::round_trip`. The girders are pinned by GlobalId (the copy keeps the model's names), their specifications don't require PGSuper's material (the model's is kept), and the girder type and concrete material specifications are left out; the strand and bar specifications are left out when a girder keeps the model's strands or bars (they apply to every IfcTendon and IfcReinforcingBar).
 
 ## What must be true after a round trip
 
@@ -73,7 +91,7 @@ Everything that isn't an element PGSuper models is kept: the merge only ever tou
 - **Export options:** when the project has a source model, the IFC export offers "Update the source model (keeps everything in it)" (the default) or "Export PGSuper's model only". The source model's path is shown.
 - **Source model missing or changed** (question 1): interactive, the user locates it or chooses a plain export; from the command line the export fails with a message, unless `/IfcSourceModel=<file>` gives it (or `/IfcNoSourceModel` asks for a plain export).
 
-## Recommended answers to the open questions
+## Recommended answers to the open questions (decided 2026-10-26)
 
 1. **Where the source model comes from at export.** **Recommended:** store its path, size, time, and SHA-256 in the project. At export, if the file is there and unchanged, merge into it. If it's missing or changed, ask the user to locate it (or choose a plain export); from the command line, fail with a message, or use `/IfcSourceModel=`. Don't store a copy in the project: IFC models are often tens to hundreds of MB, and the modeler's file stays the reference.
 2. **Elements deleted in PGSuper.** **Recommended:** remove the element, what only it uses (its representation, placement, and property sets not shared with other elements), and its membership in shared relationships (a task's assignment, a group, an aggregation); delete a relationship left with no members. Log every removal, including each task, group, or other entity it was removed from, so the modeler can review it. Keeping deleted girders in the model would leave a model that contradicts the design.
@@ -116,7 +134,7 @@ A new round-trip check in `run_validation.py`, for each IFC model (PennDOT, Iowa
 
 | | Milestone | Done when |
 |---|---|---|
-| RT0 | This note, reviewed; the open questions decided | |
+| RT0 | This note, reviewed; the open questions decided | Done 2026-10-26 (the recommended answers) |
 | RT1 | Element registry, persisted in the project; import records identities and the source model | A saved and reopened imported project has a GlobalId for every imported element |
 | RT2 | Export uses the registry | PGSuper models export the same element GlobalIds twice; IFC → PGSuper → IFC (plain export) gives the source's GlobalIds to the elements PGSuper models |
 | RT3 | Merge: update in place, add, keep everything else; units; log | The round-trip check passes for PennDOT and Iowa (no losses) |

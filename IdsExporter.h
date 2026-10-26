@@ -83,6 +83,12 @@ public:
    // from the IfcBeam GlobalIds the same CIfcExporter::BuildModel call just created.
    std::map<CSegmentKey, std::string> global_id_by_segment;
 
+   // The IDS of an export that updated a copy of the model the project was imported from (IfcRoundTripMerge.h): the
+   // girders' materials and types are the model's, so the girder specifications don't require PGSuper's material and
+   // the type specifications are left out. The caller leaves out the strands, bars, and concrete materials the copy
+   // doesn't have from PGSuper (include_strands, include_rebar, include_concrete_material)
+   bool round_trip = false;
+
    // <ids:info> metadata. Empty fields are given sensible defaults by the worker
    // (title <- bridge name; date <- today). "author" is emitted only if it looks like
    // an e-mail address (the IDS schema rejects anything else).

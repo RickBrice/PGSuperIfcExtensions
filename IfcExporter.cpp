@@ -57,6 +57,20 @@ constexpr IndexType NUM_HAUNCH_SECTIONS = 10; // cross sections along each segme
 
 #define CLOCKWISE 0
 #define COUNTERCLOCKWISE 1
+// Names an exported element for round trips (IfcRoundTrip.h)
+template <typename T>
+void Identify(const CIfcExportOptions& options, const std::string& key, const T& element)
+{
+   if (options.export_identities && element)
+      (*options.export_identities)[key].push_back(element.id());
+}
+
+SegmentIDType GetSegmentID(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey)
+{
+   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   return pIBridgeDesc->GetPrecastSegmentData(segmentKey)->GetID();
+}
+
 int GetVertexOrdering(IShape* pShape)
 {
     Float64 area;
@@ -1944,6 +1958,7 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
 
    auto slab = file.create<typename Schema::IfcSlab>().initialize(ifcopenshell::global_id(), {}, std::string("Deck Slab"), std::nullopt, std::nullopt, deck_placement, product_definition_shape, std::nullopt,
       Schema::IfcSlabTypeEnum::IfcSlabType_FLOOR); // see Ifc 4x3 6.1.2.19.2 (FLOOR represents a bridge deck), name is option but AASHTO IDS requires it
+   Identify(options, roundtrip_key::Deck(), slab);
 
 
 
@@ -2685,6 +2700,7 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
             file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(pier, bearing);
             bearings.push_back(bearing);
+            Identify(options, roundtrip_key::Bearings(GetSegmentID(pBroker, segmentKey), face == pgsTypes::Ahead ? pgsTypes::metStart : pgsTypes::metEnd), bearing);
 
             // property sets and classification from the mapping table
             ExportContext context{ pBroker, &options };
@@ -2999,6 +3015,7 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
 
          diaphragms.push_back(diaphragm);
          contained_diaphragms.push_back(diaphragm);
+         Identify(options, roundtrip_key::Diaphragms(pPier->GetID()), diaphragm);
 
          ExportContext context{ pBroker, &options };
          context.pier = pierIdx;
@@ -3035,6 +3052,7 @@ typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, st
    );
 
    file.addRelatedObject<typename Schema::IfcRelDefinesByType>(beam_type, beam);
+   Identify(options, roundtrip_key::Girder(GetSegmentID(pBroker, segmentKey)), beam);
 
    auto body_model_representation_subcontext = file.getRepresentationSubContext(std::string("Body"), std::string("Model"));
 
@@ -3120,6 +3138,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    if (bridge_name.empty()) bridge_name = "Unnamed Bridge";
 
    auto bridge = file.create<typename Schema::IfcBridge>().initialize(ifcopenshell::global_id(), {}, bridge_name, std::nullopt, std::nullopt, {}, {}, std::nullopt, Schema::IfcElementCompositionEnum::IfcElementComposition_ELEMENT, Schema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER);
+   Identify(options, roundtrip_key::Bridge(), bridge);
 
 
    // classification and property sets for the bridge are created at the end of this function
@@ -3146,6 +3165,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_SUPERSTRUCTURE);
+   Identify(options, roundtrip_key::Superstructure(), superstructure);
 
    file.addRelatedObject<typename Schema::IfcRelAggregates>(bridge, superstructure);
    if (options.classify)
@@ -3159,6 +3179,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Schema::IfcElementCompositionEnum::IfcElementComposition_COMPLEX,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_SUBSTRUCTURE);
+   Identify(options, roundtrip_key::Substructure(), substructure);
 
    file.addRelatedObject<typename Schema::IfcRelAggregates>(bridge, substructure);
    if (options.classify)
@@ -3172,6 +3193,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Schema::IfcElementCompositionEnum::IfcElementComposition_ELEMENT,
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
+   Identify(options, roundtrip_key::DeckPart(), deck);
    CreateSlab(file, pBroker, options, deck, body_model_representation_subcontext);
 
    if (options.classify)
@@ -3186,9 +3208,11 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    // Create spatial structure of substructure
    // IfcBridgePart::SUBSTRUCTURE <-> IfcRelAggregates <-> IfcBridgePart::ABUTMENT, PIER
    auto list_of_piers = CreatePiers(file, pBroker, options);
-   for (auto& pier : list_of_piers)
+   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDescription);
+   for (PierIndexType pierIdx = 0; pierIdx < list_of_piers.size(); pierIdx++)
    {
-      file.addRelatedObject<typename Schema::IfcRelAggregates>(substructure, pier);
+      file.addRelatedObject<typename Schema::IfcRelAggregates>(substructure, list_of_piers[pierIdx]);
+      Identify(options, roundtrip_key::Pier(pIBridgeDescription->GetPier(pierIdx)->GetID()), list_of_piers[pierIdx]);
    }
 
    if (options.bearing_seat_survey_points != CIfcExportOptions::BearingSeatSurveyPoints::None)
@@ -3222,12 +3246,14 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    left_barrier = file.create<typename Schema::IfcWall>().initialize(ifcopenshell::global_id(), {}, std::string("Left Barrier"), std::nullopt, std::string("BARRIER"), {}, {}, std::nullopt, Schema::IfcWallTypeEnum::IfcWallType_USERDEFINED);
 
    CreateBarrierSystemRepresentation(file, pBroker, options, pgsTypes::tboLeft, left_barrier, body_model_representation_subcontext);
+   Identify(options, roundtrip_key::Barrier(pgsTypes::tboLeft), left_barrier);
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, left_barrier);
 
    typename Schema::IfcProduct right_barrier;
    right_barrier = file.create<typename Schema::IfcWall>().initialize(ifcopenshell::global_id(), {}, std::string("Right Barrier"), std::nullopt, std::string("BARRIER"), {}, {}, std::nullopt, Schema::IfcWallTypeEnum::IfcWallType_USERDEFINED);
 
    CreateBarrierSystemRepresentation(file, pBroker, options, pgsTypes::tboRight, right_barrier, body_model_representation_subcontext);
+   Identify(options, roundtrip_key::Barrier(pgsTypes::tboRight), right_barrier);
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, right_barrier);
 
    std::vector<typename Schema::IfcObjectDefinition> barriers;
@@ -3653,9 +3679,23 @@ void CreateGeoreferencing(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
 }
 
 template <typename Schema>
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& export_options, const CString& strFilePath)
 {
    USES_CONVERSION;
+
+   // a round trip export names the elements it writes, for the merge into the copy of the source model
+   IfcExportIdentities identities;
+   CIfcExportOptions options(export_options);
+   bool bRoundTrip = !options.source_model.IsEmpty();
+   if (bRoundTrip && !options.export_identities)
+      options.export_identities = &identities;
+   m_MergeResult = RoundTripMergeResult();
+   if (bRoundTrip)
+   {
+      std::error_code ec;
+      if (std::filesystem::equivalent(std::filesystem::path(options.source_model.GetString()), std::filesystem::path(strFilePath.GetString()), ec))
+         throw std::runtime_error("The export can't replace the IFC model the project was imported from. Choose another file.");
+   }
 
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
    WBFL::EAF::AutoProgress ap(pProgress);
@@ -3679,6 +3719,8 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    auto project = file.getSingle<typename Schema::IfcProject>();
    ExportContext project_context{ pBroker, &options };
    WritePropertySets<Schema>(file, ElementKind::Project, project, project_context, PropertySetDeclaration::Condition::Always);
+   Identify(options, roundtrip_key::Project(), project);
+   Identify(options, roundtrip_key::Site(), file.getSingle<typename Schema::IfcSite>());
 
    CreateSiteLocalPlacement<Schema>(file, pBroker);
    CreateGeoreferencing<Schema>(file, pBroker);
@@ -3719,8 +3761,28 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    // Declare project units for values that rely on them (e.g. quantities without their own unit)
    AddUsedProjectUnits(file);
 
-   std::ofstream ofs(T2A(strFilePath));
-   ofs << file;
+   if (bRoundTrip)
+   {
+      pProgress->UpdateMessage(_T("Updating a copy of the IFC model"));
+      GET_IFACE2(pBroker, IIfcRoundTrip, pRoundTrip);
+      m_MergeResult = MergeIntoSourceModel(file, *options.export_identities, pRoundTrip->GetRoundTripRegistry(), session.GetTable(),
+         std::filesystem::path(options.source_model.GetString()), std::filesystem::path(strFilePath.GetString()));
+
+      // the girders have the source's GlobalIds in the result (the design-value IDS pins them)
+      if (options.segment_global_ids)
+      {
+         for (auto& [segmentKey, global_id] : *options.segment_global_ids)
+         {
+            if (auto found = m_MergeResult.global_ids.find(global_id); found != m_MergeResult.global_ids.end())
+               global_id = found->second;
+         }
+      }
+   }
+   else
+   {
+      std::ofstream ofs(T2A(strFilePath));
+      ofs << file;
+   }
 
    return true;
 }

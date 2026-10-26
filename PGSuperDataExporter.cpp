@@ -36,6 +36,7 @@
 #include <EAF/EAFUIIntegration.h>
 #include <EAF/AutoProgress.h>
 
+#include <fstream>
 #include <map>
 #include <string>
 
@@ -83,6 +84,21 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       options_sheet.m_TablePage.SetDefault(label + GetMappingTableDisplayName(project_table), project_table, MappingTableSource::Project);
    }
 
+   // Round trips: the IFC tab offers to update a copy of the model the project was imported from, if it's unchanged
+   GET_IFACE2(pBroker, IIfcRoundTrip, pRoundTrip);
+   const auto& registry = pRoundTrip->GetRoundTripRegistry();
+   if (!registry.IsEmpty())
+   {
+      auto& page = options_sheet.m_IfcPage;
+      page.m_strSourceModel = registry.source.path.c_str();
+      switch (CheckSourceModel(registry.source, registry.source.path))
+      {
+      case SourceModelState::Unchanged: page.m_bUpdateSourceModel = true; break;
+      case SourceModelState::Missing: page.m_strSourceModelProblem = _T("The model isn't there."); break;
+      case SourceModelState::Changed: page.m_strSourceModelProblem = _T("The model has changed since the import."); break;
+      }
+   }
+
    if (options_sheet.DoModal() == IDCANCEL)
       return S_OK;
 
@@ -90,9 +106,19 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    CString file_title = pDoc->GetFileTitle();
    CString file_root = pDoc->GetFileRoot();
 
-   // 2. IFC file
+   CString source_model = options_sheet.m_IfcPage.m_bUpdateSourceModel ? options_sheet.m_IfcPage.m_strSourceModel : CString();
+
+   // 2. IFC file. A copy of the source model is named after it, so it isn't confused with the source
    CString ifc_default_name;
-   ifc_default_name.Format(_T("%s%s.ifc"), file_root, file_title);
+   if (source_model.IsEmpty())
+   {
+      ifc_default_name.Format(_T("%s%s.ifc"), file_root, file_title);
+   }
+   else
+   {
+      std::filesystem::path source(source_model.GetString());
+      ifc_default_name.Format(_T("%s%s (%s).ifc"), file_root, source.stem().c_str(), file_title);
+   }
    CFileDialog ifc_dlg(FALSE, _T("ifc"), ifc_default_name, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("IFC File (*.ifc)|*.ifc||"));
    if (ifc_dlg.DoModal() != IDOK)
       return S_OK;
@@ -129,6 +155,7 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    CIfcExportOptions ifc_options = options_sheet.m_IfcPage.options;
    ifc_options.mapping_file = options_sheet.m_TablePage.m_strTable;
    ifc_options.mapping_source = options_sheet.m_TablePage.m_Source;
+   ifc_options.source_model = source_model;
    if (bExportIds)
       ifc_options.segment_global_ids = &segment_global_ids;
 
@@ -163,6 +190,25 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    if (!strError.IsEmpty())
       strMsg += _T("\n\n") + strError;
 
+   // a round trip says what it changed, and writes the details beside the IFC file
+   if (bIfcResult && !source_model.IsEmpty())
+   {
+      const auto& merge = ifc_builder.GetMergeResult();
+      std::filesystem::path log_path(ifc_path.GetString());
+      log_path.replace_extension(".export.log");
+      {
+         std::ofstream log(log_path);
+         log << "Updated a copy of " << PathToString(std::filesystem::path(source_model.GetString())) << std::endl;
+         for (const auto& line : merge.log)
+            log << line << std::endl;
+      }
+
+      CString strMerge;
+      strMerge.Format(_T("\n\nThis is a copy of %s with PGSuper's design in it (the model itself isn't changed): %d elements updated (%d values changed, %d properties and classifications added) and %d elements added. The details are in %s."),
+         source_model, (int)merge.nUpdated, (int)merge.nPropertiesChanged, (int)merge.nPropertiesAdded, (int)merge.nAdded, log_path.c_str());
+      strMsg += strMerge;
+   }
+
    // 5. Build the IDS from the same model, pinned to the just-written beam GlobalIds.
    if (bExportIds && bIfcResult)
    {
@@ -173,6 +219,17 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       if (bridge_name.IsEmpty()) bridge_name = _T("PGSuper Bridge");
       ids_options.title.Format(_T("%s - girder concrete strength requirements"), bridge_name);
       ids_options.global_id_by_segment = segment_global_ids;
+      if (!source_model.IsEmpty())
+      {
+         // the girders keep the source's names, so they're pinned by their GlobalIds. What the copy has of the model's
+         // (materials, types, strands, bars) isn't PGSuper's
+         const auto& merge = ifc_builder.GetMergeResult();
+         ids_options.beam_id = CIdsExportOptions::BeamId::GlobalId;
+         ids_options.round_trip = true;
+         ids_options.include_concrete_material = false;
+         ids_options.include_strands = ids_options.include_strands && !merge.bModelTendons;
+         ids_options.include_rebar = ids_options.include_rebar && !merge.bModelBars;
+      }
 
       // the IDS checks the values where the IFC export put them
       ids_options.mapping_file = ifc_options.mapping_file;

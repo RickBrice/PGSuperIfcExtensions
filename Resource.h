@@ -48,6 +48,9 @@
 #define IDC_CHECK2                      232
 #define IDC_PER_ACI131                  232
 #define IDC_PROPERTY_UNITS              233
+#define IDC_UPDATE_SOURCE_MODEL         411
+#define IDC_SOURCE_MODEL                412
+#define IDC_SOURCE_MODEL_BROWSE         413
 #define IDC_GIRDER_ONLY                 234
 #define IDC_SPAN                        235
 #define IDC_COMBO2                      236
@@ -237,7 +240,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        412
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         411
+#define _APS_NEXT_CONTROL_VALUE         414
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

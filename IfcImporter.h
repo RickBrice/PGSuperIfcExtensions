@@ -25,6 +25,7 @@
 #include <IFace\Project.h>
 #include "IfcImportUnits.h"
 #include "IfcMappingTable.h"
+#include "IfcRoundTrip.h"
 
 class CIfcImportOptions
 {
@@ -95,6 +96,9 @@ public:
    // Reads target values through the mapping table of the current import. See CIfcTargetReader
    static const CIfcTargetReader& GetTargetReader();
 
+   // Collects the elements of the model the import uses, for the project's round trip registry (IfcRoundTrip.h)
+   static CRoundTripRecorder& GetRoundTripRecorder() { return m_RoundTripRecorder; }
+
 
 private:
    std::shared_ptr<WBFL::EAF::Broker> m_pBroker;
@@ -103,6 +107,7 @@ private:
    static CIfcImportUnits m_Units;
    static std::unique_ptr<CIfcMappingTable> m_pMappingTable;
    static std::unique_ptr<CIfcTargetReader> m_pTargetReader;
+   static CRoundTripRecorder m_RoundTripRecorder;
    WBFL::Units::Length m_LengthUnit{ 1.0, _T("m") };
    WBFL::Units::Angle m_AngleUnit{ 1.0, _T("rad") };
    std::ostringstream m_LogStream;
@@ -115,5 +120,8 @@ private:
 
    void InitUnits(ifcopenshell::file& file);
    void LoadMappingTable();
+
+   // Makes the project's round trip registry from what the import recorded
+   void RecordRoundTrip(ifcopenshell::file& file, const CString& strFilePath);
 };
 

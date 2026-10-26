@@ -72,6 +72,7 @@ Command line
 | Command | What it does |
 |---|---|
 | `/IfcMapping=<table.ifcmap>` | Uses this table for an `/IfcImport` or `/IfcExport`, in place of the configured table or the project's table. |
+| `/IfcSourceModel[=<model.ifc>]` | With `/IfcExport`, writes a copy of the model the project was imported from (or of the given model) with PGSuper's design in it. The table decides which values the copy gets. See @ref round_trip. |
 | `/IfcIdsToTable=<agency.ids>` | Makes a table from an IDS (`/IfcTable=` names the table to write). See @ref ids. |
 | `/IfcTableToIds=<table.ids>` | Writes the configured table, or the `/IfcMapping=` table, as a general IDS. See @ref ids. |
 | `/IfcFormatTable=<table.ifcmap>` | Rewrites a table file in the standard table's style, as the editor does. |

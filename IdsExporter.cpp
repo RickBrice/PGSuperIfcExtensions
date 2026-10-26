@@ -492,7 +492,8 @@ namespace
 
       // structural checks
       AddClassifications(requirements, table, G);
-      requirements.material().push_back(MaterialReq("concrete"));
+      if (!options.round_trip)
+         requirements.material().push_back(MaterialReq("concrete"));
 
       // the two design strengths (kept even in minimal mode): where the importer reads them
       const double fciR = RoundToTenthKsi_SysUnits(sdv.fci);
@@ -808,7 +809,7 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
          }
       }
 
-      if (options.include_beam_properties)
+      if (options.include_beam_properties && !options.round_trip)
       {
          for (const auto& name : beamTypeNames)
             specifications.specification().push_back(BuildBeamTypeSpec(table, name));

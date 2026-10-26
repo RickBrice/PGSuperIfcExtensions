@@ -54,6 +54,7 @@ bool CIfcExtensionAgent::RegisterInterfaces()
    EAF_AGENT_REGISTER_INTERFACES;
    REGISTER_INTERFACE(IGeoreferencing);
    REGISTER_INTERFACE(IIfcProjectMappingTable);
+   REGISTER_INTERFACE(IIfcRoundTrip);
 
    return true;
 }
@@ -114,6 +115,20 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
       m_ExportMappingTable = table;
    }
 
+   // version 3: the round trip registry
+   m_RoundTripRegistry = CRoundTripRegistry();
+   if (3.0 <= version)
+   {
+      try
+      {
+         m_RoundTripRegistry.Load(pStrLoad);
+      }
+      catch (const std::exception&)
+      {
+         return WBFL::EAF::Broker::LoadResult::Error;
+      }
+   }
+
    if ( !pStrLoad->EndUnit() )
       return WBFL::EAF::Broker::LoadResult::Error;
 
@@ -122,15 +137,19 @@ WBFL::EAF::Broker::LoadResult CIfcExtensionAgent::Load(WBFL::System::IStructured
 
 bool CIfcExtensionAgent::Save(WBFL::System::IStructuredSave* pStrSave)
 {
-   // version 2 adds the mapping tables. A project that doesn't remember a table is saved as version 1, as before
-   bool bTables = !m_ImportMappingTable.empty() || !m_ExportMappingTable.empty();
-   pStrSave->BeginUnit(_T("IfcExtensionAgent"), bTables ? 2.0 : 1.0);
+   // version 2 adds the mapping tables and version 3 the round trip registry. A project that has neither is saved as
+   // version 1, as before
+   bool bRoundTrip = !m_RoundTripRegistry.IsEmpty();
+   bool bTables = bRoundTrip || !m_ImportMappingTable.empty() || !m_ExportMappingTable.empty();
+   pStrSave->BeginUnit(_T("IfcExtensionAgent"), bRoundTrip ? 3.0 : bTables ? 2.0 : 1.0);
    m_GeoreferencingData.Save(pStrSave);
    if (bTables)
    {
       pStrSave->Property(_T("ImportMappingTable"), m_ImportMappingTable.c_str());
       pStrSave->Property(_T("ExportMappingTable"), m_ExportMappingTable.c_str());
    }
+   if (bRoundTrip)
+      m_RoundTripRegistry.Save(pStrSave);
    pStrSave->EndUnit();
    return true;
 }
@@ -354,16 +373,45 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       options.mapping_source = MappingTableSource::Project;
    }
 
-   bool bResult = false;
+   // a round trip: a copy of the model the project was imported from, which must be unchanged since the import (or the
+   // given model)
+   std::map<CSegmentKey, std::string> segment_global_ids;
    CString strError;
-   CIfcExporter exporter;
-   try
+   if (ifcCmdInfo.m_bSourceModel)
    {
-      bResult = exporter.BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile);
+      const auto& registry = m_RoundTripRegistry;
+      if (registry.IsEmpty())
+      {
+         strError = _T("/IfcSourceModel: the project wasn't imported from an IFC model, so there's no model to update.");
+      }
+      else if (!ifcCmdInfo.m_strSourceModel.IsEmpty())
+      {
+         options.source_model = ifcCmdInfo.m_strSourceModel;
+      }
+      else
+      {
+         switch (CheckSourceModel(registry.source, registry.source.path))
+         {
+         case SourceModelState::Unchanged: options.source_model = registry.source.path.c_str(); break;
+         case SourceModelState::Missing: strError.Format(_T("/IfcSourceModel: the IFC model the project was imported from isn't there: %s"), registry.source.path.c_str()); break;
+         case SourceModelState::Changed: strError.Format(_T("/IfcSourceModel: the IFC model the project was imported from has changed since the import: %s"), registry.source.path.c_str()); break;
+         }
+      }
+      options.segment_global_ids = &segment_global_ids;
    }
-   catch (const std::exception& e)
+
+   bool bResult = false;
+   CIfcExporter exporter;
+   if (strError.IsEmpty())
    {
-      strError = e.what();
+      try
+      {
+         bResult = exporter.BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile);
+      }
+      catch (const std::exception& e)
+      {
+         strError = e.what();
+      }
    }
 
    // the design-value IDS for the exported model, with the default options
@@ -377,6 +425,18 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
          ids_options.enabled = true;
          ids_options.mapping_file = options.mapping_file;
          ids_options.mapping_source = options.mapping_source;
+         if (!options.source_model.IsEmpty())
+         {
+            // the girders keep the source's names, so they're pinned by their GlobalIds. What the copy has of the model's
+            // (materials, types, strands, bars) isn't PGSuper's
+            ids_options.beam_id = CIdsExportOptions::BeamId::GlobalId;
+            ids_options.global_id_by_segment = segment_global_ids;
+            const auto& merge = exporter.GetMergeResult();
+            ids_options.round_trip = true;
+            ids_options.include_concrete_material = false;
+            ids_options.include_strands = !merge.bModelTendons;
+            ids_options.include_rebar = !merge.bModelBars;
+         }
          bIdsResult = CIdsExporter().BuildSpecification(EAFGetBroker(), ids_options, ifcCmdInfo.m_strIdsFile);
       }
       catch (const std::exception& e)
@@ -391,6 +451,15 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       log << _T("IFC mapping table ") << CString(table_file.c_str()).GetString() << std::endl;
    if (!strError.IsEmpty())
       log << _T("IFC export failed: ") << strError.GetString() << std::endl;
+   if (!options.source_model.IsEmpty())
+   {
+      const auto& merge = exporter.GetMergeResult();
+      log << _T("Updated a copy of ") << options.source_model.GetString() << _T(": ") << merge.nUpdated << _T(" elements updated (")
+          << merge.nPropertiesChanged << _T(" values changed, ") << merge.nPropertiesAdded << _T(" properties and classifications added), ")
+          << merge.nAdded << _T(" elements added") << std::endl;
+      for (const auto& line : merge.log)
+         log << CString(line.c_str()).GetString() << std::endl;
+   }
    log << (bResult ? _T("IFC export succeeded: ") : _T("IFC export failed: ")) << ifcCmdInfo.m_strIfcFile.GetString() << std::endl;
    if (!ifcCmdInfo.m_strIdsFile.IsEmpty())
    {

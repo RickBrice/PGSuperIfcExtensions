@@ -71,12 +71,14 @@ void CExportOptions::DoDataExchange(CDataExchange* pDX)
 
 	DDX_RadioEnum<CIfcExportOptions::BeamPlacement>(pDX, IDC_LINEAR_PLACEMENT, options.beam_placement);
 	DDX_RadioEnum<CIfcExportOptions::BeamModel>(pDX, IDC_MODEL_SSH, options.beam_model);
+	DDX_Check_Bool(pDX, IDC_UPDATE_SOURCE_MODEL, m_bUpdateSourceModel);
 }
 
 
 BEGIN_MESSAGE_MAP(CExportOptions, CPropertyPage)
 	ON_CBN_SELCHANGE(IDC_SPAN, OnSpanChanged)
 	ON_BN_CLICKED(IDC_INCLUDE_REBAR, OnIncludeRebarClicked)
+	ON_BN_CLICKED(IDC_SOURCE_MODEL_BROWSE, OnBrowseSourceModel)
 END_MESSAGE_MAP()
 
 
@@ -112,9 +114,41 @@ BOOL CExportOptions::OnInitDialog()
 		pGirderBox->SetCurSel(0);
 
 	UpdateRebarRepresentationEnable();
+	UpdateSourceModelControls();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
+}
+
+void CExportOptions::UpdateSourceModelControls()
+{
+	CString strText;
+	if (m_strSourceModel.IsEmpty())
+		strText = _T("This project wasn't imported from an IFC model.");
+	else if (m_strSourceModelProblem.IsEmpty())
+		strText = m_strSourceModel;
+	else
+		strText = m_strSourceModel + _T("\r\n") + m_strSourceModelProblem + _T(" Use ... to locate it.");
+	GetDlgItem(IDC_SOURCE_MODEL)->SetWindowText(strText);
+
+	BOOL bCanUpdate = !m_strSourceModel.IsEmpty() && m_strSourceModelProblem.IsEmpty();
+	GetDlgItem(IDC_UPDATE_SOURCE_MODEL)->EnableWindow(bCanUpdate);
+	GetDlgItem(IDC_SOURCE_MODEL_BROWSE)->EnableWindow(!m_strSourceModel.IsEmpty());
+	if (!bCanUpdate)
+		((CButton*)GetDlgItem(IDC_UPDATE_SOURCE_MODEL))->SetCheck(BST_UNCHECKED);
+}
+
+void CExportOptions::OnBrowseSourceModel()
+{
+	CFileDialog dlg(TRUE, _T("ifc"), m_strSourceModel, OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY, _T("IFC Files (*.ifc)|*.ifc||"), this);
+	if (dlg.DoModal() != IDOK)
+		return;
+
+	// the model the user locates is used as it is
+	m_strSourceModel = dlg.GetPathName();
+	m_strSourceModelProblem.Empty();
+	UpdateSourceModelControls();
+	((CButton*)GetDlgItem(IDC_UPDATE_SOURCE_MODEL))->SetCheck(BST_CHECKED);
 }
 
 void CExportOptions::OnIncludeRebarClicked()

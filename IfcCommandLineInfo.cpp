@@ -54,7 +54,8 @@ CIfcCommandLineInfo::CIfcCommandLineInfo() :
    m_bIdsToTable(false),
    m_bFormatTable(false),
    m_bTableExtendsStandard(true),
-   m_bDisplayUnitsForProperties(true)
+   m_bDisplayUnitsForProperties(true),
+   m_bSourceModel(false)
 {
 }
 
@@ -107,6 +108,17 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
       else if (GetKeyValue(strParam, _T("IfcMapping"), strValue))
       {
          m_strMappingFile = strValue;
+         bMyParameter = true;
+      }
+      else if (strParam.CompareNoCase(_T("IfcSourceModel")) == 0)
+      {
+         m_bSourceModel = true;
+         bMyParameter = true;
+      }
+      else if (GetKeyValue(strParam, _T("IfcSourceModel"), strValue))
+      {
+         m_bSourceModel = true;
+         m_strSourceModel = strValue;
          bMyParameter = true;
       }
       else if (GetKeyValue(strParam, _T("IfcIds"), strValue))
@@ -229,7 +241,15 @@ CString CIfcCommandLineInfo::GetUsageMessage()
                  _T("/IfcImport - IFC model to import\n")
                  _T("/IfcOut - PGSuper project file to create. Defaults to the IFC file name with a .pgs extension\n")
                  _T("/IfcLog - Import log file. Defaults to the project file name with a .log extension\n")
-                 _T("/IfcMapping - IFC mapping table. Defaults to the configured table (File > Configure BridgeLink), else the standard table installed with the IFC extension"));
+                 _T("/IfcMapping - IFC mapping table. Defaults to the configured table (File > Configure BridgeLink), else the standard table installed with the IFC extension\n\n")
+                 _T("Usage: BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.ifcmap>] [/IfcIds=<design.ids>] [/IfcSourceModel[=<source.ifc>]]\n\n")
+                 _T("<project.pgs> - PGSuper project to export\n")
+                 _T("/IfcExport - IFC model to write\n")
+                 _T("/IfcPropertyUnits - property values in display units with their units (the default), or in system units\n")
+                 _T("/IfcLog - Export log file. Defaults to the IFC file name with a .export.log extension\n")
+                 _T("/IfcMapping - IFC mapping table. Defaults to the project's table, else the configured table, else the standard table\n")
+                 _T("/IfcIds - Also writes the design-value IDS\n")
+                 _T("/IfcSourceModel - Writes a copy of the IFC model the project was imported from (or of the given model) with PGSuper's design in it"));
    return strMsg;
 }
 

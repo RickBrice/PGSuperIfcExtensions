@@ -36,6 +36,13 @@ public:
 
 	CIfcExportOptions options;
 
+	// Round trips: the model the project was imported from (empty if none), why it can't be used as it is (e.g. it changed
+	// since the import; empty if it can), and whether the export updates a copy of it. Set before the page is shown; the
+	// user can locate the model
+	CString m_strSourceModel;
+	CString m_strSourceModelProblem;
+	bool m_bUpdateSourceModel = false;
+
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_EXPORT_OPTIONS };
@@ -47,6 +54,9 @@ protected:
 
 	void OnSpanChanged();
 	afx_msg void OnIncludeRebarClicked();
+	afx_msg void OnBrowseSourceModel();
+
+	void UpdateSourceModelControls();
 
 	// Rebar Model radios only mean something when rebar is being exported at all.
 	void UpdateRebarRepresentationEnable();

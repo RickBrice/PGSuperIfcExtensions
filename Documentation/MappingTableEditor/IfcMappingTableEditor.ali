@@ -10,3 +10,4 @@ IDH_MAPPING_IDS=ids.html
 IDH_MAPPING_MODEL=model.html
 IDH_MAPPING_CHOOSING_TABLE=choosing_table.html
 IDH_MAPPING_REFERENCE=reference.html
+IDH_MAPPING_ROUND_TRIP=round_trip.html

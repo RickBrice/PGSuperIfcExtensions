@@ -288,6 +288,7 @@ void import_traffic_barriers(std::shared_ptr<WBFL::EAF::Broker> pBroker, const M
       double sign = sign_of(side);
       std::sort(cuts.begin(), cuts.end(), [sign](const BarrierCut& a, const BarrierCut& b) {return sign * loop_center(a.loop).x() > sign * loop_center(b.loop).x(); });
       const auto& cut = cuts.front();
+      CIfcImporter::GetRoundTripRecorder().Record(roundtrip_key::Barrier(side), cut.element.id());
 
       auto edge = deck_edge(deck_loops.front(), side);
       // the roadway's cross slope at the edge of the deck (PGSuper's, so it's undone exactly), as a rise toward the

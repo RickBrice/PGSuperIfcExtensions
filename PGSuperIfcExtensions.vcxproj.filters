@@ -139,6 +139,12 @@
     <ClCompile Include="Stirrups.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IfcRoundTripMerge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IfcRoundTrip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Strands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -355,6 +361,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Stirrups.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcRoundTripMerge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IfcRoundTrip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Strands.h">
