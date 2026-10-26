@@ -44,6 +44,8 @@
 
 BEGIN_MESSAGE_MAP(CIfcExtensionAgent,CCmdTarget)
    ON_COMMAND(ID_EDIT_GEOREFERENCING,&CIfcExtensionAgent::OnEditGeoreferencing)
+   ON_COMMAND(ID_VIEW_IMPORT_LOG,&CIfcExtensionAgent::OnViewImportLog)
+   ON_UPDATE_COMMAND_UI(ID_VIEW_IMPORT_LOG,&CIfcExtensionAgent::OnUpdateViewImportLog)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////
@@ -55,6 +57,7 @@ bool CIfcExtensionAgent::RegisterInterfaces()
    REGISTER_INTERFACE(IGeoreferencing);
    REGISTER_INTERFACE(IIfcProjectMappingTable);
    REGISTER_INTERFACE(IIfcRoundTrip);
+   REGISTER_INTERFACE(IIfcImportLog);
 
    return true;
 }
@@ -188,6 +191,18 @@ void CIfcExtensionAgent::CreateMenus()
    auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
    m_pEditMenu->InsertMenu(alignmentPos, ID_EDIT_GEOREFERENCING, _T("&Georeferencing..."), callback);
    m_pEditMenu->SetMenuItemBitmaps(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
+
+   // View > IFC Import Log, at the end of the View menu
+   UINT viewPos = pMenu->FindMenuItem(_T("View"));
+   if (viewPos != (UINT)-1)
+   {
+      m_pViewMenu = pMenu->GetSubMenu(viewPos);
+      if (m_pViewMenu)
+      {
+         m_pViewMenu->AppendSeparator();
+         m_pViewMenu->AppendMenu(ID_VIEW_IMPORT_LOG, _T("IFC &Import Log..."), callback);
+      }
+   }
 }
 
 void CIfcExtensionAgent::RemoveMenus()
@@ -197,6 +212,12 @@ void CIfcExtensionAgent::RemoveMenus()
       auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
       m_pEditMenu->RemoveMenu(ID_EDIT_GEOREFERENCING, MF_BYCOMMAND, callback);
       m_pEditMenu.reset();
+   }
+   if ( m_pViewMenu )
+   {
+      auto callback = std::dynamic_pointer_cast<WBFL::EAF::ICommandCallback>(shared_from_this());
+      m_pViewMenu->RemoveMenu(ID_VIEW_IMPORT_LOG, MF_BYCOMMAND, callback);
+      m_pViewMenu.reset();
    }
 }
 
@@ -249,6 +270,18 @@ void CIfcExtensionAgent::OnEditGeoreferencing()
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
    GET_IFACE(IEditByUI,pEditByUI);
    pEditByUI->EditAlignmentDescription(_T("Georeferencing"));
+}
+
+void CIfcExtensionAgent::OnViewImportLog()
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+   CImportResults dlg(m_ImportLog, CString(m_ImportLogModel.c_str()));
+   dlg.DoModal();
+}
+
+void CIfcExtensionAgent::OnUpdateViewImportLog(CCmdUI* pCmdUI)
+{
+   pCmdUI->Enable(!m_ImportLog.empty());
 }
 
 void CIfcExtensionAgent::RegisterUIExtensions()

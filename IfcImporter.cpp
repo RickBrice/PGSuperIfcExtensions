@@ -242,9 +242,14 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
 
     WBFL::System::Logger::Info(_T("Done IFC import from file"));
 
+    // the project keeps the log for the session (View > IFC Import Log)
+    std::string log_text = m_LogStream.str();
+    GET_IFACE(IIfcImportLog, pImportLog);
+    pImportLog->SetImportLog(log_text, std::wstring(strFilePath.GetString()));
+
     if (m_Options.interactive)
     {
-       CImportResults dlg(m_LogStream);
+       CImportResults dlg(log_text, strFilePath);
        dlg.DoModal();
     }
     else if (!m_Options.log_file.IsEmpty())

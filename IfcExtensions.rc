@@ -241,6 +241,7 @@ CAPTION "Import Results"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,414,259,50,14
+    PUSHBUTTON      "Save...",IDC_SAVE_LOG,7,259,50,14
     EDITTEXT        IDC_EDIT,7,7,457,248,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL | WS_HSCROLL
 END
 
@@ -692,6 +693,7 @@ IDR_MAPPING_EDITOR      ICON                    "IfcProjectImporter.ico"
 STRINGTABLE
 BEGIN
     ID_EDIT_GEOREFERENCING  "Edit Georeferencing\nEdit Georeferencing"
+    ID_VIEW_IMPORT_LOG      "View the log of the IFC import that made this project\nIFC Import Log"
     ID_MAPPING_VALIDATE     "Check the table the way IFC imports and exports do\nValidate"
     ID_MAPPING_WRITE_IDS    "Write what the table exports as a general IDS\nWrite as IDS"
     ID_MAPPING_FROM_IDS     "Generate a mapping table from a general IDS, e.g. an agency IDS\nGenerate from IDS"

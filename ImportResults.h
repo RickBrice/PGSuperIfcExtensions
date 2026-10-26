@@ -26,12 +26,27 @@
 
 // CImportResults dialog
 
+// The log of the IFC import that made the project (or the project's last IFC import), kept for the session so View > IFC
+// Import Log can show it again. It isn't saved with the project
+// {4E7A2C91-6B3D-4F58-9A1E-8C2D5B7F0A63}
+DEFINE_GUID(IID_IIfcImportLog,
+   0x4e7a2c91, 0x6b3d, 0x4f58, 0x9a, 0x1e, 0x8c, 0x2d, 0x5b, 0x7f, 0x0a, 0x63);
+class IIfcImportLog
+{
+public:
+   virtual void SetImportLog(const std::string& log, const std::wstring& model) = 0;
+   virtual const std::string& GetImportLog() const = 0; // empty if the project wasn't imported in this session
+   virtual const std::wstring& GetImportLogModel() const = 0; // the IFC model the import read
+};
+
+// Shows an import log, which can be saved to a file
 class CImportResults : public CDialog
 {
 	DECLARE_DYNAMIC(CImportResults)
 
 public:
-   CImportResults(std::ostringstream& log,CWnd* pParent = nullptr);   // standard constructor
+   // log: the import log. model: the IFC model the import read; the log is saved beside it by default
+   CImportResults(const std::string& log, const CString& model, CWnd* pParent = nullptr);
 	virtual ~CImportResults();
 
 // Dialog Data
@@ -40,9 +55,11 @@ public:
 #endif
 
 protected:
-   std::ostringstream& m_Log;
+   std::string m_Log;
+   CString m_Model;
 
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+   afx_msg void OnSave();
 
 	DECLARE_MESSAGE_MAP()
 };

@@ -41,6 +41,7 @@
 #include "GeoReferencing.h"
 #include "IfcProjectMappingTable.h"
 #include "IfcRoundTrip.h"
+#include "ImportResults.h"
 
 class CIfcCommandLineInfo;
 
@@ -51,6 +52,7 @@ class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheri
    public IGeoreferencing,
    public IIfcProjectMappingTable,
    public IIfcRoundTrip,
+   public IIfcImportLog,
    public IEditAlignmentCallback,
    public WBFL::EAF::ICommandCallback,
    public IEAFProcessCommandLine
@@ -94,6 +96,12 @@ public:
    const CRoundTripRegistry& GetRoundTripRegistry() const override { return m_RoundTripRegistry; }
    void SetRoundTripRegistry(const CRoundTripRegistry& registry) override { m_RoundTripRegistry = registry; }
 
+// IIfcImportLog
+public:
+   void SetImportLog(const std::string& log, const std::wstring& model) override { m_ImportLog = log; m_ImportLogModel = model; }
+   const std::string& GetImportLog() const override { return m_ImportLog; }
+   const std::wstring& GetImportLogModel() const override { return m_ImportLogModel; }
+
 // IEditAlignmentCallback
 public:
    CPropertyPage* CreatePropertyPage(IEditAlignmentData* pAlignmentData) override;
@@ -114,6 +122,8 @@ public:
    BOOL GetToolTipMessageString(UINT nID, CString& rMessage) const override;
 
    afx_msg void OnEditGeoreferencing();
+   afx_msg void OnViewImportLog();
+   afx_msg void OnUpdateViewImportLog(CCmdUI* pCmdUI);
 
 // IEAFProcessCommandLine
 public:
@@ -134,6 +144,7 @@ private:
    IDType m_EditAlignmentCallbackID;
 
    std::shared_ptr<WBFL::EAF::Menu> m_pEditMenu;
+   std::shared_ptr<WBFL::EAF::Menu> m_pViewMenu;
    CBitmap m_bmpMenu;
    void CreateMenus();
    void RemoveMenus();
@@ -146,4 +157,8 @@ private:
 
    // the elements of the model the project was imported from (IIfcRoundTrip)
    CRoundTripRegistry m_RoundTripRegistry;
+
+   // the log of the project's IFC import in this session (IIfcImportLog)
+   std::string m_ImportLog;
+   std::wstring m_ImportLogModel;
 };

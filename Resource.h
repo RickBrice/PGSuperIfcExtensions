@@ -51,6 +51,7 @@
 #define IDC_UPDATE_SOURCE_MODEL         411
 #define IDC_SOURCE_MODEL                412
 #define IDC_SOURCE_MODEL_BROWSE         413
+#define IDC_SAVE_LOG                    414
 #define IDC_GIRDER_ONLY                 234
 #define IDC_SPAN                        235
 #define IDC_COMBO2                      236
@@ -207,6 +208,7 @@
 #define IDC_CLS_DELETE                  389
 #define IDC_SET_ITEMS_LABEL             390
 #define ID_EDIT_GEOREFERENCING          32771
+#define ID_VIEW_IMPORT_LOG              32779
 #define ID_MAPPING_VALIDATE             32773
 #define ID_MAPPING_WRITE_IDS            32774
 #define ID_MAPPING_FROM_IDS             32775
@@ -239,8 +241,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        412
-#define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         414
+#define _APS_NEXT_COMMAND_VALUE         32780
+#define _APS_NEXT_CONTROL_VALUE         415
 #define _APS_NEXT_SYMED_VALUE           107
 #endif
 #endif

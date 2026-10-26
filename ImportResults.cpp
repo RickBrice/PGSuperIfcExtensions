@@ -27,14 +27,16 @@
 #include "afxdialogex.h"
 #include "ImportResults.h"
 
+#include <filesystem>
+#include <fstream>
+
 // CImportResults dialog
 
 IMPLEMENT_DYNAMIC(CImportResults, CDialog)
 
-CImportResults::CImportResults(std::ostringstream& log,CWnd* pParent /*=nullptr*/)
-	: m_Log(log), CDialog(IDD_IMPORT_RESULTS, pParent)
+CImportResults::CImportResults(const std::string& log, const CString& model, CWnd* pParent /*=nullptr*/)
+	: CDialog(IDD_IMPORT_RESULTS, pParent), m_Log(log), m_Model(model)
 {
-
 }
 
 CImportResults::~CImportResults()
@@ -44,7 +46,7 @@ CImportResults::~CImportResults()
 void CImportResults::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	CString txt(m_Log.str().c_str());
+	CString txt(m_Log.c_str());
 	if (!pDX->m_bSaveAndValidate)
 	{
 	   txt.Replace(_T("\n"), _T("\r\n"));
@@ -54,7 +56,29 @@ void CImportResults::DoDataExchange(CDataExchange* pDX)
 
 
 BEGIN_MESSAGE_MAP(CImportResults, CDialog)
+   ON_BN_CLICKED(IDC_SAVE_LOG, OnSave)
 END_MESSAGE_MAP()
 
 
 // CImportResults message handlers
+
+void CImportResults::OnSave()
+{
+   // the default is beside the model, named after it
+   CString default_name;
+   if (!m_Model.IsEmpty())
+   {
+      std::filesystem::path model(m_Model.GetString());
+      default_name = (model.parent_path() / (model.stem().wstring() + L".import.log")).c_str();
+   }
+
+   CFileDialog dlg(FALSE, _T("log"), default_name, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT, _T("Log Files (*.log)|*.log|Text Files (*.txt)|*.txt|All Files (*.*)|*.*||"), this);
+   if (dlg.DoModal() != IDOK)
+      return;
+
+   std::ofstream file(std::filesystem::path(dlg.GetPathName().GetString()), std::ios::binary);
+   if (file)
+      file << m_Log;
+   if (!file)
+      AfxMessageBox(_T("The log can't be written to ") + dlg.GetPathName(), MB_OK | MB_ICONSTOP);
+}
