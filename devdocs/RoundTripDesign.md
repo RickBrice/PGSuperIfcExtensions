@@ -43,7 +43,7 @@ Why not make the exporter write into the source model directly: the exporter cre
 
 ## Components
 
-### 1. Element registry (`IfcElementRegistry.h/.cpp`, planned since M0)
+### 1. Element registry (`IfcElementRegistry.h/.cpp`, planned since M0; built as `IfcRoundTrip.h/.cpp`, see "Status")
 - **Element identity** (`ElementId`): element role (the mapping tables' `ElementKind`) plus PGSuper's stable IDs, not indices, so inserting or removing a span or a girder doesn't shift the others:
 
   | Role | Key |

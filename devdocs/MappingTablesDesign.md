@@ -87,6 +87,8 @@ One identity per PGSuper item that becomes an IFC element. Tables use it (`appli
 
 **Status (M1):** the import engine doesn't need the registry, so it's built with R1 and the export engine (M3). M1 has only `ElementKind`, in `IfcTargets.h`, with a `Haunch` role added.
 
+**Status (2026-10-26, R1's first version):** the registry was built more simply than planned below. `CRoundTripRegistry` (`IfcRoundTrip.h`) maps string keys of a role and PGSuper's IDs (`roundtrip_key`, e.g. `girder:<segment ID>`, `bearings:<segment ID>:start`) to the GlobalIds of the source model, and the project saves it (agent unit version 3). The import fills it through `CRoundTripRecorder`; the export names its elements with the same keys (`IfcExportIdentities`) instead of taking GlobalIds from a provider, and the merge pairs them. There's no `ElementId` struct or `CIfcElementRegistry`. See [RoundTripDesign.md](RoundTripDesign.md), "Status". The plan below is kept for the record.
+
 ```cpp
 enum class ElementKind { Project, Site, Bridge, BridgePart, Pier, Foundation, Alignment, Referent,
                          Girder, Deck, Bearing, Barrier };
@@ -589,7 +591,8 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 
 | File | Contents |
 |---|---|
-| `IfcElementRegistry.h/.cpp` | `ElementId`, `CIfcElementRegistry` (with R1 and M3) |
+| `IfcRoundTrip.h/.cpp` | the round trip registry (`CRoundTripRegistry`, its keys, `CRoundTripRecorder`, `IfcExportIdentities`), saved with the project (R1) |
+| `IfcRoundTripMerge.h/.cpp` | the merge of PGSuper's export into a copy of the source model (R1) |
 | `IfcTargets.h/.cpp` | `ElementKind`, `ValueKind`, `TargetValue`, `TargetDef`, the target list |
 | `IfcMappingTable.h/.cpp` | finding table files, JSON load (nlohmann-json, already in vcpkg), the `extends` merge, validation, error messages |
 | `IfcTargetReader.h/.cpp` | import engine |

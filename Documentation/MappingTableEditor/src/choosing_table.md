@@ -27,6 +27,8 @@ Choosing another table here doesn't change the configured table. The window vali
 
 The new project remembers the table the import used.
 
+When the import is done, the **Import Results** window shows the import log: the table files, where each value came from, and every assumption. **Save...** writes it to a file (beside the IFC model by default). View > IFC Import Log shows the log again until BridgeLink closes; it isn't saved with the project, so save it to keep it.
+
 Exporting
 ---------
 
