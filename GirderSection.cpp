@@ -54,6 +54,10 @@ namespace
       ~QuietChecks() { _CrtSetReportMode(_CRT_ASSERT, m_Mode); }
    private:
       int m_Mode;
+#else
+      // nothing to do, but a guard object (not an unreferenced local, C4101)
+      QuietChecks() {}
+      ~QuietChecks() {}
 #endif
    };
 
