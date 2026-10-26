@@ -250,6 +250,35 @@ namespace
       return stations;
    }
 
+   // Removes the end ties from the stations (sorted by x): within the girder's depth of an end, the stations whose legs don't
+   // engage the deck, where the girder's stirrups engage it (the first station farther from that end does). They aren't
+   // stirrups, and in the primary zones PGSuper would count them as splitting reinforcement (Iowa's 6b4 ties at the ends of
+   // its #6 stirrup pairs). Returns the number of stations removed
+   IndexType remove_end_ties(std::vector<Station>& stations, Float64 Lg, std::optional<Float64> start_depth, std::optional<Float64> end_depth)
+   {
+      std::vector<bool> bTie(stations.size(), false);
+      auto mark = [&](auto first, auto last, std::optional<Float64> depth, auto distance)
+         {
+            if (!depth)
+               return;
+            auto beyond = std::find_if(first, last, [&](const auto& s) {return *depth < distance(s); });
+            if (beyond == last || beyond->nInterfaceLegs == 0)
+               return;
+            for (auto it = first; it != beyond; it++)
+            {
+               if (it->nInterfaceLegs == 0)
+                  bTie[&*it - stations.data()] = true;
+            }
+         };
+      mark(stations.begin(), stations.end(), start_depth, [](const auto& s) {return s.x; });
+      mark(stations.rbegin(), stations.rend(), end_depth, [Lg](const auto& s) {return Lg - s.x; });
+
+      IndexType nTies = std::count(bTie.begin(), bTie.end(), true);
+      size_t i = 0;
+      stations.erase(std::remove_if(stations.begin(), stations.end(), [&](const auto&) {return bTie[i++]; }), stations.end());
+      return nTies;
+   }
+
    // the stations have mirror stations, at the same distance from the other end with the same bars
    bool is_symmetric(const std::vector<Station>& stations, Float64 Lg)
    {
@@ -323,6 +352,7 @@ void import_stirrups(std::shared_ptr<WBFL::EAF::Broker> pBroker, const GirderBar
          CShearData2 shear_data;
          shear_data.ShearBarType = pSegment->ShearData.ShearBarType; // the material if the model doesn't say
          shear_data.ShearBarGrade = pSegment->ShearData.ShearBarGrade;
+         shear_data.bUsePrimaryForSplitting = true; // the stirrups near the ends are the splitting reinforcement
          pSegment->ShearData = shear_data;
       });
    if (!girder_bars.HasBars())
@@ -387,13 +417,17 @@ void import_stirrups(std::shared_ptr<WBFL::EAF::Broker> pBroker, const GirderBar
       auto stations = get_stations(stirrups, nMixedSizes);
       if (0 < nMixedSizes)
          WBFL::System::Logger::Warning("Stirrups of " + girder_name + ": " + std::to_string(nMixedSizes) + " places along the girder have stirrups of different sizes. PGSuper has one size for a zone, so the size with the most legs is used.");
+
+      Float64 Lg = geometry.GetLength(beam_id);
+      IndexType nTies = remove_end_ties(stations, Lg, geometry.GetDepth(beam_id, 0.0), geometry.GetDepth(beam_id, Lg));
+      if (0 < nTies)
+         WBFL::System::Logger::Info("Stirrups of " + girder_name + ": " + std::to_string(nTies) + " places near the ends have bars with vertical legs that don't reach the deck, where the stirrups do. They're end ties, not stirrups or splitting reinforcement, so they aren't imported.");
       IndexType nStations = stations.size();
 
       IndexType nUnplaced = place_confinement(stations, confinement);
       IndexType nConfinedStations = std::count_if(stations.begin(), stations.end(), [](const auto& s) {return 0 < s.nConfinement; });
       IndexType nAdditional = std::accumulate(stations.begin(), stations.end(), (IndexType)0, [](IndexType n, const auto& s) {return n + (1 < s.nConfinement ? s.nConfinement - 1 : 0); });
 
-      Float64 Lg = geometry.GetLength(beam_id);
       shear_data.bAreZonesSymmetrical = is_symmetric(stations, Lg);
       if (shear_data.bAreZonesSymmetrical)
       {
@@ -441,5 +475,5 @@ void import_stirrups(std::shared_ptr<WBFL::EAF::Broker> pBroker, const GirderBar
       WBFL::System::Logger::Warning(std::to_string(nWithoutSize) + " stirrups and confinement bars were skipped: their size isn't known (rebar.bar_size, the nominal diameter, or a drawn diameter of a bar size).");
    if (0 < nWithoutStirrups)
       WBFL::System::Logger::Info(std::to_string(nWithoutStirrups) + " girders have no stirrups in the model, so they have no transverse reinforcement.");
-   WBFL::System::Logger::Info("Splitting reinforcement isn't imported yet: the girders have none.");
+   WBFL::System::Logger::Info("Splitting reinforcement: the stirrups near the girder ends (PGSuper's \"use primary bars for splitting\"), no separate splitting zone.");
 }
