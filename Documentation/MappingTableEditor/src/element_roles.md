@@ -44,8 +44,9 @@ The import reads the girders' strands (the `tendon` role) and reinforcing bars (
 
 - **Strands:** the strand positions, harping, debonding, and extended strands. The targets of the `tendon` role give the material, the jacking force, the temporary strands, and the debond lengths.
 - **Longitudinal bars:** bars along the girder, as rows referenced to the top or bottom of the girder.
-- **Stirrups:** bars with vertical legs, as shear zones. A leg that extends above the girder engages the deck.
+- **Stirrups:** bars with vertical legs, as shear zones. A leg that extends above the girder engages the deck. Bars around the bottom strands at the stirrups are the zones' confinement bars. The stirrups near the girder ends are the splitting reinforcement; end ties that don't reach the deck are left out.
+- **Deck bars:** bars inside the deck slab. PGSuper's deck reinforcement is simplified, so the longitudinal bars are imported as lump sums (bar area per width of deck): the bars that run the length of the bridge are each mat's primary reinforcement, and the shorter bars that cross a pier are its supplemental reinforcement, with their cutoffs. The cover is the depth of the bars' centroid. Transverse bars aren't PGSuper data.
 
-The bar size is read from `rebar.bar_size`, else from the bar's nominal diameter or its geometry. The bar material is read from `rebar.grade` and `rebar.fy`. A girder gets only the strands and bars that are in the model. Confinement and splitting reinforcement aren't imported yet.
+The bar size is read from `rebar.bar_size`, else from the bar's nominal diameter or its geometry. The bar material is read from `rebar.grade` and `rebar.fy`. A girder gets only the strands and bars that are in the model. A deck without longitudinal bars in the model keeps the existing deck reinforcement.
 
 The import log describes what was read for each girder, and why any strand or bar was left out.

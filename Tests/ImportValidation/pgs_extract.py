@@ -389,6 +389,22 @@ def extract(path, stations=None):
     } for p in deck.find("DeckEdgePoints").findall("DeckPoint")]
     put("deck.edge_point_count", len(deck_points), "count")
 
+    # deck reinforcement: the primary bars of each mat and the supplemental bars at the piers (lump sums, bar sizes, covers)
+    rebar = deck.find("DeckRebar")
+    if rebar is not None:
+        for mat in ("Top", "Bottom"):
+            key = f"deck.rebar.{mat.lower()}"
+            put(f"{key}.cover", _f(rebar, f"{mat}Cover"), "length_in")
+            put(f"{key}.lump_sum", _f(rebar, f"{mat}LumpSumArea"), "area_per_length")
+            put(f"{key}.bar_size", _t(rebar, f"{mat}RebarSize"), "text")
+        supplemental = rebar.findall("NegMomentRebar")
+        put("deck.rebar.supplemental_count", len(supplemental), "count")
+        for nm in supplemental:
+            key = f"deck.rebar.pier[{_t(nm, 'Pier')}].{'top' if _t(nm, 'Mat') == '0' else 'bottom'}"
+            put(f"{key}.lump_sum", _f(nm, "LumpSumArea"), "area_per_length")
+            put(f"{key}.left_cutoff", _f(nm, "LeftCutoff"), "length_ft")
+            put(f"{key}.right_cutoff", _f(nm, "RightCutoff"), "length_ft")
+
     # railings
     for side in ("Left", "Right"):
         railing = bridge.find(f"{side}RailingSystem/RailingSystem")

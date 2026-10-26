@@ -77,8 +77,17 @@ private:
    std::map<int, std::vector<std::vector<GirderPoint>>> m_Strands;
 };
 
-// the nominal diameter of a bar size (sizes are the same for every type and grade), 0 if the pool doesn't have it
+// the nominal diameter and area of a bar size (sizes are the same for every type and grade), 0 if the pool doesn't have it
 Float64 nominal_diameter(WBFL::Materials::Rebar::Size size);
+Float64 nominal_area(WBFL::Materials::Rebar::Size size);
+
+// The bar size: rebar.bar_size (a number, e.g. "#5", "5", "No. 5"), else the nominal diameter of the bar type or the
+// bar, else the diameter as drawn. bsNone if no size has the diameter (within 0.1 in)
+WBFL::Materials::Rebar::Size get_bar_size(IfcSchema::IfcReinforcingBar bar, std::optional<Float64> drawn_diameter);
+
+// The bar material: the type from rebar.grade (A615 unless the text says A706 or A1035), the grade from rebar.fy, else a
+// grade number in rebar.grade. nullopt if the model says neither
+std::optional<BarMaterial> get_bar_material(IfcSchema::IfcReinforcingBar bar);
 
 // the material most of the bars have, or nullopt if no bar has one; bMixed is set if they have different materials
 std::optional<BarMaterial> most_common_material(const std::map<BarMaterial, IndexType>& materials, bool& bMixed);

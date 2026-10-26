@@ -575,6 +575,27 @@ private:
    }
 };
 
+ReinforcementCenterlineReader::ReinforcementCenterlineReader(ifcopenshell::file& file)
+{
+   ifcopenshell::geom::settings settings;
+   m_Mapping.reset(ifcopenshell::geom::impl::mapping_implementations().construct(&file, settings));
+}
+
+ReinforcementCenterlineReader::~ReinforcementCenterlineReader() = default;
+
+std::vector<ReinforcementCenterline> ReinforcementCenterlineReader::Read(IfcSchema::IfcElement element) const
+{
+   std::vector<ReinforcementCenterline> centerlines;
+   if (!element)
+      return centerlines;
+   for (const auto& centerline : get_centerlines(*m_Mapping, element))
+   {
+      if (2 <= centerline.points.size())
+         centerlines.push_back({ centerline.points, centerline.diameter });
+   }
+   return centerlines;
+}
+
 GirderReinforcementReader::GirderReinforcementReader(ifcopenshell::file& file, const GirderLayout& layout)
 {
    for (const auto& span : layout)

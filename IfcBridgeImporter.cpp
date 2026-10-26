@@ -29,6 +29,7 @@
 #include "IfcTargetReader.h"
 
 #include "BeamSpacing.h"
+#include "DeckRebar.h"
 #include "DeckSlab.h"
 #include "TrafficBarriers.h"
 #include "RoadwaySection.h"
@@ -857,6 +858,9 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
       }
       WBFL::System::Logger::Info(_T("Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry)."));
    }
+
+   // the deck reinforcement, as lump sums
+   import_deck_rebar(m_Importer.GetBroker(), file, *deck, pier_stations, bridge_desc);
 }
 
 namespace

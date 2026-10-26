@@ -258,6 +258,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClCompile Include="LongitudinalRebar.cpp" />
     <ClCompile Include="GirderBars.cpp" />
     <ClCompile Include="Stirrups.cpp" />
+    <ClCompile Include="DeckRebar.cpp" />
     <ClCompile Include="IfcRoundTripMerge.cpp" />
     <ClCompile Include="IfcRoundTrip.cpp" />
     <ClCompile Include="Strands.cpp" />
@@ -344,6 +345,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="LongitudinalRebar.h" />
     <ClInclude Include="GirderBars.h" />
     <ClInclude Include="Stirrups.h" />
+    <ClInclude Include="DeckRebar.h" />
     <ClInclude Include="IfcRoundTripMerge.h" />
     <ClInclude Include="IfcRoundTrip.h" />
     <ClInclude Include="Strands.h" />

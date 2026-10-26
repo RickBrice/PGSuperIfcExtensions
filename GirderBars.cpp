@@ -34,90 +34,92 @@
 #undef min // undef our version of min in MathEx.h so std::min is used correctly in this file
 #undef max
 
+using WBFL::Materials::Rebar;
+
 namespace
 {
-   using WBFL::Materials::Rebar;
-
    const std::array<Rebar::Size, 11> bar_sizes{ Rebar::Size::bs3, Rebar::Size::bs4, Rebar::Size::bs5, Rebar::Size::bs6, Rebar::Size::bs7, Rebar::Size::bs8,
       Rebar::Size::bs9, Rebar::Size::bs10, Rebar::Size::bs11, Rebar::Size::bs14, Rebar::Size::bs18 };
+}
 
-   // The bar size: rebar.bar_size (a number, e.g. "#5", "5", "No. 5"), else the nominal diameter of the bar type or the
-   // bar, else the diameter as drawn. bsNone if no size has the diameter (within 0.1 in)
-   Rebar::Size get_bar_size(IfcSchema::IfcReinforcingBar bar, std::optional<Float64> drawn_diameter)
+Rebar::Size get_bar_size(IfcSchema::IfcReinforcingBar bar, std::optional<Float64> drawn_diameter)
+{
+   USES_CONVERSION;
+   const auto& reader = CIfcImporter::GetTargetReader();
+   const auto& units = CIfcImporter::GetUnits();
+   if (auto reading = reader.Read("rebar.bar_size", bar))
    {
-      USES_CONVERSION;
-      const auto& reader = CIfcImporter::GetTargetReader();
-      const auto& units = CIfcImporter::GetUnits();
-      if (auto reading = reader.Read("rebar.bar_size", bar))
+      std::smatch match;
+      const auto& text = std::get<std::string>(reading->value);
+      if (std::regex_search(text, match, std::regex("[0-9]+")))
       {
-         std::smatch match;
-         const auto& text = std::get<std::string>(reading->value);
-         if (std::regex_search(text, match, std::regex("[0-9]+")))
-         {
-            auto size = WBFL::LRFD::RebarPool::GetBarSize(A2T(("#" + match.str()).c_str()));
-            if (size != Rebar::Size::bsNone)
-               return size;
-         }
+         auto size = WBFL::LRFD::RebarPool::GetBarSize(A2T(("#" + match.str()).c_str()));
+         if (size != Rebar::Size::bsNone)
+            return size;
       }
-
-      std::optional<Float64> diameter;
-      for (const auto& rel : bar.IsTypedBy())
-      {
-         auto bar_type = rel.RelatingType().as<IfcSchema::IfcReinforcingBarType>();
-         if (bar_type && bar_type.NominalDiameter())
-            diameter = ConvertToSysUnits<IfcSchema::IfcPositiveLengthMeasure>(units, *bar_type.NominalDiameter());
-      }
-      if (!diameter && bar.NominalDiameter())
-         diameter = ConvertToSysUnits<IfcSchema::IfcPositiveLengthMeasure>(units, *bar.NominalDiameter());
-      if (!diameter)
-         diameter = drawn_diameter;
-      if (!diameter)
-         return Rebar::Size::bsNone;
-
-      auto best = std::min_element(bar_sizes.begin(), bar_sizes.end(), [&diameter](auto a, auto b) {return fabs(nominal_diameter(a) - *diameter) < fabs(nominal_diameter(b) - *diameter); });
-      return fabs(nominal_diameter(*best) - *diameter) <= WBFL::Units::ConvertToSysUnits(0.1, WBFL::Units::Measure::Inch) ? *best : Rebar::Size::bsNone;
    }
 
-   // The bar material: the type from rebar.grade (A615 unless the text says A706 or A1035), the grade from rebar.fy, else a
-   // grade number in rebar.grade. nullopt if the model says neither
-   std::optional<BarMaterial> get_bar_material(IfcSchema::IfcReinforcingBar bar)
+   std::optional<Float64> diameter;
+   for (const auto& rel : bar.IsTypedBy())
    {
-      const auto& reader = CIfcImporter::GetTargetReader();
-      std::optional<std::string> text;
-      if (auto reading = reader.Read("rebar.grade", bar))
-         text = std::get<std::string>(reading->value);
-      std::optional<Float64> fy;
-      if (auto reading = reader.Read("rebar.fy", bar))
-         fy = WBFL::Units::ConvertFromSysUnits(std::get<Float64>(reading->value), WBFL::Units::Measure::KSI);
-      if (!text && !fy)
-         return std::nullopt;
-
-      auto type = Rebar::Type::A615;
-      if (text && text->find("A706") != std::string::npos)
-         type = Rebar::Type::A706;
-      else if (text && text->find("A1035") != std::string::npos)
-         type = Rebar::Type::A1035;
-
-      const std::array<std::pair<Float64, Rebar::Grade>, 6> grades{ { {40, Rebar::Grade40}, {60, Rebar::Grade60}, {75, Rebar::Grade75}, {80, Rebar::Grade80}, {100, Rebar::Grade100}, {120, Rebar::Grade120} } };
-      if (!fy && text)
-      {
-         // the grade number in the text (e.g. "AASHTO M31 (A615) - Grade 60", or just "60")
-         std::smatch match;
-         std::string rest = std::regex_replace(*text, std::regex("A(615|706|1035)"), "");
-         if (std::regex_search(rest, match, std::regex("[0-9]+")))
-            fy = std::stod(match.str());
-      }
-      auto grade = Rebar::Grade60;
-      if (fy)
-         grade = std::min_element(grades.begin(), grades.end(), [&fy](const auto& a, const auto& b) {return fabs(a.first - *fy) < fabs(b.first - *fy); })->second;
-      return std::make_pair(type, grade);
+      auto bar_type = rel.RelatingType().as<IfcSchema::IfcReinforcingBarType>();
+      if (bar_type && bar_type.NominalDiameter())
+         diameter = ConvertToSysUnits<IfcSchema::IfcPositiveLengthMeasure>(units, *bar_type.NominalDiameter());
    }
+   if (!diameter && bar.NominalDiameter())
+      diameter = ConvertToSysUnits<IfcSchema::IfcPositiveLengthMeasure>(units, *bar.NominalDiameter());
+   if (!diameter)
+      diameter = drawn_diameter;
+   if (!diameter)
+      return Rebar::Size::bsNone;
+
+   auto best = std::min_element(bar_sizes.begin(), bar_sizes.end(), [&diameter](auto a, auto b) {return fabs(nominal_diameter(a) - *diameter) < fabs(nominal_diameter(b) - *diameter); });
+   return fabs(nominal_diameter(*best) - *diameter) <= WBFL::Units::ConvertToSysUnits(0.1, WBFL::Units::Measure::Inch) ? *best : Rebar::Size::bsNone;
+}
+
+std::optional<BarMaterial> get_bar_material(IfcSchema::IfcReinforcingBar bar)
+{
+   const auto& reader = CIfcImporter::GetTargetReader();
+   std::optional<std::string> text;
+   if (auto reading = reader.Read("rebar.grade", bar))
+      text = std::get<std::string>(reading->value);
+   std::optional<Float64> fy;
+   if (auto reading = reader.Read("rebar.fy", bar))
+      fy = WBFL::Units::ConvertFromSysUnits(std::get<Float64>(reading->value), WBFL::Units::Measure::KSI);
+   if (!text && !fy)
+      return std::nullopt;
+
+   auto type = Rebar::Type::A615;
+   if (text && text->find("A706") != std::string::npos)
+      type = Rebar::Type::A706;
+   else if (text && text->find("A1035") != std::string::npos)
+      type = Rebar::Type::A1035;
+
+   const std::array<std::pair<Float64, Rebar::Grade>, 6> grades{ { {40, Rebar::Grade40}, {60, Rebar::Grade60}, {75, Rebar::Grade75}, {80, Rebar::Grade80}, {100, Rebar::Grade100}, {120, Rebar::Grade120} } };
+   if (!fy && text)
+   {
+      // the grade number in the text (e.g. "AASHTO M31 (A615) - Grade 60", or just "60")
+      std::smatch match;
+      std::string rest = std::regex_replace(*text, std::regex("A(615|706|1035)"), "");
+      if (std::regex_search(rest, match, std::regex("[0-9]+")))
+         fy = std::stod(match.str());
+   }
+   auto grade = Rebar::Grade60;
+   if (fy)
+      grade = std::min_element(grades.begin(), grades.end(), [&fy](const auto& a, const auto& b) {return fabs(a.first - *fy) < fabs(b.first - *fy); })->second;
+   return std::make_pair(type, grade);
 }
 
 Float64 nominal_diameter(Rebar::Size size)
 {
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(Rebar::Type::A615, Rebar::Grade60, size);
    return pRebar ? pRebar->GetNominalDimension() : 0.0;
+}
+
+Float64 nominal_area(Rebar::Size size)
+{
+   const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(Rebar::Type::A615, Rebar::Grade60, size);
+   return pRebar ? pRebar->GetNominalArea() : 0.0;
 }
 
 std::optional<BarMaterial> most_common_material(const std::map<BarMaterial, IndexType>& materials, bool& bMixed)

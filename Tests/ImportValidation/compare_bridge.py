@@ -42,6 +42,7 @@ KINDS = {
     "stress": (0.05 * KSI, lambda v: f"{v / KSI:.3f} ksi"),
     "force": (0.05 * KIP, lambda v: f"{v / KIP:.3f} kip"),
     "spacing": (0.003, lambda v: f"{v['value'] / FT:.3f} ft ({v['datum']})"),
+    "area_per_length": (0.001 * IN * IN / FT, lambda v: f"{v / (IN * IN / FT):.3f} in^2/ft"),
     "count": (0, str),
     "text": (None, str),
     "entry_name": (None, str),  # a library entry name: one the import created has " (IFC)" after its name (see same)

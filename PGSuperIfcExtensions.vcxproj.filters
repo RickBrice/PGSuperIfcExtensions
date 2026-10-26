@@ -139,6 +139,9 @@
     <ClCompile Include="Stirrups.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DeckRebar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcRoundTripMerge.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -361,6 +364,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Stirrups.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeckRebar.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcRoundTripMerge.h">

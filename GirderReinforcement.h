@@ -57,6 +57,28 @@ struct GirderReinforcement
                                             // projects), or nullopt if it's farther than end_distance_limit
 };
 
+// The centerline of a piece of reinforcement in global coordinates (system units), from its body geometry as
+// GirderReinforcementReader::Read reads it, and its diameter as drawn
+struct ReinforcementCenterline
+{
+   std::vector<Eigen::Vector3d> points; // its ends and bends
+   std::optional<Float64> diameter;
+};
+
+// Reads the centerlines of reinforcement anywhere in the model (e.g. the deck's): one for each bar of an element that
+// is a group of bars. Empty if its geometry has no straight pieces that make a centerline
+class ReinforcementCenterlineReader
+{
+public:
+   ReinforcementCenterlineReader(ifcopenshell::file& file);
+   ~ReinforcementCenterlineReader();
+
+   std::vector<ReinforcementCenterline> Read(IfcSchema::IfcElement element) const;
+
+private:
+   std::unique_ptr<ifcopenshell::geom::abstract_mapping> m_Mapping;
+};
+
 class GirderReinforcementReader
 {
 public:
