@@ -64,6 +64,7 @@ public:
 
 protected:
    void DoDataExchange(CDataExchange* pDX) override;
+   BOOL OnInitDialog() override;
    void OnOK() override;
    afx_msg void OnBrowseIds();
    afx_msg void OnBrowseBinding();

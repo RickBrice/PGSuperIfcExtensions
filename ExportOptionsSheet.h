@@ -41,4 +41,7 @@ public:
    CExportOptions       m_IfcPage;
    CIdsExportOptionsDlg m_IdsPage;
    CExportTablePage     m_TablePage;
+
+protected:
+   BOOL OnInitDialog() override;
 };

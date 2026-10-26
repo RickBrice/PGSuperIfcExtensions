@@ -24,6 +24,7 @@
 #include "MappingTableWindows.h"
 #include "MappingEditorViews.h" // ShowMappingHelp
 #include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
+#include "MenuLogo.h"
 
 #include <CommCtrl.h>
 #pragma comment(lib, "comctl32.lib") // LoadIconWithScaleDown
@@ -51,6 +52,7 @@ END_MESSAGE_MAP()
 
 CMappingTableConfigPage::CMappingTableConfigPage() : CPropertyPage(IDD_MAPPING_CONFIG_PAGE)
 {
+   SetPageLogo(*this);
    m_psp.dwFlags |= PSP_USETITLE | PSP_USEHEADERTITLE | PSP_USEHEADERSUBTITLE;
    m_psp.dwFlags &= ~PSP_HASHELP;
    m_psp.pszTitle = _T("Configure IFC Extension");
@@ -172,6 +174,7 @@ CIfcImportTableDlg::CIfcImportTableDlg(const CString& strModelFile, CWnd* pParen
 BOOL CIfcImportTableDlg::OnInitDialog()
 {
    CDialog::OnInitDialog();
+   SetWindowLogo(this);
 
    SetDlgItemText(IDC_IMPORT_MODEL_FILE, m_strModelFile);
    // the default is the configured table (an empty path: LoadActive uses the setting, else the standard table)
@@ -211,6 +214,7 @@ END_MESSAGE_MAP()
 
 CExportTablePage::CExportTablePage() : CPropertyPage(IDD_EXPORT_TABLE_PAGE)
 {
+   SetPageLogo(*this);
    m_DefaultLabel = configured_table_label();
 }
 

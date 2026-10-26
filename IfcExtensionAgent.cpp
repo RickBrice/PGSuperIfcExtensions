@@ -201,6 +201,7 @@ void CIfcExtensionAgent::CreateMenus()
       {
          m_pViewMenu->AppendSeparator();
          m_pViewMenu->AppendMenu(ID_VIEW_IMPORT_LOG, _T("IFC &Import Log..."), callback);
+         m_pViewMenu->SetMenuItemBitmaps(ID_VIEW_IMPORT_LOG, MF_BYCOMMAND, &m_bmpMenu, nullptr, callback);
       }
    }
 }

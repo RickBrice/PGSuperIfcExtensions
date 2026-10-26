@@ -30,6 +30,7 @@
 #include "MappingEditorPanes.h"
 #include "IfcTableFormat.h"
 #include "IfcTableIds.h"
+#include "MenuLogo.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFMainFrame.h>
@@ -73,6 +74,13 @@ void CMappingFromIdsDlg::DoDataExchange(CDataExchange* pDX)
    DDX_Text(pDX, IDC_FROMIDS_IDS, m_strIds);
    DDX_Text(pDX, IDC_FROMIDS_BINDING, m_strBinding);
    DDX_Check(pDX, IDC_FROMIDS_EXTEND, m_bExtend);
+}
+
+BOOL CMappingFromIdsDlg::OnInitDialog()
+{
+   CDialog::OnInitDialog();
+   SetWindowLogo(this);
+   return TRUE;
 }
 
 void CMappingFromIdsDlg::OnOK()

@@ -33,6 +33,7 @@
 #include "MappingEditorViews.h"
 #include "Documentation\MappingTableEditor\IfcMappingTableEditor.hh"
 #include "MappingEditorModelPane.h"
+#include "MenuLogo.h"
 
 #include <sstream>
 
@@ -773,6 +774,7 @@ int CLocationDlg::GetKind() const
 BOOL CLocationDlg::OnInitDialog()
 {
    CDialog::OnInitDialog();
+   SetWindowLogo(this);
 
    CString strCaption;
    strCaption.Format(_T("Location of %s"), Utf8ToCString(std::string(m_Target.name)).GetString());
@@ -1053,6 +1055,7 @@ CMappingMessagesDlg::CMappingMessagesDlg(const CString& strCaption, const CStrin
 BOOL CMappingMessagesDlg::OnInitDialog()
 {
    CDialog::OnInitDialog();
+   SetWindowLogo(this);
    SetWindowText(m_strCaption);
    SetDlgItemText(IDC_EDIT, ToWindowsLines(m_strText));
    return TRUE;

@@ -31,6 +31,7 @@
 #include "MappingEditorDoc.h"
 #include "MappingEditorUtil.h"
 #include "bSDD.h"
+#include "MenuLogo.h"
 
 #include <sstream>
 
@@ -897,6 +898,7 @@ CPropertyDlg::CPropertyDlg(bool bQuantity, const std::vector<std::string>& roles
 BOOL CPropertyDlg::OnInitDialog()
 {
    CDialog::OnInitDialog();
+   SetWindowLogo(this);
    SetWindowText(m_bQuantity ? _T("Quantity") : _T("Property"));
 
    const auto& p = m_Property;

@@ -25,6 +25,7 @@
 
 #include "stdafx.h"
 #include "ExportOptionsSheet.h"
+#include "MenuLogo.h"
 
 CExportOptionsSheet::CExportOptionsSheet(LPCTSTR pszCaption, CWnd* pParentWnd /*=nullptr*/)
    : CPropertySheet(pszCaption, pParentWnd)
@@ -33,4 +34,11 @@ CExportOptionsSheet::CExportOptionsSheet(LPCTSTR pszCaption, CWnd* pParentWnd /*
    AddPage(&m_IfcPage);
    AddPage(&m_IdsPage);
    AddPage(&m_TablePage);
+}
+
+BOOL CExportOptionsSheet::OnInitDialog()
+{
+   BOOL bResult = CPropertySheet::OnInitDialog();
+   SetWindowLogo(this);
+   return bResult;
 }

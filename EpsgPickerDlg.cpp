@@ -23,6 +23,7 @@
 #include "stdafx.h"
 #include "afxdialogex.h"
 #include "EpsgPickerDlg.h"
+#include "MenuLogo.h"
 
 #include <algorithm>
 
@@ -54,6 +55,7 @@ END_MESSAGE_MAP()
 BOOL CEpsgPickerDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+	SetWindowLogo(this);
 
 	if (!m_strCaption.IsEmpty())
 		SetWindowText(m_strCaption);

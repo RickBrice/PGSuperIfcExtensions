@@ -26,6 +26,7 @@
 #include "stdafx.h"
 #include "afxdialogex.h"
 #include "ExportOptions.h"
+#include "MenuLogo.h"
 #include <MfcTools/CustomDDX.h>
 #include <PsgLib\BridgeDescription2.h>
 #include <psgLib\GirderLabel.h>
@@ -42,6 +43,7 @@ IMPLEMENT_DYNAMIC(CExportOptions, CPropertyPage)
 CExportOptions::CExportOptions()
 	: CPropertyPage(IDD_EXPORT_OPTIONS)
 {
+   SetPageLogo(*this);
 
 }
 

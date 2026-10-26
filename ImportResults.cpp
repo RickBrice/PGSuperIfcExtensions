@@ -26,6 +26,7 @@
 #include "stdafx.h"
 #include "afxdialogex.h"
 #include "ImportResults.h"
+#include "MenuLogo.h"
 
 #include <filesystem>
 #include <fstream>
@@ -61,6 +62,13 @@ END_MESSAGE_MAP()
 
 
 // CImportResults message handlers
+
+BOOL CImportResults::OnInitDialog()
+{
+   CDialog::OnInitDialog();
+   SetWindowLogo(this);
+   return TRUE;
+}
 
 void CImportResults::OnSave()
 {

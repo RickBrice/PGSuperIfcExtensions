@@ -55,3 +55,31 @@ inline void LoadMenuLogo(CBitmap& bitmap)
    dc.SelectObject(pOld);
    ::DestroyIcon(hIcon);
 }
+
+// The bSI logo in the title bar of a window of the extension (a dialog or property sheet), so users can tell the window
+// comes from the IFC extension. Call in the window's OnInitDialog. A modal frame shows no title bar icon, so it's
+// removed. The icons (the small and large system icon sizes, from the multi-size icon) are loaded once, from the
+// extension's resources whatever the module state
+inline void SetWindowLogo(CWnd* pWnd)
+{
+   static HICON hSmall = nullptr, hLarge = nullptr;
+   HINSTANCE hInstance = AfxGetStaticModuleState()->m_hCurrentResourceHandle;
+   if (!hSmall && FAILED(::LoadIconWithScaleDown(hInstance, MAKEINTRESOURCE(IDI_BSI), ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), &hSmall)))
+      hSmall = nullptr;
+   if (!hLarge && FAILED(::LoadIconWithScaleDown(hInstance, MAKEINTRESOURCE(IDI_BSI), ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON), &hLarge)))
+      hLarge = nullptr;
+
+   pWnd->ModifyStyleEx(WS_EX_DLGMODALFRAME, 0, SWP_FRAMECHANGED);
+   if (hLarge)
+      pWnd->SetIcon(hLarge, TRUE);
+   if (hSmall)
+      pWnd->SetIcon(hSmall, FALSE);
+}
+
+// The bSI logo on the tab of a property page of the extension. Call in the page's constructor
+inline void SetPageLogo(CPropertyPage& page)
+{
+   page.m_psp.dwFlags |= PSP_USEICONID;
+   page.m_psp.hInstance = AfxGetStaticModuleState()->m_hCurrentResourceHandle;
+   page.m_psp.pszIcon = MAKEINTRESOURCE(IDI_BSI);
+}

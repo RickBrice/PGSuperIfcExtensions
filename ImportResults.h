@@ -59,6 +59,7 @@ protected:
    CString m_Model;
 
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+   BOOL OnInitDialog() override;
    afx_msg void OnSave();
 
 	DECLARE_MESSAGE_MAP()
