@@ -33,7 +33,7 @@ A hook that throws stops the export. The exception becomes a `CIfcExtensionExcep
 
 ## Visibility
 
-`IfcExtensionRegistry.h`: an extension's content is registered for each export and kept for the life of the process (never destroyed), because tables hold `const TargetDef*` and the extension's DLL can be unloaded and loaded again between exports. Role ids are `ElementKind::FirstExtension` (1000) and up.
+`IfcExtensionRegistry.h`: an extension's content is registered for each export and owned by it (`CIfcExportSession`, or `WriteTableIds`), declared before the mapping table so it outlives the table's `const TargetDef*` pointers. Its getters are code in the extension's DLL, which is loaded throughout, because the extension is the caller. Role ids are `ElementKind::FirstExtension` (1000) and up, for each export.
 
 `FindTargetDef`, `GetElementKind`, and `GetElementRoleName` find an extension's targets and roles only while a `CIfcExtensionScope` for it exists, that is, during `IIfcModelBuilder` calls that name the extension. The standard export, the import, `/IfcTableToIds`, and the mapping table editor never see them. `GetTargetDefs()` still lists only this project's targets.
 
@@ -55,10 +55,9 @@ A mismatch gives a message that says to install versions released together.
 
 ## Value kinds
 
-`Time`, `LinearForce`, `MassDensity`, `Real`, and `Moment` (API version 2) were added for extension targets. They are generic physical quantity kinds. `AddUsedProjectUnits` declares SI project units for them: s, and the derived units N/m, kg/m³, and N·m (IFC 4.3 writes moments as `IfcTorqueMeasure`).
+`Time`, `LinearForce`, `MassDensity`, `Real`, and `Moment` were added for extension targets. They are generic physical quantity kinds. `AddUsedProjectUnits` declares SI project units for them: s, and the derived units N/m, kg/m³, and N·m (IFC 4.3 writes moments as `IfcTorqueMeasure`).
 
 ## Not done yet
 
-- `ExportContext::row` (rebar row) is declared but not filled: the core writes rebar property sets as shared sets.
 - The design-value IDS (`IdsExporter`) doesn't know about extension targets. Use `IIfcModelBuilder::WriteTableIds` for a general IDS of the extension's table.
 - PGSplice: the builder is registered by the agent in both, but the extension hooks have only been designed with PGSuper bridges in mind.

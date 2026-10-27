@@ -131,6 +131,14 @@ namespace
    }
 }
 
+void WriteTableAsIdsFile(const CIfcMappingTable& table, const std::filesystem::path& ids_path, std::vector<std::string>& notes)
+{
+   std::ofstream ids(ids_path, std::ios::binary);
+   if (!ids)
+      throw std::runtime_error("The IDS file can't be written: " + PathToString(ids_path));
+   WriteTableAsIds(table, ids, notes);
+}
+
 void WriteTableAsIds(const CIfcMappingTable& table, std::ostream& os, std::vector<std::string>& notes)
 {
    try

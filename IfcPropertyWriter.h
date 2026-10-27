@@ -66,7 +66,7 @@ public:
    void CallHook(const char* hook, const std::function<void(IfcExport::IHooks&, IfcExport::HookContext&)>& call);
    IfcExport::ExportedElements& GetExportedElements() { return m_Elements; }
    const std::vector<std::string>& GetHookLog() const { return m_HookLog; }
-   void SetSucceeded() { m_bSucceeded = true; } // for IIfcExportHooks::OnExportEnd
+   void SetSucceeded() { m_bSucceeded = true; } // for IfcExport::IHooks::OnExportEnd
 
    // IfcPropertyEnumeration instances already written, by name and values, so each is written once
    std::map<std::string, uint32_t> enumerations;
@@ -82,12 +82,13 @@ public:
    std::map<std::string, uint32_t> classification_references;
 
 private:
-   std::unique_ptr<CIfcExtensionScope> m_pScope; // before the table, which can use the extension's targets and roles
+   // in this order, so each outlives the ones after it: the table can use the extension's targets and roles
+   std::unique_ptr<CIfcExtensionContent> m_pExtensionContent;
+   std::unique_ptr<CIfcExtensionScope> m_pScope;
    std::unique_ptr<CIfcMappingTable> m_pTable;
-   const CIfcExtensionContent* m_pExtensionContent = nullptr;
    std::unique_ptr<IfcExport::IHooks> m_pHooks;
-   std::unique_ptr<IfcExport::IServices> m_pServices;
-   std::unique_ptr<IfcExport::HookContext> m_pHookContext;
+   std::unique_ptr<IfcExport::IServices> m_pServices;       // uses m_pHookContext's file, broker, and options
+   std::unique_ptr<IfcExport::HookContext> m_pHookContext;  // refers to m_pServices
    IfcExport::ExportedElements m_Elements;
    std::vector<std::string> m_HookLog;
    bool m_bSucceeded = false;
@@ -96,13 +97,14 @@ private:
    friend class CIfcExportServices;
 };
 
-// Calls an export extension hook during a model build, if there's an extension. call is a generic lambda
-// [&](auto& hooks, auto& context) {...}, so it only compiles for the schema extensions use
-template <typename Schema, typename Call>
-void CallExportHook(const char* hook, Call&& call)
+// Calls an export extension hook during a model build, if there's an extension, e.g.
+//    CallExportHook<Schema>("OnPier", &IfcExport::IHooks::OnPier, pierIdx, pier);
+// Hooks are only called for the schema extensions use
+template <typename Schema, typename... Params, typename... Args>
+void CallExportHook(const char* name, void (IfcExport::IHooks::*hook)(IfcExport::HookContext&, Params...), const Args&... args)
 {
    if constexpr (std::is_same_v<Schema, IfcExport::Schema>)
-      CIfcExportSession::Current().CallHook(hook, std::forward<Call>(call));
+      CIfcExportSession::Current().CallHook(name, [&](IfcExport::IHooks& hooks, IfcExport::HookContext& context) { (hooks.*hook)(context, args...); });
 }
 
 // Records an element the extension's hooks can use, if there's an extension. record is a generic lambda [&](auto& elements) {...}

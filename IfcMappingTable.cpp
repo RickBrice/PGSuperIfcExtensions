@@ -1219,6 +1219,11 @@ std::string PathToString(const std::filesystem::path& path)
    }
 }
 
+std::string DescribeTableFile(const MappingTableFile& file)
+{
+   return "\"" + file.name + "\" (version " + std::to_string(file.version) + "): " + PathToString(file.path);
+}
+
 namespace
 {
    // HKCU\Software\Washington State Department of Transportation\BridgeLink\IfcExtensions, shared by PGSuper and PGSplice

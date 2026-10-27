@@ -24,12 +24,12 @@
 
 CIfcExportSession* CIfcExportSession::ms_pCurrent = nullptr;
 
-// What an export extension's hooks use to write property sets and log (IfcExport::IServices)
+// What an export extension's hooks use to write property sets and log (IfcExport::IServices). The file, broker, and options
+// are the hook context's
 class CIfcExportServices : public IfcExport::IServices
 {
 public:
-   CIfcExportServices(CIfcExportSession& session, IfcExport::File& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options) :
-      m_Session(session), m_File(file), m_pBroker(pBroker), m_Options(options)
+   explicit CIfcExportServices(CIfcExportSession& session) : m_Session(session)
    {
    }
 
@@ -49,22 +49,22 @@ public:
 
    void WritePropertySets(ElementKind role, const std::vector<IfcExport::Schema::IfcObjectDefinition>& objects, const ExportContext& context) override
    {
-      ::WritePropertySets<IfcExport::Schema>(m_File, role, objects, WithSession(context));
+      ::WritePropertySets<IfcExport::Schema>(Hooks().file, role, objects, WithSession(context));
    }
 
    std::vector<IfcExport::Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const ExportContext& context) override
    {
-      return ::CreateTypePropertySets<IfcExport::Schema>(m_File, role, WithSession(context));
+      return ::CreateTypePropertySets<IfcExport::Schema>(Hooks().file, role, WithSession(context));
    }
 
    void Classify(ElementKind role, IfcExport::Schema::IfcObjectDefinition object) override
    {
-      ::Classify<IfcExport::Schema>(m_File, role, object, m_Options);
+      ::Classify<IfcExport::Schema>(Hooks().file, role, object, Hooks().options);
    }
 
    IfcExport::Schema::IfcGeometricRepresentationSubContext BodySubContext() override
    {
-      return m_File.getRepresentationSubContext(std::string("Body"), std::string("Model"));
+      return Hooks().file.getRepresentationSubContext(std::string("Body"), std::string("Model"));
    }
 
    void Log(const std::string& line) override
@@ -74,16 +74,15 @@ public:
 
 private:
    CIfcExportSession& m_Session;
-   IfcExport::File& m_File;
-   std::shared_ptr<WBFL::EAF::Broker> m_pBroker;
-   const CIfcExportOptions& m_Options;
+
+   const IfcExport::HookContext& Hooks() const { return *m_Session.m_pHookContext; }
 
    // the context with the broker and options of the export, if the extension left them out
    ExportContext WithSession(const ExportContext& context) const
    {
       ExportContext c(context);
-      if (!c.broker) c.broker = m_pBroker;
-      if (!c.options) c.options = &m_Options;
+      if (!c.broker) c.broker = Hooks().broker;
+      if (!c.options) c.options = &Hooks().options;
       return c;
    }
 };
@@ -93,8 +92,8 @@ CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options, IIfcExpor
    ASSERT(ms_pCurrent == nullptr); // one export at a time
 
    if (extension)
-      m_pExtensionContent = &GetExtensionContent(*extension); // registers its targets and roles the first time
-   m_pScope = std::make_unique<CIfcExtensionScope>(m_pExtensionContent);
+      m_pExtensionContent = RegisterExtension(*extension);
+   m_pScope = std::make_unique<CIfcExtensionScope>(m_pExtensionContent.get());
 
    std::filesystem::path path(options.mapping_file.GetString());
    m_pTable = CIfcMappingTable::LoadActive(path);
@@ -118,7 +117,7 @@ void CIfcExportSession::StartHooks(IfcExport::File& file, std::shared_ptr<WBFL::
    if (!m_pHooks)
       return;
 
-   m_pServices = std::make_unique<CIfcExportServices>(*this, file, pBroker, options);
+   m_pServices = std::make_unique<CIfcExportServices>(*this);
    m_pHookContext = std::make_unique<IfcExport::HookContext>(IfcExport::HookContext{ file, pBroker, options, *m_pServices, m_Elements });
 }
 
@@ -136,11 +135,7 @@ void CIfcExportSession::CallHook(const char* hook, const std::function<void(IfcE
    {
       call(*m_pHooks, *m_pHookContext);
    }
-   catch (const CIfcExtensionException& e)
-   {
-      throw failed(e.what());
-   }
-   catch (const std::exception& e)
+   catch (const std::exception& e) // CIfcExtensionException too
    {
       throw failed(e.what());
    }

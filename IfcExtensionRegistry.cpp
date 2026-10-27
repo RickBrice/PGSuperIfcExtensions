@@ -27,17 +27,6 @@
 
 namespace
 {
-   // the content of every export of an extension in this process. Never destroyed: the getters are code in the extension's
-   // DLL, which may be unloaded before this one is
-   std::deque<std::unique_ptr<CIfcExtensionContent>>& registered()
-   {
-      static auto* pContent = new std::deque<std::unique_ptr<CIfcExtensionContent>>;
-      return *pContent;
-   }
-
-   // the next ElementKind for an extension's element role, unique in the process
-   int g_NextRoleKind = (int)ElementKind::FirstExtension;
-
    const CIfcExtensionContent* g_pActive = nullptr;
 
    bool starts_with_prefix(const std::string& name, const std::string& prefix)
@@ -61,7 +50,7 @@ public:
       if (GetElementKind(role.name, existing) || m_Content.FindRole(role.name))
          Error("the element role \"" + role.name + "\" is registered twice");
 
-      auto kind = (ElementKind)g_NextRoleKind++;
+      auto kind = (ElementKind)m_Content.m_NextRoleKind++;
       m_Content.m_Roles.push_back({ role.name, role.description, kind });
       return kind;
    }
@@ -137,7 +126,7 @@ const CIfcExtensionContent::Role* CIfcExtensionContent::FindRole(ElementKind kin
    return nullptr;
 }
 
-const CIfcExtensionContent& GetExtensionContent(IIfcExportExtension& extension)
+std::unique_ptr<CIfcExtensionContent> RegisterExtension(IIfcExportExtension& extension)
 {
    auto id = extension.GetId();
 
@@ -167,10 +156,7 @@ const CIfcExtensionContent& GetExtensionContent(IIfcExportExtension& extension)
    CRegistryImpl registry(*pContent);
    CIfcExtensionScope scope(pContent.get());
    extension.RegisterContent(registry);
-
-   const auto& result = *pContent;
-   registered().push_back(std::move(pContent));
-   return result;
+   return pContent;
 }
 
 const CIfcExtensionContent* GetActiveExtensionContent()

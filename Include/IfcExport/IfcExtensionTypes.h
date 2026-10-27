@@ -36,7 +36,7 @@
 
 // Changes when a type or interface of the extension SDK (Include\IfcExport) changes. The IFC extension refuses an
 // export extension built with another version
-#define IFC_EXPORT_EXTENSION_API_VERSION 2 // 2: ValueKind::Moment
+#define IFC_EXPORT_EXTENSION_API_VERSION 3 // 2: ValueKind::Moment; 3: ExportContext::row removed (it was never filled)
 
 namespace WBFL { namespace EAF { class Broker; }; };
 namespace WBFL { namespace Materials { class PsStrand; class Rebar; }; };
@@ -123,7 +123,6 @@ struct ExportContext
    pgsTypes::TrafficBarrierOrientation barrier_side = pgsTypes::tboLeft; // Barrier
    SpanIndexType span = INVALID_INDEX; // extension roles that belong to a span
    IndexType index = INVALID_INDEX;    // extension roles: the element's position in its list (e.g. a stirrup zone)
-   IndexType row = INVALID_INDEX;      // Rebar: the longitudinal reinforcement row of the bar
    std::any extension;                 // data an export extension passes to its own targets
 };
 

@@ -282,3 +282,6 @@ private:
 
 // Path as text, for messages
 std::string PathToString(const std::filesystem::path& path);
+
+// A table file for logs: "name" (version n): path
+std::string DescribeTableFile(const MappingTableFile& file);

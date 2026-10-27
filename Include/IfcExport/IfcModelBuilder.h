@@ -30,11 +30,11 @@
 
    - its own mapping table, which extends the standard table, declares the
      property sets it adds
-   - its own targets (IIfcExtensionRegistry::RegisterTarget) supply their values.
+   - its own targets (IfcExport::IRegistry::RegisterTarget) supply their values.
      They can belong to the IFC extension's element roles (e.g. "girder") or to
-     element roles of its own (IIfcExtensionRegistry::RegisterRole)
-   - its hooks (IIfcExportHooks) add elements at fixed points of the build, and
-     write their property sets through IIfcExportServices
+     element roles of its own (IfcExport::IRegistry::RegisterRole)
+   - its hooks (IfcExport::IHooks) add elements at fixed points of the build, and
+     write their property sets through IfcExport::IServices
 
    The IFC extension builds the model in a fixed order and calls the hooks at
    each step (a template method). The standard IFC export never loads an

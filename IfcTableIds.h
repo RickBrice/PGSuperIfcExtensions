@@ -53,6 +53,9 @@
 // Throws std::runtime_error if the IDS can't be written
 void WriteTableAsIds(const CIfcMappingTable& table, std::ostream& os, std::vector<std::string>& notes);
 
+// Writes the table as a general IDS file. Throws std::runtime_error if the file can't be written
+void WriteTableAsIdsFile(const CIfcMappingTable& table, const std::filesystem::path& ids_path, std::vector<std::string>& notes);
+
 struct IdsToTableResult
 {
    std::string table_json;          // the generated mapping table, in the style of Standard.json (FormatMappingTable)

@@ -293,7 +293,7 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
             {"IfcQuantityWeight", Schema::IfcUnitEnum::IfcUnit_MASSUNIT},
             {"IfcQuantityTime", Schema::IfcUnitEnum::IfcUnit_TIMEUNIT},
          };
-         // measures of derived units (e.g. values of export extension targets)
+         // measures of derived units (e.g. values of export extension targets). derived_units, below, says what they're made of
          static const std::map<std::string, DerivedUnitType> derived_unit_types{
             {"IfcLinearForceMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT},
             {"IfcMassDensityMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT},
@@ -366,30 +366,26 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
       {Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL}},
    };
 
-   for (auto unit_type : used)
-   {
-      const auto& [prefix, name] = si_units.at(unit_type);
-      units.push_back(file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name));
-   }
-
-   // derived units are products of SI units: N/m, kg/m^3, N m
-   auto element = [&file](UnitType unit_type, int64_t exponent)
+   auto si_unit = [&file](UnitType unit_type)
       {
          const auto& [prefix, name] = si_units.at(unit_type);
-         auto si_unit = file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name);
-         return file.template create<typename Schema::IfcDerivedUnitElement>().initialize(si_unit, exponent);
+         return file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name);
       };
+
+   for (auto unit_type : used)
+      units.push_back(si_unit(unit_type));
+
+   // derived units are products of SI units
+   static const std::map<DerivedUnitType, std::vector<std::pair<UnitType, int64_t>>> derived_units{
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT, {{Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -1}}}, // N/m
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT, {{Schema::IfcUnitEnum::IfcUnit_MASSUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -3}}}, // kg/m^3
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_TORQUEUNIT, {{Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, 1}}},        // N m
+   };
    for (auto unit_type : used_derived)
    {
       std::vector<typename Schema::IfcDerivedUnitElement> elements;
-      if (unit_type == Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT)
-         elements = { element(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1), element(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -1) };
-      else if (unit_type == Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT)
-         elements = { element(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, 1), element(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -3) };
-      else if (unit_type == Schema::IfcDerivedUnitEnum::IfcDerivedUnit_TORQUEUNIT)
-         elements = { element(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1), element(Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, 1) };
-      else
-         ASSERT(false); // a derived unit type that isn't handled here
+      for (const auto& [element_type, exponent] : derived_units.at(unit_type))
+         elements.push_back(file.template create<typename Schema::IfcDerivedUnitElement>().initialize(si_unit(element_type), exponent));
 
       units.push_back(file.template create<typename Schema::IfcDerivedUnit>().initialize(elements, unit_type, std::nullopt, std::nullopt));
    }

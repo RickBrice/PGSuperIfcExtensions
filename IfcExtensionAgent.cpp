@@ -131,20 +131,16 @@ IfcBuildResult CIfcExtensionAgent::WriteTableIds(const CString& strMappingTable,
    try
    {
       // the extension's targets and element roles, for the table
-      const CIfcExtensionContent* pContent = extension ? &GetExtensionContent(*extension) : nullptr;
-      CIfcExtensionScope scope(pContent);
+      auto pContent = extension ? RegisterExtension(*extension) : nullptr; // outlives the table, which uses its targets
+      CIfcExtensionScope scope(pContent.get());
 
       std::filesystem::path table_path(strMappingTable.GetString());
       auto table = CIfcMappingTable::LoadActive(table_path);
       for (const auto& file : table->GetFiles())
-         result.table_files.push_back("\"" + file.name + "\" (version " + std::to_string(file.version) + "): " + PathToString(file.path));
-
-      std::ofstream ids(strIdsPath.GetString(), std::ios::binary);
-      if (!ids)
-         throw std::runtime_error("The IDS file can't be written: " + PathToString(std::filesystem::path(strIdsPath.GetString())));
+         result.table_files.push_back(DescribeTableFile(file));
 
       std::vector<std::string> notes;
-      WriteTableAsIds(*table, ids, notes);
+      WriteTableAsIdsFile(*table, std::filesystem::path(strIdsPath.GetString()), notes);
       for (const auto& note : notes)
          result.log.push_back("Note: " + note);
 
@@ -472,17 +468,14 @@ void CIfcExtensionAgent::TableToIdsFromCommandLine(const CIfcCommandLineInfo& if
       std::filesystem::path table_path(ifcCmdInfo.m_strMappingFile.GetString());
       auto table = CIfcMappingTable::LoadActive(table_path);
       for (const auto& file : table->GetFiles())
-         log << "IFC mapping table \"" << file.name << "\" (version " << file.version << "): " << PathToString(file.path) << ", chosen by " << MappingTableSourceDescription(file.source) << std::endl;
+         log << "IFC mapping table " << DescribeTableFile(file) << ", chosen by " << MappingTableSourceDescription(file.source) << std::endl;
 
-      std::ofstream ids(ifcCmdInfo.m_strToolIdsFile.GetString(), std::ios::binary);
-      if (!ids)
-         throw std::runtime_error("The IDS file can't be written: " + PathToString(std::filesystem::path(ifcCmdInfo.m_strToolIdsFile.GetString())));
-
+      std::filesystem::path ids_path(ifcCmdInfo.m_strToolIdsFile.GetString());
       std::vector<std::string> notes;
-      WriteTableAsIds(*table, ids, notes);
+      WriteTableAsIdsFile(*table, ids_path, notes);
       for (const auto& note : notes)
          log << "Note: " << note << std::endl;
-      log << "IDS written: " << PathToString(std::filesystem::path(ifcCmdInfo.m_strToolIdsFile.GetString())) << std::endl;
+      log << "IDS written: " << PathToString(ids_path) << std::endl;
    }
    catch (const std::exception& e)
    {

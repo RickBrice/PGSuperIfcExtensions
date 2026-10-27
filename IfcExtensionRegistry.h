@@ -24,9 +24,10 @@
 /*****************************************************************************
    The element roles and targets of export extensions (devdocs/ExtensionsDesign.md)
 
-   An extension's content is registered for each export that uses it, and kept
-   for the life of the process (mapping tables hold pointers to its targets, and
-   the extension's DLL may be unloaded and loaded again between exports).
+   An extension's content is registered for each export that uses it, and is
+   owned by that export: it must outlive the mapping table loaded with it,
+   which holds pointers to its targets. Its getters are code in the extension's
+   DLL, which is loaded while the extension exports (it calls IIfcModelBuilder).
    It's only visible while a CIfcExtensionScope for the extension exists (during
    IIfcModelBuilder calls that name the extension): FindTargetDef,
    GetElementKind, and GetElementRoleName find it then, and never during the
@@ -66,8 +67,6 @@ public:
    const Role* FindRole(std::string_view name) const;
    const Role* FindRole(ElementKind kind) const;
 
-   const std::deque<Role>& GetRoles() const { return m_Roles; }
-
 private:
    friend class CRegistryImpl;
 
@@ -81,11 +80,12 @@ private:
    // deques, so the elements don't move as more are added
    std::deque<Role> m_Roles;
    std::deque<Target> m_Targets;
+   int m_NextRoleKind = (int)ElementKind::FirstExtension;
 };
 
-// The content of an export extension, registered for an export. Checks that the extension was built with this
-// version of the SDK. Throws CIfcExtensionException if the extension can't be used
-const CIfcExtensionContent& GetExtensionContent(IIfcExportExtension& extension);
+// Registers an export extension's element roles and targets for an export. Checks that the extension was built with
+// this version of the SDK. Throws CIfcExtensionException if the extension can't be used
+std::unique_ptr<CIfcExtensionContent> RegisterExtension(IIfcExportExtension& extension);
 
 // The content of the extension whose export is in progress, or nullptr
 const CIfcExtensionContent* GetActiveExtensionContent();
