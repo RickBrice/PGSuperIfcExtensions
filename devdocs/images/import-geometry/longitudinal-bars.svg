@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" role="img" aria-label="Longitudinal girder bars">
+<title>Longitudinal girder bars</title>
+
+<style>
+  text { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; fill: #222; }
+  .muted { fill: #666; }
+  .small { font-size: 11.5px; }
+  .title { font-weight: 600; font-size: 14px; }
+  .meas { fill: #c0392b; }
+  .align { fill: #1f6fb2; }
+  .green { fill: #2e8b57; }
+  .steel { fill: #8a5a2b; }
+  .orange { fill: #d4801f; }
+  .mid { text-anchor: middle; }
+  .end { text-anchor: end; }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+  </marker>
+  <marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#222"/>
+  </marker>
+  <marker id="arrow-align" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1f6fb2"/>
+  </marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#2e8b57"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="760" height="330" rx="8" fill="#ffffff" stroke="#d0d0d0"/>
+<text x="20.0" y="28.0" class="title">(a) Section: face and cover</text>
+<polygon points="160.0,50.0 88.0,50.0 88.0,59.0 124.0,65.0 151.0,74.0 151.0,236.0 122.5,251.0 122.5,272.0 160.0,272.0 197.5,272.0 197.5,251.0 169.0,236.0 169.0,74.0 196.0,65.0 232.0,59.0 232.0,50.0" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2" stroke-linejoin="round"/>
+<circle cx="112.0" cy="56.0" r="3.4" fill="#8a5a2b" stroke="none" stroke-width="1"/>
+<circle cx="136.0" cy="56.0" r="3.4" fill="#8a5a2b" stroke="none" stroke-width="1"/>
+<circle cx="184.0" cy="56.0" r="3.4" fill="#8a5a2b" stroke="none" stroke-width="1"/>
+<circle cx="208.0" cy="56.0" r="3.4" fill="#8a5a2b" stroke="none" stroke-width="1"/>
+<circle cx="136.0" cy="263.0" r="3.4" fill="#8a5a2b" stroke="none" stroke-width="1"/>
+<circle cx="184.0" cy="263.0" r="3.4" fill="#8a5a2b" stroke="none" stroke-width="1"/>
+<line x1="228.0" y1="50.0" x2="248.0" y2="50.0" stroke="#c0392b" stroke-width="1"/>
+<line x1="228.0" y1="56.0" x2="248.0" y2="56.0" stroke="#c0392b" stroke-width="1"/>
+<line x1="244.0" y1="38.0" x2="244.0" y2="50.0" stroke="#c0392b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="244.0" y1="68.0" x2="244.0" y2="56.0" stroke="#c0392b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="252.0" y="57.0" class="meas small">cover from the top</text>
+<line x1="198.0" y1="263.0" x2="218.0" y2="263.0" stroke="#c0392b" stroke-width="1"/>
+<line x1="198.0" y1="272.0" x2="218.0" y2="272.0" stroke="#c0392b" stroke-width="1"/>
+<line x1="214.0" y1="251.0" x2="214.0" y2="263.0" stroke="#c0392b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<line x1="214.0" y1="284.0" x2="214.0" y2="272.0" stroke="#c0392b" stroke-width="1.2" marker-end="url(#arrow)"/>
+<text x="222.0" y="271.5" class="meas small">cover from the bottom</text>
+<text x="20.0" y="300.0" class="muted small">Bars pair at +/-z about the CL girder (a</text>
+<text x="20.0" y="315.0" class="muted small">bar without a mirror bar is skipped).</text>
+<text x="370.0" y="28.0" class="title">(b) Elevation: layout from the bar ends</text>
+<rect x="380.0" y="60.0" width="335.0" height="90.0" rx="0" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2"/>
+<line x1="384.0" y1="70.0" x2="711.0" y2="70.0" stroke="#8a5a2b" stroke-width="2.4"/>
+<text x="709.0" y="86.0" class="small steel" text-anchor="end">full length (ends within 3 in of the end faces)</text>
+<line x1="384.0" y1="110.0" x2="530.0" y2="110.0" stroke="#8a5a2b" stroke-width="2.4"/>
+<text x="536.0" y="114.0" class="small steel">from the left end</text>
+<line x1="467.5" y1="138.0" x2="627.5" y2="138.0" stroke="#8a5a2b" stroke-width="2.4"/>
+<text x="547.5" y="132.0" class="small steel" text-anchor="middle">centered</text>
+<line x1="711.0" y1="70.0" x2="735.0" y2="70.0" stroke="#8a5a2b" stroke-width="2.4"/>
+<text x="370.0" y="190.0" class="small">A longitudinal bar's longest straight piece runs within 2 degrees</text>
+<text x="370.0" y="206.0" class="small">of the girder axis and is at least 2 ft long. Bars of one size that</text>
+<text x="370.0" y="222.0" class="small">lap (collinear within 1.5 bar diameters) are one bar. A bar that</text>
+<text x="370.0" y="238.0" class="small">projects beyond an end (right) is extended there. Bars with the</text>
+<text x="370.0" y="254.0" class="small">same face, cover, size, and layout make a row.</text>
+</svg>

@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 505" width="760" height="505" role="img" aria-label="Deck cross-section measurements">
+<title>Deck cross-section measurements</title>
+
+<style>
+  text { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; fill: #222; }
+  .muted { fill: #666; }
+  .small { font-size: 11.5px; }
+  .title { font-weight: 600; font-size: 14px; }
+  .meas { fill: #c0392b; }
+  .align { fill: #1f6fb2; }
+  .green { fill: #2e8b57; }
+  .steel { fill: #8a5a2b; }
+  .orange { fill: #d4801f; }
+  .mid { text-anchor: middle; }
+  .end { text-anchor: end; }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+  </marker>
+  <marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#222"/>
+  </marker>
+  <marker id="arrow-align" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1f6fb2"/>
+  </marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#2e8b57"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="760" height="505" rx="8" fill="#ffffff" stroke="#d0d0d0"/>
+<text x="20.0" y="28.0" class="title">(a) Cross section normal to the alignment at the 1/4, 1/2, and 3/4 points of each span (left part)</text>
+<polygon points="30.0,90.0 730.0,90.0 730.0,121.5 714.0,121.5 570.0,121.5 565.5,114.0 502.5,114.0 498.0,121.5 354.0,121.5 349.5,114.0 286.5,114.0 282.0,121.5 138.0,121.5 30.0,111.0" fill="#e4e4e4" stroke="#6b6b6b" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="138.0,121.5 138.0,130.5 174.0,136.5 201.0,145.5 201.0,199.5 205.0,193.5 215.0,205.5 219.0,199.5 219.0,145.5 246.0,136.5 282.0,130.5 282.0,121.5" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="354.0,121.5 354.0,130.5 390.0,136.5 417.0,145.5 417.0,199.5 421.0,193.5 431.0,205.5 435.0,199.5 435.0,145.5 462.0,136.5 498.0,130.5 498.0,121.5" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="570.0,121.5 570.0,130.5 606.0,136.5 633.0,145.5 633.0,199.5 637.0,193.5 647.0,205.5 651.0,199.5 651.0,145.5 678.0,136.5 714.0,130.5 714.0,121.5" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2" stroke-linejoin="round"/>
+<line x1="730.0" y1="90.0" x2="730.0" y2="121.5" stroke="#ffffff" stroke-width="3"/>
+<line x1="288.0" y1="90.0" x2="288.0" y2="114.0" stroke="#c0392b" stroke-width="1.6"/>
+<circle cx="288.0" cy="90.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<circle cx="288.0" cy="114.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<line x1="348.0" y1="90.0" x2="348.0" y2="114.0" stroke="#c0392b" stroke-width="1.6"/>
+<circle cx="348.0" cy="90.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<circle cx="348.0" cy="114.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<line x1="504.0" y1="90.0" x2="504.0" y2="114.0" stroke="#c0392b" stroke-width="1.6"/>
+<circle cx="504.0" cy="90.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<circle cx="504.0" cy="114.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<line x1="564.0" y1="90.0" x2="564.0" y2="114.0" stroke="#c0392b" stroke-width="1.6"/>
+<circle cx="564.0" cy="90.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<circle cx="564.0" cy="114.0" r="2.2" fill="#c0392b" stroke="none" stroke-width="1"/>
+<text x="302.0" y="60.0" class="meas small">gross depth: 2 in outside</text>
+<text x="302.0" y="74.0" class="meas small">each flange tip, in the bays</text>
+<line x1="288.0" y1="86.0" x2="300.0" y2="68.0" stroke="#c0392b" stroke-width="0.8"/>
+<line x1="426.0" y1="90.0" x2="426.0" y2="121.5" stroke="#2e8b57" stroke-width="1.8"/>
+<circle cx="426.0" cy="121.5" r="2.2" fill="#2e8b57" stroke="none" stroke-width="1"/>
+<text x="416.0" y="236.0" class="green small">over the middle of the flange: deeper</text>
+<text x="416.0" y="250.0" class="green small">than the gross depth, a haunch in the deck solid</text>
+<line x1="427.0" y1="123.5" x2="422.0" y2="224.0" stroke="#2e8b57" stroke-width="0.8"/>
+<line x1="498.0" y1="127.5" x2="498.0" y2="135.5" stroke="#2e8b57" stroke-width="1"/>
+<line x1="502.5" y1="120.0" x2="502.5" y2="135.5" stroke="#2e8b57" stroke-width="1"/>
+<text x="518.0" y="176.0" class="green small">fillet: the</text>
+<text x="518.0" y="190.0" class="green small">transition's width</text>
+<line x1="501.0" y1="137.5" x2="516.0" y2="170.0" stroke="#2e8b57" stroke-width="0.8"/>
+<line x1="30.8" y1="90.0" x2="30.8" y2="111.0" stroke="#c0392b" stroke-width="1.8"/>
+<text x="30.0" y="133.0" class="meas small">edge depth, 1/4 in</text>
+<text x="30.0" y="147.0" class="meas small">inside the edge</text>
+<line x1="33.0" y1="112.0" x2="138.0" y2="121.5" stroke="#d4801f" stroke-width="1.6" stroke-dasharray="5 3"/>
+<text x="30.0" y="236.0" class="orange small">soffit line (dashed): its depth at the</text>
+<text x="30.0" y="250.0" class="orange small">exterior flange tip sets the taper</text>
+<text x="30.0" y="290.0" class="small meas">Gross depth</text>
+<text x="160.0" y="290.0" class="small">the median thickness 2 in outside each flange tip in the bays (clear of fillets and crowns)</text>
+<text x="30.0" y="308.0" class="small green">Haunch in the deck</text>
+<text x="160.0" y="308.0" class="small">the thickness over the middle of the flanges exceeds the gross depth by 1/8 in</text>
+<text x="30.0" y="326.0" class="small green">Fillet</text>
+<text x="160.0" y="326.0" class="small">the transition's width at the flange tips of interior bays (1/32 in steps); under 1/8 in: square</text>
+<text x="30.0" y="344.0" class="small meas">Edge depth</text>
+<text x="160.0" y="344.0" class="small">1/4 in inside the edge, or the soffit extrapolated to the edge where it's straight (within 1/32 in)</text>
+<text x="30.0" y="362.0" class="small orange">Overhang taper</text>
+<text x="160.0" y="362.0" class="small">the soffit's depth at the exterior flange tip compared with the edge and the haunch, within 1/4 in</text>
+<text x="30.0" y="384.0" class="muted small">Each is measured at every cut; the import uses the median (depths) or the most common (tapers).</text>
+<text x="20.0" y="418.0" class="title">(b) Overhang taper</text>
+<polygon points="40.0,436.0 240.0,436.0 240.0,454.9 160.0,454.9 160.0,448.6 40.0,448.6" fill="#e4e4e4" stroke="#6b6b6b" stroke-width="1.2" stroke-linejoin="round"/>
+<rect x="160.0" y="454.9" width="80.0" height="6.0" rx="0" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2"/>
+<text x="140.0" y="488.0" class="small" text-anchor="middle">none</text>
+<polygon points="280.0,436.0 480.0,436.0 480.0,454.9 400.0,454.9 280.0,448.6" fill="#e4e4e4" stroke="#6b6b6b" stroke-width="1.2" stroke-linejoin="round"/>
+<rect x="400.0" y="454.9" width="80.0" height="6.0" rx="0" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2"/>
+<text x="380.0" y="488.0" class="small" text-anchor="middle">to the top of the top flange</text>
+<polygon points="520.0,436.0 720.0,436.0 720.0,454.9 640.0,454.9 640.0,460.3 520.0,448.6" fill="#e4e4e4" stroke="#6b6b6b" stroke-width="1.2" stroke-linejoin="round"/>
+<polygon points="640.0,454.9 720.0,454.9 720.0,462.3 640.0,462.3" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2" stroke-linejoin="round"/>
+<text x="620.0" y="488.0" class="small" text-anchor="middle">to the bottom of the top flange</text>
+</svg>

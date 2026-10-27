@@ -1,6 +1,6 @@
 # PGSuperIfcExtensions: notes for Claude
 
-Project knowledge that isn't in the code or git history. The design notes are in `devdocs/` (start with `IfcImportPlan.md` and `MappingTablesDesign.md`; `Targets.md` maps the mapping-table target names to PGSuper data and code, keep it current when targets change).
+Project knowledge that isn't in the code or git history. The design notes are in `devdocs/` (start with `IfcImportPlan.md` and `MappingTablesDesign.md`; `Targets.md` maps the mapping-table target names to PGSuper data and code, keep it current when targets change; `ImportGeometry.md` explains, with figures, how PGSuper input is derived from the model's geometry, keep it current when a geometry step changes: its figures come from `devdocs/images/import-geometry/make_figures.py`). `doxygen Doxyfile.dox` in `devdocs` builds them as HTML (`devdocs/API/html`, not tracked; `Introduction.md` is the main page, so list a new document there).
 
 ## Working rules
 - **Paths:** the user works on several computers with the repositories on different drives. Use the environment variables, never a drive letter: `%ARPDIR%` (WBFL, PGSuper, BridgeLink, this repository; `$ARPDIR` in bash, `$env:ARPDIR` in PowerShell, `$(ARPDIR)` in MSBuild) and `%IFCOPENSHELL_DIR%`. BSDev (BridgeSightBeams and the other BridgeSight repositories) has no variable; it's `BSDev` at the root of the same drive as `%ARPDIR%`.

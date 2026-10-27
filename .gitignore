@@ -247,3 +247,6 @@ ModelManifest.xml
 CMakeUserPresets.json
 build/
 vcpkg_installed/
+
+# Doxygen output of the developer documentation (devdocs/Doxyfile.dox)
+devdocs/API/

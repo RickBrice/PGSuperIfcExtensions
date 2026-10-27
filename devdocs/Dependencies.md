@@ -71,15 +71,15 @@ run-cmake.cmd vs2022-x64
 ~~~
 
 Next, merge the debug libraries into the release folder structure.
-1. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\rocksdb\lib. Make of copy of rocksdb.lib and rename it to rocksdbd.lib. Move rocksdbd.lib to IfcOpenShell\_deps-vs2022-x64-installed\rocksdb\lib.
-2. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\zstd\lib. Make of copy of zstd_static.lib and rename it to zstd_staticd.lib. Move zstd_staticd.lib to IfcOpenShell\_deps-vs2022-x64-installed\zstd\lib.
-3. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib. Copy all of the lib files (their names should end with _D.lib) to IfcOpenShell\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib
-4. Go to the folder IfcOpenShell_Debug\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada. Copy all of the lib files (their names should end with d.lib) to IfcOpenShell\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada
+1. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\rocksdb\lib`. Make of copy of rocksdb.lib and rename it to rocksdbd.lib. Move rocksdbd.lib to `IfcOpenShell\_deps-vs2022-x64-installed\rocksdb\lib`.
+2. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\zstd\lib`. Make of copy of zstd_static.lib and rename it to zstd_staticd.lib. Move zstd_staticd.lib to `IfcOpenShell\_deps-vs2022-x64-installed\zstd\lib`.
+3. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib`. Copy all of the lib files (their names should end with _D.lib) to `IfcOpenShell\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib`
+4. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada`. Copy all of the lib files (their names should end with d.lib) to `IfcOpenShell\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada`
 
-5. Go to the folder IfcOpenShell\_deps\boost_1_86_0 and run b2.exe. This will compile all of the boost libraries need by BridgeLink.
+5. Go to the folder `IfcOpenShell\_deps\boost_1_86_0` and run b2.exe. This will compile all of the boost libraries need by BridgeLink.
 
 
-Now we are ready to build IfcOpenShell. The solution file is IfcOpenShell\_build-vs2022-x64\IfcOpenShell.sln
+Now we are ready to build IfcOpenShell. The solution file is `IfcOpenShell\_build-vs2022-x64\IfcOpenShell.sln`
 
 Select the Debug configuration and build only the IfcParse project.
 

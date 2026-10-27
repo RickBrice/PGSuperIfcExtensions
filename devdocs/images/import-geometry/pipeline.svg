@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 545" width="760" height="545" role="img" aria-label="Order of the import steps">
+<title>Order of the import steps</title>
+
+<style>
+  text { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; fill: #222; }
+  .muted { fill: #666; }
+  .small { font-size: 11.5px; }
+  .title { font-weight: 600; font-size: 14px; }
+  .meas { fill: #c0392b; }
+  .align { fill: #1f6fb2; }
+  .green { fill: #2e8b57; }
+  .steel { fill: #8a5a2b; }
+  .orange { fill: #d4801f; }
+  .mid { text-anchor: middle; }
+  .end { text-anchor: end; }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+  </marker>
+  <marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#222"/>
+  </marker>
+  <marker id="arrow-align" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1f6fb2"/>
+  </marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#2e8b57"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="760" height="545" rx="8" fill="#ffffff" stroke="#d0d0d0"/>
+<text x="20.0" y="28.0" class="title">Order of the steps: each one uses what the steps before it found</text>
+<rect x="30.0" y="48.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="68.0" text-anchor="middle">Alignment</text>
+<text x="236.0" y="68.0" class="small">the model's IfcAlignment; a straight one through the deck ends if it has none</text>
+<line x1="125.0" y1="78.0" x2="125.0" y2="89.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="90.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="110.0" text-anchor="middle">Piers and abutments</text>
+<text x="236.0" y="110.0" class="small">the number of spans, and the pier stations</text>
+<line x1="125.0" y1="120.0" x2="125.0" y2="131.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="132.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="152.0" text-anchor="middle">Girders</text>
+<text x="236.0" y="152.0" class="small">ends and CL from each girder's top surface, span, order; bearings at the ends</text>
+<line x1="125.0" y1="162.0" x2="125.0" y2="173.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="174.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="194.0" text-anchor="middle">Pier orientation</text>
+<text x="236.0" y="194.0" class="small">positioning referent, else the CL bearing line, else the girder ends</text>
+<line x1="125.0" y1="204.0" x2="125.0" y2="215.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="216.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="236.0" text-anchor="middle">Girder spacing</text>
+<text x="236.0" y="236.0" class="small">where the girder CLs cross the pier lines</text>
+<line x1="125.0" y1="246.0" x2="125.0" y2="257.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="258.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="278.0" text-anchor="middle">Girder sections</text>
+<text x="236.0" y="278.0" class="small">cut from the solids; a library entry matched, or a new one fitted</text>
+<line x1="125.0" y1="288.0" x2="125.0" y2="299.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="300.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="320.0" text-anchor="middle">End distance, bearings</text>
+<text x="236.0" y="320.0" class="small">end distance and bearing offset from the CL bearings; bearing size and count</text>
+<line x1="125.0" y1="330.0" x2="125.0" y2="341.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="342.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="362.0" text-anchor="middle">Boundary conditions</text>
+<text x="236.0" y="362.0" class="small">pier diaphragms, then support conditions</text>
+<line x1="125.0" y1="372.0" x2="125.0" y2="383.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="384.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="404.0" text-anchor="middle">Strands</text>
+<text x="236.0" y="404.0" class="small">centerlines to the library's strand grid, else individual strands</text>
+<line x1="125.0" y1="414.0" x2="125.0" y2="425.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="426.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="446.0" text-anchor="middle">Girder bars</text>
+<text x="236.0" y="446.0" class="small">longitudinal rows, stirrup zones, confinement bars</text>
+<line x1="125.0" y1="456.0" x2="125.0" y2="467.0" stroke="#1f6fb2" stroke-width="1.3" marker-end="url(#arrow-align)"/>
+<rect x="30.0" y="468.0" width="190.0" height="30.0" rx="5" fill="#eef4fb" stroke="#1f6fb2" stroke-width="1.2"/>
+<text x="125.0" y="488.0" text-anchor="middle">Deck</text>
+<text x="236.0" y="488.0" class="small">plan edges, profile, roadway section, traffic barriers, depths, haunch,</text>
+<text x="236.0" y="504.0" class="small">slab offset, deck reinforcement</text>
+<text x="20.0" y="530.0" class="muted small">The deck is last: its cross section is measured over the girders, and the slab offset at the CL bearings.</text>
+</svg>

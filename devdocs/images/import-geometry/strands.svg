@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" width="760" height="330" role="img" aria-label="Strands in girder coordinates">
+<title>Strands in girder coordinates</title>
+
+<style>
+  text { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; fill: #222; }
+  .muted { fill: #666; }
+  .small { font-size: 11.5px; }
+  .title { font-weight: 600; font-size: 14px; }
+  .meas { fill: #c0392b; }
+  .align { fill: #1f6fb2; }
+  .green { fill: #2e8b57; }
+  .steel { fill: #8a5a2b; }
+  .orange { fill: #d4801f; }
+  .mid { text-anchor: middle; }
+  .end { text-anchor: end; }
+</style>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#c0392b"/>
+  </marker>
+  <marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#222"/>
+  </marker>
+  <marker id="arrow-align" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#1f6fb2"/>
+  </marker>
+  <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#2e8b57"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="760" height="330" rx="8" fill="#ffffff" stroke="#d0d0d0"/>
+<text x="20.0" y="28.0" class="title">Girder elevation: strand centerlines read from their solids, in girder coordinates</text>
+<rect x="60.0" y="60.0" width="640.0" height="150.0" rx="0" fill="#cfd8e3" stroke="#4a5a70" stroke-width="1.2"/>
+<line x1="70.0" y1="78.0" x2="690.0" y2="78.0" stroke="#d4801f" stroke-width="2"/>
+<text x="688.0" y="74.0" class="orange small" text-anchor="end">temporary (tendon status TEMPORARY)</text>
+<polyline points="60.0,100.0 316.0,185.0 444.0,185.0 700.0,100.0" fill="none" stroke="#c0392b" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="316.0" cy="185.0" r="3.5" fill="#c0392b" stroke="none" stroke-width="1"/>
+<circle cx="444.0" cy="185.0" r="3.5" fill="#c0392b" stroke="none" stroke-width="1"/>
+<text x="380.0" y="178.0" class="meas small" text-anchor="middle">harped: its centerline bends</text>
+<text x="316.0" y="228.0" class="meas small" text-anchor="middle">harp point</text>
+<text x="444.0" y="228.0" class="meas small" text-anchor="middle">harp point</text>
+<line x1="60.0" y1="195.0" x2="700.0" y2="195.0" stroke="#8a5a2b" stroke-width="2"/>
+<line x1="60.0" y1="202.0" x2="700.0" y2="202.0" stroke="#8a5a2b" stroke-width="2"/>
+<line x1="60.0" y1="188.0" x2="700.0" y2="188.0" stroke="#8a5a2b" stroke-width="2"/>
+<rect x="62.0" y="185.0" width="70.0" height="6.0" rx="0" fill="none" stroke="#222" stroke-width="1" stroke-dasharray="3 2"/>
+<text x="140.0" y="164.0" class="small" text-anchor="start">debonded length (from properties)</text>
+<line x1="138.0" y1="168.0" x2="110.0" y2="184.0" stroke="#222" stroke-width="0.8"/>
+<line x1="700.0" y1="202.0" x2="730.0" y2="202.0" stroke="#8a5a2b" stroke-width="2"/>
+<text x="734.0" y="200.0" class="small"></text>
+<text x="560.0" y="248.0" class="small steel">projects beyond the end:</text>
+<text x="560.0" y="262.0" class="small steel">extended there</text>
+<line x1="600.0" y1="232.0" x2="720.0" y2="206.0" stroke="#8a5a2b" stroke-width="0.8"/>
+<text x="200.0" y="232.0" class="steel small">straight</text>
+<line x1="60.0" y1="60.0" x2="120.0" y2="60.0" stroke="#2e8b57" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+<text x="64.0" y="54.0" class="green small">x</text>
+<line x1="60.0" y1="60.0" x2="60.0" y2="100.0" stroke="#2e8b57" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+<text x="54.0" y="96.0" class="green small" text-anchor="end">y</text>
+<text x="20.0" y="285.0" class="muted small">Every strand on a grid position of the library entry (and harp points as the entry gives them): the grid is filled.</text>
+<text x="20.0" y="300.0" class="muted small">Otherwise the strands are input individually, with the harped strands' common harp points.</text>
+</svg>
