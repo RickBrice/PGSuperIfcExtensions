@@ -744,7 +744,8 @@ namespace
             rebuild(kind, false);
       }
 
-      // what refers to the copies: the styles of their geometry, the properties and representations of their materials
+      // what refers to the copies: the styles of their geometry and the properties of their materials (the export's materials
+      // have no representations)
       for (const auto& styled_item : m_Exp.instances_by_type<IfcSchema::IfcStyledItem>())
       {
          if (styled_item.Item() && copied.count(styled_item.Item().id()))
@@ -754,11 +755,6 @@ namespace
       {
          if (properties.Material() && copied.count(properties.Material().id()))
             copy(properties);
-      }
-      for (const auto& representation : m_Exp.instances_by_type<IfcSchema::IfcMaterialDefinitionRepresentation>())
-      {
-         if (representation.RepresentedMaterial() && copied.count(representation.RepresentedMaterial().id()))
-            copy(representation);
       }
 
       FixCopiedValues(copied);

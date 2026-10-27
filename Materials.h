@@ -50,6 +50,8 @@ typename Schema::IfcSurfaceStyle CreateSurfaceStyle(hierarchy_helper<Schema>& fi
 }
 
 // Styles a geometric representation item directly (Surface Colour Style concept), rather than through a material representation.
+// The materials have no representations: IfcMaterialDefinitionRepresentation and IfcStyledRepresentation aren't in the
+// Alignment-based View (IFC431), which the export declares.
 // IfcStyledItem.Item <-> IfcRepresentationItem
 // IfcStyledItem.Styles <-> IfcSurfaceStyle
 template <typename Schema>
@@ -88,27 +90,6 @@ void StyleShapeRepresentation(hierarchy_helper<Schema>& file, typename Schema::I
 }
 
 template <typename Schema>
-typename Schema::IfcStyledRepresentation CreateMaterialRepresentation(hierarchy_helper<Schema>& file, std::string name, COLORREF clr)
-{
-   auto geometric_representation_context = file.getRepresentationContext(std::string("Model")); // creates the representation context if it doesn't already exist
-
-   auto ss = CreateSurfaceStyle<Schema>(file, name, clr);
-
-   std::vector<typename Schema::IfcPresentationStyle> list_of_presentation_styles;
-   list_of_presentation_styles.push_back(ss);
-   
-   auto styled_item = file.create<typename Schema::IfcStyledItem>().initialize({}, list_of_presentation_styles, std::nullopt);
-
-
-   std::vector<typename Schema::IfcRepresentationItem> styled_items;
-   styled_items.push_back(styled_item);
-   auto styled_representation = file.create<typename Schema::IfcStyledRepresentation>().initialize(geometric_representation_context, std::nullopt, std::nullopt, styled_items);
-
-
-   return styled_representation;
-}
-
-template <typename Schema>
 typename Schema::IfcMaterial GetStrandMaterial(hierarchy_helper<Schema>& file,std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::PsStrand* pStrand)
 {
    USES_CONVERSION;
@@ -133,21 +114,6 @@ typename Schema::IfcMaterial GetStrandMaterial(hierarchy_helper<Schema>& file,st
    context.strand = pStrand;
    WriteMaterialProperties<Schema>(file, ElementKind::Tendon, strand_material, context);
 
-   if (!options.classify)
-   {
-      // Material style representations are not part of AbV so don't include 
-      // if we are exporting with usBridge classification system
-
-      // create the representation style
-      auto material_representation = CreateMaterialRepresentation<Schema>(file, "Strand", STRAND_BORDER_COLOR);
-
-      // assigns the presentation styles to the material
-      std::vector<typename Schema::IfcRepresentation> list_of_representations;
-      list_of_representations.push_back(material_representation);
-      auto material_defintion_representation = file.create<typename Schema::IfcMaterialDefinitionRepresentation>().initialize(std::nullopt, std::nullopt, list_of_representations, strand_material);
-
-   }
-
    return strand_material;
 }
 
@@ -158,7 +124,7 @@ std::string GetRebarMaterialName(const WBFL::Materials::Rebar* pRebar)
 }
 
 template <typename Schema>
-typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::Rebar* pRebar,const std::string& styleName,COLORREF color)
+typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const WBFL::Materials::Rebar* pRebar)
 {
    USES_CONVERSION;
 
@@ -184,22 +150,6 @@ typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, st
    context.rebar = pRebar;
    WriteMaterialProperties<Schema>(file, ElementKind::Rebar, rebar_material, context);
 
-
-   if (!options.classify)
-   {
-      // Material style representations are not part of AbV so don't include 
-      // if we are exporting with usBridge classification system
-       
-      // create the representation style
-      auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
-
-      // assigns the presentation styles to the material
-      std::vector<typename Schema::IfcRepresentation> list_of_representations;
-      list_of_representations.push_back(material_representation);
-      auto material_defintion_representation = file.create<typename Schema::IfcMaterialDefinitionRepresentation>().initialize(std::nullopt, std::nullopt, list_of_representations, rebar_material);
-
-   }
-
    return rebar_material;
 }
 
@@ -208,7 +158,7 @@ typename Schema::IfcMaterial GetRebarMaterial(hierarchy_helper<Schema>& file, st
 // same strength but another aggregate size gets its own material, with the size in its name. The material properties are the
 // ones the mapping table declares for the role of the element that creates it (e.g. Pset_MaterialConcrete of a girder)
 template <typename Schema>
-typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, ElementKind role, const ExportContext& context, const std::string& styleName, COLORREF color)
+typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, Float64 fc, Float64 max_agg_size, ElementKind role, const ExportContext& context)
 {
    USES_CONVERSION;
 
@@ -244,22 +194,6 @@ typename Schema::IfcMaterial GetConcreteMaterial(hierarchy_helper<Schema>& file,
    auto concrete_material = file.create<typename Schema::IfcMaterial>().initialize(name, std::nullopt/*description*/, std::string("concrete")/*category*/);
 
    WriteMaterialProperties<Schema>(file, role, concrete_material, context);
-
-
-   if (!options.classify)
-   {
-      // Material style representations are not part of AbV so don't include 
-      // if we are exporting with usBridge classification system
-
-      // create the representation style
-      auto material_representation = CreateMaterialRepresentation<Schema>(file, styleName, color);
-
-      // assigns the presentation styles to the material
-      std::vector<typename Schema::IfcRepresentation> list_of_representations;
-      list_of_representations.push_back(material_representation);
-      auto material_defintion_representation = file.create<typename Schema::IfcMaterialDefinitionRepresentation>().initialize(std::nullopt, std::nullopt, list_of_representations, concrete_material);
-
-   }
 
    return concrete_material;
 }

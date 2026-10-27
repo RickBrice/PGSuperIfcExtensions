@@ -1438,7 +1438,7 @@ void CreatePrecastSegmentMaterials(hierarchy_helper<Schema>& file, std::shared_p
 
    ExportContext context{ pBroker, &options };
    context.segment = segmentKey;
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Girder, context, "Precast Concrete", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Girder, context);
 
    // need a list of entities that are associated with this material
    // right now we are creating a unique material for each segment but we still need the list
@@ -1487,7 +1487,7 @@ void CreateLongitudinalRebarRepresentation(hierarchy_helper<Schema>& file, std::
    WBFL::Materials::Rebar::Grade rebar_grade;
    pMaterials->GetSegmentLongitudinalRebarMaterial(segmentKey, &rebar_type, &rebar_grade);
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebar_type, rebar_grade, WBFL::Materials::Rebar::Size::bs3);
-   auto rebar_material = GetRebarMaterial(file, pBroker, options, pRebar, "Rebar", REBAR_COLOR);
+   auto rebar_material = GetRebarMaterial(file, pBroker, options, pRebar);
    
    CreateLongitudinalRebars<Schema>(file, pBroker, options, poiStart, poiEnd, rebar_material, rebar_assembly, rebar_batch);
 }
@@ -1516,7 +1516,7 @@ void CreateStirrupRepresentation(hierarchy_helper<Schema>& file, std::shared_ptr
    WBFL::Materials::Rebar::Grade rebar_grade;
    pMaterials->GetSegmentLongitudinalRebarMaterial(segmentKey, &rebar_type, &rebar_grade);
    const auto* pRebar = WBFL::LRFD::RebarPool::GetInstance()->GetRebar(rebar_type, rebar_grade, WBFL::Materials::Rebar::Size::bs3);
-   auto rebar_material = GetRebarMaterial(file, pBroker, options, pRebar, "Stirrup", STIRRUP_COLOR);
+   auto rebar_material = GetRebarMaterial(file, pBroker, options, pRebar);
 
    CreateStirrups<Schema>(file, pBroker, options, segmentKey, rebar_material, rebar_assembly, rebar_batch);
 }
@@ -1982,7 +1982,7 @@ void CreateSlab(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broke
    auto fc = pMaterials->GetDeckFc28();
    auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
    ExportContext context{ pBroker, &options };
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Deck, context, "Slab Concrete", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Deck, context);
 
    if (options.classify)
    {
@@ -2614,8 +2614,6 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
 
    std::vector<typename Schema::IfcDefinitionSelect> bearings;
 
-   // one surface style shared by all the bearing solids
-   auto bearing_surface_style = GetSurfaceStyle<Schema>(file, "Bearing", BEARING_FILL_COLOR);
 
    auto nPiers = pBridge->GetPierCount();
    CHECK(list_of_piers.size() == nPiers);
@@ -2670,7 +2668,7 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
             }
 
             auto solid = CreatePrismFaceSet<Schema>(file, plan_points, height);
-            StyleRepresentationItem<Schema>(file, solid, bearing_surface_style);
+            StyleRepresentationItem<Schema>(file, solid, GetSurfaceStyle<Schema>(file, "Bearing", BEARING_FILL_COLOR)); // one style shared by all the bearing solids, created with the first one (an unused style isn't referenced by a rooted entity, IFC106)
 
             std::vector<typename Schema::IfcRepresentationItem> representation_items;
             representation_items.push_back(solid);
@@ -2812,8 +2810,6 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
          basis_curve = gc.BaseCurve();
       }
    }
-
-   auto surface_style = GetSurfaceStyle<Schema>(file, "Diaphragm", DECK_FILL_COLOR);
 
    std::vector<typename Schema::IfcDefinitionSelect> diaphragms;
    std::vector<typename Schema::IfcProduct> contained_diaphragms;
@@ -3002,7 +2998,7 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
             continue;
 
          auto solid = CreateDiaphragmFaceSet<Schema>(file, d.points, d.height, d.y0, d.y1);
-         StyleRepresentationItem<Schema>(file, solid, surface_style);
+         StyleRepresentationItem<Schema>(file, solid, GetSurfaceStyle<Schema>(file, "Diaphragm", DECK_FILL_COLOR)); // created with the first diaphragm, so a bridge without diaphragms has no unused style
 
          std::vector<typename Schema::IfcRepresentationItem> representation_items;
          representation_items.push_back(solid);
@@ -3048,7 +3044,7 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
 
    // PGSuper's diaphragm loads use the deck concrete
    ExportContext context{ pBroker, &options };
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, pMaterials->GetDeckFc28(), pMaterials->GetDeckMaxAggrSize(), ElementKind::Diaphragm, context, "Diaphragm", DECK_FILL_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, pMaterials->GetDeckFc28(), pMaterials->GetDeckMaxAggrSize(), ElementKind::Diaphragm, context);
    file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::string("Associates_Concrete_to_Diaphragms"), std::nullopt, diaphragms, material);
 }
 
@@ -3281,7 +3277,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    auto fc = pMaterials->GetDeckFc28();
    auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
    ExportContext context{ pBroker, &options };
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Barrier, context, "Barrier", SEGMENT_BORDER_COLOR);
+   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Barrier, context);
 
    if (options.classify)
    {
