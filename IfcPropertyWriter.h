@@ -72,6 +72,9 @@ public:
    std::map<std::string, uint32_t> bar_types;
    std::map<std::string, uint32_t> tendon_types;
 
+   // the IfcElementAssemblyType of the tendon bundles, written once and shared by every bundle (0 until written)
+   uint32_t tendon_bundle_type = 0;
+
    // the number of types written with each name, so a type that has the name of another type gets " (2)", and so on
    std::map<std::string, int> type_names;
 

@@ -24,6 +24,7 @@
 #include "IfcRoundTripMerge.h"
 #include "IfcImportUnits.h"
 #include "IfcMappingTable.h"
+#include "IfcTargetReader.h"
 
 #include <Eigen/Dense>
 
@@ -119,6 +120,8 @@ namespace
       if (prefix == "girder") return { ElementKind::Girder };
       if (prefix == "bearings") return { ElementKind::Bearing };
       if (prefix == "diaphragms") return { ElementKind::Diaphragm };
+      if (prefix == "tendons") return { ElementKind::TendonBundle };
+      if (prefix == "bars") return { ElementKind::ReinforcementCage };
       return {};
    }
 
@@ -274,12 +277,14 @@ namespace
       std::vector<Match> m_Matches;
       std::map<unsigned int, IfcSchema::IfcObjectDefinition> m_SourceOf; // exported element id -> source element
 
-      // an element of PGSuper's model to add, and the source element its placement is relative to (may be empty)
+      // an element of PGSuper's model to add, and the source element its placement is relative to (may be empty).
+      // When into is set, only the element's parts are added, to that source element (e.g. strands to an empty bundle)
       struct Addition
       {
          IfcSchema::IfcProduct exported;
          IfcSchema::IfcProduct anchor;
          std::string description;
+         IfcSchema::IfcObjectDefinition into;
       };
       std::vector<Addition> m_Additions;
 
@@ -293,6 +298,7 @@ namespace
       IfcSchema::IfcObjectDefinition FindSource(const std::string& global_id);
       void MatchElements();
       void PlanChildren(const Match& girder);
+      ElementKind ChildRole(const IfcSchema::IfcObject& child, const CIfcTargetReader& reader) const;
 
       void AddElements();
       void FixCopiedValues(const std::set<unsigned int>& copied);
@@ -435,14 +441,45 @@ namespace
             m_Result.global_ids[r1.GlobalId()] = match.source.as<IfcSchema::IfcRoot>().GlobalId();
       }
 
-      for (const auto& match : m_Matches)
+      // PlanChildren can add matches, so the girder is a copy
+      for (size_t i = 0, n = m_Matches.size(); i < n; i++)
       {
-         if (match.key.rfind("girder:", 0) == 0)
-            PlanChildren(match);
+         if (m_Matches[i].key.rfind("girder:", 0) == 0)
+         {
+            Match girder = m_Matches[i];
+            PlanChildren(girder);
+         }
       }
    }
 
-   // PGSuper's strands and bars of a girder are added if the source's girder has none
+   // The element role of a child of a girder, as an assembly of strands or bars: by its parts, else by the mapping table
+   // (e.g. an empty assembly). ElementKind::Girder if it's neither
+   ElementKind Merger::ChildRole(const IfcSchema::IfcObject& child, const CIfcTargetReader& reader) const
+   {
+      bool bTendons = false, bBars = false;
+      for (const auto& part_rel : child.IsDecomposedBy())
+      {
+         for (const auto& part : part_rel.RelatedObjects())
+         {
+            bTendons |= (bool)part.as<IfcSchema::IfcTendon>();
+            bBars |= (bool)part.as<IfcSchema::IfcReinforcingBar>();
+         }
+      }
+      if (bTendons != bBars)
+         return bTendons ? ElementKind::TendonBundle : ElementKind::ReinforcementCage;
+      if (bTendons)
+         return ElementKind::Girder; // both: not one of PGSuper's
+
+      if (reader.Matches(ElementKind::ReinforcementCage, child))
+         return ElementKind::ReinforcementCage;
+      if (reader.Matches(ElementKind::TendonBundle, child))
+         return ElementKind::TendonBundle;
+      return ElementKind::Girder;
+   }
+
+   // PGSuper's tendon bundles and reinforcement cages of a girder are matched with the source girder's of the same role,
+   // which are then updated like other matched elements (property sets, classification). PGSuper's strands and bars are
+   // added if the source's girder has none: into the matched assembly if it's empty, else with their own assembly
    void Merger::PlanChildren(const Match& girder)
    {
       auto segment = id_of_key(girder.key);
@@ -450,7 +487,19 @@ namespace
       bool bSourceBars = !m_Registry.Find("bars:" + segment).empty();
       std::string name = girder.source.as<IfcSchema::IfcRoot>().Name().value_or("unnamed girder");
 
-      IndexType nTendons = 0, nBars = 0;
+      CIfcTargetReader exported_reader(m_Table, m_ExpUnits), source_reader(m_Table, m_SrcUnits);
+      auto has_parts = [](const IfcSchema::IfcObjectDefinition& object)
+         {
+            for (const auto& rel : object.IsDecomposedBy())
+               if (!rel.RelatedObjects().empty())
+                  return true;
+            for (const auto& rel : object.IsNestedBy())
+               if (!rel.RelatedObjects().empty())
+                  return true;
+            return false;
+         };
+
+      std::set<unsigned int> used; // the source girder's children already matched
       for (const auto& rel : girder.exported.IsDecomposedBy())
       {
          for (const auto& child : rel.RelatedObjects())
@@ -459,24 +508,40 @@ namespace
             if (!product)
                continue;
 
-            // what the child is: its parts are strands or bars
-            bool bTendons = false, bBars = false;
-            for (const auto& part_rel : child.IsDecomposedBy())
+            auto role = ChildRole(product, exported_reader);
+            if (role == ElementKind::Girder)
+               continue;
+            bool bTendons = (role == ElementKind::TendonBundle);
+            bool bSourceParts = (bTendons ? bSourceTendons : bSourceBars);
+            std::string key = (bTendons ? "tendons:" : "bars:") + segment;
+
+            // the source girder's assembly of the role: an empty one, or the one with the model's strands or bars
+            IfcSchema::IfcObjectDefinition source_child;
+            for (const auto& source_rel : girder.source.IsDecomposedBy())
             {
-               for (const auto& part : part_rel.RelatedObjects())
+               for (const auto& candidate : source_rel.RelatedObjects())
                {
-                  bTendons |= (bool)part.as<IfcSchema::IfcTendon>();
-                  bBars |= (bool)part.as<IfcSchema::IfcReinforcingBar>();
+                  auto object = candidate.as<IfcSchema::IfcObject>();
+                  if (source_child || !object || used.count(object.id()) || ChildRole(object, source_reader) != role)
+                     continue;
+                  if (!has_parts(object) || bSourceParts)
+                     source_child = object;
                }
             }
-            if (!bTendons && !bBars)
+
+            if (source_child)
+            {
+               used.insert(source_child.id());
+               m_Matches.push_back({ key, product, source_child });
+               m_SourceOf[product.id()] = source_child;
+               m_Result.global_ids[product.GlobalId()] = source_child.as<IfcSchema::IfcRoot>().GlobalId();
+            }
+
+            if (bSourceParts || !has_parts(product))
                continue;
 
-            if ((bTendons && bSourceTendons) || (bBars && bSourceBars))
-               continue;
-
-            m_Additions.push_back({ product, girder.source.as<IfcSchema::IfcProduct>(), std::string(bTendons ? "strands" : "bars") + " of " + name });
-            (bTendons ? nTendons : nBars)++;
+            // into the source's assembly only if it's empty (one with other parts isn't used)
+            m_Additions.push_back({ product, girder.source.as<IfcSchema::IfcProduct>(), std::string(bTendons ? "strands" : "bars") + " of " + name, source_child });
          }
       }
 
@@ -556,7 +621,20 @@ namespace
       std::map<unsigned int, IfcSchema::IfcProduct> anchor_of;
       std::vector<std::pair<IfcSchema::IfcObjectDefinition, IfcSchema::IfcProduct>> stack;
       for (const auto& addition : m_Additions)
-         stack.emplace_back(addition.exported, addition.anchor);
+      {
+         if (!addition.into)
+         {
+            stack.emplace_back(addition.exported, addition.anchor);
+            continue;
+         }
+         // only the parts: the source element takes the place of PGSuper's (see m_SourceOf)
+         for (const auto& rel : addition.exported.IsDecomposedBy())
+            for (const auto& part : rel.RelatedObjects())
+               stack.emplace_back(part, addition.anchor);
+         for (const auto& rel : addition.exported.IsNestedBy())
+            for (const auto& part : rel.RelatedObjects())
+               stack.emplace_back(part, addition.anchor);
+      }
       while (!stack.empty())
       {
          auto [element, anchor] = stack.back();
@@ -661,7 +739,10 @@ namespace
       for (const auto& addition : m_Additions)
       {
          m_Result.nAdded++;
-         Log("Added " + addition.description + ": " + Describe(addition.exported) + ".");
+         if (addition.into)
+            Log("Added " + addition.description + " to the model's empty " + Describe(addition.into) + ".");
+         else
+            Log("Added " + addition.description + ": " + Describe(addition.exported) + ".");
       }
 
       // the relationships of the added elements, with only the added elements in them. Types, materials, property sets, and

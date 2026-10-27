@@ -365,25 +365,40 @@ void CreateStrands(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Br
    GET_IFACE2(pBroker, IStrandGeometry, pStrandGeom);
    GET_IFACE2_NOCHECK(pBroker, IMaterials, pMaterials);
 
+   // a segment without strands has no tendon bundle
+   if (pStrandGeom->GetStrandCount(segmentKey, pgsTypes::Straight) + pStrandGeom->GetStrandCount(segmentKey, pgsTypes::Harped) + pStrandGeom->GetStrandCount(segmentKey, pgsTypes::Temporary) == 0)
+      return;
+
    // place strands relative to the segment origin
    typename Schema::IfcLocalPlacement strand_placement;
 
-   auto tendon_assembly_type = file.create<typename Ifc4x3_add2::IfcElementAssemblyType>().initialize(
-      ifcopenshell::global_id(),
-      {},
-      std::string("Tendon Bundle"), /*Name*/
-      std::nullopt, /*Description*/
-      std::nullopt, /*ApplicableOccurrence*/
-      std::nullopt, /*HasPropertySets*/
-      std::nullopt, /*RepresentationMaps*/
-      std::nullopt, /*Tag*/
-      std::string("TENDON_BUNDLE"), /*ElementType*/
-      Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED /*PredefinedType*/);
+   // every tendon bundle shares one type (its type property sets don't depend on the segment)
+   auto& session = CIfcExportSession::Current();
+   typename Schema::IfcElementAssemblyType tendon_assembly_type;
+   if (session.tendon_bundle_type != 0)
+   {
+      tendon_assembly_type = file.instance_by_id(session.tendon_bundle_type).template as<typename Schema::IfcElementAssemblyType>();
+   }
+   else
+   {
+      tendon_assembly_type = file.create<typename Schema::IfcElementAssemblyType>().initialize(
+         ifcopenshell::global_id(),
+         {},
+         std::string("Tendon Bundle"), /*Name*/
+         std::nullopt, /*Description*/
+         std::nullopt, /*ApplicableOccurrence*/
+         std::nullopt, /*HasPropertySets*/
+         std::nullopt, /*RepresentationMaps*/
+         std::nullopt, /*Tag*/
+         std::string("TENDON_BUNDLE"), /*ElementType*/
+         Schema::IfcElementAssemblyTypeEnum::IfcElementAssemblyType_USERDEFINED /*PredefinedType*/);
 
+      auto bundle_type_property_sets = CreateTypePropertySets<Schema>(file, ElementKind::TendonBundle, ExportContext{ pBroker, &options });
+      if (!bundle_type_property_sets.empty())
+         tendon_assembly_type.setHasPropertySets(bundle_type_property_sets);
 
-   auto bundle_type_property_sets = CreateTypePropertySets<Schema>(file, ElementKind::TendonBundle, ExportContext{ pBroker, &options });
-   if (!bundle_type_property_sets.empty())
-      tendon_assembly_type.setHasPropertySets(bundle_type_property_sets);
+      session.tendon_bundle_type = tendon_assembly_type.id();
+   }
 
    auto tendon_assembly = file.create<typename Schema::IfcElementAssembly>().initialize(
       ifcopenshell::global_id(),
