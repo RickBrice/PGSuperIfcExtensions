@@ -250,3 +250,4 @@ vcpkg_installed/
 
 # Doxygen output of the developer documentation (devdocs/Doxyfile.dox)
 devdocs/API/
+__pycache__/
