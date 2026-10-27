@@ -1,91 +1,35 @@
-The PGSuperIfcExtension is based on IfcOpenShell v0.8.0. Before building this PGSuper plug-in, the IfcOpenShell dependency needs to be installed from source and compiled.
+# Dependencies
 
-**NOTE** If you have a version of the boost libraries already installed, consider using the version installed with IFCOS instead. Mixing versions of boost libraries leads to runtime issues.
+PGSuperIfcExtensions is built with Visual Studio 2026 (platform toolset v145, x64) and uses IfcOpenShell v0.9.0, built from source. PROJ comes from vcpkg (see the project's README.md).
 
-Designate the repository directories as `safe` for git. This is a one-time setup step. The build scripts will fail if git cannot clone the repositories and check out branches.
-Option 1 - Make git trust any directory
+## IfcOpenShell
+
+Build IfcOpenShell and its dependencies by following IfcOpenShell's own instructions, `win/readme.md` in the IfcOpenShell repository (`%IFCOPENSHELL_DIR%\win\readme.md`). In short, from the x64 Native Tools Command Prompt for VS 2026, in `%IFCOPENSHELL_DIR%\win`:
+
 ~~~
-git config --global --add safe.directory *
+python build-deps.py vs2026-x64 Debug
+python build-deps.py vs2026-x64 Release
+python run-cmake.py vs2026-x64
 ~~~
 
-This may work too, but I haven't tested it
-~~~
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/*
-~~~
+then build IfcOpenShell (`_build-vs2026-x64\IfcOpenShell.sln`, or `build-ifcopenshell.py` and `install-ifcopenshell.py`) in Debug and Release. Debug and Release builds of the dependencies coexist. The readme has the options, the requirements, and how to troubleshoot a build.
 
-Option 2 - Make git trust the following directories (more directories may be added to this list as IfcOpenShell evolves with time)
+Use the `v0.9.0` branch (or a branch made from it). Clone with `--recursive` so the submodules come too.
+
+### What this project expects
+
+- **Environment variables:** `IFCOPENSHELL_DIR`, the root of the IfcOpenShell repository, and `BOOSTDIR`, the Boost that IfcOpenShell's `build-deps` installs (`%IFCOPENSHELL_DIR%\_deps\boost_<version>`). The project links Boost iostreams from `%BOOSTDIR%\stage\vs2026-x64\lib`, which `build-deps` builds. Don't mix it with another Boost installation: mixed Boost versions cause runtime problems.
+- **Folders** (made by the IfcOpenShell scripts with the `vs2026-x64` generator): `_deps-vs2026-x64-installed` (the dependencies), `_build-vs2026-x64` (the build), and `_installed-vs2026-x64` (the installed libraries). `PGSuperIfcExtensions.vcxproj` refers to these names, so a different generator means changing the project.
+- **Safe instances:** IfcOpenShell's CMake option `IFOPSH_SAFE_INSTANCE` (on by default since the 0.9.1 plugin ABI v2 change) changes the exported signatures of every entity class. `PGSuperIfcExtensions.vcxproj` defines `IFOPSH_SAFE_INSTANCE` to match. If IfcOpenShell is configured with `IFOPSH_SAFE_INSTANCE=OFF`, remove the define from the project, or the link fails with unresolved `instance_data` constructors.
+- **Debug libraries:** on Windows, IfcOpenShell's Debug libraries and DLLs have a `_d` suffix (`ifcopenshell_parse_d.lib`, ...).
+- **Python:** the IfcOpenShell build includes a Python (`%IFCOPENSHELL_DIR%\_deps\python.<version>`) with ifcopenshell; the import validation scripts in `Tests/ImportValidation` run with it (see its README).
+
+### Git safe directories
+
+The dependency scripts clone repositories and check out branches. If git refuses because a directory is owned by another user, mark the IfcOpenShell directories as safe, e.g.
+
 ~~~
 git config --global --add safe.directory %IFCOPENSHELL_DIR%
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/mpfr
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/mpir
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/OpenCOLLADA
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/occt_git
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps/cgal
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/_deps-vs2022-x64-installed/Eigen
-git config --global --add safe.directory %IFCOPENSHELL_DIR%/src/ifcconvert/cityjson
 ~~~
 
-
-Get the sources
-Checkout the v0.8.0 branch and updated submodules (The cityjson submodule gets missed during the oringal clone)
-~~~
-git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
-~~~
-
-Uninstall Python and use the version that comes with IfcOpenShell. If you want to use a different version of Python, you'll need to dig into the documentation and figure it out. 
-
-Open the `x64 Native Tools Command Prompt for VS 2022` window.
-~~~
-Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
-~~~
-
-This is an optional step. One of my computers has a 24 core processor. The default is to use all 24 cores, but this ends up with out of memory errors. I find that using 12 cores works well.
-~~~
-set IFCOS_NUM_BUILD_PROCS=12
-~~~
-
-Build the IfcOpenShell dependencies by running the following commands.
-This will take a long time. 
-I have experienced the scripts failing the first time I run them. Just run them a second time.
-
-First build the Debug version of the dependencies.
-
-~~~
-cd %IFCOPENSHELL_DIR%\win
-build-deps.cmd vs2022-x64 Debug
-~~~
-
-Python has been installed. You need to manually uninstall it. Go to Control Panel and remove Python.
-
-Rename the IfcOpenShell folder to IfcOpenShell_Debug. You will need to close the command prompt, and maybe even reboot.
-
-Now we need to start over for the Release dependencies.
-
-~~~
-Start > Visual Studio 2022 > x64 Native Tools Command Prompt for VS 2022
-git clone --recursive https://github.com/IfcOpenShell/IfcOpenShell.git
-set IFCOS_NUM_BUILD_PROCS=12
-cd %IFCOPENSHELL_DIR%\win
-build-deps.cmd vs2022-x64 Release
-run-cmake.cmd vs2022-x64
-~~~
-
-Next, merge the debug libraries into the release folder structure.
-1. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\rocksdb\lib`. Make of copy of rocksdb.lib and rename it to rocksdbd.lib. Move rocksdbd.lib to `IfcOpenShell\_deps-vs2022-x64-installed\rocksdb\lib`.
-2. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\zstd\lib`. Make of copy of zstd_static.lib and rename it to zstd_staticd.lib. Move zstd_staticd.lib to `IfcOpenShell\_deps-vs2022-x64-installed\zstd\lib`.
-3. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib`. Copy all of the lib files (their names should end with _D.lib) to `IfcOpenShell\_deps-vs2022-x64-installed\HDF5-1_13_1-win64\lib`
-4. Go to the folder `IfcOpenShell_Debug\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada`. Copy all of the lib files (their names should end with d.lib) to `IfcOpenShell\_deps-vs2022-x64-installed\OpenCOLLADA\lib\opencollada`
-
-5. Go to the folder `IfcOpenShell\_deps\boost_1_86_0` and run b2.exe. This will compile all of the boost libraries need by BridgeLink.
-
-
-Now we are ready to build IfcOpenShell. The solution file is `IfcOpenShell\_build-vs2022-x64\IfcOpenShell.sln`
-
-Select the Debug configuration and build only the IfcParse project.
-
-Select the Release configuration and build the INSTALL project, found in the folder CMakePredefinedTargets.
-
-IfcOpenShell's CMake option IFOPSH_SAFE_INSTANCE (ON by default since the 0.9.1 plugin ABI v2 change) changes the exported
-signatures of every entity class. PGSuperIfcExtensions.vcxproj defines IFOPSH_SAFE_INSTANCE to match. If IfcOpenShell is
-configured with IFOPSH_SAFE_INSTANCE=OFF, remove the define from the project or the link fails with unresolved
-instance_data constructors. On Windows, IfcOpenShell Debug libraries and DLLs carry a _d suffix (ifcopenshell.parse_d.lib, etc.).
+and the same for each directory git names (under `_deps` and `src`), or trust every directory with `git config --global --add safe.directory *`.
