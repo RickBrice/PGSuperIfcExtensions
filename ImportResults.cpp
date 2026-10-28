@@ -28,10 +28,16 @@
 #include "ImportResults.h"
 #include "MenuLogo.h"
 
+#include <EAF\EAFApp.h>
+
 #include <filesystem>
 #include <fstream>
 
 // CImportResults dialog
+
+// the dialog's size and position are kept where EAF keeps its dialogs' (CEAFApp::WriteWindowPlacement)
+static const TCHAR* const WINDOW_POSITIONS_SECTION = _T("Window Positions");
+static const TCHAR* const WINDOW_POSITION_KEY = _T("IfcImportResults");
 
 IMPLEMENT_DYNAMIC(CImportResults, CDialog)
 
@@ -58,6 +64,7 @@ void CImportResults::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CImportResults, CDialog)
    ON_BN_CLICKED(IDC_SAVE_LOG, OnSave)
+   ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 
@@ -67,7 +74,38 @@ BOOL CImportResults::OnInitDialog()
 {
    CDialog::OnInitDialog();
    SetWindowLogo(this);
+   RestoreWindowPosition();
    return TRUE;
+}
+
+void CImportResults::OnDestroy()
+{
+   SaveWindowPosition();
+   CDialog::OnDestroy();
+}
+
+void CImportResults::SaveWindowPosition()
+{
+   WINDOWPLACEMENT wp;
+   wp.length = sizeof(WINDOWPLACEMENT);
+   if (GetWindowPlacement(&wp))
+   {
+      EAFGetApp()->WriteWindowPlacement(WINDOW_POSITIONS_SECTION, WINDOW_POSITION_KEY, &wp);
+   }
+}
+
+void CImportResults::RestoreWindowPosition()
+{
+   WINDOWPLACEMENT wp;
+   if (EAFGetApp()->ReadWindowPlacement(WINDOW_POSITIONS_SECTION, WINDOW_POSITION_KEY, &wp))
+   {
+      // use the saved position only if it is on a monitor (one may have been disconnected), otherwise keep the default position
+      if (MonitorFromRect(&wp.rcNormalPosition, MONITOR_DEFAULTTONULL) != NULL)
+      {
+         const CRect& rect(wp.rcNormalPosition);
+         SetWindowPos(nullptr, rect.left, rect.top, rect.Width(), rect.Height(), SWP_NOZORDER | SWP_NOACTIVATE);
+      }
+   }
 }
 
 void CImportResults::OnSave()

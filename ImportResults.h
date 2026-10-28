@@ -61,6 +61,10 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
    BOOL OnInitDialog() override;
    afx_msg void OnSave();
+   afx_msg void OnDestroy();
+
+   void SaveWindowPosition();
+   void RestoreWindowPosition();
 
 	DECLARE_MESSAGE_MAP()
 };
