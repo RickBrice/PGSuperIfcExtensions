@@ -1,176 +1,177 @@
-[Info] [2026-10-27 12:39:30] Starting IFC import from file
-[Info] [2026-10-27 12:39:30] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
-[Info] [2026-10-27 12:39:30] Initializing units and precision from IFC file.
-[Info] [2026-10-27 12:39:30] Importing alignment data from IFC file...
-[Info] [2026-10-27 12:39:30] Importing from bridge IFC file.
-[Info] [2026-10-27 12:39:31] Abutment 1 orientation NORMAL (from positioning referent)
-[Info] [2026-10-27 12:39:31] Pier 2 orientation NORMAL (from positioning referent)
-[Info] [2026-10-27 12:39:31] Pier 3 orientation NORMAL (from positioning referent)
-[Info] [2026-10-27 12:39:31] Abutment 4 orientation NORMAL (from positioning referent)
-[Info] [2026-10-27 12:39:31] 62 of 62 library girders have a section to compare with. Not compared, since they came with the import template: Unknown_Girder_Type.
-[Info] [2026-10-27 12:39:31] Section of Span 1, Girder 1: height 66.001 in, width 49.000 in, area 874.5 in^2, I 556359 in^4. Library girder WF66G has the girder type name and the same section.
-[Info] [2026-10-27 12:39:31] Section of Span 1, Girder 2: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 1, Girder 3: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 1, Girder 4: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 2, Girder 1: height 100.000 in, width 49.000 in, area 1082.8 in^2, I 1524915 in^4. Library girder WF100G has the girder type name and the same section.
-[Info] [2026-10-27 12:39:31] Section of Span 2, Girder 2: the same as an earlier girder's, so WF100G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 2, Girder 3: the same as an earlier girder's, so WF100G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 2, Girder 4: the same as an earlier girder's, so WF100G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 2, Girder 5: the same as an earlier girder's, so WF100G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 3, Girder 1: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 3, Girder 2: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 3, Girder 3: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] Section of Span 3, Girder 4: the same as an earlier girder's, so WF66G is used without fitting again.
-[Info] [2026-10-27 12:39:31] f'ci of Span 1, Girder 1 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 1, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 1, Girder 2 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 1, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 1, Girder 3 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 1, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 1, Girder 4 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 1, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 2, Girder 1 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 2, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 2, Girder 2 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 2, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 2, Girder 3 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 2, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 2, Girder 4 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 2, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 2, Girder 5 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 2, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 3, Girder 1 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 3, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 3, Girder 2 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 3, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 3, Girder 3 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 3, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'ci of Span 3, Girder 4 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] f'c of Span 3, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
-[Info] [2026-10-27 12:39:31] Abutment 1 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-27 12:39:31] Pier 2 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-27 12:39:31] Pier 2 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-27 12:39:31] Pier 3 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-27 12:39:31] Pier 3 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-27 12:39:31] Abutment 4 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
-[Info] [2026-10-27 12:39:31] Bearings: the same bearing everywhere, rectangular, 12.000 in x 47.000 in, height 1.725 in
-[Info] [2026-10-27 12:39:31] Abutment 1 boundary condition: Hinge (support condition "Fixed" of the bearing "Abutment 1, Girder 1")
-[Info] [2026-10-27 12:39:31] Pier 2 boundary condition: Roller (support condition "Expansion" of the bearing "Pier 2 Back, Girder 1")
-[Info] [2026-10-27 12:39:31] Pier 3 boundary condition: Roller (support condition "Expansion" of the bearing "Pier 3 Back, Girder 1")
-[Info] [2026-10-27 12:39:31] Abutment 4 boundary condition: Roller (support condition "Expansion" of the bearing "Abutment 4, Girder 1")
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 1: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.115 and 58.673 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 2: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.171 and 58.757 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 3: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.227 and 58.841 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 1, Girder 4: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.283 and 58.925 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 1: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.074 and 76.611 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 2: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.136 and 76.704 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 3: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.198 and 76.798 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 4: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.261 and 76.891 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 5: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 5: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 5: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 2, Girder 5: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.323 and 76.985 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 1: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.115 and 58.673 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 2: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.171 and 58.757 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 3: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.227 and 58.841 ft.
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
-[Info] [2026-10-27 12:39:31] Strands of Span 3, Girder 4: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.283 and 58.925 ft.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 1, Girder 1: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 1, Girder 2: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 1, Girder 3: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 1, Girder 4: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 2, Girder 1: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 2, Girder 2: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 2, Girder 3: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 2, Girder 4: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 2, Girder 5: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 3, Girder 1: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 3, Girder 2: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 3, Girder 3: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Longitudinal bars of Span 3, Girder 4: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 1, Girder 1: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 1: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 1: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 1, Girder 2: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 2: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 2: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 1, Girder 3: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 3: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 3: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 1, Girder 4: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 4: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 1, Girder 4: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 2, Girder 1: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 1: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 1: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 2, Girder 2: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 2: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 2: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 2, Girder 3: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 3: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 3: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 2, Girder 4: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 4: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 4: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 2, Girder 5: 143 bars at 143 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 5: 286 bars around the bottom strands, at 143 of the 143 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 2, Girder 5: 143 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 3, Girder 1: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 1: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 1: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 3, Girder 2: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 2: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 2: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 3, Girder 3: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 3: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 3: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Stirrups of Span 3, Girder 4: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
-[Info] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 4: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
-[Warning] [2026-10-27 12:39:32] Confinement bars of Span 3, Girder 4: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
-[Info] [2026-10-27 12:39:32] Splitting reinforcement: the stirrups near the girder ends (PGSuper's "use primary bars for splitting"), no separate splitting zone.
-[Info] [2026-10-27 12:39:33] Profile from the top of the deck at the alignment at 37 stations: elevation 104.830 ft at station 2000.000 ft, a vertical curve from station 2000.000 ft to 2330.000 ft (0.66% to -0.46%) (within 0.002 in). The alignment has a profile, which is used.
-[Info] [2026-10-27 12:39:33] Roadway section from the top of the deck at 11 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left 2.00%, ridge at the alignment, right -2.00% (rise to the right, measured from -14.917 ft to 14.917 ft).
-[Info] [2026-10-27 12:39:33] The left exterior traffic barrier is Left Barrier (#3906): area 623.0 in^2, 6 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
-[Info] [2026-10-27 12:39:33] The right exterior traffic barrier is Right Barrier (#4046): area 623.0 in^2, 6 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
-[Info] [2026-10-27 12:39:33] Deck gross depth 7.500 in (from deck geometry)
-[Info] [2026-10-27 12:39:33] Left overhang edge depth 7.000 in (from deck geometry)
-[Info] [2026-10-27 12:39:33] Left overhang taper: taper to top of girder top flange (from deck geometry)
-[Info] [2026-10-27 12:39:33] Right overhang edge depth 7.000 in (from deck geometry)
-[Info] [2026-10-27 12:39:33] Right overhang taper: taper to top of girder top flange (from deck geometry)
-[Info] [2026-10-27 12:39:33] Haunch shape: filleted (from deck geometry)
-[Info] [2026-10-27 12:39:33] Fillet 0.750 in (from deck geometry)
-[Info] [2026-10-27 12:39:33] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
-[Info] [2026-10-27 12:39:33] Slab offset for the bridge 9.500 in (from deck geometry)
-[Info] [2026-10-27 12:39:39] The model has no longitudinal bars in the deck, so the deck keeps the existing deck reinforcement.
-[Info] [2026-10-27 12:39:39] Removed the unused girder library entry Unknown_Girder_Type that came with the import template.
-[Info] [2026-10-27 12:39:39] The project remembers 82 elements of the IFC model, so an export can update a copy of it.
-[Info] [2026-10-27 12:39:39] Done IFC import from file
+[Info] [2026-10-30 10:42:15] Starting IFC import from file
+[Info] [2026-10-30 10:42:15] IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
+[Info] [2026-10-30 10:42:15] Initializing units and precision from IFC file.
+[Info] [2026-10-30 10:42:15] Importing alignment data from IFC file...
+[Info] [2026-10-30 10:42:15] Importing from bridge IFC file.
+[Info] [2026-10-30 10:42:16] Abutment 1 orientation NORMAL (from positioning referent)
+[Info] [2026-10-30 10:42:16] Pier 2 orientation NORMAL (from positioning referent)
+[Info] [2026-10-30 10:42:16] Pier 3 orientation NORMAL (from positioning referent)
+[Info] [2026-10-30 10:42:16] Abutment 4 orientation NORMAL (from positioning referent)
+[Info] [2026-10-30 10:42:16] 62 of 62 library girders have a section to compare with. Not compared, since they came with the import template: Unknown_Girder_Type.
+[Info] [2026-10-30 10:42:16] Section of Span 1, Girder 1: height 66.001 in, width 49.000 in, area 874.5 in^2, I 556359 in^4. Library girder WF66G has the girder type name and the same section.
+[Info] [2026-10-30 10:42:16] Section of Span 1, Girder 2: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 1, Girder 3: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 1, Girder 4: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 2, Girder 1: height 100.000 in, width 49.000 in, area 1082.8 in^2, I 1524915 in^4. Library girder WF100G has the girder type name and the same section.
+[Info] [2026-10-30 10:42:16] Section of Span 2, Girder 2: the same as an earlier girder's, so WF100G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 2, Girder 3: the same as an earlier girder's, so WF100G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 2, Girder 4: the same as an earlier girder's, so WF100G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 2, Girder 5: the same as an earlier girder's, so WF100G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 3, Girder 1: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 3, Girder 2: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 3, Girder 3: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Section of Span 3, Girder 4: the same as an earlier girder's, so WF66G is used without fitting again.
+[Info] [2026-10-30 10:42:16] Girder sections: 13 from the profile of an IfcSectionedSolidHorizontal.
+[Info] [2026-10-30 10:42:16] f'ci of Span 1, Girder 1 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 1, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 1, Girder 2 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 1, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 1, Girder 3 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 1, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 1, Girder 4 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 1, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 2, Girder 1 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 2, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 2, Girder 2 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 2, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 2, Girder 3 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 2, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 2, Girder 4 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 2, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 2, Girder 5 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 2, Girder 5 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 3, Girder 1 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 3, Girder 1 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 3, Girder 2 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 3, Girder 2 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 3, Girder 3 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 3, Girder 3 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'ci of Span 3, Girder 4 = 4.000 ksi, "2.7579e+07" from Pset_PrecastConcreteElementGeneral.ReleaseStrength in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] f'c of Span 3, Girder 4 = 5.000 ksi, "3.44738e+07" from Pset_MaterialConcrete.CompressiveStrength (material) in mapping table "Standard (TPF/usBridge)"
+[Info] [2026-10-30 10:42:16] Abutment 1 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-30 10:42:16] Pier 2 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-30 10:42:16] Pier 2 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-30 10:42:16] Pier 3 ahead face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-30 10:42:16] Pier 3 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-30 10:42:16] Abutment 4 back face: end distance 20.5 in, bearing offset 32.5 in (from the CL bearings)
+[Info] [2026-10-30 10:42:16] Bearings: the same bearing everywhere, rectangular, 12.000 in x 47.000 in, height 1.725 in
+[Info] [2026-10-30 10:42:16] Abutment 1 boundary condition: Hinge (support condition "Fixed" of the bearing "Abutment 1, Girder 1")
+[Info] [2026-10-30 10:42:16] Pier 2 boundary condition: Roller (support condition "Expansion" of the bearing "Pier 2 Back, Girder 1")
+[Info] [2026-10-30 10:42:16] Pier 3 boundary condition: Roller (support condition "Expansion" of the bearing "Pier 3 Back, Girder 1")
+[Info] [2026-10-30 10:42:16] Abutment 4 boundary condition: Roller (support condition "Expansion" of the bearing "Abutment 4, Girder 1")
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 1: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.115 and 58.673 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 2: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.171 and 58.757 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 3: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.227 and 58.841 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 1, Girder 4: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.283 and 58.925 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 1: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.074 and 76.611 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 2: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.136 and 76.704 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 3: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.198 and 76.798 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 4: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.261 and 76.891 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 5: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 5: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 5: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 2, Girder 5: 18 straight, 9 harped, 2 temporary, filled into the strand grid of WF100G, harp points (from the model) at 51.323 and 76.985 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 1: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 1: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.115 and 58.673 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 2: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 2: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.171 and 58.757 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 3: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 3: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.227 and 58.841 ft.
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 4: Grade 270 Low Relaxation 0.6" (diameter 0.600 in, grade from "1.86158e+09" from usBrPset_ACI_TendonMaterial.TendonGrade (type) in mapping table "Standard (TPF/usBridge)").
+[Info] [2026-10-30 10:42:16] Strands of Span 3, Girder 4: 20 straight, 8 harped, 0 temporary, filled into the strand grid of WF66G, harp points (from the model) at 39.283 and 58.925 ft.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 1, Girder 1: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 1, Girder 2: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 1, Girder 3: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 1, Girder 4: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 2, Girder 1: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 2, Girder 2: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 2, Girder 3: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 2, Girder 4: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 2, Girder 5: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 3, Girder 1: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 3, Girder 2: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 3, Girder 3: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Longitudinal bars of Span 3, Girder 4: 6 bars (6 referenced to the top of the girder, 0 to the bottom) in 1 rows, AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 1, Girder 1: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 1: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 1: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 1, Girder 2: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 2: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 2: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 1, Girder 3: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 3: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 3: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 1, Girder 4: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 4: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 1, Girder 4: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 2, Girder 1: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 1: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 1: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 2, Girder 2: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 2: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 2: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 2, Girder 3: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 3: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 3: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 2, Girder 4: 142 bars at 142 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 4: 284 bars around the bottom strands, at 142 of the 142 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 4: 142 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 2, Girder 5: 143 bars at 143 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 5: 286 bars around the bottom strands, at 143 of the 143 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 2, Girder 5: 143 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 3, Girder 1: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 1: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 1: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 3, Girder 2: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 2: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 2: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 3, Girder 3: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 3: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 3: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Stirrups of Span 3, Girder 4: 122 bars at 122 places in 5 symmetric zones (#5 2 legs (2 into the deck) with #3 confinement @ 1.50 in for 1.50 in; #5 2 legs (2 into the deck) with #3 confinement @ 3.50 in for 21.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 6.00 in for 144.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 9.00 in for 126.00 in; #5 2 legs (2 into the deck) with #3 confinement @ 18.00 in), AASHTO M31 (A615) - Grade 60.
+[Info] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 4: 244 bars around the bottom strands, at 122 of the 122 stirrup places.
+[Warning] [2026-10-30 10:42:17] Confinement bars of Span 3, Girder 4: 122 more bars are at places that have one. PGSuper has one confinement bar at a stirrup, so the bar that encloses the most is used.
+[Info] [2026-10-30 10:42:17] Splitting reinforcement: the stirrups near the girder ends (PGSuper's "use primary bars for splitting"), no separate splitting zone.
+[Info] [2026-10-30 10:42:18] Profile from the top of the deck at the alignment at 37 stations: elevation 104.830 ft at station 2000.000 ft, a vertical curve from station 2000.000 ft to 2330.000 ft (0.66% to -0.46%) (within 0.002 in). The alignment has a profile, which is used.
+[Info] [2026-10-30 10:42:18] Roadway section from the top of the deck at 11 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left 2.00%, ridge at the alignment, right -2.00% (rise to the right, measured from -14.917 ft to 14.917 ft).
+[Info] [2026-10-30 10:42:18] The left exterior traffic barrier is Left Barrier (#3906): area 623.0 in^2, 6 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
+[Info] [2026-10-30 10:42:18] The right exterior traffic barrier is Right Barrier (#4046): area 623.0 in^2, 6 corners, turned back 2.00% (the roadway cross slope at the edge of the deck, rising toward the roadway). Its section is the library's 42" Single Slope (outlines within 0.000 in).
+[Info] [2026-10-30 10:42:19] Deck gross depth 7.500 in (from deck geometry)
+[Info] [2026-10-30 10:42:19] Left overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-10-30 10:42:19] Left overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-10-30 10:42:19] Right overhang edge depth 7.000 in (from deck geometry)
+[Info] [2026-10-30 10:42:19] Right overhang taper: taper to top of girder top flange (from deck geometry)
+[Info] [2026-10-30 10:42:19] Haunch shape: filleted (from deck geometry)
+[Info] [2026-10-30 10:42:19] Fillet 0.750 in (from deck geometry)
+[Info] [2026-10-30 10:42:19] The deck doesn't extend over some bearings (e.g. integral abutments). The slab offset at those bearings is extrapolated from where the deck is over the girder.
+[Info] [2026-10-30 10:42:19] Slab offset for the bridge 9.500 in (from deck geometry)
+[Info] [2026-10-30 10:42:24] The model has no longitudinal bars in the deck, so the deck keeps the existing deck reinforcement.
+[Info] [2026-10-30 10:42:24] Removed the unused girder library entry Unknown_Girder_Type that came with the import template.
+[Info] [2026-10-30 10:42:24] The project remembers 82 elements of the IFC model, so an export can update a copy of it.
+[Info] [2026-10-30 10:42:24] Done IFC import from file
 IFC import succeeded
 Project saved to F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-WSDOT-System.pgs
