@@ -69,6 +69,6 @@
 <line x1="600.0" y1="200.0" x2="600.0" y2="175.0" stroke="#2e8b57" stroke-width="1.6" marker-end="url(#arrow-green)"/>
 <text x="606.0" y="184.0" class="green small">y (up)</text>
 <circle cx="600.0" cy="200.0" r="3" fill="#2e8b57" stroke="none" stroke-width="1"/>
-<text x="470.0" y="315.0" class="muted small">Sections are cut normal to the girder axis, origin at the</text>
-<text x="470.0" y="330.0" class="muted small">top center, x horizontal, y up.</text>
+<text x="470.0" y="315.0" class="muted small">Sections are in the vertical plane normal to the girder</text>
+<text x="470.0" y="330.0" class="muted small">axis, origin at the top center, x horizontal, y up.</text>
 </svg>

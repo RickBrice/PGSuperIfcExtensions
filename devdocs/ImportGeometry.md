@@ -24,6 +24,8 @@ The figures are schematic (not to scale). They're made by [`images/import-geomet
 - **The top:** the component that's highest when each component is pushed out along its average normal (`get_top_mesh`). This picks the upward-facing surface even when the solid's sides are taller than its top is wide.
 - **Boundary and segments:** the outline of the top component is a chain of edges, split into smooth segments where the direction turns more than a limit (1 degree for girders, 10 for the deck). The shortest segments are the ends; the longest are the edges.
 
+**Swept profiles.** A girder whose body is one swept solid along it (an extrusion or a sectioned solid, through mapped items and clipping results) has its section read from the solid's profile instead of cut from its mesh (`GirderProfileReader`, Section 9): exact, and independent of the triangulation (curved faces aren't faceted, and a solid OpenCASCADE can't mesh still has a profile). The profile is read with IfcOpenShell's mapping, not its kernel, placed in 3D as IfcOpenShell places it, and projected along the sweep onto the cut plane, so it's the section the same cut would give.
+
 **Cuts.** A vertical plane cuts a mesh into closed loops (`CutMesh`, the largest first), or into loose segments when the mesh is several touching solids, e.g. a deck slab with separate haunches (`CutMeshSegments`). Sections are cut normal to the alignment (deck, roadway, barriers) or normal to the girder axis (girder sections).
 
 **Probes.** `Mesh::z_range_at(x, y)` gives the lowest and highest elevation of a mesh at a plan point, or nothing outside its footprint. Deck thickness, slab offset, and girder top elevations are probes; edges along a cut line are found by stepping outward and bisecting to 1/64 in.
@@ -87,11 +89,11 @@ Spacing is measured at each pier line where the girder CLs cross a line through 
 
 ## 9. Girder section and library entry
 
-![Girder section cut and measures](images/import-geometry/girder-section.svg)
+![Girder section and measures](images/import-geometry/girder-section.svg)
 
 **The section** (`GirderProfileReader`, `CutGirderSection`, `MeasureSection`):
 - The section is at **mid-length**, away from end blocks and tapers, in the vertical plane normal to the girder axis in plan.
-- **From the swept profile** when the girder's body is one swept solid along the girder: an extrusion (a tapered one halfway between its profiles), or a sectioned solid (its cross sections before and after mid-length interpolated, point by point, as the loft does), through mapped items and clipping results. The profile is exact: arcs are divided to within 0.1 mm. It's placed in 3D as IfcOpenShell places it, then each point is moved along the sweep onto the cut plane, so a profile in a skewed plane (the PGSuper export's end sections) gives the normal section. A profile more than 1/2 in from the mesh cut isn't the girder's section (e.g. a clipping plane through mid-length) and the cut is used; the log says so. The log counts the sections from each source ("Girder sections: 20 from the profile of an IfcSectionedSolidHorizontal.").
+- **From the swept profile** when the girder's body is one swept solid along the girder: an extrusion (a tapered one halfway between its profiles), or a sectioned solid (its cross sections before and after mid-length interpolated, point by point, as the loft does), through mapped items and clipping results. The profile is exact: arcs are divided to within 0.1 mm. It's placed in 3D as IfcOpenShell places it, then each point is moved along the sweep onto the cut plane, so a profile in a skewed plane (the PGSuper export's end sections) gives the normal section. A profile more than 1/2 in from the mesh cut isn't the girder's section (e.g. a clipping plane through mid-length) and the cut is used; the log says so. The PGSuper exports' girders come from their `IfcSectionedSolidHorizontal` profiles; PennDOT's faceted breps and Iowa's triangulated face sets are cut. The log counts the sections from each source ("Girder sections: 20 from the profile of an IfcSectionedSolidHorizontal.").
 - **Otherwise cut** from the triangulated girder solid by that plane (faceted: curved faces such as fillets come out as short straight pieces).
 - A girder can be rotated about its axis (e.g. to the deck's cross slope). The section is **turned upright**: rotated within 15 degrees, in 0.05 degree steps, to where it's least high (girders have flat tops and bottoms, so this works for sections that aren't symmetric too). Less than a quarter degree is left alone.
 - The largest loop is the outside of the section; loops inside it are **voids**.
@@ -107,6 +109,8 @@ Spacing is measured at each pier line where the girder CLs cross a line through 
    - The girder has a constant depth, so a fit must too (`MakeConstantDepth`): a dimension that only shapes the far end of a varying-depth girder is solved so both ends have the same height, or the fit is rejected.
    - Ties between factories that make the same shape: a factory made for constant-depth girders is preferred; then the user picks; a command-line import takes the factory published by WSDOT, else the best fit.
 4. **A new library entry**, "<girder type> (IFC)" (" (2)" and so on if the name is taken), from the best factory with the fitted dimensions rounded to 1/16 in (US units) or 1 mm, and a generated strand grid: positions on a 2 in grid at least 2 in from the edges and voids, straight strands in the lower half, harped strands in the web column, temporary strands in the top quarter (`GenerateStrandGrid`).
+
+End blocks and tapers aren't detected yet: the section is taken at mid-length only, and the girder keeps the template's end blocks (to do: sections near the ends, see G1 in [GirderImportPlan.md](GirderImportPlan.md)).
 
 If the section can't be read or cut, the entry is found by name only, and the log says so. When girders get different entries, adjacent girders with the same entry are grouped (PGSuper requires a group's girders to share an entry). The girder orientation is the factory's first supported orientation; it isn't measured yet.
 

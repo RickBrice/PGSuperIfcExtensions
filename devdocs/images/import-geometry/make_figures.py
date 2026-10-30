@@ -201,8 +201,8 @@ def fig_coordinates():
     f.line(cx, top, cx, top - 25, GREEN, 1.6, arrow="arrow-green")
     f.text(cx + 6, top - 16, "y (up)", "green small")
     f.circle(cx, top, 3, GREEN)
-    f.lines(470, 315, ["Sections are cut normal to the girder axis, origin at the",
-                       "top center, x horizontal, y up."], "muted small", dy=15)
+    f.lines(470, 315, ["Sections are in the vertical plane normal to the girder",
+                       "axis, origin at the top center, x horizontal, y up."], "muted small", dy=15)
     f.write()
 
 
@@ -274,7 +274,7 @@ def fig_pipeline():
         ("Girders", "ends and CL from each girder's top surface, span, order; bearings at the ends"),
         ("Pier orientation", "positioning referent, else the CL bearing line, else the girder ends"),
         ("Girder spacing", "where the girder CLs cross the pier lines"),
-        ("Girder sections", "cut from the solids; a library entry matched, or a new one fitted"),
+        ("Girder sections", "swept profiles, else cut from the solids; an entry matched or fitted"),
         ("End distance, bearings", "end distance and bearing offset from the CL bearings; bearing size and count"),
         ("Boundary conditions", "pier diaphragms, then support conditions"),
         ("Strands", "centerlines to the library's strand grid, else individual strands"),
@@ -483,13 +483,13 @@ def fig_continuity():
 
 # ---------------------------------------------------------------------------------------------------------------------
 def fig_girder_section():
-    f = Figure("girder-section", 760, 380, "Girder section cut and measures")
-    f.text(20, 28, "(a) Cut at mid-length, normal to the girder axis", "title")
+    f = Figure("girder-section", 760, 380, "Girder section and measures")
+    f.text(20, 28, "(a) At mid-length, normal to the girder axis", "title")
     # girder elevation with a cut plane
     f.rect(30, 70, 300, 60, GIRDER, GIRDER_EDGE)
     f.line(180, 50, 180, 150, MEAS, 2)
-    f.text(186, 162, "cut at 0.5 of the length", "meas small")
-    f.text(30, 178, "(away from end blocks and tapers)", "muted small")
+    f.text(186, 162, "section at 0.5 of the length", "meas small")
+    f.text(30, 178, "(the swept profile, else a cut of the solid)", "muted small")
     # (b) rotated section then upright
     f.text(20, 215, "(b) Turned upright", "title")
     s = 0.95
