@@ -266,6 +266,47 @@ std::vector<SectionOutline::Loop> CutMesh(const Mesh& mesh, const Eigen::Vector2
    return loops;
 }
 
+SectionOutline UprightSection(SectionOutline outline)
+{
+   // A girder can be rotated about its axis (e.g. to the cross slope of the deck). The section is turned back to the
+   // rotation, within 15 degrees, where it's the least high: girders have flat tops and bottoms, so that's upright, also
+   // for sections that aren't symmetric. Less than a quarter degree is left alone (e.g. a slight crown on the top)
+   auto height = [&outline](double angle)
+      {
+         double s = sin(angle), c = cos(angle), ymin = DBL_MAX, ymax = -DBL_MAX;
+         for (const auto& loop : outline.solids)
+         {
+            for (const auto& p : loop)
+            {
+               double y = s * p.x() + c * p.y();
+               ymin = std::min(ymin, y);
+               ymax = std::max(ymax, y);
+            }
+         }
+         return ymax - ymin;
+      };
+   const double step = M_PI / 3600; // 0.05 degree
+   double best_angle = 0, best_height = height(0);
+   for (double angle = -M_PI / 12; angle <= M_PI / 12; angle += step)
+   {
+      double h = height(angle);
+      if (h < best_height)
+      {
+         best_height = h;
+         best_angle = angle;
+      }
+   }
+   if (!IsZero(best_angle, M_PI / 720))
+   {
+      Eigen::Rotation2Dd rotation(best_angle);
+      for (auto* loops : { &outline.solids, &outline.voids })
+         for (auto& loop : *loops)
+            for (auto& p : loop)
+               p = rotation * p;
+   }
+   return normalize(outline);
+}
+
 std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Vector2d& start, const Eigen::Vector2d& end, double fraction)
 {
    auto loops = CutMesh(mesh, start + fraction * (end - start), end - start);
@@ -273,42 +314,6 @@ std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Ve
       return std::nullopt;
 
    // the largest loop is the outside of the section, loops inside it are voids
-
-   // A girder can be rotated about its axis (e.g. to the cross slope of the deck). The section is turned back to the
-   // rotation, within 15 degrees, where it's the least high: girders have flat tops and bottoms, so that's upright, also
-   // for sections that aren't symmetric. Less than a quarter degree is left alone (e.g. a slight crown on the top)
-   {
-      const auto& outer = loops.front();
-      auto height = [&outer](double angle)
-         {
-            double s = sin(angle), c = cos(angle), ymin = DBL_MAX, ymax = -DBL_MAX;
-            for (const auto& p : outer)
-            {
-               double y = s * p.x() + c * p.y();
-               ymin = std::min(ymin, y);
-               ymax = std::max(ymax, y);
-            }
-            return ymax - ymin;
-         };
-      const double step = M_PI / 3600; // 0.05 degree
-      double best_angle = 0, best_height = height(0);
-      for (double angle = -M_PI / 12; angle <= M_PI / 12; angle += step)
-      {
-         double h = height(angle);
-         if (h < best_height)
-         {
-            best_height = h;
-            best_angle = angle;
-         }
-      }
-      if (!IsZero(best_angle, M_PI / 720))
-      {
-         Eigen::Rotation2Dd rotation(best_angle);
-         for (auto& loop : loops)
-            for (auto& p : loop)
-               p = rotation * p;
-      }
-   }
    SectionOutline outline;
    outline.solids.push_back(loops.front());
    for (size_t i = 1; i < loops.size(); i++)
@@ -319,7 +324,7 @@ std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Ve
          outline.voids.push_back(loops[i]);
    }
 
-   return normalize(outline);
+   return UprightSection(outline);
 }
 
 SectionOutline GetShapeOutline(IShape* pShape)

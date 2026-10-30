@@ -24,6 +24,7 @@
 #include "IfcImporter.h"
 #include "BeamSpacing.h"
 #include "GirderSection.h"
+#include "GirderProfile.h"
 #include <IFace\Project.h>
 #include <map>
 #include <set>
@@ -96,6 +97,10 @@ private:
    std::unique_ptr<IDimensionFitter> m_pScreenFitter = std::make_unique<OutlineDimensionFitter>(10);
    std::unique_ptr<IDimensionFitter> m_pFitter = std::make_unique<OutlineDimensionFitter>(100);
    bool m_bLibrarySectionsReported = false;
+
+   // reads girder sections from the profiles of their swept solids (created for the girders of an import)
+   std::unique_ptr<GirderProfileReader> m_pProfileReader;
+   std::map<std::string, IndexType> m_SectionSources; // the number of girder sections by source (the swept solid's IFC class, or empty if cut)
 
    bool DeriveAlignmentFromDeck(ifcopenshell::file& file);
 

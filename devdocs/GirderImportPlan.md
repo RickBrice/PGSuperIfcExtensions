@@ -8,7 +8,7 @@ Before G1, the importer set the girder type by name only (`GetGirderLibraryEntry
 
 | | PGSuper export | Iowa US59 | PennDOT |
 |---|---|---|---|
-| Girder geometry | `IfcSectionedSolidHorizontal` of the exact PGSuper sections | `IfcMappedItem` of swept sections | `IfcFacetedBrep` |
+| Girder geometry | `IfcSectionedSolidHorizontal` of the exact PGSuper sections | `IfcMappedItem` of `IfcTriangulatedFaceSet` (two girders `IfcPolygonalFaceSet`); no swept sections (checked 2026-10-30) | `IfcFacetedBrep` |
 | Girder type name | `IfcBeamType` = library entry (WF66G, WF100G) | `IaDOT_PPCB.2_Type` (BTB45) | `_PS Concrete Beams.Type` |
 | Strands | 369 `IfcTendon`, `IfcSweptDiskSolid` along a polyline (start, harp points, end), types with debonding (`usBrPset_TendonDebonding`) | 661 `IfcTendon` STRAND in "Strands_Beam n_Span m" assemblies, mapped `IfcExtrudedAreaSolid` (straight, apparently scaled by the mapping), `IaDOT_Strand` properties as text (`0.5"`, `270`, `Low Relaxation`); 81 more are lifting loops (NOTDEFINED). No harping or debonding words in the file | none |
 | Girder bars | 2354 `IfcReinforcingBar` with types: G2 stirrups, G3 top bars, G9/G10 confinement, longitudinal; `usBrPset_ACI_ReinforcingBar.BarUse` (STIRRUP, TIE, ...) | 6080 bars in "Rebar_Beam n_Span m" assemblies, mapped extrusions, ProStructures marks and ACI bend shapes (`4d1` IA56, `4e1` S10, `4h1` S11, `6b3` 20, `4c1` straight), lengths as text (`2:3`) | none |
@@ -23,7 +23,8 @@ Before G1, the importer set the girder type by name only (`GetGirderLibraryEntry
 ## G1. Girder section
 
 Phase 5 of [IfcImportPlan.md](IfcImportPlan.md) is the plan; in short:
-1. Get the section polygon of each girder from the model: the swept profiles (PGSuper export, Iowa), or a cut through the solid (PennDOT). Several cuts to see end blocks and tapers; the prismatic middle portion is the section.
+1. Get the section polygon of each girder from the model: the swept profile (PGSuper export), or a cut through the solid (PennDOT, Iowa). Several cuts to see end blocks and tapers; the prismatic middle portion is the section.
+   - **Swept profiles (2026-10-30, `GirderProfile.cpp`):** done for bodies that are one swept solid along the girder: `IfcExtrudedAreaSolid` (tapered ones interpolated halfway), `IfcSectionedSolidHorizontal` (the cross sections around mid-length interpolated), through mapped items and clipping results. The profile is read with IfcOpenShell's mapping (arcs within 0.1 mm), placed as IfcOpenShell's loft places it, and projected along the sweep onto the plane the mesh cut uses, so the PGSuper export's skewed end sections give the normal section. A profile more than 1/2 in from the mesh cut isn't used. The mesh cut stays the fallback; several cuts are still to do.
 2. Match a library entry by geometry (depth, flange widths and thicknesses, area, I, centroid), confirming a name match. A geometric match with another name is used and logged.
 3. If nothing matches: classify the family and fit its dimensions (minimize the difference between the polygon and the factory's section).
 4. Create the library entry: clone the closest entry of the family and set the dimensions, or start from the factory's defaults. The existing PGSuper library API is enough (see "Library entry creation").

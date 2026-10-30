@@ -89,8 +89,10 @@ Spacing is measured at each pier line where the girder CLs cross a line through 
 
 ![Girder section cut and measures](images/import-geometry/girder-section.svg)
 
-**The section** (`CutGirderSection`, `MeasureSection`):
-- The girder solid is cut by a vertical plane normal to its axis at **mid-length**, away from end blocks and tapers.
+**The section** (`GirderProfileReader`, `CutGirderSection`, `MeasureSection`):
+- The section is at **mid-length**, away from end blocks and tapers, in the vertical plane normal to the girder axis in plan.
+- **From the swept profile** when the girder's body is one swept solid along the girder: an extrusion (a tapered one halfway between its profiles), or a sectioned solid (its cross sections before and after mid-length interpolated, point by point, as the loft does), through mapped items and clipping results. The profile is exact: arcs are divided to within 0.1 mm. It's placed in 3D as IfcOpenShell places it, then each point is moved along the sweep onto the cut plane, so a profile in a skewed plane (the PGSuper export's end sections) gives the normal section. A profile more than 1/2 in from the mesh cut isn't the girder's section (e.g. a clipping plane through mid-length) and the cut is used; the log says so. The log counts the sections from each source ("Girder sections: 20 from the profile of an IfcSectionedSolidHorizontal.").
+- **Otherwise cut** from the triangulated girder solid by that plane (faceted: curved faces such as fillets come out as short straight pieces).
 - A girder can be rotated about its axis (e.g. to the deck's cross slope). The section is **turned upright**: rotated within 15 degrees, in 0.05 degree steps, to where it's least high (girders have flat tops and bottoms, so this works for sections that aren't symmetric too). Less than a quarter degree is left alone.
 - The largest loop is the outside of the section; loops inside it are **voids**.
 - **Measures:** height, area, centroid, moment of inertia about the centroid, overall width, the material width at every 1/8 in of depth (the width profile), and the area above every 1/2 in of depth (the area profile, which changes smoothly with the dimensions, for fitting).
@@ -106,7 +108,7 @@ Spacing is measured at each pier line where the girder CLs cross a line through 
    - Ties between factories that make the same shape: a factory made for constant-depth girders is preferred; then the user picks; a command-line import takes the factory published by WSDOT, else the best fit.
 4. **A new library entry**, "<girder type> (IFC)" (" (2)" and so on if the name is taken), from the best factory with the fitted dimensions rounded to 1/16 in (US units) or 1 mm, and a generated strand grid: positions on a 2 in grid at least 2 in from the edges and voids, straight strands in the lower half, harped strands in the web column, temporary strands in the top quarter (`GenerateStrandGrid`).
 
-If the section can't be cut, the entry is found by name only, and the log says so. When girders get different entries, adjacent girders with the same entry are grouped (PGSuper requires a group's girders to share an entry). The girder orientation is the factory's first supported orientation; it isn't measured yet.
+If the section can't be read or cut, the entry is found by name only, and the log says so. When girders get different entries, adjacent girders with the same entry are grouped (PGSuper requires a group's girders to share an entry). The girder orientation is the factory's first supported orientation; it isn't measured yet.
 
 ## 10. Bearings, end distance, and bearing offset
 
@@ -263,6 +265,7 @@ Not imported from geometry yet: stay-in-place deck panels, sidewalks and interio
 | Girder section match | height, centroid, widths 1/8 in; area, I 1% |
 | Fitted section | as above; widths may differ over 1/2 in of depth, or where outlines are within 1/8 in |
 | Same girder section | outlines 1/8 in; area, I 1%; centroid 1/8 in |
+| Swept profile agrees with the mesh cut | outlines 1/2 in |
 | Section turned upright | within 15 degrees, 0.05 degree steps; under 0.25 degree left alone |
 | Strand and bar positions | 1/8 in |
 | Extended strand | projects more than 1 in |

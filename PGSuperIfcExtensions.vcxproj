@@ -325,6 +325,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     </ClCompile>
     <ClCompile Include="BarShape.cpp" />
     <ClCompile Include="GirderSection.cpp" />
+    <ClCompile Include="GirderProfile.cpp" />
     <ClCompile Include="Piers.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -361,6 +362,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="MapConversion.h" />
     <ClInclude Include="BarShape.h" />
     <ClInclude Include="GirderSection.h" />
+    <ClInclude Include="GirderProfile.h" />
     <ClInclude Include="Piers.h" />
     <ClInclude Include="PropertySets.h" />
     <ClInclude Include="QuantitySets.h" />

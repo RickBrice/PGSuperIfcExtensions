@@ -316,6 +316,7 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
    USES_CONVERSION;
 
    // library entry for each girder
+   m_pProfileReader = std::make_unique<GirderProfileReader>(file);
    std::map<CGirderKey, const GirderLibraryEntry*> library_entries;
    for (const auto& girders : layout)
    {
@@ -327,6 +328,17 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
          auto beam = file.instance_by_id(girder.beam_id).as<IfcSchema::IfcBeam>();
          library_entries[girder.girder_key] = GetGirderLibraryEntry(beam, girder);
       }
+   }
+
+   // where the girder sections came from
+   if (!m_SectionSources.empty())
+   {
+      std::ostringstream os;
+      os << "Girder sections:";
+      for (const auto& [source, count] : m_SectionSources)
+         os << (source == m_SectionSources.begin()->first ? " " : ", ") << count << (source.empty() ? " cut from the triangulated geometry" : " from the profile of an " + source);
+      os << ".";
+      WBFL::System::Logger::Info(os.str());
    }
 
    if (library_entries.empty())
@@ -1427,15 +1439,47 @@ const GirderLibraryEntry* CIfcBridgeImporter::GetGirderLibraryEntry(IfcSchema::I
    auto beam_name = beam.Name().value_or("unnamed beam");
    auto girder_type_names = GetGirderTypeNames(beam);
 
-   // the girder's section, at mid-length (end blocks and tapers are at the ends)
+   // the girder's section, at mid-length (end blocks and tapers are at the ends): from the profile of its swept solid
+   // when it has one (exact), else cut from its triangulated geometry. A profile that doesn't agree with the cut isn't
+   // the girder's section (e.g. a clipping half space or an opening through mid-length), so the cut is used
    std::optional<SectionMeasures> section;
+   std::optional<SectionOutline> cut;
    if (girder.mesh)
+      cut = CutGirderSection(*girder.mesh, girder.start, girder.end, 0.5);
+
+   std::string source, why_not;
+   auto profile = m_pProfileReader ? m_pProfileReader->Read(beam, girder, source, why_not) : std::nullopt;
+   if (profile && cut)
    {
-      if (auto outline = CutGirderSection(*girder.mesh, girder.start, girder.end, 0.5))
-         section = MeasureSection(*outline);
-      else
-         WBFL::System::Logger::Info("The section of " + beam_name + " couldn't be cut from its geometry. The girder type is found by name.");
+      const Float64 agreement = WBFL::Units::ConvertToSysUnits(0.5, WBFL::Units::Measure::Inch);
+      Float64 distance = OutlineDistance(*profile, *cut);
+      if (agreement < distance)
+      {
+         std::ostringstream os;
+         os << "The profile of " << beam_name << "'s " << source << " is up to " << std::fixed << std::setprecision(2) << WBFL::Units::ConvertFromSysUnits(distance, WBFL::Units::Measure::Inch)
+            << " in from the section cut from its geometry, so the cut section is used.";
+         WBFL::System::Logger::Info(os.str());
+         profile.reset();
+      }
    }
+   else if (!profile && !source.empty())
+   {
+      // the body is a swept solid, but its section can't be read from it
+      WBFL::System::Logger::Info("The section of " + beam_name + " isn't read from its profile: " + why_not + ".");
+   }
+
+   if (profile)
+   {
+      section = MeasureSection(*profile);
+      m_SectionSources[source]++;
+   }
+   else if (cut)
+   {
+      section = MeasureSection(*cut);
+      m_SectionSources[""]++;
+   }
+   else if (girder.mesh)
+      WBFL::System::Logger::Info("The section of " + beam_name + " couldn't be cut from its geometry. The girder type is found by name.");
 
    auto found = std::find_if(m_GirderMatches.begin(), m_GirderMatches.end(), [&](const GirderMatch& match)
       {

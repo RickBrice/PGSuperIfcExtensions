@@ -79,6 +79,11 @@ std::vector<SectionOutline::Loop> CutMesh(const Mesh& mesh, const Eigen::Vector2
 // loops: a mesh of several solids that touch (e.g. a deck slab and its haunches) can't always be joined correctly
 std::vector<std::pair<Eigen::Vector2d, Eigen::Vector2d>> CutMeshSegments(const Mesh& mesh, const Eigen::Vector2d& point, Eigen::Vector2d axis);
 
+// A girder section in section coordinates, but not yet upright or at the origin (e.g. as cut or projected from the
+// model), turned upright and moved so the origin is at its top center. A girder can be rotated about its axis (e.g. to
+// the cross slope of the deck): the section is turned, within 15 degrees, to where it's the least high
+SectionOutline UprightSection(SectionOutline outline);
+
 // The section of a girder mesh cut by a vertical plane normal to the girder axis (start to end, in plan) at a
 // fraction of its length. Returns nullopt if the plane doesn't cut a closed outline
 std::optional<SectionOutline> CutGirderSection(const Mesh& mesh, const Eigen::Vector2d& start, const Eigen::Vector2d& end, double fraction);
