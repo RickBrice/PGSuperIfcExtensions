@@ -96,6 +96,9 @@ public:
    // Reads target values through the mapping table of the current import. See CIfcTargetReader
    static const CIfcTargetReader& GetTargetReader();
 
+   // Leaves elements out of every element role for the rest of the import (CIfcTargetReader::ExcludeElements)
+   static void ExcludeElements(const std::set<int>& ids);
+
    // Collects the elements of the model the import uses, for the project's round trip registry (IfcRoundTrip.h)
    static CRoundTripRecorder& GetRoundTripRecorder() { return m_RoundTripRecorder; }
 

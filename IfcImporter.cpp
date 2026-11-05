@@ -45,6 +45,12 @@ const CIfcTargetReader& CIfcImporter::GetTargetReader()
    return *m_pTargetReader;
 }
 
+void CIfcImporter::ExcludeElements(const std::set<int>& ids)
+{
+   ASSERT(m_pTargetReader); // only available during an import
+   m_pTargetReader->ExcludeElements(ids);
+}
+
 void CIfcImporter::LoadMappingTable()
 {
    m_pTargetReader.reset();
@@ -191,7 +197,11 @@ HRESULT CIfcImporter::ImportFromIFC(CString& strFilePath, CIfcImportOptions opti
          {
             auto import_result = ImportBridge(*pFile,import_alignment_result == ImportResult::NotFound);
             if (import_result == ImportResult::Fail || import_result == ImportResult::NotFound)
+            {
+               // the reasons are logged above. Say so at the end, where an interactive user looks first
+               WBFL::System::Logger::Error(import_result == ImportResult::NotFound ? "IFC import failed: no bridge was imported (see the errors above)." : "IFC import failed: the bridge couldn't be imported (see the errors above).");
                hr = E_FAIL;
+            }
             else
                RecordRoundTrip(*pFile, strFilePath);
          }

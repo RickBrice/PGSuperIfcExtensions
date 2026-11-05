@@ -180,6 +180,9 @@ IfcSchema::IfcAlignment CIfcAlignmentImporter::GetAlignment(ifcopenshell::file& 
 
    auto alignments = file.instances_by_type<IfcSchema::IfcAlignment>();
 
+   if (alignments.empty())
+      WBFL::System::Logger::Info(_T("The model has no IfcAlignment. When the bridge is imported, a straight alignment is derived from the deck."));
+
    if (1 <= alignments.size())
    {
       std::vector<IfcSchema::IfcAlignment> valid_alignments;

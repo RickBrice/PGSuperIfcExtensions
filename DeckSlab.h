@@ -29,20 +29,28 @@ namespace WBFL { namespace EAF { class Broker; }; };
 #include "BeamSpacing.h"
 #include <psgLib/BridgeDescription2.h>
 
-// Id of the deck slab (the first element selected by the deck element role of the mapping table), or 0 if there isn't one
+// Ids of the deck slabs: the elements selected by the deck element role of the mapping table (e.g. one slab, or the deck
+// segments between joints of a bridge of simple spans, or the halves of a deck built in stages)
+std::vector<int> get_slab_ids(ifcopenshell::file& file);
+
+// Id of the first deck slab, or 0 if there isn't one. It holds the deck's properties and is the deck of round trips
 int get_slab_id(ifcopenshell::file& file);
 
-// Geometry of the deck slab, or nullopt if it can't be processed
-std::optional<Mesh> get_deck_mesh(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
+// Geometry of each deck slab (empty if none can be processed). Logs how many slabs there are when there are several
+std::vector<Mesh> get_deck_meshes(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
 
-// Geometry of the deck slab and the haunches that are separate elements, in one mesh: parts aggregated under the deck,
-// and slabs and building element parts identified as haunches by ObjectType or Name. Returns nullopt if there are no
-// separate haunches; the deck slab geometry (get_deck_mesh) then has all of the deck concrete, including haunches that
-// are part of the deck solid or other items of its representation.
+// The meshes in one mesh (their vertices aren't merged)
+Mesh combine_meshes(const std::vector<Mesh>& meshes);
+
+// Geometry of the deck slabs and the haunches that are separate elements, in one mesh: parts aggregated under a deck slab,
+// and the elements selected by the haunch element role. Returns nullopt if there are no separate haunches; the deck
+// slab geometry (get_deck_meshes) then has all of the deck concrete, including haunches that are part of the deck solid
+// or other items of its representation.
 std::optional<Mesh> get_deck_concrete_mesh(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
 
-// Deck edge points, relative to the alignment, that reproduce the edges of the deck slab geometry
-std::vector<CDeckPoint> get_deck_edge_points(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& deck);
+// Deck edge points, relative to the alignment, that reproduce the edges of the deck: at each station, the outermost
+// edges of the slabs (slabs), whose top surfaces are found one by one. deck is all of the slabs in one mesh
+std::vector<CDeckPoint> get_deck_edge_points(std::shared_ptr<WBFL::EAF::Broker> pBroker, const std::vector<Mesh>& slabs, const Mesh& deck);
 
 // Cast-in-place deck dimensions measured from the deck and girder geometry.
 // Values that couldn't be measured are nullopt

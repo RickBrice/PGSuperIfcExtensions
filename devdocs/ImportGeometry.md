@@ -50,10 +50,20 @@ Each step uses the results of the steps before it (`CIfcBridgeImporter::Import`)
 
 ![Profile fitted to the top of the deck](images/import-geometry/profile.svg)
 
+- **Structures side by side** (`select_structure`, `Structures.cpp`): PGSuper models one structure, but an `IfcBridge` can hold several, e.g. parallel bridges for the two directions of a highway, each with its own deck, crown, girders, bearings, and barriers. Once the alignment is known, the deck slabs (the `deck` role) are grouped by their offset ranges: slabs whose ranges overlap (by more than 1/16 in) are one deck, as the segments between deck joints are; groups side by side, with a joint along the bridge and no slab across it, are separate structures. The structure whose deck spans the alignment (offset 0) is imported. Every element of the other element roles (girders, haunches, bearings, diaphragms, barriers, strands, bars, and their assemblies) goes with the structure whose slab is over the center of its bounding box in plan (else the structure nearest in offset), and the other structures' elements are left out of the roles for the rest of the import (`CIfcTargetReader::ExcludeElements`), so the steps below don't see them. The structures and the counts left out are logged (a warning). If no structure spans the alignment, everything is imported as one bridge, with a warning.
+
 ## 5. Piers and abutments
 
-- **Number of spans:** the number of abutments and piers, less one. A number-of-spans property (`bridge.number_of_spans`) is only a cross check: a conflict is logged and the modeled substructure wins.
-- **Pier stations:** the station of the `IfcReferent` that positions the pier (`Pset_Stationing.Station`). Without one, the station of the center of the bounding box of the bearings in the pier's spatial structure. With neither, 100 ft apart (logged). The piers are sorted by station.
+The abutments and piers are found by `locate_supports` (`Piers.cpp`), after the girder centerlines (section 6), whose ends it may use.
+
+- **By bridge part:** when every `IfcBridgePart` abutment and pier can be located by itself, each is a support. Its station is the station of the `IfcReferent` that positions it (`Pset_Stationing.Station`), else the station of the center of the bounding box of the bearings in its spatial structure. PGSuper's exports (referents) and the Iowa and PennDOT models (bearings in the piers) are located this way.
+- **By the support lines of the geometry:** when some parts have neither (e.g. bearings in the superstructure, parts with nothing in them, or no bridge parts at all), the supports are where the girder ends and bearings meet:
+  1. The girder ends and the centers of the bearings are grouped in plan (single linkage): points within 0.4 of the shortest girder of each other, directly or through other points, are one support line. The ends of the girders at a support are a girder spacing apart, while the supports are a span apart, so the grouping holds up to large skews. Without girders the distance is 3 m.
+  2. The station of a line is where it crosses the alignment: the station is fitted as a linear function of the offset, to the line's bearings if it has any (as the bearings of a pier give the CL bearings), else to its girder ends. Points that don't spread at least 1 ft across the alignment give their mean station.
+  3. Each part goes to the line nearest the median station of the elements in it (or its referent station), within half the distance to the neighboring lines. A referent station replaces the line's station. Several parts can share a line (e.g. the halves of a split bent); the round-trip record keeps all of them.
+  4. Parts that can't be put at a line (nothing in them and no referent, or away from every line) aren't used, and the log lists them. A line with no part is still a support.
+  The first and last supports are the abutments, whatever the parts' predefined types (a difference is logged). With fewer than two lines, each part is located by itself, at stations 100 ft apart where nothing locates it (a warning).
+- **Number of spans:** the number of supports, less one. A number-of-spans property (`bridge.number_of_spans`) is only a cross check: a conflict is logged and the modeled substructure wins. Fewer than two supports fail the import.
 
 ## 6. Girder layout
 
@@ -183,8 +193,8 @@ The bars are the elements of the `rebar` role in the girders, read once with the
 
 ![Deck edges and deck points](images/import-geometry/deck-plan.svg)
 
-The deck slab is the first element of the `deck` role (`get_deck_edge_points`):
-1. Its top surface's outline is split into segments (10 degrees); the **two longest are the deck edges**. The left edge is the one with the smaller offsets.
+The deck slabs are the elements of the `deck` role (`get_deck_meshes`): usually one, but a deck can be several, e.g. the deck segments between the joints of simple spans, or a deck built in halves with a joint along the bridge. The measurements that cut across the deck (edges, roadway, barriers, cross section) use all of the slabs as one mesh; the cross section steps over gaps up to 3 in wide (a longitudinal joint) when it looks for the deck edges. The deck's properties (e.g. `deck.gross_depth`) and its round-trip identity are the first slab's. The edges (`get_deck_edge_points`):
+1. Each slab's top surface outline is split into segments (10 degrees); the **two longest are the slab's edges**. The left edge is the one with the smaller offsets. With several slabs, the **deck edges are the outermost** of the slabs' edges at each station (the left edge with the smallest offset, the right with the largest), at the stations of all of their points.
 2. **Chamfers and drips:** the top surface can stop short of the deck's outermost points. The deck is cut normal to the alignment at its 1/4, 1/2, and 3/4 points, and if the three cuts agree (within 1/8 in) that the outermost point is 1/16 to 6 in outside the top's edge, the edge is moved out by that much.
 3. **Deck points:** each edge, as offsets along the alignment, is simplified to within 1/8 in of offset (Douglas-Peucker). The stations where either edge changes direction are the deck points, with the left and right offsets there. A stretch of constant offset parallels the alignment; one that changes is a linear transition. Points in the middle of runs that parallel the alignment on both sides are removed.
 
@@ -258,9 +268,11 @@ Not imported from geometry yet: stay-in-place deck panels, sidewalks and interio
 | What | Tolerance |
 |---|---|
 | Smooth components of a mesh | adjacent faces within 10 degrees |
+| Structures side by side | deck slab offset ranges overlapping by more than 1/16 in are one deck |
 | Girder end segments; deck edge segments | 1 degree; 10 degrees |
 | Edges along a cut (probing) | 1/64 in |
 | Uniform girder spacing | 1/16 in |
+| Support line (girder ends and bearings grouped) | 0.4 of the shortest girder (3 m without girders); a line fitted when its points spread 1 ft across the alignment; a part within half the distance to the next line |
 | Pier orientation cross check | 0.5 degree |
 | Bearing to girder end | 1/2 in outside to 6 ft inside the end, 3 ft from the CL |
 | End distance and bearing offset spread (logged) | 1/4 in |
@@ -278,6 +290,8 @@ Not imported from geometry yet: stay-in-place deck panels, sidewalks and interio
 | Stirrup zones | equal spaces 1/4 in; symmetric 1 in; spacings rounded to 1/8 in (1 mm) |
 | Confinement bar | below 40% of the depth; strands within 1 in of the lowest; station within 3 in and half the spacing |
 | Deck edge outside the top (chamfer, drip) | 1/16 to 6 in, three cuts within 1/8 in |
+| Deck edges in the cross section | gaps up to 3 in wide (a longitudinal joint) are stepped over |
+| Deck gross depth at a cut | bays with no deck (under 1/64 in thick) don't count |
 | Deck points | 1/8 in of offset |
 | Deck gross depth property cross check | 1/8 in |
 | Haunch in the deck solid; fillet steps; square haunch | 1/8 in; 1/32 in; under 1/8 in |

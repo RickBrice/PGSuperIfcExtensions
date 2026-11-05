@@ -1,0 +1,20 @@
+{
+  "comment": "TxDOT mapping table for the US 77 CRP test model (OpenBridge Designer, BridgeOnly-spatialized). The property values are plain numbers or text: the deck thickness is a number in inches. The model's haunches and barriers have an ObjectType but no PredefinedType (USERDEFINED is missing). The model has no concrete strengths, fixity, or girder designations PGSuper can read: Beam Segment Properties.Beam Name is a girder mark (\"#9\") and Span Name names the bents (\"Bent22 - Bent23\").",
+  "format": "PGSuperIfcMapping",
+  "version": 1,
+  "name": "TxDOT",
+  "extends": "standard",
+  "elements": {
+    "barrier": {"entity": "IfcWall", "attributes": {"ObjectType": "BARRIER"}},
+    "haunch": {"entity": "IfcSlab", "attributes": {"ObjectType": "HAUNCH"}}
+  },
+  "targets": {
+    "girder.type_names": [
+      {"property": {"pset": "Beam Segment Properties", "name": "Template"}},
+      {"property": {"pset": "BeamSegment - Item Type", "name": "Type"}}
+    ],
+    "deck.gross_depth": [
+      {"property": {"pset": "Deck - Item Type", "name": "Thickness"}, "unit": "in"}
+    ]
+  }
+}

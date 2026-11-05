@@ -525,15 +525,6 @@ namespace
       return true;
    }
 
-   std::string object_name(IfcSchema::IfcObject object)
-   {
-      std::ostringstream os;
-      os << object.declaration().name() << " #" << object.id();
-      if (object.Name())
-         os << " \"" << *object.Name() << "\"";
-      return os.str();
-   }
-
    std::string predefined_type(IfcSchema::IfcObject object)
    {
       // the predefined type is from the type object if there is one (see GetPredefinedType)
@@ -549,6 +540,15 @@ namespace
 
       return "";
    }
+}
+
+std::string DescribeElement(IfcSchema::IfcRoot object)
+{
+   std::ostringstream os;
+   os << object.declaration().name() << " #" << object.id();
+   if (object.Name())
+      os << " \"" << *object.Name() << "\"";
+   return os.str();
 }
 
 std::string TargetReading::Source() const
@@ -597,14 +597,14 @@ void CIfcTargetReader::Read(const TargetDef& target, IfcSchema::IfcObject object
       std::string problem;
       auto values = find_values(object, location, problem);
       if (!problem.empty())
-         LogProblem(location.Describe() + " of " + object_name(object) + " " + problem + ". It isn't used for " + std::string(target.description) + " (" + location.origin + ")");
+         LogProblem(location.Describe() + " of " + DescribeElement(object) + " " + problem + ". It isn't used for " + std::string(target.description) + " (" + location.origin + ")");
 
       for (const auto& raw : values)
       {
          TargetValue value;
          if (!convert(m_Units, raw, location, target, value, problem))
          {
-            LogProblem("The value \"" + raw.Text() + "\" of " + location.Describe() + " of " + object_name(object) + " " + problem + ". It isn't used for " + std::string(target.description) + " (" + location.origin + ")");
+            LogProblem("The value \"" + raw.Text() + "\" of " + location.Describe() + " of " + DescribeElement(object) + " " + problem + ". It isn't used for " + std::string(target.description) + " (" + location.origin + ")");
             continue;
          }
 
@@ -673,7 +673,12 @@ bool CIfcTargetReader::HasSelector(ElementKind role) const
 bool CIfcTargetReader::Matches(ElementKind role, IfcSchema::IfcObject object) const
 {
    auto* selector = m_Table.GetSelector(role);
-   return selector && object && Matches(*selector, object);
+   return selector && object && !m_Excluded.contains(object.id()) && Matches(*selector, object);
+}
+
+void CIfcTargetReader::ExcludeElements(const std::set<int>& ids)
+{
+   m_Excluded.insert(ids.begin(), ids.end());
 }
 
 bool CIfcTargetReader::Matches(const ElementSelector& selector, IfcSchema::IfcObject object) const
@@ -698,6 +703,54 @@ bool CIfcTargetReader::Matches(const ElementSelector& selector, IfcSchema::IfcOb
       return false;
 
    return true;
+}
+
+std::string CIfcTargetReader::WhyNotMatched(ElementKind role, IfcSchema::IfcObject object) const
+{
+   auto* selector = m_Table.GetSelector(role);
+   if (!selector)
+      return "no mapping table defines the " + std::string(GetElementRoleName(role)) + " role";
+   if (Matches(*selector, object))
+      return "";
+
+   std::ostringstream os;
+   os << WhyNotMatched(*selector, object) << "; mapping table \"" << selector->table << "\" selects the " << GetElementRoleName(role) << " as " << selector->Describe();
+   return os.str();
+}
+
+std::string CIfcTargetReader::WhyNotMatched(const ElementSelector& selector, IfcSchema::IfcObject object) const
+{
+   if (!selector.any_of.empty())
+   {
+      std::string reasons;
+      for (const auto& alternative : selector.any_of)
+         reasons += (reasons.empty() ? "" : ", and ") + WhyNotMatched(alternative, object);
+      return reasons;
+   }
+
+   if (!object.declaration().is(selector.entity))
+      return "it's an " + object.declaration().name() + ", not an " + selector.entity;
+
+   if (!selector.predefined_type.empty())
+   {
+      auto type = predefined_type(object);
+      if (type != selector.predefined_type)
+         return type.empty() ? std::string("it has no PredefinedType") : "its PredefinedType is " + type;
+   }
+
+   for (const auto& [name, value] : selector.attributes)
+   {
+      RawValue raw;
+      if (!attribute_value(object.as<express::entity>(), name, raw))
+         return "it has no " + name;
+      if (lower(raw.Text()) != lower(value))
+         return "its " + name + " is \"" + raw.Text() + "\"";
+   }
+
+   if (!selector.classification.empty() && !HasClassification<IfcSchema>(object, selector.classification))
+      return "it isn't classified " + selector.classification;
+
+   return "";
 }
 
 std::vector<IfcSchema::IfcObject> CIfcTargetReader::Select(ElementKind role, ifcopenshell::file& file) const
@@ -727,7 +780,7 @@ std::vector<IfcSchema::IfcObject> CIfcTargetReader::Select(ElementKind role, ifc
       for (auto& instance : file.instances_by_type(entity))
       {
          auto object = instance.as<IfcSchema::IfcObject>();
-         if (object && Matches(*selector, object) && ids.insert(object.id()).second)
+         if (object && !m_Excluded.contains(object.id()) && Matches(*selector, object) && ids.insert(object.id()).second)
             objects.push_back(object);
       }
    }

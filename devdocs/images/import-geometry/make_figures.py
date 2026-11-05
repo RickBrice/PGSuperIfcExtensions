@@ -270,8 +270,9 @@ def fig_mesh_steps():
 def fig_pipeline():
     steps = [
         ("Alignment", "the model's IfcAlignment; a straight one through the deck ends if it has none"),
-        ("Piers and abutments", "the number of spans, and the pier stations"),
-        ("Girders", "ends and CL from each girder's top surface, span, order; bearings at the ends"),
+        ("Girder centerlines", "ends and CL from each girder's top surface"),
+        ("Piers and abutments", "referents or bearings of the bridge parts, else the support lines of the geometry"),
+        ("Girders", "span and order from the pier stations; bearings at the ends"),
         ("Pier orientation", "positioning referent, else the CL bearing line, else the girder ends"),
         ("Girder spacing", "where the girder CLs cross the pier lines"),
         ("Girder sections", "swept profiles, else cut from the solids; an entry matched or fitted"),
@@ -281,7 +282,7 @@ def fig_pipeline():
         ("Girder bars", "longitudinal rows, stirrup zones, confinement bars"),
         ("Deck", "plan edges, profile, roadway section, traffic barriers, depths, haunch,"),
     ]
-    f = Figure("pipeline", 760, 545, "Order of the import steps")
+    f = Figure("pipeline", 760, 587, "Order of the import steps")
     f.text(20, 28, "Order of the steps: each one uses what the steps before it found", "title")
     y = 48
     for i, (name, what) in enumerate(steps):
@@ -292,7 +293,7 @@ def fig_pipeline():
             f.line(125, y + 30, 125, y + 41, ALIGN, 1.3, arrow="arrow-align")
         y += 42
     f.text(236, y - 42 + 36, "slab offset, deck reinforcement", "small")
-    f.lines(20, 530, ["The deck is last: its cross section is measured over the girders, and the slab offset at the CL bearings."], "muted small")
+    f.lines(20, 572, ["The deck is last: its cross section is measured over the girders, and the slab offset at the CL bearings."], "muted small")
     f.write()
 
 

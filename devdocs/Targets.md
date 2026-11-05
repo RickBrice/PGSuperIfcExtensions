@@ -78,7 +78,7 @@ All values are in PGSuper system units (SI). "Export" is what the `get` lambda i
 | `girder.fci` | Stress | `IMaterials::GetSegmentFc(segmentKey, IIntervals::GetPrestressReleaseInterval(segmentKey))` | `SetGirderProperties`: `CPrecastSegmentData::Material.Concrete.Fci` |
 | `girder.strength_class` | Text | `GetSegmentFc28` formatted in the display stress unit | – |
 | `girder.max_aggregate_size` | Length | `IMaterials::GetSegmentMaxAggrSize` | – |
-| `girder.assembly_place` | Text | – (written as a fixed value by the table) | `IsValidBridge` (`IfcBridgeImporter.cpp`): with `girder.casting_method`, checks that the beams are factory-made precast girders ("FACTORY", "PRECAST") |
+| `girder.assembly_place` | Text | – (written as a fixed value by the table) | `HasValidGirdersByTPF` (`IfcBridgeImporter.cpp`): with `girder.casting_method`, checks that the beams are factory-made precast girders ("FACTORY", "PRECAST"). Not called: `WhyNotImportable` has the check commented out |
 | `girder.casting_method` | Text | – (fixed value in the table) | See `girder.assembly_place` |
 | `girder.span` | Length | `IBridge::GetSegmentSpanLength` | – |
 | `girder.slope` | Angle | `atan(IBridge::GetSegmentSlope)` | – |

@@ -46,6 +46,9 @@ struct TargetReading
    std::string Source() const;
 };
 
+// An element for messages: its class, id, and name (e.g. IfcBridge #396086 "US77-CRP-Test-BridgeOnly")
+std::string DescribeElement(IfcSchema::IfcRoot object);
+
 class CIfcTargetReader
 {
 public:
@@ -74,17 +77,26 @@ public:
    // True if the element plays the role. False if no table defines the role
    bool Matches(ElementKind role, IfcSchema::IfcObject object) const;
 
+   // Why the element doesn't play the role, for messages (e.g. "its PredefinedType is NOTDEFINED; mapping table
+   // "Standard (TPF/usBridge)" selects the bridge as IfcBridge.GIRDER"). Empty if it does
+   std::string WhyNotMatched(ElementKind role, IfcSchema::IfcObject object) const;
+
    // The elements that play the role, in the order they are in the file
    std::vector<IfcSchema::IfcObject> Select(ElementKind role, ifcopenshell::file& file) const;
+
+   // Leaves elements out of every element role (Select and Matches), e.g. the elements of a structure that isn't imported
+   void ExcludeElements(const std::set<int>& ids);
 
 private:
    const CIfcMappingTable& m_Table;
    const CIfcImportUnits& m_Units;
    mutable std::map<std::string, size_t, std::less<>> m_NotFound; // target -> number of elements it wasn't found for
    mutable std::set<std::string> m_Problems; // logged problems, so each is logged once
+   std::set<int> m_Excluded; // elements that play no role (ExcludeElements)
 
    const TargetDef& GetTarget(std::string_view target) const;
    void Read(const TargetDef& target, IfcSchema::IfcObject object, bool bAll, std::vector<TargetReading>& readings) const;
    bool Matches(const ElementSelector& selector, IfcSchema::IfcObject object) const;
+   std::string WhyNotMatched(const ElementSelector& selector, IfcSchema::IfcObject object) const;
    void LogProblem(const std::string& problem) const;
 };

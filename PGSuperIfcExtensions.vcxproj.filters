@@ -166,6 +166,9 @@
     <ClCompile Include="Piers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Structures.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ImportResults.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -394,6 +397,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Piers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImportResults.h">

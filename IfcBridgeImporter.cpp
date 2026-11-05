@@ -34,6 +34,7 @@
 #include "TrafficBarriers.h"
 #include "RoadwaySection.h"
 #include "Piers.h"
+#include "Structures.h"
 #include "Strands.h"
 #include "LongitudinalRebar.h"
 #include "Stirrups.h"
@@ -74,13 +75,28 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    {
       if (!DeriveAlignmentFromDeck(file))
       {
-         WBFL::System::Logger::Info(_T("Failed to derive alignment from deck slab."));
+         WBFL::System::Logger::Error(_T("Failed to derive alignment from deck slab."));
          //IFC_THROW(_T("Failed to derive alignment from deck slab."));
          return CIfcImporter::ImportResult::Fail;
       }
    }
 
-   auto nPiers = get_pier_count(file);
+   // PGSuper models one structure: when the deck is structures side by side, the one on the alignment is imported
+   select_structure(m_Importer.GetBroker(), file);
+
+   // The girders from the model geometry. Their ends locate the abutments and piers when the bridge parts can't
+   auto girder_centerlines = get_girder_centerlines(m_Importer.GetBroker(), file);
+
+   //
+   // Position the abutments and piers
+   //
+   auto supports = locate_supports(m_Importer.GetBroker(), file, girder_centerlines);
+   if (supports.size() < 2)
+   {
+      WBFL::System::Logger::Error("The bridge needs at least two abutments and piers, and " + std::to_string(supports.size()) + " were found.");
+      return CIfcImporter::ImportResult::Fail;
+   }
+   PierIndexType nPiers = supports.size();
 
    // The number of spans is from the modeled substructure. A number of spans property is only a cross check;
    // when it disagrees, the model is used and the conflict is reported (devdocs/MappingTablesDesign.md, G4)
@@ -115,36 +131,17 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
          bridge_desc.AppendSpan(nullptr, nullptr, true, 0);
       }
    }
-
-   //
-   // Position the abutments and piers
-   //
-
-   // Per TPF modeling guidance, piers and abutments are different types.
-   // Get the abutments and piers and put into a single vector because we need to treat them the same in PGSuper.
-   // The order doesn't matter, the piers are sorted by station
-   std::vector<IfcSchema::IfcBridgePart> piers = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
-   auto interior_piers = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
-   piers.insert(piers.end(), interior_piers.begin(), interior_piers.end());
-
-   ASSERT(nPiers == piers.size());
    ASSERT(nPiers == bridge_desc.GetPierCount());
-   // station and direction (if the model has it) of each pier, sorted by station because we don't know the order the piers are defined in the model
-   std::vector<std::tuple<Float64, std::optional<Eigen::Vector2d>, int>> pier_locations; // station, direction, IfcBridgePart
-   for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
-   {
-      // get the pier station from the positioning element
-      pier_locations.emplace_back(get_pier_station(m_Importer.GetBroker(), file, pierIdx, piers[pierIdx]), get_referent_direction(piers[pierIdx]), piers[pierIdx].id());
-   }
-   std::sort(pier_locations.begin(), pier_locations.end(), [](const auto& a, const auto& b) {return std::get<0>(a) < std::get<0>(b); });
 
+   // station and direction (if the model has it) of each pier, in order by station
    std::vector<Float64> pier_stations;
    std::vector<std::optional<Eigen::Vector2d>> referent_directions;
-   for (const auto& [station, direction, part_id] : pier_locations)
+   for (const auto& support : supports)
    {
-      recorder.RecordPier(pier_stations.size(), part_id);
-      pier_stations.push_back(station);
-      referent_directions.push_back(direction);
+      for (auto part_id : support.part_ids)
+         recorder.RecordPier(pier_stations.size(), part_id);
+      pier_stations.push_back(support.station);
+      referent_directions.push_back(support.referent_direction);
    }
 
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
@@ -156,8 +153,8 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    // Girders
    //
 
-   // Locate the girders from the model geometry. The location determines the span and girder index
-   auto layout = get_girder_layout(m_Importer.GetBroker(), file, pier_stations);
+   // The location of each girder determines its span and girder index
+   auto layout = get_girder_layout(file, girder_centerlines, pier_stations);
    locate_bearings(m_Importer.GetBroker(), file, layout);
    for (const auto& girders : layout)
    {
@@ -416,19 +413,92 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
    }
 }
 
-bool CIfcBridgeImporter::IsValidBridge(ifcopenshell::file& file, IfcSchema::IfcBridge bridge)
+std::string CIfcBridgeImporter::WhyNotImportable(ifcopenshell::file& file, IfcSchema::IfcBridge bridge)
 {
-   // must be a girder bridge
-   if (bridge.PredefinedType().value_or(IfcSchema::IfcBridgeTypeEnum::IfcBridgeType_NOTDEFINED) != IfcSchema::IfcBridgeTypeEnum::IfcBridgeType_GIRDER)
-      return false;
+   // must be the mapping table's bridge (the standard table: a girder bridge, IfcBridge.GIRDER)
+   if (auto why_not = CIfcImporter::GetTargetReader().WhyNotMatched(ElementKind::Bridge, bridge); !why_not.empty())
+      return why_not;
 
    // This check could be far less strict if we can assume the user provided us a PSG bridge.
    // If we can go from the girder line geometry and the girder name, mapped to a library entry,
    // that might be enough to actually do some work
    //if (!HasValidGirders(file, bridge))
-   //   return false;
+   //   return "...";
 
-   return true;
+   return "";
+}
+
+namespace
+{
+   // the number of each key, in the order the keys are first found
+   using Counts = std::vector<std::pair<std::string, size_t>>;
+   void count(Counts& counts, const std::string& key)
+   {
+      auto found = std::find_if(counts.begin(), counts.end(), [&key](const auto& c) {return c.first == key; });
+      if (found == counts.end())
+         counts.emplace_back(key, 1);
+      else
+         found->second++;
+   }
+
+   // e.g. "50 PIER, 6 ABUTMENT"
+   std::string list_counts(const Counts& counts)
+   {
+      std::ostringstream os;
+      for (const auto& [key, n] : counts)
+         os << (&key == &counts.front().first ? "" : ", ") << n << " " << key;
+      return os.str();
+   }
+
+}
+
+void CIfcBridgeImporter::LogBridgeParts(ifcopenshell::file& file)
+{
+   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
+   if (parts.empty())
+   {
+      WBFL::System::Logger::Info("The model has no IfcBridgePart (superstructure, abutments, piers, ...).");
+   }
+   else
+   {
+      Counts types, parents;
+      for (auto& part : parts)
+      {
+         count(types, part.PredefinedType() ? IfcSchema::IfcBridgePartTypeEnum::ToString(*part.PredefinedType()) : "no PredefinedType");
+         auto decomposes = part.Decomposes();
+         count(parents, decomposes.empty() ? std::string("nothing") : DescribeElement(decomposes.front().RelatingObject()));
+      }
+
+      std::ostringstream os;
+      os << "The model has " << parts.size() << " IfcBridgePart (" << list_counts(types) << "), aggregated by: " << list_counts(parents) << ".";
+      WBFL::System::Logger::Info(os.str());
+   }
+
+   // where the girders are, since the import looks for them in the superstructure
+   const auto& reader = CIfcImporter::GetTargetReader();
+   if (auto* selector = reader.GetTable().GetSelector(ElementKind::Girder))
+   {
+      auto girders = reader.Select(ElementKind::Girder, file);
+      Counts containers;
+      for (const auto& girder : girders)
+      {
+         std::string container = "no spatial element";
+         if (auto element = girder.as<IfcSchema::IfcElement>())
+         {
+            auto contained_in = element.ContainedInStructure();
+            if (!contained_in.empty())
+               container = DescribeElement(contained_in.front().RelatingStructure());
+         }
+         count(containers, container);
+      }
+
+      std::ostringstream os;
+      os << "The model has " << girders.size() << " girders (" << selector->Describe() << ")";
+      if (!girders.empty())
+         os << ", contained in: " << list_counts(containers);
+      os << ".";
+      WBFL::System::Logger::Info(os.str());
+   }
 }
 
 bool CIfcBridgeImporter::HasValidGirders(ifcopenshell::file& file, IfcSchema::IfcBridge bridge)
@@ -554,18 +624,43 @@ IfcSchema::IfcBridge CIfcBridgeImporter::GetBridge(ifcopenshell::file& file)
 
    auto bridges = file.instances_by_type<IfcSchema::IfcBridge>();
 
-   if (1 <= bridges.size())
+   if (bridges.empty())
+   {
+      WBFL::System::Logger::Error("The model has no IfcBridge, so there's no bridge to import. PGSuper imports an IfcBridge that aggregates the bridge parts (superstructure, abutments, piers).");
+      LogBridgeParts(file);
+   }
+   else
    {
       std::vector<IfcSchema::IfcBridge> valid_bridges;
+      std::vector<std::pair<IfcSchema::IfcBridge, std::string>> other_bridges; // and why they aren't the table's bridge
       for (auto& bridge : bridges)
       {
-         if (IsValidBridge(file, bridge))
+         if (auto why_not = WhyNotImportable(file, bridge); why_not.empty())
+            valid_bridges.push_back(bridge);
+         else
+            other_bridges.emplace_back(bridge, why_not);
+      }
+
+      // When no IfcBridge is the mapping table's bridge (e.g. a girder bridge with PredefinedType NOTDEFINED), the others
+      // are imported as if they were, since models often leave the bridge type out. The girders, piers, and deck are
+      // found by their own roles, and the log says how the bridge differs
+      for (const auto& [bridge, why_not] : other_bridges)
+      {
+         if (valid_bridges.empty())
+            WBFL::System::Logger::Warning(DescribeElement(bridge) + " isn't the bridge the mapping table describes: " + why_not + ". No IfcBridge is, so it's imported as if it were.");
+         else
+            WBFL::System::Logger::Info(DescribeElement(bridge) + " isn't imported: " + why_not + ".");
+      }
+      if (valid_bridges.empty())
+      {
+         for (const auto& [bridge, why_not] : other_bridges)
             valid_bridges.push_back(bridge);
       }
 
       if (valid_bridges.size() == 0)
       {
-         WBFL::System::Logger::Info(_T("IFC model does not contain a bridge that is compatible with this software."));
+         WBFL::System::Logger::Error("The model has no bridge that can be imported.");
+         LogBridgeParts(file);
       }
       else
       {
@@ -584,7 +679,10 @@ IfcSchema::IfcBridge CIfcBridgeImporter::GetBridge(ifcopenshell::file& file)
             {
                result = AfxChoose(_T("Select Bridge"), _T("Select bridge to import"), A2T(os.str().c_str()), 0, TRUE);
                if (result < 0)
+               {
+                  WBFL::System::Logger::Error("No bridge was chosen, so none is imported.");
                   return {};
+               }
             }
             else
             {
@@ -605,9 +703,10 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
       return; // no deck
    CIfcImporter::GetRoundTripRecorder().Record(roundtrip_key::Deck(), get_slab_id(file));
 
-   auto deck = get_deck_mesh(m_Importer.GetBroker(), file);
-   if (!deck)
+   auto slabs = get_deck_meshes(m_Importer.GetBroker(), file);
+   if (slabs.empty())
       return; // keep the default deck
+   auto deck = std::make_optional(slabs.size() == 1 ? slabs.front() : combine_meshes(slabs));
 
    auto* pDeck = bridge_desc.GetDeckDescription();
 
@@ -615,7 +714,7 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
    pDeck->SetDeckType(pgsTypes::sdtCompositeCIP);
 
    // plan view shape
-   auto deck_points = get_deck_edge_points(m_Importer.GetBroker(), *deck);
+   auto deck_points = get_deck_edge_points(m_Importer.GetBroker(), slabs, *deck);
    if (!deck_points.empty())
       pDeck->DeckEdgePoints = deck_points;
 

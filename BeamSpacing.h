@@ -56,9 +56,12 @@ struct GirderCenterline
 // [span][girder], girders ordered left to right
 using GirderLayout = std::vector<std::vector<GirderCenterline>>;
 
-// Locates the girders from the IfcBeam geometry. Each girder is assigned to the span that contains its
-// mid-point and girders are ordered left to right within the span by offset from the alignment.
-GirderLayout get_girder_layout(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<Float64>& pier_stations);
+// Locates the girders from the IfcBeam geometry: the centerline, stations, and offsets of each girder (girder_key isn't set)
+std::vector<GirderCenterline> get_girder_centerlines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
+
+// Assigns the girders to spans. Each girder is assigned to the span that contains its mid-point and girders are
+// ordered left to right within the span by offset from the alignment.
+GirderLayout get_girder_layout(ifcopenshell::file& file, const std::vector<GirderCenterline>& girders, const std::vector<Float64>& pier_stations);
 
 // Girder spacing at the start (ahead side of the previous pier) and end (back side of the next pier) of each span,
 // measured along a line through the alignment at each pier station: normal to the alignment, or in the direction

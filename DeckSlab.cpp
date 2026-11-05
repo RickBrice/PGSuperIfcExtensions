@@ -47,21 +47,79 @@
 #undef min // undef our version of min in MathEx.h so std::min is used correctly in this file
 
 
+std::vector<int> get_slab_ids(ifcopenshell::file& file)
+{
+   std::vector<int> ids;
+   for (const auto& deck : CIfcImporter::GetTargetReader().Select(ElementKind::Deck, file))
+      ids.push_back(deck.id());
+   return ids;
+}
+
 int get_slab_id(ifcopenshell::file& file)
 {
-   // the first element selected by the deck element role of the mapping table
-   auto decks = CIfcImporter::GetTargetReader().Select(ElementKind::Deck, file);
-   if (decks.empty())
-      return 0; // no deck
+   auto ids = get_slab_ids(file);
+   return ids.empty() ? 0 : ids.front();
+}
 
-   if (1 < decks.size())
+namespace
+{
+   // The geometry of each element, in world coordinates, in the order the geometry iterator returns them.
+   // Elements whose geometry can't be processed are left out
+   std::vector<Mesh> get_element_meshes(ifcopenshell::file& file, const std::set<int>& ids)
    {
-      std::ostringstream os;
-      os << decks.size() << " elements are selected as the deck (" << CIfcImporter::GetTargetReader().GetTable().GetSelector(ElementKind::Deck)->Describe() << "). The first one, #" << decks.front().id() << ", is used.";
-      WBFL::System::Logger::Warning(os.str());
-   }
+      ifcopenshell::geom::settings settings;
+      settings.set("use-world-coords", true);
+      settings.set("weld-vertices", true);
+      settings.set("disable-opening-subtractions", true);
 
-   return decks.front().id();
+      ifcopenshell::geom::instance_id_filter filter(true, false, ids);
+      std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
+
+      std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
+      ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, 1);
+      std::vector<Mesh> meshes;
+      if (!iterator.initialize())
+         return meshes;
+
+      do
+      {
+         auto element = iterator.get();
+         auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
+         if (!triangulation)
+            continue;
+         auto geometry = triangulation->geometry_pointer();
+         const auto& verts = geometry->verts();
+         const auto& faces = geometry->faces();
+
+         std::vector<Eigen::Vector3d> v;
+         v.reserve(verts.size() / 3);
+         for (size_t i = 0; i < verts.size(); i += 3)
+            v.emplace_back(verts[i], verts[i + 1], verts[i + 2]);
+
+         std::vector<std::array<int, 3>> f;
+         f.reserve(faces.size() / 3);
+         for (size_t i = 0; i < faces.size(); i += 3)
+            f.emplace_back(std::array<int, 3>({ faces[i], faces[i + 1], faces[i + 2] }));
+
+         meshes.emplace_back(v, f);
+      } while (iterator.next());
+
+      return meshes;
+   }
+}
+
+Mesh combine_meshes(const std::vector<Mesh>& meshes)
+{
+   std::vector<Eigen::Vector3d> v;
+   std::vector<std::array<int, 3>> f;
+   for (const auto& mesh : meshes)
+   {
+      int base = (int)v.size();
+      v.insert(v.end(), mesh.verts.begin(), mesh.verts.end());
+      for (const auto& face : mesh.faces)
+         f.emplace_back(std::array<int, 3>({ base + face[0], base + face[1], base + face[2] }));
+   }
+   return Mesh(v, f);
 }
 
 using EdgeProfile = std::vector<std::pair<double, double>>; // (station, offset) along a deck edge, sorted by station
@@ -203,77 +261,60 @@ std::vector<CDeckPoint> create_deck_points(const EdgeProfile& left, const EdgePr
    return deck_points;
 }
 
-std::optional<Mesh> get_deck_mesh(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
+std::vector<Mesh> get_deck_meshes(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
 {
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Processing deck geometry"));
 
-   auto slab_id = get_slab_id(file);
-   ASSERT(slab_id != 0); // should not be calling into this function if there isn't a deck slab
+   auto slab_ids = get_slab_ids(file);
+   ASSERT(!slab_ids.empty()); // should not be calling into this function if there isn't a deck slab
 
-   ifcopenshell::geom::settings settings;
-   settings.set("use-world-coords", true);
-   settings.set("weld-vertices", true);
-   settings.set("disable-opening-subtractions", true);
-
-   // set up filter for the geometry iterator
-   ifcopenshell::geom::instance_id_filter filter(true, false, { slab_id });
-   std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
-
-   std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
-   ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters,1);
-   if (!iterator.initialize())
+   auto meshes = get_element_meshes(file, std::set<int>(slab_ids.begin(), slab_ids.end()));
+   if (meshes.empty())
    {
       WBFL::System::Logger::Info(_T("Unable to process deck slab geometry. Deck geometry will not be imported."));
-      return std::nullopt;
    }
-
-   auto element = iterator.get();
-   auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
-   auto geometry = triangulation->geometry_pointer();
-   const auto& verts = geometry->verts();
-   const auto& faces = geometry->faces();
-
-   std::vector<Eigen::Vector3d> v;
-   v.reserve(verts.size() / 3);
-   for (auto i = 0; i < verts.size(); i += 3)
+   else if (1 < slab_ids.size())
    {
-      v.emplace_back(verts[i], verts[i + 1], verts[i + 2]);
+      std::ostringstream os;
+      os << slab_ids.size() << " elements are selected as the deck (" << CIfcImporter::GetTargetReader().GetTable().GetSelector(ElementKind::Deck)->Describe()
+         << "), e.g. deck segments between joints. They're measured as one deck";
+      if (meshes.size() < slab_ids.size())
+         os << " (" << slab_ids.size() - meshes.size() << " have no geometry that can be processed)";
+      os << ".";
+      WBFL::System::Logger::Info(os.str());
    }
-
-   std::vector<std::array<int, 3>> f;
-   f.reserve(faces.size() / 3);
-   for (auto i = 0; i < faces.size(); i += 3)
-   {
-      f.emplace_back(std::array<int, 3>({ faces[i],faces[i + 1],faces[i + 2] }));
-   }
-
-   return Mesh(v, f);
+   return meshes;
 }
 
 namespace
 {
-   // Haunches that are modeled as elements separate from the deck slab: parts aggregated under the deck
+   // Haunches that are modeled as elements separate from the deck slabs: parts aggregated under a deck slab
    // and the elements selected by the haunch element role of the mapping table
-   std::set<int> get_haunch_ids(ifcopenshell::file& file, int slab_id)
+   std::set<int> get_haunch_ids(ifcopenshell::file& file, const std::set<int>& slab_ids)
    {
       std::set<int> ids;
 
-      auto deck = file.instance_by_id(slab_id).as<IfcSchema::IfcSlab>();
-      for (auto& rel : deck.IsDecomposedBy())
+      for (auto slab_id : slab_ids)
       {
-         for (auto& part : rel.RelatedObjects())
+         auto deck = file.instance_by_id(slab_id).as<IfcSchema::IfcSlab>();
+         if (!deck)
+            continue;
+         for (auto& rel : deck.IsDecomposedBy())
          {
-            if (part.as<IfcSchema::IfcSlab>() || part.as<IfcSchema::IfcBuildingElementPart>())
-               ids.insert(part.id());
+            for (auto& part : rel.RelatedObjects())
+            {
+               if (part.as<IfcSchema::IfcSlab>() || part.as<IfcSchema::IfcBuildingElementPart>())
+                  ids.insert(part.id());
+            }
          }
       }
 
       bool bSelected = false;
       for (auto& haunch : CIfcImporter::GetTargetReader().Select(ElementKind::Haunch, file))
       {
-         if (haunch.id() != slab_id)
+         if (!slab_ids.contains(haunch.id()))
          {
             ids.insert(haunch.id());
             bSelected = true;
@@ -284,7 +325,7 @@ namespace
       {
          // elements named like haunches are only hints for the mapping table author (devdocs/MappingTablesDesign.md, G3)
          std::set<int> excluded(ids);
-         excluded.insert(slab_id);
+         excluded.insert(slab_ids.begin(), slab_ids.end());
          CIfcTargetHints::LogHaunchHints(file, excluded);
       }
 
@@ -298,87 +339,118 @@ std::optional<Mesh> get_deck_concrete_mesh(std::shared_ptr<WBFL::EAF::Broker> pB
    WBFL::EAF::AutoProgress ap(pProgress);
    pProgress->UpdateMessage(_T("Processing deck and haunch geometry"));
 
-   auto slab_id = get_slab_id(file);
-   ASSERT(slab_id != 0); // should not be calling into this function if there isn't a deck slab
+   auto slab_ids = get_slab_ids(file);
+   ASSERT(!slab_ids.empty()); // should not be calling into this function if there isn't a deck slab
+   std::set<int> slabs(slab_ids.begin(), slab_ids.end());
 
-   auto haunch_ids = get_haunch_ids(file, slab_id);
+   auto haunch_ids = get_haunch_ids(file, slabs);
    if (haunch_ids.empty())
-      return std::nullopt; // the deck slab is all of the deck concrete
+      return std::nullopt; // the deck slabs are all of the deck concrete
 
    std::_tostringstream os;
    os << haunch_ids.size() << _T(" haunch elements found. They are measured with the deck slab.");
    WBFL::System::Logger::Info(os.str().c_str());
 
+   // all of the deck concrete in one mesh. The haunches are cast with the deck
    std::set<int> ids(haunch_ids);
-   ids.insert(slab_id);
-
-   ifcopenshell::geom::settings settings;
-   settings.set("use-world-coords", true);
-   settings.set("weld-vertices", true);
-   settings.set("disable-opening-subtractions", true);
-
-   ifcopenshell::geom::instance_id_filter filter(true, false, ids);
-   std::vector<ifcopenshell::geom::filter_function> filters({ std::ref(filter) });
-
-   std::unique_ptr<ifcopenshell::geom::kernels::abstract_kernel> kernel(std::make_unique<ifcopenshell::geom::open_cascade_kernel>(settings));
-   ifcopenshell::geom::iterator iterator(std::move(kernel), settings, &file, filters, 1);
-   if (!iterator.initialize())
+   ids.insert(slabs.begin(), slabs.end());
+   auto meshes = get_element_meshes(file, ids);
+   if (meshes.empty())
    {
       WBFL::System::Logger::Info(_T("Unable to process deck slab geometry. Deck geometry will not be imported."));
       return std::nullopt;
    }
-
-   // all of the deck concrete in one mesh. The haunches are cast with the deck
-   std::vector<Eigen::Vector3d> v;
-   std::vector<std::array<int, 3>> f;
-   do
-   {
-      auto element = iterator.get();
-      auto triangulation = dynamic_cast<ifcopenshell::geom::triangulation_element*>(element.get());
-      auto geometry = triangulation->geometry_pointer();
-      const auto& verts = geometry->verts();
-      const auto& faces = geometry->faces();
-
-      int base = (int)v.size();
-      for (size_t i = 0; i < verts.size(); i += 3)
-         v.emplace_back(verts[i], verts[i + 1], verts[i + 2]);
-      for (size_t i = 0; i < faces.size(); i += 3)
-         f.emplace_back(std::array<int, 3>({ base + faces[i], base + faces[i + 1], base + faces[i + 2] }));
-   } while (iterator.next());
-
-   return Mesh(v, f);
+   return combine_meshes(meshes);
 }
 
-std::vector<CDeckPoint> get_deck_edge_points(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& m)
+namespace
 {
+   // Left and right edges of one deck slab, from the boundary of its top surface, or nullopt if they can't be found
+   std::optional<std::pair<EdgeProfile, EdgeProfile>> get_slab_edges(std::shared_ptr<WBFL::EAF::Broker> pBroker, const Mesh& m)
+   {
+      // 1. Decompose mesh into smooth components
+      std::vector<Mesh> decomposed = m.decompose();
 
-   // 1. Decompose mesh into smooth components
-   std::vector<Mesh> decomposed = m.decompose();
+      // 2. Select top component (max Z of vertex + avg normal)
+      Mesh top_component = get_top_mesh(decomposed);
 
-   // 2. Select top component (max Z of vertex + avg normal)
-   Mesh top_component = get_top_mesh(decomposed);
+      // 3. Extract boundary wire
+      Wire boundary = top_component.boundary();
 
-   // 3. Extract boundary wire
-   Wire boundary = top_component.boundary();
+      // 4. Decompose boundary into smooth segments
+      std::vector<Wire> segments = boundary.decompose();
+      if (segments.size() < 2)
+         return std::nullopt;
 
-   // 4. Decompose boundary into smooth segments
-   std::vector<Wire> segments = boundary.decompose();
-   if (segments.size() < 2)
+      // 5. Assume the two longest segments are the slab edges
+      std::sort(segments.begin(), segments.end(), [](const Wire& a, const Wire& b) {return a.plan_length() < b.plan_length(); });
+      EdgeProfile edge1 = get_edge_profile(pBroker, segments[segments.size() - 1]);
+      EdgeProfile edge2 = get_edge_profile(pBroker, segments[segments.size() - 2]);
+
+      // 6. The left edge has the smaller offsets (offsets are positive to the right)
+      auto average_offset = [](const EdgeProfile& edge) {return std::accumulate(edge.begin(), edge.end(), 0.0, [](double sum, const auto& point) {return sum + point.second; }) / edge.size(); };
+      bool bEdge1IsLeft = average_offset(edge1) < average_offset(edge2);
+      return std::make_pair(bEdge1IsLeft ? edge1 : edge2, bEdge1IsLeft ? edge2 : edge1);
+   }
+
+   // The outermost of several edges (the smallest offset for the left edge, the largest for the right), at the stations
+   // of their points. A station that no edge reaches (a gap between deck slabs) has no point
+   EdgeProfile outermost_edge(const std::vector<EdgeProfile>& edges, bool bLeft)
+   {
+      std::vector<double> stations;
+      for (const auto& edge : edges)
+      {
+         for (const auto& point : edge)
+            stations.push_back(point.first);
+      }
+      std::sort(stations.begin(), stations.end());
+      stations.erase(std::unique(stations.begin(), stations.end()), stations.end());
+
+      EdgeProfile result;
+      for (auto station : stations)
+      {
+         std::optional<double> offset;
+         for (const auto& edge : edges)
+         {
+            if (station < edge.front().first || edge.back().first < station)
+               continue;
+            double o = get_edge_offset(edge, station);
+            if (!offset || (bLeft ? o < *offset : *offset < o))
+               offset = o;
+         }
+         if (offset)
+            result.emplace_back(station, *offset);
+      }
+      return result;
+   }
+}
+
+std::vector<CDeckPoint> get_deck_edge_points(std::shared_ptr<WBFL::EAF::Broker> pBroker, const std::vector<Mesh>& slabs, const Mesh& m)
+{
+   // 1-6. The edges of each slab. The deck's edges are the outermost of them, so slabs between deck joints and slabs
+   // side by side (e.g. a deck built in halves) make one deck
+   std::vector<EdgeProfile> lefts, rights;
+   for (const auto& slab : slabs)
+   {
+      if (auto edges = get_slab_edges(pBroker, slab))
+      {
+         lefts.push_back(edges->first);
+         rights.push_back(edges->second);
+      }
+   }
+   if (lefts.empty())
    {
       WBFL::System::Logger::Info(_T("Unable to identify deck slab edges from the slab geometry."));
       return {};
    }
-
-   // 5. Assume the two longest segments are the slab edges
-   std::sort(segments.begin(), segments.end(), [](const Wire& a, const Wire& b) {return a.plan_length() < b.plan_length(); });
-   EdgeProfile edge1 = get_edge_profile(pBroker, segments[segments.size() - 1]);
-   EdgeProfile edge2 = get_edge_profile(pBroker, segments[segments.size() - 2]);
-
-   // 6. The left edge has the smaller offsets (offsets are positive to the right)
-   auto average_offset = [](const EdgeProfile& edge) {return std::accumulate(edge.begin(), edge.end(), 0.0, [](double sum, const auto& point) {return sum + point.second; }) / edge.size(); };
-   bool bEdge1IsLeft = average_offset(edge1) < average_offset(edge2);
-   EdgeProfile left = bEdge1IsLeft ? edge1 : edge2;
-   EdgeProfile right = bEdge1IsLeft ? edge2 : edge1;
+   if (lefts.size() < slabs.size())
+   {
+      std::ostringstream os;
+      os << "The edges of " << slabs.size() - lefts.size() << " of the " << slabs.size() << " deck slabs couldn't be found. The deck edges are from the other slabs.";
+      WBFL::System::Logger::Info(os.str());
+   }
+   EdgeProfile left = lefts.size() == 1 ? lefts.front() : outermost_edge(lefts, true);
+   EdgeProfile right = rights.size() == 1 ? rights.front() : outermost_edge(rights, false);
 
    // 7. The top of the deck can stop short of the deck's edges (e.g. a chamfer or a drip): the edges are the outermost
    // points of the deck. How far out they are is measured at the quarter points of the deck (where a cut normal to the
@@ -486,8 +558,9 @@ namespace
    };
 
    // Offsets of the left and right edges of a mesh along a transverse line, searching outward from an offset
-   // that is on the mesh. Steps then bisects to the nearest 1/64 inch.
-   std::optional<std::pair<Float64, Float64>> find_extents(const Mesh& mesh, const TransverseLine& line, Float64 start_offset, Float64 max_distance)
+   // that is on the mesh. Steps then bisects to the nearest 1/64 inch. Gaps up to max_gap wide are stepped over
+   // (e.g. the joint between the halves of a deck built in stages)
+   std::optional<std::pair<Float64, Float64>> find_extents(const Mesh& mesh, const TransverseLine& line, Float64 start_offset, Float64 max_distance, Float64 max_gap = 0)
    {
       auto on_mesh = [&](Float64 offset) { auto p = line.At(offset); return mesh.z_range_at(p.x(), p.y()).has_value(); };
       if (!on_mesh(start_offset))
@@ -498,8 +571,24 @@ namespace
             Float64 inside = start_offset;
             Float64 step = inch;
             Float64 outside = inside + direction * step;
-            while (on_mesh(outside) && fabs(outside - start_offset) < max_distance)
+            while (fabs(outside - start_offset) < max_distance)
             {
+               if (!on_mesh(outside))
+               {
+                  // the mesh again within max_gap (searched in 1/4 inch steps)?
+                  std::optional<Float64> beyond;
+                  for (Float64 d = inch / 4; IsLE(d, max_gap); d += inch / 4)
+                  {
+                     if (on_mesh(outside + direction * d))
+                     {
+                        beyond = outside + direction * d;
+                        break;
+                     }
+                  }
+                  if (!beyond)
+                     break;
+                  outside = *beyond;
+               }
                inside = outside;
                outside += direction * step;
             }
@@ -593,21 +682,29 @@ DeckSectionData analyze_deck_section(std::shared_ptr<WBFL::EAF::Broker> pBroker,
             continue; // couldn't find all the girders on this line
 
          // deck edges, searching outward from the first girder
-         auto deck_extents = find_extents(deck, line, (flanges.front().first + flanges.front().second) / 2, WBFL::Units::ConvertToSysUnits(200.0, WBFL::Units::Measure::Feet));
+         auto deck_extents = find_extents(deck, line, (flanges.front().first + flanges.front().second) / 2, WBFL::Units::ConvertToSysUnits(200.0, WBFL::Units::Measure::Feet), 3 * inch);
          if (!deck_extents)
             continue;
          profile.left_edge = deck_extents->first;
          profile.right_edge = deck_extents->second;
 
-         // Gross depth: thickness in the bays, 2 inches outside of the flanges (clear of fillets and of crown points in the middle of bays)
+         // Gross depth: thickness in the bays, 2 inches outside of the flanges (clear of fillets and of crown points in the middle of bays).
+         // A bay without deck (e.g. a line on the haunches of a span whose deck slab isn't in the mesh) doesn't count, and
+         // a line with no bay on the deck isn't measured
          Float64 gross_depth_here = 0;
          {
             std::vector<Float64> depths;
             for (size_t i = 0; i + 1 < flanges.size(); i++)
             {
-               depths.push_back(profile.thickness(flanges[i].second + 2 * inch));
-               depths.push_back(profile.thickness(flanges[i + 1].first - 2 * inch));
+               for (auto offset : { flanges[i].second + 2 * inch, flanges[i + 1].first - 2 * inch })
+               {
+                  Float64 t = profile.thickness(offset);
+                  if (!IsZero(t, inch / 64))
+                     depths.push_back(t);
+               }
             }
+            if (depths.empty())
+               continue;
             gross_depth_here = median(depths);
             gross_depths.push_back(gross_depth_here);
          }

@@ -21,10 +21,12 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "Piers.h"
+#include "Structures.h"
 #include "Properties.h"
 #include "Geometry.h"
 #include "IfcImporter.h"
 #include "IfcTargetReader.h"
+#include "Utilities.h"
 
 #include <psgLib\GirderLabel.h>
 #include <IFace/Alignment.h>
@@ -35,24 +37,14 @@
 
 #include <limits>
 #include <numeric>
+#include <functional>
+#include <iomanip>
 
 #include <ifcgeom/abstract_mapping.h>
 #include <ifcgeom/iterator.h>
 #include <ifcgeom/element.h>
 #include <ifcgeom/kernels/opencascade/opencascade_kernel.h>
 
-
-PierIndexType get_pier_count(ifcopenshell::file& file)
-{
-   auto parts = file.instances_by_type<IfcSchema::IfcBridgePart>();
-   PierIndexType nPiers = 0;
-   for (auto& part : parts)
-   {
-      if (part.PredefinedType().has_value() && (part.PredefinedType().value() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT || part.PredefinedType().value() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_PIER))
-         nPiers++;
-   }
-   return nPiers;
-}
 
 std::set<int> get_bearing_ids(IfcSchema::IfcBridgePart pier)
 {
@@ -74,15 +66,23 @@ std::set<int> get_bearing_ids(IfcSchema::IfcBridgePart pier)
    return bearing_ids;
 }
 
+namespace
+{
+   // the station of the IfcReferent that positions the pier (Pset_Stationing.Station), if it has one
+   std::optional<Float64> get_referent_station(IfcSchema::IfcBridgePart pier)
+   {
+      auto rel_positions = pier.PositionedRelativeTo();
+      IfcSchema::IfcPositioningElement positioning_element;
+      if (!rel_positions.empty())
+         positioning_element = rel_positions.front().RelatingPositioningElement();
+      auto referent = positioning_element ? positioning_element.as<IfcSchema::IfcReferent>() : IfcSchema::IfcReferent{};
+      return referent ? GetMeasureProperty<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), referent, "Pset_Stationing", "Station") : std::nullopt;
+   }
+}
+
 double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell::file& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart pier)
 {
-   auto rel_positions = pier.PositionedRelativeTo();
-   IfcSchema::IfcPositioningElement positioning_element;
-   if (!rel_positions.empty())
-      positioning_element = rel_positions.front().RelatingPositioningElement();
-   auto referent = positioning_element ? positioning_element.as<IfcSchema::IfcReferent>() : IfcSchema::IfcReferent{};
-   auto station = referent ? GetMeasureProperty<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), referent, "Pset_Stationing", "Station") : std::nullopt;
-   if (referent && station)
+   if (auto station = get_referent_station(pier))
    {
       return *station;
    }
@@ -104,7 +104,7 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell:
 
       if (bearing_ids.empty())
       {
-         WBFL::System::Logger::Info("IfcBearing not found in the spatial structure of this pier. Assuming piers to be at stations on 100ft increment.");
+         WBFL::System::Logger::Warning("IfcBearing not found in the spatial structure of this pier. Assuming piers to be at stations on 100ft increment.");
          double station = WBFL::Units::ConvertToSysUnits(pierIdx * 100.0, WBFL::Units::Measure::Feet);
          return station;
       }
@@ -124,7 +124,7 @@ double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell:
          Eigen::Vector3d vmin(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
          if (!iterator.initialize())
          {
-            WBFL::System::Logger::Info("Unable to process bearing geometry. Assuming piers to be at stations on 100ft increment.");
+            WBFL::System::Logger::Warning("Unable to process bearing geometry. Assuming piers to be at stations on 100ft increment.");
             return WBFL::Units::ConvertToSysUnits(pierIdx * 100.0, WBFL::Units::Measure::Feet);
          }
 
@@ -228,6 +228,384 @@ namespace
 
       return bearings;
    }
+
+   // the elements in a bridge part: contained in it, or aggregated by it
+   std::set<int> get_part_element_ids(IfcSchema::IfcBridgePart part)
+   {
+      std::set<int> ids;
+      for (auto& rel : part.ContainsElements())
+      {
+         for (auto& element : rel.RelatedElements())
+            ids.insert(element.id());
+      }
+      for (auto& rel : part.IsDecomposedBy())
+      {
+         for (auto& object : rel.RelatedObjects())
+            ids.insert(object.id());
+      }
+      return ids;
+   }
+
+   std::string format_station(Float64 station)
+   {
+      std::ostringstream os;
+      os << std::fixed << std::setprecision(2) << WBFL::Units::ConvertFromSysUnits(station, WBFL::Units::Measure::Feet);
+      return os.str();
+   }
+
+   // the first few items, and how many more there are, so long lists don't swamp the log
+   std::string list_items(const std::vector<std::string>& items, size_t max_items = 10)
+   {
+      std::ostringstream os;
+      for (size_t i = 0; i < items.size() && i < max_items; i++)
+         os << (i == 0 ? "" : ", ") << items[i];
+      if (max_items < items.size())
+         os << ", and " << items.size() - max_items << " more";
+      return os.str();
+   }
+
+   // Groups points that are within the distance of each other, directly or through other points of the group
+   // (single linkage). The groups are lists of point indices
+   std::vector<std::vector<size_t>> cluster_points(const std::vector<Eigen::Vector2d>& points, Float64 distance)
+   {
+      std::vector<size_t> parent(points.size());
+      std::iota(parent.begin(), parent.end(), 0);
+      std::function<size_t(size_t)> root = [&](size_t i) {return parent[i] == i ? i : parent[i] = root(parent[i]); };
+      for (size_t i = 0; i < points.size(); i++)
+      {
+         for (size_t j = i + 1; j < points.size(); j++)
+         {
+            if ((points[i] - points[j]).norm() <= distance)
+               parent[root(i)] = root(j);
+         }
+      }
+
+      std::map<size_t, std::vector<size_t>> groups;
+      for (size_t i = 0; i < points.size(); i++)
+         groups[root(i)].push_back(i);
+
+      std::vector<std::vector<size_t>> result;
+      for (auto& [r, members] : groups)
+         result.push_back(std::move(members));
+      return result;
+   }
+
+   // The station where a line through the points (station, offset) crosses the alignment: the station is fitted as a
+   // linear function of the offset, so a skewed line is crossed where it is. The mean station when the points don't
+   // spread across the alignment enough to fit a line
+   Float64 line_station(const std::vector<std::pair<Float64, Float64>>& station_offsets)
+   {
+      Float64 n = (Float64)station_offsets.size();
+      Float64 mean_station = 0, mean_offset = 0;
+      for (const auto& [station, offset] : station_offsets)
+      {
+         mean_station += station / n;
+         mean_offset += offset / n;
+      }
+
+      Float64 soo = 0, sos = 0;
+      for (const auto& [station, offset] : station_offsets)
+      {
+         soo += (offset - mean_offset) * (offset - mean_offset);
+         sos += (offset - mean_offset) * (station - mean_station);
+      }
+
+      Float64 min_spread = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet);
+      if (station_offsets.size() < 2 || IsLE(soo, n * min_spread * min_spread))
+         return mean_station;
+
+      Float64 slope = sos / soo; // change in station per unit offset
+      return mean_station - slope * mean_offset;
+   }
+
+   // a support line of the geometry: where girder ends and bearings meet
+   struct SupportLine
+   {
+      Float64 station;
+      size_t girder_ends = 0;
+      size_t bearings = 0;
+   };
+
+   // The support lines of the overall geometry, in order by station: the girder ends and bearings, grouped in plan.
+   // The ends of the girders at a support are a girder spacing apart, while the supports are a span apart, so the points
+   // are grouped by a distance of 0.4 of the shortest girder (3 m without girders). The station of a line is fitted to
+   // its bearings if it has any (the CL bearings, as from the bearings of a pier), else its girder ends
+   std::vector<SupportLine> find_support_lines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<GirderCenterline>& girders, size_t& nGirderEnds, size_t& nBearings)
+   {
+      GET_IFACE2(pBroker, IRoadway, pAlignment);
+      CComPtr<IPoint2d> point;
+      point.CoCreateInstance(CLSID_Point2d);
+      auto station_and_offset = [&](const Eigen::Vector2d& p)
+         {
+            point->Move(p.x(), p.y());
+            Float64 station, offset;
+            pAlignment->GetStationAndOffset(pgsTypes::PlanCoordinateType::pcGlobal, point, &station, &offset);
+            return std::make_pair(station, offset);
+         };
+
+      std::vector<Eigen::Vector2d> points;
+      std::vector<std::pair<Float64, Float64>> station_offsets;
+      std::vector<bool> is_bearing;
+      Float64 shortest_girder = std::numeric_limits<Float64>::infinity();
+      for (const auto& girder : girders)
+      {
+         points.push_back(girder.start);
+         station_offsets.emplace_back(girder.start_station, girder.start_offset);
+         points.push_back(girder.end);
+         station_offsets.emplace_back(girder.end_station, girder.end_offset);
+         is_bearing.insert(is_bearing.end(), 2, false);
+         shortest_girder = std::min(shortest_girder, (girder.end - girder.start).norm());
+      }
+      nGirderEnds = points.size();
+
+      auto bearings = get_element_geometry(file, ElementKind::Bearing);
+      for (const auto& bearing : bearings)
+      {
+         points.push_back(bearing.center);
+         station_offsets.push_back(station_and_offset(bearing.center));
+         is_bearing.push_back(true);
+      }
+      nBearings = bearings.size();
+
+      Float64 distance = girders.empty() ? 3.0 : 0.4 * shortest_girder;
+      std::vector<SupportLine> lines;
+      for (const auto& group : cluster_points(points, distance))
+      {
+         SupportLine line;
+         std::vector<std::pair<Float64, Float64>> line_bearings, line_ends;
+         for (auto i : group)
+         {
+            if (is_bearing[i])
+            {
+               line.bearings++;
+               line_bearings.push_back(station_offsets[i]);
+            }
+            else
+            {
+               line.girder_ends++;
+               line_ends.push_back(station_offsets[i]);
+            }
+         }
+         line.station = line_station(line_bearings.empty() ? line_ends : line_bearings);
+         lines.push_back(line);
+      }
+
+      std::sort(lines.begin(), lines.end(), [](const auto& a, const auto& b) {return a.station < b.station; });
+      return lines;
+   }
+
+   // Each part is a support, located by its referent station or its bearings (get_pier_station)
+   std::vector<Support> locate_supports_by_part(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<IfcSchema::IfcBridgePart>& parts)
+   {
+      std::vector<Support> supports;
+      for (PierIndexType pierIdx = 0; pierIdx < parts.size(); pierIdx++)
+         supports.push_back({ get_pier_station(pBroker, file, pierIdx, parts[pierIdx]), get_referent_direction(parts[pierIdx]), { (int)parts[pierIdx].id() } });
+
+      // sorted by station because we don't know the order the piers are defined in the model
+      std::stable_sort(supports.begin(), supports.end(), [](const auto& a, const auto& b) {return a.station < b.station; });
+      return supports;
+   }
+}
+
+std::vector<Support> locate_supports(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<GirderCenterline>& girders)
+{
+   USES_CONVERSION;
+   GET_IFACE2(pBroker, IEAFProgress, pProgress);
+   WBFL::EAF::AutoProgress ap(pProgress);
+   pProgress->UpdateMessage(_T("Locating abutments and piers"));
+
+   // Per TPF modeling guidance, piers and abutments are different types. PGSuper treats them the same: its first and
+   // last piers are the abutments
+   std::vector<IfcSchema::IfcBridgePart> parts = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_ABUTMENT);
+   auto interior_piers = GetBridgeParts(file, IfcSchema::IfcBridgePartTypeEnum::Value::IfcBridgePartType_PIER);
+   parts.insert(parts.end(), interior_piers.begin(), interior_piers.end());
+
+   // parts that are located by themselves
+   std::vector<IfcSchema::IfcBridgePart> unlocated;
+   std::copy_if(parts.begin(), parts.end(), std::back_inserter(unlocated), [](const auto& part) {return !get_referent_station(part) && get_bearing_ids(part).empty(); });
+   if (!parts.empty() && unlocated.empty())
+      return locate_supports_by_part(pBroker, file, parts);
+
+   // the support lines of the geometry
+   {
+      std::ostringstream os;
+      if (parts.empty())
+         os << "The model has no abutments or piers (IfcBridgePart.ABUTMENT or PIER).";
+      else
+         os << unlocated.size() << " of the " << parts.size() << " abutments and piers (IfcBridgePart.ABUTMENT or PIER) have neither a referent station nor bearings of their own (e.g. " << DescribeElement(unlocated.front()) << ").";
+      os << " The abutments and piers are located from the geometry: the support lines of the girder ends and bearings.";
+      WBFL::System::Logger::Info(os.str());
+   }
+
+   size_t nGirderEnds, nBearings;
+   auto lines = find_support_lines(pBroker, file, girders, nGirderEnds, nBearings);
+   {
+      std::ostringstream os;
+      os << lines.size() << " support lines from " << nGirderEnds << " girder ends and " << nBearings << " bearings";
+      std::vector<std::string> stations;
+      for (const auto& line : lines)
+         stations.push_back(format_station(line.station));
+      if (!lines.empty())
+         os << ", at stations (ft) " << list_items(stations, lines.size());
+      os << ".";
+      WBFL::System::Logger::Info(os.str());
+   }
+
+   if (lines.size() < 2)
+   {
+      if (parts.empty())
+      {
+         WBFL::System::Logger::Error("The abutments and piers can't be located: the model has no IfcBridgePart abutments or piers, and its geometry has fewer than two support lines.");
+         return {};
+      }
+      WBFL::System::Logger::Warning("The geometry has fewer than two support lines, so each abutment and pier is located by itself.");
+      return locate_supports_by_part(pBroker, file, parts);
+   }
+
+   std::vector<Support> supports;
+   for (const auto& line : lines)
+      supports.push_back({ line.station, std::nullopt, {} });
+
+   // put each part at the line nearest the elements in it (or its referent station), within half the distance to the
+   // next line
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   CComPtr<IPoint2d> point;
+   point.CoCreateInstance(CLSID_Point2d);
+   auto station_at = [&](const Eigen::Vector2d& p)
+      {
+         point->Move(p.x(), p.y());
+         Float64 station, offset;
+         pAlignment->GetStationAndOffset(pgsTypes::PlanCoordinateType::pcGlobal, point, &station, &offset);
+         return station;
+      };
+
+   std::set<int> element_ids;
+   std::vector<std::set<int>> part_elements;
+   for (const auto& part : parts)
+   {
+      part_elements.push_back(get_part_element_ids(part));
+      element_ids.insert(part_elements.back().begin(), part_elements.back().end());
+   }
+   auto centers = get_plan_centers(file, element_ids);
+
+   auto nearest_line = [&](Float64 station) -> std::optional<size_t>
+      {
+         size_t nearest = 0;
+         for (size_t i = 1; i < supports.size(); i++)
+         {
+            if (fabs(supports[i].station - station) < fabs(supports[nearest].station - station))
+               nearest = i;
+         }
+         Float64 window = std::numeric_limits<Float64>::infinity();
+         if (0 < nearest)
+            window = std::min(window, (supports[nearest].station - supports[nearest - 1].station) / 2);
+         if (nearest + 1 < supports.size())
+            window = std::min(window, (supports[nearest + 1].station - supports[nearest].station) / 2);
+         if (fabs(supports[nearest].station - station) <= window)
+            return nearest;
+         return std::nullopt;
+      };
+
+   std::vector<std::string> empty_parts, away_parts;
+   std::map<std::string, PierIndexType> located_names; // name of a part at a support -> the support
+   std::vector<std::pair<std::string, size_t>> unlocated_names; // name of an empty part, its index in empty_parts
+   std::set<size_t> referent_set; // supports whose station is from a referent
+   for (size_t partIdx = 0; partIdx < parts.size(); partIdx++)
+   {
+      const auto& part = parts[partIdx];
+      auto referent_station = get_referent_station(part);
+
+      std::optional<Float64> station = referent_station;
+      if (!station)
+      {
+         std::vector<Float64> stations;
+         for (auto id : part_elements[partIdx])
+         {
+            if (auto found = centers.find(id); found != centers.end())
+               stations.push_back(station_at(found->second));
+         }
+         if (!stations.empty())
+            station = median(stations);
+      }
+
+      if (!station)
+      {
+         empty_parts.push_back(DescribeElement(part));
+         if (part.Name())
+            unlocated_names.emplace_back(*part.Name(), empty_parts.size() - 1);
+         continue;
+      }
+
+      auto lineIdx = nearest_line(*station);
+      if (!lineIdx)
+      {
+         away_parts.push_back(DescribeElement(part) + " (station " + format_station(*station) + " ft)");
+         continue;
+      }
+
+      auto& support = supports[*lineIdx];
+      support.part_ids.push_back(part.id());
+      if (referent_station && referent_set.insert(*lineIdx).second)
+      {
+         support.station = *referent_station; // the model's station wins
+         support.referent_direction = get_referent_direction(part);
+      }
+      if (part.Name())
+         located_names.emplace(*part.Name(), (PierIndexType)*lineIdx);
+   }
+
+   // the supports and their parts
+   for (PierIndexType pierIdx = 0; pierIdx < supports.size(); pierIdx++)
+   {
+      const auto& support = supports[pierIdx];
+      bool bAbutment = (pierIdx == 0 || pierIdx == supports.size() - 1);
+      std::ostringstream os;
+      os << T2A(LABEL_PIER_EX(bAbutment, pierIdx)) << " at station " << format_station(support.station) << " ft"
+         << (referent_set.count(pierIdx) ? " (from the referent of its bridge part)" : "") << ": ";
+      if (support.part_ids.empty())
+      {
+         os << "no IfcBridgePart (located by the girder ends and bearings only)";
+      }
+      else
+      {
+         std::vector<std::string> names;
+         for (auto id : support.part_ids)
+         {
+            auto part = file.instance_by_id(id).as<IfcSchema::IfcBridgePart>();
+            std::string name = DescribeElement(part);
+            bool bPartIsAbutment = part.PredefinedType() && *part.PredefinedType() == IfcSchema::IfcBridgePartTypeEnum::IfcBridgePartType_ABUTMENT;
+            if (bPartIsAbutment != bAbutment)
+               name += bPartIsAbutment ? " (an ABUTMENT, imported as a pier)" : " (a PIER, imported as an abutment)";
+            names.push_back(name);
+         }
+         os << list_items(names);
+      }
+      WBFL::System::Logger::Info(os.str());
+   }
+
+   if (!empty_parts.empty())
+   {
+      std::ostringstream os;
+      os << empty_parts.size() << " abutments and piers have no elements and no referent, so they can't be put at a support line and aren't used: " << list_items(empty_parts) << ".";
+      size_t nNamed = std::count_if(unlocated_names.begin(), unlocated_names.end(), [&](const auto& n) {return located_names.count(n.first) != 0; });
+      if (0 < nNamed)
+      {
+         auto example = std::find_if(unlocated_names.begin(), unlocated_names.end(), [&](const auto& n) {return located_names.count(n.first) != 0; });
+         auto pierIdx = located_names[example->first];
+         os << " " << nNamed << " of them have the name of a part at a support (e.g. " << empty_parts[example->second] << ", like the part at "
+            << T2A(LABEL_PIER_EX(pierIdx == 0 || pierIdx == supports.size() - 1, pierIdx)) << ").";
+      }
+      WBFL::System::Logger::Warning(os.str());
+   }
+
+   if (!away_parts.empty())
+   {
+      std::ostringstream os;
+      os << away_parts.size() << " abutments and piers aren't near a support line of the geometry, so they aren't used: " << list_items(away_parts) << ".";
+      WBFL::System::Logger::Warning(os.str());
+   }
+
+   return supports;
 }
 
 void locate_bearings(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, GirderLayout& layout)

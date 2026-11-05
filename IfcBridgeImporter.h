@@ -38,8 +38,18 @@ public:
 private:
    CIfcImporter& m_Importer;
 
+   // The bridge to import: the one the mapping table's bridge role selects (the user picks one if there are several).
+   // Each IfcBridge that isn't selected is logged with the reason
    IfcSchema::IfcBridge GetBridge(ifcopenshell::file& file);
-   bool IsValidBridge(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
+
+   // Why the bridge can't be imported, for the log. Empty if it can
+   std::string WhyNotImportable(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
+
+   // Logs the bridge parts by predefined type and what aggregates them, so a model whose bridge isn't found shows
+   // how it's organized (e.g. bridge parts aggregated by the IfcSite, with no IfcBridge)
+   void LogBridgeParts(ifcopenshell::file& file);
+
+
    bool HasValidGirders(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
    bool HasValidGirdersByTPF(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
    bool HasValidGirdersByOther(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);

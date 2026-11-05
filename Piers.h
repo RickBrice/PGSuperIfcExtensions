@@ -25,7 +25,21 @@
 
 class CBridgeDescription2;
 
-PierIndexType get_pier_count(ifcopenshell::file& file);
+// An abutment or pier of the PGSuper bridge
+struct Support
+{
+   Float64 station;
+   std::optional<Eigen::Vector2d> referent_direction; // direction of the CL pier from the referent that positions it
+   std::vector<int> part_ids;                         // the IfcBridgeParts at the support (none, one, or e.g. the halves of a split bent)
+};
+
+// Locates the abutments and piers, in order by station.
+// When every IfcBridgePart abutment and pier has a referent station or bearings of its own, each is a support,
+// located by them (get_pier_station). Otherwise the supports are the support lines of the overall geometry: the girder
+// ends and bearings, clustered in plan. A part goes to the line nearest the elements in it, and its referent station, if
+// it has one, is the line's station. Parts that can't be put at a line (e.g. parts with nothing in them) aren't used.
+// Fewer than two supports means the bridge can't be located. Each decision is logged
+std::vector<Support> locate_supports(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<GirderCenterline>& girders);
 
 double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart pier);
 

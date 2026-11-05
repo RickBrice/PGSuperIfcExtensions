@@ -107,7 +107,7 @@ namespace
 }
 
 // Locates the girders from the IfcBeam geometry
-GirderLayout get_girder_layout(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<Float64>& pier_stations)
+std::vector<GirderCenterline> get_girder_centerlines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
 {
    USES_CONVERSION;
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
@@ -125,9 +125,7 @@ GirderLayout get_girder_layout(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcop
          return std::make_pair(station, offset);
       };
 
-   SpanIndexType nSpans = pier_stations.size() - 1;
-   GirderLayout layout(nSpans);
-
+   std::vector<GirderCenterline> girders;
    auto beam_ids = get_beam_ids(file);
 
    ifcopenshell::geom::settings settings;
@@ -145,7 +143,7 @@ GirderLayout get_girder_layout(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcop
    if (!iterator.initialize())
    {
       WBFL::System::Logger::Info(_T("Unable to process beam geometry. Girders will not be located."));
-      return layout;
+      return girders;
    }
 
    // This do loop can be multi-threaded
@@ -227,12 +225,26 @@ GirderLayout get_girder_layout(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcop
          std::swap(girder.start_offset, girder.end_offset);
       }
 
-      // 8. The girder is in the span that contains its mid-point
+      girders.push_back(std::move(girder));
+   } while (iterator.next());
+
+   return girders;
+}
+
+GirderLayout get_girder_layout(ifcopenshell::file& file, const std::vector<GirderCenterline>& girders, const std::vector<Float64>& pier_stations)
+{
+   USES_CONVERSION;
+   SpanIndexType nSpans = pier_stations.size() - 1;
+   GirderLayout layout(nSpans);
+
+   // 8. The girder is in the span that contains its mid-point
+   for (const auto& girder : girders)
+   {
       Float64 mid_station = (girder.start_station + girder.end_station) / 2;
       auto next_pier = std::upper_bound(pier_stations.begin(), pier_stations.end(), mid_station);
       SpanIndexType spanIdx = (SpanIndexType)std::clamp<std::ptrdiff_t>(std::distance(pier_stations.begin(), next_pier) - 1, 0, (std::ptrdiff_t)nSpans - 1);
       layout[spanIdx].push_back(girder);
-   } while (iterator.next());
+   }
 
    // 9. Order girders left to right (offsets are positive to the right) and assign girder keys
    for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++)
