@@ -38,9 +38,10 @@ After the models, the last row ("Standard table <-> IDS") checks the standard ta
 
 The files are sorted and stable, so the change in conformance from one run to the next shows up as a difference in the repository.
 
-Two optional entries apply to any model:
+These optional entries apply to any model:
 - **`mapping`:** an IFC mapping table, passed to the import with `/IfcMapping` (tables are in `mappings/`). Without one, the configured mapping table (File > Configure BridgeLink) is used, or the standard table installed with the extension if none is configured. The committed results are made without a configured table. Command line imports don't make the project remember a table, so the round-trip exports use the same table as the import. `run_validation.py` warns, and says in the summary, when one is set. See `devdocs/MappingTablesDesign.md`.
 - **`expect_log`:** text the import log must contain. The summary reports any text that is missing. The `-StandardTable` runs use it to check that the import suggests the agency properties (hints) when the agency table isn't used.
+- **`timeout`:** seconds a BridgeLink run (an import or an export) may take before it is stopped, 600 by default. The `TxDOT` run has a longer one: the design-value IDS of its round trip needs PGSuper's analysis (the cambers) of 27 spans.
 
 An expected file lists values in SI (PGSuper system units) by the keys that `pgs_extract.py` produces, e.g. `{"values": {"pier[1].station": 16.4592, "group[0].girder_count": 5}}`. Only the listed values are compared.
 

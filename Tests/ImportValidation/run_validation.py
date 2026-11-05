@@ -48,6 +48,8 @@ unless --bridgelink is given.
 name matches) for the duration of the run and switches back to the current configuration
 when done. A model with a "configuration" runs with that configuration and switches back after it (e.g.
 "PGSuper-WSDOT": the PGSuper model with the WSDOT library, whose girders it matches exactly).
+A BridgeLink run that takes longer than 600 s is stopped, unless the model has a "timeout" (seconds; e.g. a large
+bridge, whose design-value IDS needs PGSuper's analysis for the cambers).
 
 The girder label format (GirderLabelFormat in PGSuper's Settings key, "Alpha" by default) is set to
 Numeric for the run, as the baselines have, and restored when done.
@@ -77,7 +79,8 @@ import ifc_strands
 HERE = Path(__file__).resolve().parent
 RESULTS = HERE / "results"
 EXPORT_BASELINE = HERE / "export_baseline"
-TIMEOUT = 600  # seconds for one BridgeLink run
+TIMEOUT = 600  # seconds for one BridgeLink run, unless the model has a "timeout"
+timeout = TIMEOUT  # the current model's
 PGSUPER_OPTIONS_KEY = r"Software\Washington State Department of Transportation\PGSuper\Options"
 PGSUPER_SETTINGS_KEY = r"Software\Washington State Department of Transportation\PGSuper\Settings"
 GIRDER_LABEL_FORMAT = "Numeric"  # girder names in the exports and baselines are "Girder 1", ...
@@ -102,9 +105,9 @@ def run_bridgelink(exe, arguments):
     start = time.time()
     try:
         # BridgeLink is a GUI application - the command line is passed as is so quoting is under our control
-        result = subprocess.run(command, timeout=TIMEOUT)
+        result = subprocess.run(command, timeout=timeout)
     except subprocess.TimeoutExpired:
-        return False, f"timed out after {TIMEOUT} s (a dialog may be waiting for input)"
+        return False, f"timed out after {timeout} s (a dialog may be waiting for input)"
     elapsed = time.time() - start
     if result.returncode != 0:
         return False, f"exit code {result.returncode:#x} after {elapsed:.0f} s"
@@ -374,6 +377,7 @@ def ifc_model(model, config, exe):
 
 
 def main():
+    global timeout
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--models", nargs="*", help="names of the models to run (default: all)")
     parser.add_argument("--configuration", help='PGSuper configuration for the run, "server" or "server:publisher"')
@@ -423,6 +427,7 @@ def main():
         run_configuration = get_configuration()
         for model in models:
             print(f"Running {model['name']}...", flush=True)
+            timeout = model.get("timeout", TIMEOUT)
             # a model can name the configuration it runs with (e.g. the girders of its library), "server" or "server:publisher"
             model_configuration = None
             if model.get("configuration"):

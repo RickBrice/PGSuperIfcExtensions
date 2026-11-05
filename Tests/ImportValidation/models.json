@@ -77,6 +77,14 @@
       "name": "Iowa-StandardTable",
       "ifc": "models/Iowa_ADCMS_Pilot_US59_over_IA92_2025_07_09.ifc.zip",
       "expect_log": [ "IaDOT_PPCB.2_Type = \"BTB45\"", "Bearing Item - ItemTypes.3_Fixity = \"Fixed\"", "elements may be haunches" ]
+    },
+    {
+      "name": "TxDOT",
+      "comment": "The US 77 CRP test model (OpenBridge Designer, BridgeOnly-spatialized): an IfcBridge with PredefinedType NOTDEFINED, abutments and piers without referents or bearings of their own (they are located at the support lines of the girder ends and bearings), and two structures side by side, each deck in slabs between joints (the one on the alignment is imported)",
+      "ifc": "models/US77-CRP-Test-BridgeOnly-spatialized.ifc.zip",
+      "mapping": "mappings/TxDOT.ifcmap",
+      "timeout": 3600,
+      "expect_log": [ "28 support lines from 414 girder ends", "structures side by side", "elements are selected as the deck" ]
     }
   ]
 }
