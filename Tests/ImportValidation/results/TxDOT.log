@@ -1,0 +1,600 @@
+[Info] [2026-11-04 18:09:26] Starting IFC import from file
+[Info] [2026-11-04 18:09:26] IFC mapping table "TxDOT" (version 1): D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\mappings\TxDOT.ifcmap, chosen by the command line (/IfcMapping)
+[Info] [2026-11-04 18:09:26] IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap, chosen by the standard table installed with the IFC extension
+[Info] [2026-11-04 18:09:28] Initializing units and precision from IFC file.
+[Info] [2026-11-04 18:09:28] IFC model does not contain an IfcProjectedCRS. Georeferencing will not be imported.
+[Info] [2026-11-04 18:09:28] Importing alignment data from IFC file...
+[Info] [2026-11-04 18:09:28] The model has no IfcAlignment. When the bridge is imported, a straight alignment is derived from the deck.
+[Info] [2026-11-04 18:09:28] Importing from bridge IFC file.
+[Warning] [2026-11-04 18:09:28] IfcBridge #396086 "US77-CRP-Test-BridgeOnly" isn't the bridge the mapping table describes: its PredefinedType is NOTDEFINED; mapping table "Standard (TPF/usBridge)" selects the bridge as IfcBridge.GIRDER. No IfcBridge is, so it's imported as if it were.
+[Warning] [2026-11-04 18:09:45] The deck is 2 structures side by side, with joints along the bridge and no deck slab across them (deck offsets -87.08 ft to -29.08 ft (9 slabs), and -29.00 ft to 29.00 ft (9 slabs)). PGSuper models one structure, so the one on the alignment (-29.00 ft to 29.00 ft) is imported. The others' elements aren't: 9 deck, 207 girder, 207 haunch, 414 bearing, 21 barrier elements.
+[Info] [2026-11-04 18:09:49] 56 of the 56 abutments and piers (IfcBridgePart.ABUTMENT or PIER) have neither a referent station nor bearings of their own (e.g. IfcBridgePart #18365 "InteriorBent8"). The abutments and piers are located from the geometry: the support lines of the girder ends and bearings.
+[Info] [2026-11-04 18:09:50] 28 support lines from 414 girder ends and 414 bearings, at stations (ft) 1.00, 115.20, 245.13, 375.06, 475.13, 580.13, 705.20, 835.13, 965.13, 1095.13, 1225.07, 1325.13, 1425.20, 1555.13, 1685.13, 1815.13, 1945.13, 2075.13, 2205.13, 2335.13, 2465.13, 2595.14, 2725.14, 2855.14, 2985.07, 3095.14, 3205.14, 3314.14.
+[Info] [2026-11-04 18:10:05] Abutment 1 at station 1.00 ft: IfcBridgePart #252108 "Abutment1"
+[Info] [2026-11-04 18:10:05] Pier 2 at station 115.20 ft: IfcBridgePart #170537 "InteriorBent2"
+[Info] [2026-11-04 18:10:05] Pier 3 at station 245.13 ft: IfcBridgePart #171279 "InteriorBent3"
+[Info] [2026-11-04 18:10:05] Pier 4 at station 375.06 ft: IfcBridgePart #172021 "InteriorBent4"
+[Info] [2026-11-04 18:10:05] Pier 5 at station 475.13 ft: IfcBridgePart #178239 "InteriorBent5"
+[Info] [2026-11-04 18:10:05] Pier 6 at station 580.13 ft: IfcBridgePart #178985 "InteriorBent6"
+[Info] [2026-11-04 18:10:05] Pier 7 at station 705.20 ft: IfcBridgePart #179731 "InteriorBent7"
+[Info] [2026-11-04 18:10:05] Pier 8 at station 835.13 ft: IfcBridgePart #186855 "InteriorBent8"
+[Info] [2026-11-04 18:10:05] Pier 9 at station 965.13 ft: IfcBridgePart #187601 "InteriorBent9"
+[Info] [2026-11-04 18:10:05] Pier 10 at station 1095.13 ft: IfcBridgePart #188347 "InteriorBent10"
+[Info] [2026-11-04 18:10:05] Pier 11 at station 1225.07 ft: IfcBridgePart #195559 "InteriorBent11"
+[Info] [2026-11-04 18:10:05] Pier 12 at station 1325.13 ft: IfcBridgePart #196305 "InteriorBent12"
+[Info] [2026-11-04 18:10:05] Pier 13 at station 1425.20 ft: IfcBridgePart #197051 "InteriorBent13"
+[Info] [2026-11-04 18:10:05] Pier 14 at station 1555.13 ft: IfcBridgePart #202001 "InteriorBent14"
+[Info] [2026-11-04 18:10:05] Pier 15 at station 1685.13 ft: IfcBridgePart #202747 "InteriorBent15"
+[Info] [2026-11-04 18:10:05] Pier 16 at station 1815.13 ft: IfcBridgePart #203492 "InteriorBent16"
+[Info] [2026-11-04 18:10:05] Pier 17 at station 1945.13 ft: IfcBridgePart #210932 "InteriorBent17"
+[Info] [2026-11-04 18:10:05] Pier 18 at station 2075.13 ft: IfcBridgePart #211678 "InteriorBent18"
+[Info] [2026-11-04 18:10:05] Pier 19 at station 2205.13 ft: IfcBridgePart #212424 "InteriorBent19"
+[Info] [2026-11-04 18:10:05] Pier 20 at station 2335.13 ft: IfcBridgePart #220011 "InteriorBent20"
+[Info] [2026-11-04 18:10:05] Pier 21 at station 2465.13 ft: IfcBridgePart #220757 "InteriorBent21"
+[Info] [2026-11-04 18:10:05] Pier 22 at station 2595.14 ft: IfcBridgePart #221503 "InteriorBent22"
+[Info] [2026-11-04 18:10:05] Pier 23 at station 2725.14 ft: IfcBridgePart #228987 "InteriorBent23"
+[Info] [2026-11-04 18:10:05] Pier 24 at station 2855.14 ft: IfcBridgePart #229733 "InteriorBent24"
+[Info] [2026-11-04 18:10:05] Pier 25 at station 2985.07 ft: IfcBridgePart #230479 "InteriorBent25"
+[Info] [2026-11-04 18:10:05] Pier 26 at station 3095.14 ft: IfcBridgePart #237979 "InteriorBent26"
+[Info] [2026-11-04 18:10:05] Pier 27 at station 3205.14 ft: IfcBridgePart #238725 "InteriorBent27"
+[Info] [2026-11-04 18:10:05] Abutment 28 at station 3314.14 ft: IfcBridgePart #239280 "Abutment28"
+[Warning] [2026-11-04 18:10:05] 28 abutments and piers have no elements and no referent, so they can't be put at a support line and aren't used: IfcBridgePart #18365 "InteriorBent8", IfcBridgePart #19123 "InteriorBent9", IfcBridgePart #83673 "Abutment1", IfcBridgePart #84330 "Abutment28", IfcBridgePart #7116 "InteriorBent2", IfcBridgePart #8030 "InteriorBent3", IfcBridgePart #8788 "InteriorBent4", IfcBridgePart #9952 "InteriorBent5", IfcBridgePart #10710 "InteriorBent6", IfcBridgePart #11468 "InteriorBent7", and 18 more. 28 of them have the name of a part at a support (e.g. IfcBridgePart #18365 "InteriorBent8", like the part at Pier 8).
+[Info] [2026-11-04 18:10:05] The number of spans of the bridge wasn't found. Locations tried: usBrPset_BridgeGeometry.NumberOfSpans.
+[Info] [2026-11-04 18:10:05] The girder designation (e.g. "Span 1, Girder 2") of Smart Solid wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.DesignLocationNumber.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:05] Beam designation: Smart Solid is not expected.
+[Info] [2026-11-04 18:10:06] Abutment 1 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 2 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 3 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 4 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 5 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 6 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 7 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 8 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 9 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 10 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 11 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 12 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 13 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 14 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 15 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 16 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 17 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 18 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 19 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 20 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 21 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 22 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 23 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 24 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 25 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 26 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Pier 27 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] Abutment 28 orientation NORMAL (from CL bearing line)
+[Info] [2026-11-04 18:10:06] 62 of 62 library girders have a section to compare with. Not compared, since they came with the import template: Unknown_Girder_Type.
+[Info] [2026-11-04 18:10:15] New library entry Tx54 (IFC): the fitted dimensions are rounded to the nearest 1/16 in (D1 3.501 to 3.500, D2 2.000 to 2.000, D3 2.000 to 2.000, D4 3.001 to 3.000, D5 4.751 to 4.750, D6 8.752 to 8.750, H 54.012 to 54.000 in).
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: height 54.012 in, width 36.000 in, area 817.5 in^2, I 299946 in^4. No library girder has this section. The closest is WF50G (height 54.012 in vs 50.000 in, centroid (from the top) 30.499 in vs 25.849 in, area 817.5 vs 776.5 in^2, I 299945.7 vs 282559.4 in^4, width differs over 49.000 in of depth (the most 1.688 in below the top: 36.000 in vs 49.000 in)). The Precast I-Beam beam factory (I-Beam) fits the section (all dimensions fitted, 5 of 39 beam factories fully fitted after screening; the closest: Tapered I-Beam 0.0, Tapered I Beam (BridgeSight) 0.0, Precast I-Beam 0.0, FIB Girder (BridgeSight) 0.3, Nebraska NU Girder 0.3, from WF50G, 9.3 s), so a new library entry, Tx54 (IFC), was created with a generated 2 in strand grid (31 straight, 13 harped, and 7 temporary positions): D1 3.501 in, D2 2.000 in, D3 2.000 in, D4 3.001 in, D5 4.751 in, D6 8.752 in, H 54.012 in, T1 7.000 in, T2 7.000 in, W1 0.000 in, W2 12.500 in, W3 2.000 in, W4 3.000 in, W5 9.500 in, C1 0.750 in, EndBlockWidth 0.000 in, EndBlockLength 0.000 in, EndBlockTransition 0.000 in.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Section of Smart Solid: the same as an earlier girder's, so Tx54 (IFC) is used without fitting again.
+[Info] [2026-11-04 18:10:15] Girder sections: 207 cut from the triangulated geometry.
+[Info] [2026-11-04 18:10:15] The girder concrete strength at release, f'ci of Smart Solid wasn't found. Locations tried: Pset_PrecastConcreteElementGeneral.ReleaseStrength.
+[Info] [2026-11-04 18:10:15] The girder concrete strength, f'c of Smart Solid wasn't found. Locations tried: Pset_MaterialConcrete.CompressiveStrength (material).
+[Info] [2026-11-04 18:10:15] Abutment 1 ahead face: end distance 9.00002 in, bearing offset 0 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 2 ahead face: end distance 9.00002 in, bearing offset 11.2 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 2 back face: end distance 9.00002 in, bearing offset 12.8 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 3 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 3 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 4 ahead face: end distance 9.00002 in, bearing offset 12.8 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 4 back face: end distance 9.00002 in, bearing offset 11.2 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 5 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 5 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 6 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 6 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 7 ahead face: end distance 9.00002 in, bearing offset 11.2 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 7 back face: end distance 9.00002 in, bearing offset 12.8 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 8 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 8 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 9 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 9 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 10 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 10 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 11 ahead face: end distance 9.00002 in, bearing offset 12.8 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 11 back face: end distance 9.00002 in, bearing offset 11.2 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 12 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 12 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 13 ahead face: end distance 9.00002 in, bearing offset 11.2 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 13 back face: end distance 9.00002 in, bearing offset 12.8 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 14 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 14 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 15 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 15 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 16 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 16 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 17 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 17 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 18 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 18 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 19 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 19 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 20 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 20 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 21 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 21 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 22 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 22 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 23 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 23 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 24 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 24 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 25 ahead face: end distance 9.00002 in, bearing offset 12.8 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 25 back face: end distance 9.00002 in, bearing offset 11.2 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 26 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 26 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 27 ahead face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Pier 27 back face: end distance 9.00002 in, bearing offset 12 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] Abutment 28 back face: end distance 9.00002 in, bearing offset 0 in (from the CL bearings)
+[Info] [2026-11-04 18:10:15] The bearing fixed along the girder of Smart Solid wasn't found. Locations tried: Pset_BearingCommon.DisplacementAccommodated[0].
+[Info] [2026-11-04 18:10:15] Bearings: the same bearing everywhere, rectangular, 8.000 in x 21.000 in, height 2.750 in
+[Info] [2026-11-04 18:10:15] Abutment 1 boundary condition: Hinge (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 2 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 3 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 4 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 5 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 6 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 7 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 8 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 9 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 10 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 11 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 12 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 13 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 14 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 15 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 16 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 17 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 18 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 19 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 20 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 21 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 22 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 23 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 24 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 25 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 26 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Pier 27 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] Abutment 28 boundary condition: Roller (assumed, since the model has no continuity diaphragm or support condition here: a hinge at the first abutment, rollers elsewhere)
+[Info] [2026-11-04 18:10:15] The model has no strands (IfcTendon.STRAND). The girders keep the template's strands.
+[Info] [2026-11-04 18:10:15] Longitudinal girder bars aren't imported: the model has no reinforcing bars (IfcReinforcingBar). The girders have no longitudinal reinforcement.
+[Info] [2026-11-04 18:10:15] Stirrups aren't imported: the model has no reinforcing bars (IfcReinforcingBar). The girders have no transverse reinforcement.
+[Info] [2026-11-04 18:10:16] 9 elements are selected as the deck (IfcSlab.FLOOR), e.g. deck segments between joints. They're measured as one deck.
+[Info] [2026-11-04 18:10:16] Profile from the top of the deck at the alignment at 349 stations: elevation 64.168 ft at station 1.000 ft, a vertical curve from station 1.000 ft to 589.752 ft (2.31% to 0.53%), a vertical curve from station 589.752 ft to 637.854 ft (0.53% to 0.50%), a grade of 0.50% from station 637.854 ft to 2270.135 ft, a vertical curve from station 2270.135 ft to 2325.849 ft (0.50% to 0.40%), a vertical curve from station 2325.849 ft to 3314.137 ft (0.40% to -1.71%) (within 0.058 in).
+[Info] [2026-11-04 18:10:16] Roadway section from the top of the deck at 83 stations (the quarter points of the spans and near the ends of the bridge): the same at every station: left -2.50%, ridge at the alignment, right -2.50% (rise to the right, measured from -28.917 ft to 28.917 ft).
+[Info] [2026-11-04 18:10:18] The left exterior traffic barrier is LT_Barrier_Unit5 (#44011): area 514.1 in^2, 17 corners, turned back -2.50% (the roadway cross slope at the edge of the deck, rising toward the roadway). No library traffic barrier has its section (the closest is 32" F Shape Flat Slab (3" Overlay), outlines 7.187 in apart). A new library entry, LT_Barrier_Unit5 (IFC), is made from it (its weight is computed from the section). Its points (x, y in inches): (1.012, 19.531) (1.500, 0.000) (17.006, 0.000) (8.159, 41.235) (6.948, 42.187) (-0.050, 42.012) (-1.025, 40.987) (-0.913, 36.489) (-0.400, 36.001) (-0.370, 34.809) (-0.350, 34.002) (-0.838, 33.489) (-0.738, 29.490) (-0.225, 29.003) (-0.175, 27.003) (-0.663, 26.491) (-0.525, 20.993).
+[Info] [2026-11-04 18:10:18] The right exterior traffic barrier is RT_Barrier_Unit5 (#43902): area 358.8 in^2, 9 corners, turned back 2.50% (the roadway cross slope at the edge of the deck, rising toward the roadway). No library traffic barrier has its section (the closest is 32" F Shape Flat Slab (3" Overlay), outlines 3.469 in apart). A new library entry, RT_Barrier_Unit5 (IFC), is made from it (its weight is computed from the section). Its points (x, y in inches): (8.128, 35.212) (7.482, 35.824) (1.900, 35.964) (0.875, 34.989) (0.600, 23.993) (2.062, 22.456) (1.500, -0.000) (14.505, -0.000) (8.567, 34.797).
+[Info] [2026-11-04 18:10:18] 207 haunch elements found. They are measured with the deck slab.
+[Info] [2026-11-04 18:10:44] Deck gross depth 8.500 in (from deck geometry)
+[Info] [2026-11-04 18:10:44] Left overhang edge depth 8.500 in (from deck geometry)
+[Info] [2026-11-04 18:10:44] Left overhang taper: none (from deck geometry)
+[Info] [2026-11-04 18:10:44] Right overhang edge depth 8.500 in (from deck geometry)
+[Info] [2026-11-04 18:10:44] Right overhang taper: none (from deck geometry)
+[Info] [2026-11-04 18:10:44] Haunch shape: square (from deck geometry)
+[Info] [2026-11-04 18:10:44] Slab offset varies by girder. The slab offset is set for each segment (from deck and girder geometry).
+[Info] [2026-11-04 18:10:44] The model has no longitudinal bars in the deck, so the deck keeps the existing deck reinforcement.
+[Info] [2026-11-04 18:10:45] Removed the unused girder library entry Unknown_Girder_Type that came with the import template.
+[Info] [2026-11-04 18:10:45] The project remembers 657 elements of the IFC model, so an export can update a copy of it.
+[Info] [2026-11-04 18:10:45] The bearing fixed along the girder also wasn't found for 413 more elements.
+[Info] [2026-11-04 18:10:45] The girder designation (e.g. "Span 1, Girder 2") also wasn't found for 206 more elements.
+[Info] [2026-11-04 18:10:45] The girder concrete strength, f'c also wasn't found for 206 more elements.
+[Info] [2026-11-04 18:10:45] The girder concrete strength at release, f'ci also wasn't found for 206 more elements.
+[Info] [2026-11-04 18:10:45] Done IFC import from file
+IFC import succeeded
+Project saved to D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\TxDOT.pgs
