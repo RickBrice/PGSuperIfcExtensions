@@ -13,6 +13,7 @@ Start with the import plan and the mapping tables design.
 | [Mapping table targets](Targets.md) | Each target and the PGSuper data and code behind it |
 | [Round trip design](RoundTripDesign.md) | Exporting a project as an updated copy of the model it was imported from |
 | [PGSplice plan](PGSplicePlan.md) | Import and export for PGSplice |
+| [Stirrup plan](StirrupPlan.md) | Plug-in stirrup input with bar shapes and layouts, analysis through `CShearData2`, design mapping, and a general bar export |
 | [3D view plan](3DViewPlan.md) | Exploratory: a 3D view of the bridge model, native or from IFC |
 | [Dependencies](Dependencies.md) | Building IfcOpenShell and the other dependencies |
 
