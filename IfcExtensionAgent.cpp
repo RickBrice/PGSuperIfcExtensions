@@ -28,6 +28,7 @@
 
 #include <IFace\Tools.h>
 #include <IFace\EditByUI.h>
+#include <IFace\DocumentType.h>
 #include <EAF\Transaction.h>
 #include "EditGeoreferencing.h"
 #include "IfcCommandLineInfo.h"
@@ -285,21 +286,34 @@ void CIfcExtensionAgent::OnUpdateViewImportLog(CCmdUI* pCmdUI)
    pCmdUI->Enable(!m_ImportLog.empty());
 }
 
-void CIfcExtensionAgent::RegisterUIExtensions()
+std::shared_ptr<IExtendUI> CIfcExtensionAgent::GetExtendUI()
 {
    // RegisterEditAlignmentCallback is declared on the shared IExtendUI base, but only
    // IExtendPGSuperUI/IExtendPGSpliceUI are ever registered on the broker (see
    // CPGSuperDocProxyAgent::RegisterInterfaces) - IID_IExtendUI itself is never
-   // queryable directly. This plugin is PGSuper-specific, so IExtendPGSuperUI is the
-   // right one to go through (same pattern ExampleExtensionAgent uses).
-   GET_IFACE(IExtendPGSuperUI,pExtendPGSuperUI);
-   m_EditAlignmentCallbackID = pExtendPGSuperUI->RegisterEditAlignmentCallback(this);
+   // queryable directly. The agent is loaded by PGSuper and PGSplice, so ask for the
+   // document's own one.
+   GET_IFACE(IDocumentType, pDocType);
+   if (pDocType->IsPGSpliceDocument())
+   {
+      GET_IFACE(IExtendPGSpliceUI, pExtendPGSpliceUI);
+      return pExtendPGSpliceUI;
+   }
+   else
+   {
+      GET_IFACE(IExtendPGSuperUI, pExtendPGSuperUI);
+      return pExtendPGSuperUI;
+   }
+}
+
+void CIfcExtensionAgent::RegisterUIExtensions()
+{
+   m_EditAlignmentCallbackID = GetExtendUI()->RegisterEditAlignmentCallback(this);
 }
 
 void CIfcExtensionAgent::UnregisterUIExtensions()
 {
-   GET_IFACE(IExtendPGSuperUI,pExtendPGSuperUI);
-   pExtendPGSuperUI->UnregisterEditAlignmentCallback(m_EditAlignmentCallbackID);
+   GetExtendUI()->UnregisterEditAlignmentCallback(m_EditAlignmentCallbackID);
 }
 
 ////////////////////////////////////////////////////////////////////

@@ -263,7 +263,7 @@ const std::vector<TargetDef>& GetTargetDefs()
       { .name = "girder.jacking_stress", .element = ElementKind::Girder, .kind = ValueKind::Stress, .description = "jacking stress of the permanent strands", .display_unit = DU::Stress,
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IStrandGeometry, pStrandGeom); return ExportValue(pStrandGeom->GetJackingStress(c.segment, pgsTypes::Permanent)); } },
       { .name = "girder.camber_ratio", .element = ElementKind::Girder, .kind = ValueKind::Ratio, .description = "camber at release divided by the girder length",
-        .get = [](const ExportContext& c)
+        .needs_analysis = true, .get = [](const ExportContext& c)
          {
             if (!c.options->include_camber)
                return ExportValue::NoValue();
@@ -280,11 +280,11 @@ const std::vector<TargetDef>& GetTargetDefs()
             return ExportValue((ps + girder + pGirder->GetPrecamber(c.segment)) / pBridge->GetSegmentPlanLength(c.segment));
          } },
       { .name = "girder.camber_at_release", .element = ElementKind::Girder, .kind = ValueKind::Length, .description = "camber at release", .display_unit = DU::Deflection,
-        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetInitialCamber(released_midspan(c.broker, c.segment))); } },
+        .needs_analysis = true, .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetInitialCamber(released_midspan(c.broker, c.segment))); } },
       { .name = "girder.camber_after_losses", .element = ElementKind::Girder, .kind = ValueKind::Length, .description = "excess camber", .display_unit = DU::Deflection,
-        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetExcessCamber(released_midspan(c.broker, c.segment), pgsTypes::CreepTime::Max)); } },
+        .needs_analysis = true, .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetExcessCamber(released_midspan(c.broker, c.segment), pgsTypes::CreepTime::Max)); } },
       { .name = "girder.screed_camber", .element = ElementKind::Girder, .kind = ValueKind::Length, .description = "screed camber", .display_unit = DU::Deflection,
-        .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetScreedCamber(released_midspan(c.broker, c.segment), pgsTypes::CreepTime::Max)); } },
+        .needs_analysis = true, .get = [](const ExportContext& c) { GET_IFACE2(c.broker, ICamber, pCamber); return ExportValue(pCamber->GetScreedCamber(released_midspan(c.broker, c.segment), pgsTypes::CreepTime::Max)); } },
       // Qto_BeamBaseQuantities. Simple sections are assumed (no end blocks or variable depth)
       { .name = "girder.length", .element = ElementKind::Girder, .kind = ValueKind::Length, .description = "girder plan length", .display_unit = DU::SpanLength,
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridge, pBridge); return ExportValue(pBridge->GetSegmentPlanLength(c.segment)); } },

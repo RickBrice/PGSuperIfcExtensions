@@ -68,13 +68,16 @@ PGSplice analyzes; it doesn't design, and its time-step analysis is slow. These 
 
   The user approved these three (2026-11-10). A purpose-built model is added only when no regression model has a feature.
 - **No analysis in a test run:** under PGSplice the export writes input values only. Targets that need analysis or design (cambers, effective tendon forces, required strengths, the design values of the design-value IDS) are left out for PGSplice documents, so an export never starts the time-step analysis. Check this with the run time of the first export.
-- `run_validation.py`: accept `"spl"` models (round trip through PGSplice).
+- `run_validation.py`: accept `"spl"` models (round trip through PGSplice). Before the first PGSplice model it reads PGSplice's configuration (`PGSplice\Options`, `CatalogServer`/`Publisher`), switches to `"Regression":"Regression"`, and switches back to what it read when done, as it does for PGSuper (the user, 2026-11-10).
 - `pgs_extract.py`/`compare_bridge.py`: input data only: groups, segments per girder (length, variation), closure joints (length, concrete, event), temporary supports (station, type), ducts and tendons (type, centerline points, strands, Pj, jacking end, event). Keyed by group, girder, segment, and duct index so PGSuper reports don't change.
 
 ### S1. Registration
-- Add `CATID_PGSpliceDataExporter`, `CATID_PGSpliceDataImporter`, `CATID_PGSpliceExtensionAgent` to the manifest (`CATID_PGSpliceProjectImporter` in S4).
-- Extension agent: `IExtendPGSpliceUI` under PGSplice; check every interface the agent, exporter, and IDS exporter use exists there.
-- **Done when** File > Export > IFC and `/IfcExport` work on the S0 models.
+**Done 2026-11-10** (except the user's check of the menus):
+- The manifest registers the exporter and the extension agent in `CATID_PGSpliceDataExporter` and `CATID_PGSpliceExtensionAgent` too. The data importer stays PGSuper-only until S5 (its import assumes one segment per span); `CATID_PGSpliceProjectImporter` comes in S4.
+- `CIfcExtensionAgent::GetExtendUI` uses `IExtendPGSpliceUI` or `IExtendPGSuperUI` by the document type.
+- **No analysis in an export:** a PGSplice export left the cambers out (`TargetDef::needs_analysis`, `CIfcExportOptions::include_analysis_values`) and still ran the time-step analysis (6 minutes for `Segment_Tendons.spl`). The cause was `IBridge::GetBearingElevationDetails(..., bIgnoreUnrecoverableDeformations = false)`: with haunch depth input its finished elevations need a full analysis. A PGSplice export now asks for the geometry-only elevations; PGSuper exports are unchanged. The export takes 12 s. If an analysis turns out to be unavoidable for some value, the test models get a coarse timeline (few intervals); the analysis's accuracy doesn't matter here (the user, 2026-11-10).
+- `/IfcExport` on `Segment_Tendons.spl` writes a `GIRDER` assembly per girder with Segment 1, Closure Joint 1, and Segment 2, closure joints with their solids, and the pretensioned strands. File > Export > IFC in PGSplice is for the user to check.
+- **Configuration:** PGSplice has its own configuration (`HKCU\...\PGSplice\Options`, `CatalogServer`/`Publisher`, not PGSuper's `CatalogServer2`/`Publisher2`). The regression models need the Regression configuration (with another library, loading stops at a Library Entry Conflict dialog): `BridgeLink.exe /App=PGSplice /Configuration="Regression":"Regression"`, with a `Regression` catalog server for PGSplice (`FILSYS|%ARPDIR%\PGSuper\RegressionTest\PGSuperRegTestLibrary.lbr|%ARPDIR%\PGSuper\Configurations\PGSplice\WSDOT`).
 
 ### S2. Export
 1. **Run what's there** on the S0 models, fix what breaks, and check with the usBridge IDS (`check_ids.py`).

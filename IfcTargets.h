@@ -151,6 +151,8 @@ struct TargetDef
    std::string_view description; // for messages
    ExportUnit display_unit = ExportUnit::None; // export: the display unit of a number
    Float64 display_round = 0; // export: rounding increment in display units (0: none)
+   bool needs_analysis = false; // export: the value comes from analysis results. Left out (no value) when the export
+                                // options say so, e.g. for PGSplice, whose time-step analysis is slow
    ExportGetter get; // export: the value for an element. Empty for import-only targets
 };
 

@@ -2455,7 +2455,7 @@ void CreateBearingSeatSurveyPoints(hierarchy_helper<Schema>& file, std::shared_p
       for (auto face : faces)
       {
          // bIgnoreUnrecoverableDeformations = false so the elevations match the Bearing Seat Elevations report
-         auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, false);
+         auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, !options.include_analysis_values); // with deformations, an analysis (see include_analysis_values)
          for (const auto& elevDetails : vElevDetails)
          {
             // only want the CL Girder value, not the individual bearings when there are multiple bearings per girder
@@ -2642,7 +2642,7 @@ void CreateBearings(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::B
       for (auto face : faces)
       {
          // bIgnoreUnrecoverableDeformations = false so the elevations match the Bearing Seat Elevations report and the survey points
-         auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, false);
+         auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, !options.include_analysis_values); // with deformations, an analysis (see include_analysis_values)
          for (const auto& elevDetails : vElevDetails)
          {
             // skip the CL Girder value when there are multiple bearings per girder. There isn't a bearing there.
@@ -2928,7 +2928,7 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
          {
             std::vector<std::tuple<CSegmentKey, pgsTypes::MemberEndType, CComPtr<IPoint2d>>> points;
             auto ends = girder_ends(face);
-            auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, false);
+            auto vElevDetails = pBridge->GetBearingElevationDetails(pierIdx, face, ALL_GIRDERS, !options.include_analysis_values); // with deformations, an analysis (see include_analysis_values)
             for (const auto& elevDetails : vElevDetails)
             {
                if (elevDetails.BearingIdx != IBridge::sbiCLValue && elevDetails.BearingIdx != IBridge::sbiSingleBearingValue)
@@ -3714,6 +3714,14 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    IfcExportIdentities identities;
    CIfcExportOptions options(export_options);
    bool bRoundTrip = !options.source_model.IsEmpty();
+
+   // PGSplice analyzes with the time-step method, which is slow, and the IFC model is input data. Values that need
+   // analysis results (cambers) are left out, so an export doesn't start the analysis
+   {
+      GET_IFACE2(pBroker, IDocumentType, pDocType);
+      if (pDocType->IsPGSpliceDocument())
+         options.include_analysis_values = false;
+   }
    if (bRoundTrip && !options.export_identities)
       options.export_identities = &identities;
    m_MergeResult = RoundTripMergeResult();

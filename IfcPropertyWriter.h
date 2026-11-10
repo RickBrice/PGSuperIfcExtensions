@@ -92,6 +92,10 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
 // True if properties are written in display units with their own unit (see CIfcExportOptions::display_units_for_properties)
 bool UseDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options);
 
+// The export value of a target for an element. A target that needs analysis results has no value when the options
+// leave them out (CIfcExportOptions::include_analysis_values)
+ExportValue TargetExportValue(const TargetDef& target, const ExportContext& context);
+
 // Text that's the same for two elements exactly when the role's type property sets have the same values for them,
 // e.g. strands with different debonding. Elements with the same type in IFC must share these values, so the
 // exporter gives elements with different signatures different types
@@ -185,7 +189,7 @@ namespace ifc_property_writer
       value = property.value;
       if (!value && property.target && property.target->get)
       {
-         auto result = property.target->get(context);
+         auto result = TargetExportValue(*property.target, context);
          if (result.state == ExportValue::State::Absent)
             return false;
 

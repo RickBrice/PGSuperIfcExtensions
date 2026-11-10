@@ -4,7 +4,8 @@
       "CLSID": "{4E36E0A6-9EAE-452E-B91C-0099D065A764}",
       "dll": "PGSuperIfcExtensions.dll",
       "Categories": {
-         "CATID": "{369A62A2-8995-4404-9C16-15AE5A0681E2}"
+         "CATID": "{369A62A2-8995-4404-9C16-15AE5A0681E2}",
+         "CATID": "{D889AF1D-0CA1-4f01-AA2D-84F8F9F3A2DD}"
       }
    },
    "Component": {
@@ -28,7 +29,8 @@
       "CLSID": "{577F6678-6DD6-4003-ACA2-6406039B690F}",
       "dll": "PGSuperIfcExtensions.dll",
       "Categories": {
-         "CATID": "{4B5AD09A-E616-468e-8F84-4F9D68E7B6CA}"
+         "CATID": "{4B5AD09A-E616-468e-8F84-4F9D68E7B6CA}",
+         "CATID": "{5875EE83-78FE-4181-834A-C979FAD24222}"
       }
    }
 

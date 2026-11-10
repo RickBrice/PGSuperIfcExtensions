@@ -117,6 +117,8 @@ public:
    bool include_rebar = true;
    RebarRepresentation rebar_representation = RebarRepresentation::Mapped;
    bool include_camber = true;
+   bool include_analysis_values = true; // false leaves out targets that need analysis results (TargetDef::needs_analysis). Set
+                                        // false for PGSplice documents, so an export doesn't start the time-step analysis
    bool include_quantities = true;
    bool display_units_for_properties = true; // if true, properties will be exported in display units. If false, properties will be exported in internal system units (which are typically metric for PGSuper)
    BeamPlacement beam_placement = BeamPlacement::Linear;

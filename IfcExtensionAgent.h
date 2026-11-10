@@ -139,6 +139,7 @@ public:
 private:
    EAF_DECLARE_AGENT_DATA;
 
+   std::shared_ptr<IExtendUI> GetExtendUI(); // IExtendPGSuperUI or IExtendPGSpliceUI, for the document type
    void RegisterUIExtensions();
    void UnregisterUIExtensions();
    IDType m_EditAlignmentCallbackID;

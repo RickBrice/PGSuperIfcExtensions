@@ -87,6 +87,14 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    return value;
 }
 
+ExportValue TargetExportValue(const TargetDef& target, const ExportContext& context)
+{
+   if (target.needs_analysis && !context.options->include_analysis_values)
+      return ExportValue::NoValue();
+
+   return target.get(context);
+}
+
 std::string GetTypePropertySignature(ElementKind role, const ExportContext& context)
 {
    std::ostringstream os;
@@ -100,7 +108,7 @@ std::string GetTypePropertySignature(ElementKind role, const ExportContext& cont
          if (property.value || !property.target || !property.target->get)
             continue; // the same for every element
 
-         auto result = property.target->get(context);
+         auto result = TargetExportValue(*property.target, context);
          os << pset->name << "." << property.name << "=" << (int)result.state;
          if (result.state == ExportValue::State::Value)
          {

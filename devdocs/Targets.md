@@ -13,6 +13,7 @@ A **target** is a PGSuper data item with a fixed, readable name such as `girder.
 | `kind` | `ValueKind`: Stress, Length, Angle, Count, Boolean, Text, TextList, and so on. It decides the unit conversion and the IFC measure type |
 | `description` | Shown in the editor and in log messages |
 | `display_unit`, `display_round` | Export only: the display unit and rounding used when properties are written in display units |
+| `needs_analysis` | Export only: the value comes from analysis results. When `CIfcExportOptions::include_analysis_values` is false the property is written with no value and `get` isn't called. The exporter sets it false for PGSplice documents, so an export doesn't start the time-step analysis (the IFC model is input data) |
 | `get` | Export only: a lambda that reads the value from PGSuper, given an `ExportContext` (the broker, export options, and the segment, pier, strand, bar, bearing, or barrier being written). Empty for an import-only target |
 
 A table can't add targets. `CIfcMappingTable` resolves each name it reads with `FindTargetDef` (`IfcMappingTable.cpp`, when properties and locations are loaded), so an unknown name is a table error. The editor (`MappingEditorPanes.cpp`, `MappingEditorModelPane.cpp`), the model browser (`IfcModelBrowser.cpp`) and the IDS writer (`IfcTableIds.cpp`) look names up the same way.
@@ -86,10 +87,10 @@ All values are in PGSuper system units (SI). "Export" is what the `get` lambda i
 | `girder.batter` | Angle | `atan(IBridge::GetSegmentSlope)` when the export battered the girder ends (`CIfcExportOptions::batter_ends`), else 0 | – |
 | `girder.bunk_point` | Length | the larger of `CPrecastSegmentData::HandlingData.LeadingSupportPoint` and `TrailingSupportPoint` | – |
 | `girder.jacking_stress` | Stress | `IStrandGeometry::GetJackingStress(segmentKey, pgsTypes::Permanent)` | – |
-| `girder.camber_ratio` | Ratio | at the released mid-span POI: `IProductForces::GetDeflection` for pretension plus girder self-weight at release, plus `IGirder::GetPrecamber`, divided by `IBridge::GetSegmentPlanLength`. No value unless the export includes camber | – |
-| `girder.camber_at_release` | Length | `ICamber::GetInitialCamber` at the released mid-span POI | – |
-| `girder.camber_after_losses` | Length | `ICamber::GetExcessCamber(poi, CreepTime::Max)` | – |
-| `girder.screed_camber` | Length | `ICamber::GetScreedCamber(poi, CreepTime::Max)` | – |
+| `girder.camber_ratio` | Ratio | at the released mid-span POI: `IProductForces::GetDeflection` for pretension plus girder self-weight at release, plus `IGirder::GetPrecamber`, divided by `IBridge::GetSegmentPlanLength`. No value unless the export includes camber. Needs analysis (no value for PGSplice) | – |
+| `girder.camber_at_release` | Length | `ICamber::GetInitialCamber` at the released mid-span POI. Needs analysis (no value for PGSplice) | – |
+| `girder.camber_after_losses` | Length | `ICamber::GetExcessCamber(poi, CreepTime::Max)`. Needs analysis (no value for PGSplice) | – |
+| `girder.screed_camber` | Length | `ICamber::GetScreedCamber(poi, CreepTime::Max)`. Needs analysis (no value for PGSplice) | – |
 | `girder.length` | Length | `IBridge::GetSegmentPlanLength` | – |
 | `girder.cross_section_area` | Area | `ISectionProperties::GetAg` at release, released mid-span POI | – |
 | `girder.outer_surface_area` | Area | `GetSegmentPlanLength` × `ISectionProperties::GetPerimeter` | – |
