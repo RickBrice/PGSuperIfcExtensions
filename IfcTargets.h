@@ -52,6 +52,7 @@ enum class ElementKind
    Pier,
    Abutment,       // an abutment is a pier in PGSuper: pier targets apply to it
    Foundation,
+   ErectionTower,  // IfcBridgePart of a PGSplice erection tower (a temporary support)
    Alignment,
    Referent,
    Girder,         // IfcBeam, one per segment

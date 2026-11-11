@@ -45,3 +45,13 @@ public:
 private:
    CBitmap m_Bitmap;
 };
+
+// Creates a new PGSplice project from a bridge in an IFC model. The import is the same as PGSuper's; the project starts
+// from IfcImportTemplate.spt, whose spliced girders the import reduces to single segments
+// (ReduceToSingleSegmentGirders in IfcBridgeImporter.cpp)
+class CPGSpliceProjectImporter : public CPGSuperProjectImporter
+{
+public:
+   CLSID GetCLSID() const override;
+   CString GetTemplateFilePath() const override;
+};

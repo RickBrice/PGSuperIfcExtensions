@@ -2244,6 +2244,78 @@ inline WBFL::Geometry::Vector3d GetPierRightDirection(std::shared_ptr<IBridge> p
    return WBFL::Geometry::Vector3d(-cos(dir), -sin(dir), 0.0);
 }
 
+// The erection towers of a PGSplice bridge: an IfcBridgePart (USERDEFINED, ObjectType ERECTION_TOWER, the table's
+// erection_tower role) for each temporary support that's an erection tower, positioned by a referent at its station like
+// a pier. Strongbacks aren't modeled: the import assumes one at a closure joint that isn't over a pier or an erection
+// tower (devdocs/PGSplicePlan.md, Q3). usBridge has no class for temporary supports (a shortcoming noted in the plan)
+template <typename Schema>
+std::vector<typename Schema::IfcObjectDefinition> CreateErectionTowers(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+{
+   USES_CONVERSION;
+   std::vector<typename Schema::IfcObjectDefinition> towers;
+
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   SupportIndexType nTemporarySupports = pBridge->GetTemporarySupportCount();
+   if (nTemporarySupports == 0)
+      return towers;
+
+   GET_IFACE2(pBroker, IEAFDisplayUnits, pDisplayUnits);
+   auto station_format = pDisplayUnits->GetStationFormat();
+
+   Float64 startStation, startElevation, startGrade;
+   GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+   auto directrix = GetAlignmentDirectrix(file, options);
+   auto alignment = file.getSingle<typename Schema::IfcAlignment>();
+
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   for (SupportIndexType tsIdx = 0; tsIdx < nTemporarySupports; tsIdx++)
+   {
+      if (pBridge->GetTemporarySupportType(tsIdx) != pgsTypes::ErectionTower)
+         continue;
+
+      std::ostringstream os;
+      os << "Erection Tower " << LABEL_TEMPORARY_SUPPORT(tsIdx); // PGSplice's temporary support number
+      std::string name = os.str();
+      auto tower = file.create<typename Schema::IfcBridgePart>().initialize(ifcopenshell::global_id(), {}, name, std::nullopt, std::string("ERECTION_TOWER"), {}, {}, std::nullopt,
+         Schema::IfcElementCompositionEnum::IfcElementComposition_ELEMENT,
+         Schema::IfcFacilityUsageEnum::IfcFacilityUsage_VERTICAL,
+         Schema::IfcBridgePartTypeEnum::IfcBridgePartType_USERDEFINED);
+      if (options.classify)
+         Classify<Schema>(file, ElementKind::ErectionTower, tower, options);
+
+      // positioned like a pier: x along the CL of the temporary support, z up
+      Float64 station = pBridge->GetTemporarySupportStation(tsIdx);
+      auto point_on_alignment = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(
+         file.create<typename Schema::IfcLengthMeasure>().initialize(station - startStation),
+         std::nullopt, std::nullopt, std::nullopt,
+         directrix);
+      CComPtr<IDirection> ts_direction;
+      pBridge->GetTemporarySupportDirection(tsIdx, &ts_direction);
+      Float64 dir;
+      ts_direction->get_Value(&dir);
+      WBFL::Geometry::Vector3d x_dir(cos(dir), sin(dir), 0.0);
+      WBFL::Geometry::Vector3d z_dir(0, 0, 1);
+      auto relative_placement = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(point_on_alignment,
+         file.create<typename Schema::IfcDirection>().initialize({ z_dir.X(), z_dir.Y(), z_dir.Z() }),
+         file.create<typename Schema::IfcDirection>().initialize({ x_dir.X(), x_dir.Y(), x_dir.Z() }));
+      CComPtr<IPoint2d> ts_point;
+      pAlignment->GetPoint(station, 0.0, nullptr, pgsTypes::pcGlobal, &ts_point);
+      Float64 x, y;
+      ts_point->Location(&x, &y);
+      Float64 z = pAlignment->GetElevation(station, 0.0);
+      auto fallback_placement = file.addPlacement3d(x, y, z, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+      auto referent_placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, relative_placement, fallback_placement);
+
+      std::ostringstream os_referent;
+      os_referent << "Station " << T2A(WBFL::COGO::Station(station).AsString(station_format).c_str()) << " " << name;
+      auto referent = CreatePositioningReferent<Schema>(file, alignment, os_referent.str(), station, referent_placement);
+      file.addRelatedObject<typename Schema::IfcRelPositions>(referent, tower);
+
+      towers.push_back(tower);
+   }
+   return towers;
+}
+
 template <typename Schema>
 std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
@@ -3263,6 +3335,10 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Identify(options, roundtrip_key::Pier(pIBridgeDescription->GetPier(pierIdx)->GetID()), list_of_piers[pierIdx]);
    }
 
+   // PGSplice erection towers, in the substructure
+   for (auto tower : CreateErectionTowers<Schema>(file, pBroker, options))
+      file.addRelatedObject<typename Schema::IfcRelAggregates>(substructure, tower);
+
    if (options.bearing_seat_survey_points != CIfcExportOptions::BearingSeatSurveyPoints::None)
    {
       ReportProgress(pBroker, _T("Exporting the bearing seat elevations"));
@@ -3362,9 +3438,10 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    // specifically, precast concrete is defined by Pset_ConcreteElementGeneral with AssemblyPlace=FACTORY, CastingMethod=PRECAST
    auto property_sets = CreateTypePropertySets<Schema>(file, ElementKind::Girder, ExportContext{ pBroker, &options });
 
-   GET_IFACE2(pBroker, IDocumentType, pDocType);
-   bool bIsPGSplice = pDocType->IsPGSpliceDocument();
-
+   // The beam types follow the girders, not the document type: girders of more than one segment (PGSplice) share the
+   // GIRDER_SEGMENT type, and single-segment girders (PGSuper, and PGSplice girders of one segment, e.g. a PGSplice
+   // project imported from IFC) get a BEAM type for each girder name.
+   bool bHasSplicedGirders = false;
    std::set<std::_tstring> beam_names;
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
    GroupIndexType nGroups = pIBridgeDesc->GetGirderGroupCount();
@@ -3374,12 +3451,15 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       for (GirderIndexType gdrIdx = 0; gdrIdx < nGirders; gdrIdx++)
       {
          auto pGirder = pIBridgeDesc->GetGirder(CGirderKey(grpIdx, gdrIdx));
-         beam_names.insert(pGirder->GetGirderName());
+         if (1 < pGirder->GetSegmentCount())
+            bHasSplicedGirders = true;
+         else
+            beam_names.insert(pGirder->GetGirderName());
       }
    }
 
    std::map<std::_tstring, typename Schema::IfcBeamType> beam_types;
-   if (bIsPGSplice)
+   if (bHasSplicedGirders)
    {
       auto beam_type = file.create<typename Schema::IfcBeamType>().initialize(
          ifcopenshell::global_id(),
@@ -3396,7 +3476,8 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
       beam_types.insert(std::make_pair(_T("Spliced_Girder_Type"), beam_type));
    }
-   else
+
+   if (!beam_names.empty())
    {
       std::vector<typename Schema::IfcObjectDefinition> beam_object_definitions;
       for (auto beam_name : beam_names)

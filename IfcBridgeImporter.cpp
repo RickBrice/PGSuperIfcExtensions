@@ -38,6 +38,8 @@
 #include "Strands.h"
 #include "LongitudinalRebar.h"
 #include "Stirrups.h"
+#include "SplicedGirders.h"
+#include "GirderProfile.h"
 
 #include <chrono>
 #include <numeric>
@@ -62,6 +64,48 @@ CIfcBridgeImporter::CIfcBridgeImporter(CIfcImporter& importer) :
 {
 }
 
+namespace
+{
+   // A PGSplice template can have spliced girders: temporary supports, several segments per girder, closure joints,
+   // and tendons. The import builds a girder group per span with one segment per girder (the PGSuper layout), so the
+   // template is reduced to that first: its temporary supports (the segments meeting at them are joined) and tendons
+   // are removed. Spans the import appends then get single-segment girders (CBridgeDescription2::AppendSpan).
+   void ReduceToSingleSegmentGirders(CBridgeDescription2& bridge_desc)
+   {
+      IndexType nTendons = 0;
+      for (GroupIndexType grpIdx = 0; grpIdx < bridge_desc.GetGirderGroupCount(); grpIdx++)
+      {
+         auto* pGroup = bridge_desc.GetGirderGroup(grpIdx);
+         for (GirderIndexType gdrIdx = 0; gdrIdx < pGroup->GetGirderCount(); gdrIdx++)
+         {
+            auto* pGirder = pGroup->GetGirder(gdrIdx);
+            nTendons += pGirder->GetPostTensioning()->GetDuctCount();
+            pGirder->GetPostTensioning()->RemoveDucts();
+            for (SegmentIndexType segIdx = 0; segIdx < pGirder->GetSegmentCount(); segIdx++)
+            {
+               auto& tendons = pGirder->GetSegment(segIdx)->Tendons;
+               nTendons += tendons.GetDuctCount();
+               tendons.RemoveDucts();
+            }
+         }
+      }
+
+      SupportIndexType nTemporarySupports = bridge_desc.GetTemporarySupportCount();
+      while (0 < bridge_desc.GetTemporarySupportCount())
+         bridge_desc.RemoveTemporarySupportByIndex(bridge_desc.GetTemporarySupportCount() - 1);
+
+      // The template is a one-span bridge (IfcImportTemplate.spt), so after this its girders are single segments.
+      // (Segments that meet at a pier can't be joined from here: CSplicedGirderData::JoinSegmentsAtPier is protected.)
+
+      if (0 < nTendons || 0 < nTemporarySupports)
+      {
+         std::_tostringstream os;
+         os << _T("The PGSplice template's ") << nTemporarySupports << _T(" temporary supports and ") << nTendons << _T(" tendons were removed. The import builds single-segment girders, one girder group per span.");
+         WBFL::System::Logger::Info(os.str().c_str());
+      }
+   }
+}
+
 CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, bool bDeriveAlignmentFromDeck)
 {
    WBFL::System::Logger::Info(_T("Importing from bridge IFC file."));
@@ -84,8 +128,37 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    // PGSuper models one structure: when the deck is structures side by side, the one on the alignment is imported
    select_structure(m_Importer.GetBroker(), file);
 
-   // The girders from the model geometry. Their ends locate the abutments and piers when the bridge parts can't
-   auto girder_centerlines = get_girder_centerlines(m_Importer.GetBroker(), file);
+   // Spliced girders (girder assemblies of segments and closure joints, devdocs/PGSplicePlan.md S3) need PGSplice:
+   // importing them as single-segment girders would be wrong
+   GET_IFACE2(m_Importer.GetBroker(), IDocumentType, pDocType);
+   bool bSpliced = false;
+   if (auto nSpliced = count_spliced_girders(file); 0 < nSpliced)
+   {
+      if (!pDocType->IsPGSpliceDocument())
+      {
+         std::_tostringstream os;
+         os << _T("The model has ") << nSpliced << _T(" spliced girders (girder assemblies of more than one segment, or closure joints). ")
+            << _T("PGSuper models girders of one precast segment: import the model into a PGSplice project.");
+         WBFL::System::Logger::Error(os.str().c_str());
+         return CIfcImporter::ImportResult::Fail;
+      }
+      bSpliced = true;
+   }
+
+   // The girders from the model geometry. Their ends locate the abutments and piers when the bridge parts can't. Spliced
+   // girders are girder lines of segments and closure joints; each segment is located
+   std::vector<SplicedGirder> spliced_girders;
+   std::vector<GirderCenterline> girder_centerlines;
+   if (bSpliced)
+   {
+      spliced_girders = get_spliced_girders(m_Importer.GetBroker(), file);
+      for (const auto& girder : spliced_girders)
+         girder_centerlines.insert(girder_centerlines.end(), girder.segments.begin(), girder.segments.end());
+   }
+   else
+   {
+      girder_centerlines = get_girder_centerlines(m_Importer.GetBroker(), file);
+   }
 
    //
    // Position the abutments and piers
@@ -123,12 +196,33 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    GET_IFACE2(m_Importer.GetBroker(),IBridgeDescription, pIBridgeDesc);
    auto bridge_desc = *(pIBridgeDesc->GetBridgeDescription());
 
+   // the template's temporary support events and geometry, for the temporary supports of spliced girders
+   TemporarySupportDefaults ts_defaults;
+   if (pDocType->IsPGSpliceDocument())
+   {
+      ts_defaults = get_temporary_support_defaults(bridge_desc);
+      ReduceToSingleSegmentGirders(bridge_desc);
+   }
+
+   // the girder groups, segment connections, and temporary supports of spliced girders
+   SplicedFraming framing;
+   if (bSpliced)
+   {
+      std::vector<Float64> stations;
+      for (const auto& support : supports)
+         stations.push_back(support.station);
+      framing = get_spliced_framing(file, spliced_girders, stations);
+   }
+
+   // each span is a girder group, except that spliced girders continue over the piers inside their group
    SpanIndexType nSpansToAdd = nSpans - pIBridgeDesc->GetSpanCount();
    if (0 < nSpansToAdd)
    {
       for (SpanIndexType i = 0; i < nSpansToAdd; i++)
       {
-         bridge_desc.AppendSpan(nullptr, nullptr, true, 0);
+         PierIndexType startPierIdx = bridge_desc.GetSpanCount(); // the pier at the start of the new span
+         bool bCreateNewGroup = !bSpliced || framing.group_boundary[startPierIdx];
+         bridge_desc.AppendSpan(nullptr, nullptr, bCreateNewGroup, 0);
       }
    }
    ASSERT(nPiers == bridge_desc.GetPierCount());
@@ -153,19 +247,36 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    // Girders
    //
 
-   // The location of each girder determines its span and girder index
-   auto layout = get_girder_layout(file, girder_centerlines, pier_stations);
+   // The location of each girder determines its span and girder index. For spliced girders, the layout has the piece of
+   // each girder line in each span; the segment layout has the segments of each group's girders
+   GirderLayout layout, segment_layout;
+   if (bSpliced)
+   {
+      layout = get_spliced_span_layout(spliced_girders, framing, pier_stations);
+      segment_layout = get_spliced_segment_layout(spliced_girders, framing);
+   }
+   else
+   {
+      layout = get_girder_layout(file, girder_centerlines, pier_stations);
+   }
    locate_bearings(m_Importer.GetBroker(), file, layout);
-   for (const auto& girders : layout)
+   for (const auto& girders : (bSpliced ? segment_layout : layout))
    {
       for (const auto& girder : girders)
+         recorder.RecordGirder(CSegmentKey(girder.girder_key, girder.segment_index), girder.beam_id);
+   }
+   if (!bSpliced) // a spliced girder's span pieces aren't its segments; its bearings aren't recorded yet (S5)
+   {
+      for (const auto& girders : layout)
       {
-         CSegmentKey segmentKey(girder.girder_key, 0);
-         recorder.RecordGirder(segmentKey, girder.beam_id);
-         for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+         for (const auto& girder : girders)
          {
-            for (const auto& bearing : girder.bearings[end])
-               recorder.RecordBearing(segmentKey, end, bearing.id);
+            CSegmentKey segmentKey(girder.girder_key, 0);
+            for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
+            {
+               for (const auto& bearing : girder.bearings[end])
+                  recorder.RecordBearing(segmentKey, end, bearing.id);
+            }
          }
       }
    }
@@ -192,7 +303,42 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
       for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++)
       {
          if (2 <= layout[spanIdx].size())
-            bridge_desc.GetGirderGroup(spanIdx)->SetGirderCount(layout[spanIdx].size());
+            bridge_desc.GetGirderGroup(bridge_desc.GetSpan(spanIdx))->SetGirderCount(layout[spanIdx].size());
+      }
+   }
+
+   // Spliced girders: the segment connections at the piers inside the groups, and the temporary supports (which split the
+   // girders into their segments)
+   if (bSpliced)
+   {
+      apply_spliced_framing(framing, ts_defaults, bridge_desc);
+
+      // every girder of the model has its segments in the bridge description
+      IndexType nMismatched = 0;
+      for (const auto& segments : segment_layout)
+      {
+         std::map<CGirderKey, SegmentIndexType> nModelSegments;
+         for (const auto& segment : segments)
+            nModelSegments[segment.girder_key] = std::max(nModelSegments[segment.girder_key], segment.segment_index + 1);
+         for (const auto& [girder_key, nSegments] : nModelSegments)
+         {
+            SegmentIndexType nBridgeSegments = 0;
+            if (girder_key.groupIndex < bridge_desc.GetGirderGroupCount() && girder_key.girderIndex < bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirderCount())
+               nBridgeSegments = bridge_desc.GetGirderGroup(girder_key.groupIndex)->GetGirder(girder_key.girderIndex)->GetSegmentCount();
+            if (nBridgeSegments != nSegments)
+            {
+               std::_tostringstream os;
+               os << LABEL_GIRDER(girder_key) << _T(" of group ") << LABEL_GROUP(girder_key.groupIndex) << _T(" has ") << nSegments << _T(" segments in the model, and the girder groups, segment connections, and temporary supports make ")
+                  << nBridgeSegments << _T(".");
+               WBFL::System::Logger::Error(os.str().c_str());
+               nMismatched++;
+            }
+         }
+      }
+      if (0 < nMismatched)
+      {
+         WBFL::System::Logger::Error(_T("The spliced girders can't be framed as they are in the model, so the bridge isn't imported."));
+         return CIfcImporter::ImportResult::Fail;
       }
    }
 
@@ -254,6 +400,8 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
       auto pSpan = bridge_desc.GetSpan(spanIdx);
       for (auto [pPier, face, spacing] : { std::make_tuple(pSpan->GetPrevPier(), pgsTypes::Ahead, &start_spacing[spanIdx]), std::make_tuple(pSpan->GetNextPier(), pgsTypes::Back, &end_spacing[spanIdx]) })
       {
+         if (pPier->IsInteriorPier())
+            continue; // inside a girder group (spliced girders): the spacing is at the ends of the group
          auto girder_spacing = pPier->GetGirderSpacing(face);
          girder_spacing->SetMeasurementType(pgsTypes::MeasurementType::NormalToItem);
          girder_spacing->SetMeasurementLocation(pgsTypes::MeasurementLocation::AtPierLine);
@@ -266,7 +414,30 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
       }
    }
 
-   SetGirderProperties(file, bridge_desc, layout);
+   // the library entry of each girder: a spliced girder's from its segment closest to constant depth
+   std::unique_ptr<GirderProfileReader> pSegmentReader;
+   if (bSpliced)
+   {
+      pSegmentReader = std::make_unique<GirderProfileReader>(file);
+      SetGirderProperties(file, bridge_desc, get_spliced_girder_layout(file, *pSegmentReader, spliced_girders, framing));
+
+      // each segment's concrete and depth variation
+      for (const auto& segments : segment_layout)
+      {
+         for (const auto& segment : segments)
+         {
+            auto beam = file.instance_by_id(segment.beam_id).as<IfcSchema::IfcBeam>();
+            auto* pSegment = bridge_desc.GetGirderGroup(segment.girder_key.groupIndex)->GetGirder(segment.girder_key.girderIndex)->GetSegment(segment.segment_index);
+            ReadConcreteStrengths(beam, pSegment);
+         }
+      }
+      set_segment_variations(file, *pSegmentReader, segment_layout, pier_stations, bridge_desc);
+      EnableVariableDepthSections(bridge_desc);
+   }
+   else
+   {
+      SetGirderProperties(file, bridge_desc, layout);
+   }
 
    // Girder end distance and bearing offset normal to the CL pier
    set_end_distance_and_bearing_offset(m_Importer.GetBroker(), layout, pier_stations, pier_directions, bridge_desc);
@@ -278,17 +449,18 @@ CIfcImporter::ImportResult CIfcBridgeImporter::Import(ifcopenshell::file& file, 
    set_boundary_conditions(m_Importer.GetBroker(), file, layout, pier_stations, pier_directions, bridge_desc);
 
    // Prestressing strands, after the library entries are set
-   import_strands(m_Importer.GetBroker(), file, layout, m_CreatedEntries, bridge_desc);
+   import_strands(m_Importer.GetBroker(), file, bSpliced ? segment_layout : layout, m_CreatedEntries, bridge_desc);
 
    // Girder bars, after the library entries are set (girders come with the entry's bars, which are replaced)
    {
-      GirderBars girder_bars(file, layout);
-      for (const auto& girders : layout)
+      const auto& bar_layout = (bSpliced ? segment_layout : layout);
+      GirderBars girder_bars(file, bar_layout);
+      for (const auto& girders : bar_layout)
       {
          for (const auto& girder : girders)
          {
             if (!girder_bars.GetBars(girder.beam_id).empty())
-               recorder.RecordBars(CSegmentKey(girder.girder_key, 0), girder.beam_id);
+               recorder.RecordBars(CSegmentKey(girder.girder_key, girder.segment_index), girder.beam_id);
          }
       }
       import_longitudinal_rebar(girder_bars, bridge_desc);
@@ -369,25 +541,7 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
 
       const auto& girder = layout[girder_key.groupIndex][girder_key.girderIndex];
       auto beam = file.instance_by_id(girder.beam_id).as<IfcSchema::IfcBeam>();
-      auto beam_name = beam.Name().value_or("unnamed beam");
-
-      const auto& reader = CIfcImporter::GetTargetReader();
-      for (auto [target, label, pStrength] : { std::make_tuple("girder.fci", "f'ci", &pGirder->GetSegment(0)->Material.Concrete.Fci),
-                                               std::make_tuple("girder.fc", "f'c", &pGirder->GetSegment(0)->Material.Concrete.Fc) })
-      {
-         if (auto reading = reader.Read(target, beam))
-         {
-            *pStrength = std::get<Float64>(reading->value);
-
-            std::ostringstream os;
-            os << label << " of " << beam_name << " = " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(*pStrength, WBFL::Units::Measure::KSI) << " ksi, " << reading->Source();
-            WBFL::System::Logger::Info(os.str());
-         }
-         else
-         {
-            reader.ReportNotFound(target, beam, beam_name);
-         }
-      }
+      ReadConcreteStrengths(beam, pGirder->GetSegment(girder.segment_index));
    }
 
    // The girders of a girder type group share a library entry (PGSuper checks it). With different entries, each run of
@@ -409,6 +563,95 @@ void CIfcBridgeImporter::SetGirderProperties(ifcopenshell::file& file, CBridgeDe
                pGroup->Join(first, last, first);
             first = last + 1;
          }
+      }
+   }
+}
+
+void CIfcBridgeImporter::EnableVariableDepthSections(CBridgeDescription2& bridge_desc)
+{
+   // A spliced girder library entry allows segments of varying depth only if its variable depth section is enabled, and
+   // then it doesn't allow constant depth (None): PGSplice changes a segment variation the entry doesn't allow to the
+   // first it does (CBridgeDescription2::SetGirderLibraryEntry). So for a girder with segments that vary, the entry is
+   // enabled (an entry this import created) and the girder's constant depth segments are linear with equal end heights
+   GET_IFACE2(m_Importer.GetBroker(), ILibrary, pLibrary);
+   auto& library = pLibrary->GetGirderLibrary();
+   std::set<std::_tstring> enabled, not_enabled;
+   for (GroupIndexType grpIdx = 0; grpIdx < bridge_desc.GetGirderGroupCount(); grpIdx++)
+   {
+      auto* pGroup = bridge_desc.GetGirderGroup(grpIdx);
+      for (GirderIndexType gdrIdx = 0; gdrIdx < pGroup->GetGirderCount(); gdrIdx++)
+      {
+         auto* pGirder = pGroup->GetGirder(gdrIdx);
+         SegmentIndexType nSegments = pGirder->GetSegmentCount();
+         bool bVaries = false;
+         for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
+            bVaries |= (pGirder->GetSegment(segIdx)->GetVariationType() != pgsTypes::svtNone);
+         if (!bVaries)
+            continue;
+
+         const GirderLibraryEntry* pEntry = pGirder->GetGirderLibraryEntry();
+         if (!pEntry)
+            pEntry = bridge_desc.GetGirderLibraryEntry();
+         if (!pEntry)
+            continue;
+         std::_tstring name = pEntry->GetName();
+         if (!pEntry->IsVariableDepthSectionEnabled())
+         {
+            if (m_CreatedEntries.contains(name) && enabled.insert(name).second)
+            {
+               GirderLibraryEntry entry(*pEntry);
+               entry.EnableVariableDepthSection(true);
+               library.UpdateEntry(entry, name.c_str());
+               pEntry = pLibrary->GetGirderEntry(name.c_str());
+            }
+            else if (!m_CreatedEntries.contains(name))
+            {
+               not_enabled.insert(name);
+               continue;
+            }
+         }
+
+         for (SegmentIndexType segIdx = 0; segIdx < nSegments; segIdx++)
+         {
+            auto* pSegment = pGirder->GetSegment(segIdx);
+            if (pSegment->GetVariationType() != pgsTypes::svtNone)
+               continue;
+            Float64 height = pSegment->GetBasicSegmentHeight();
+            Float64 left_height = pSegment->GetVariationHeight(pgsTypes::sztLeftPrismatic);
+            Float64 right_height = pSegment->GetVariationHeight(pgsTypes::sztRightPrismatic);
+            Float64 bf = pSegment->GetVariationBottomFlangeDepth(pgsTypes::sztLeftPrismatic);
+            pSegment->SetVariationType(pgsTypes::svtLinear);
+            // the heights of the neighbors' matching ends were set by AdjustAdjacentSegment; else the library height
+            pSegment->SetVariationParameters(pgsTypes::sztLeftPrismatic, 0.0, 0 < left_height ? left_height : height, bf);
+            pSegment->SetVariationParameters(pgsTypes::sztRightPrismatic, 0.0, 0 < right_height ? right_height : height, bf);
+         }
+      }
+   }
+
+   for (const auto& name : enabled)
+      WBFL::System::Logger::Info(_T("Library entry ") + name + _T(": variable depth section enabled, since the girders' segments vary in depth. Its constant depth segments are linear with equal end heights."));
+   for (const auto& name : not_enabled)
+      WBFL::System::Logger::Warning(_T("Library entry ") + name + _T(" doesn't allow variable depth sections, so the segments that vary in depth are constant depth (the entry isn't one this import created, so it isn't changed)."));
+}
+
+void CIfcBridgeImporter::ReadConcreteStrengths(IfcSchema::IfcBeam beam, CPrecastSegmentData* pSegment)
+{
+   auto beam_name = beam.Name().value_or("unnamed beam");
+   const auto& reader = CIfcImporter::GetTargetReader();
+   for (auto [target, label, pStrength] : { std::make_tuple("girder.fci", "f'ci", &pSegment->Material.Concrete.Fci),
+                                            std::make_tuple("girder.fc", "f'c", &pSegment->Material.Concrete.Fc) })
+   {
+      if (auto reading = reader.Read(target, beam))
+      {
+         *pStrength = std::get<Float64>(reading->value);
+
+         std::ostringstream os;
+         os << label << " of " << beam_name << " = " << std::fixed << std::setprecision(3) << WBFL::Units::ConvertFromSysUnits(*pStrength, WBFL::Units::Measure::KSI) << " ksi, " << reading->Source();
+         WBFL::System::Logger::Info(os.str());
+      }
+      else
+      {
+         reader.ReportNotFound(target, beam, beam_name);
       }
    }
 }
@@ -930,7 +1173,22 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
       }
    }
 
-   if (spread(all_slab_offsets) <= tolerance)
+   // spliced girders: the slab offsets are measured at the ends of the girders' pieces of the spans, not at the segment
+   // ends, so per-segment and per-bearing-line slab offsets aren't set yet. The average is used for the bridge
+   bool bSpliced = std::any_of(layout.begin(), layout.end(), [](const auto& girders) {
+      return std::any_of(girders.begin(), girders.end(), [](const auto& g) {return g.continuous[pgsTypes::metStart] || g.continuous[pgsTypes::metEnd] || 0 < g.segment_index; }); });
+   if (bSpliced && tolerance < spread(all_slab_offsets))
+   {
+      auto [lo, hi] = std::minmax_element(all_slab_offsets.begin(), all_slab_offsets.end());
+      bridge_desc.SetSlabOffsetType(pgsTypes::sotBridge);
+      bridge_desc.SetSlabOffset(average(all_slab_offsets));
+      std::ostringstream os;
+      os << std::fixed << std::setprecision(3) << "The slab offset varies (" << WBFL::Units::ConvertFromSysUnits(*lo, WBFL::Units::Measure::Inch) << " to "
+         << WBFL::Units::ConvertFromSysUnits(*hi, WBFL::Units::Measure::Inch) << " in). Slab offsets at the segment ends of spliced girders aren't imported yet, so the average is used for the bridge.";
+      WBFL::System::Logger::Warning(os.str());
+      log_length(_T("Slab offset for the bridge"), average(all_slab_offsets));
+   }
+   else if (spread(all_slab_offsets) <= tolerance)
    {
       bridge_desc.SetSlabOffsetType(pgsTypes::sotBridge);
       bridge_desc.SetSlabOffset(average(all_slab_offsets));
@@ -959,7 +1217,7 @@ void CIfcBridgeImporter::ImportSlab(ifcopenshell::file& file, CBridgeDescription
             if (layout[spanIdx].size() < 2)
                continue; // girders weren't imported for this span
 
-            auto* pSegment = bridge_desc.GetGirderGroup(spanIdx)->GetGirder(gdrIdx)->GetSegment(0);
+            auto* pSegment = bridge_desc.GetGirderGroup(bridge_desc.GetSpan(spanIdx))->GetGirder(gdrIdx)->GetSegment(0);
             for (auto end : { pgsTypes::metStart, pgsTypes::metEnd })
             {
                if (ends[end])

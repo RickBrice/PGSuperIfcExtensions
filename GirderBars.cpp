@@ -228,5 +228,5 @@ std::string GirderBars::GetGirderName(int beam_id) const
 
 CPrecastSegmentData* GirderBars::GetSegment(CBridgeDescription2& bridge_desc, const GirderCenterline& girder)
 {
-   return bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex)->GetSegment(0);
+   return bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex)->GetSegment(girder.segment_index);
 }

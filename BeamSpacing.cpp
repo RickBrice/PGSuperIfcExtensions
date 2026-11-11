@@ -109,6 +109,11 @@ namespace
 // Locates the girders from the IfcBeam geometry
 std::vector<GirderCenterline> get_girder_centerlines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file)
 {
+   return get_beam_centerlines(pBroker, file, get_beam_ids(file));
+}
+
+std::vector<GirderCenterline> get_beam_centerlines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::set<int>& beam_ids)
+{
    USES_CONVERSION;
    GET_IFACE2(pBroker, IEAFProgress, pProgress);
    WBFL::EAF::AutoProgress ap(pProgress);
@@ -126,7 +131,6 @@ std::vector<GirderCenterline> get_girder_centerlines(std::shared_ptr<WBFL::EAF::
       };
 
    std::vector<GirderCenterline> girders;
-   auto beam_ids = get_beam_ids(file);
 
    ifcopenshell::geom::settings settings;
    settings.set("use-world-coords", true);

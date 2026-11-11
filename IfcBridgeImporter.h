@@ -55,6 +55,12 @@ private:
    bool HasValidGirdersByOther(ifcopenshell::file& file, IfcSchema::IfcBridge bridge);
 
    void SetGirderProperties(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout);
+
+   // a segment's f'ci and f'c from its beam (girder.fci, girder.fc)
+   void ReadConcreteStrengths(IfcSchema::IfcBeam beam, CPrecastSegmentData* pSegment);
+
+   // enables variable depth sections on the library entries of spliced girders whose segments vary in depth
+   void EnableVariableDepthSections(CBridgeDescription2& bridge_desc);
    void ImportSlab(ifcopenshell::file& file, CBridgeDescription2& bridge_desc, const GirderLayout& layout, const std::vector<Float64>& pier_stations);
    
    const GirderLibraryEntry* GetGirderLibraryEntry(IfcSchema::IfcBeam beam, const GirderCenterline& girder);

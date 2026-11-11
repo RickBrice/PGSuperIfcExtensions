@@ -66,18 +66,14 @@ std::set<int> get_bearing_ids(IfcSchema::IfcBridgePart pier)
    return bearing_ids;
 }
 
-namespace
+std::optional<Float64> get_referent_station(IfcSchema::IfcBridgePart pier)
 {
-   // the station of the IfcReferent that positions the pier (Pset_Stationing.Station), if it has one
-   std::optional<Float64> get_referent_station(IfcSchema::IfcBridgePart pier)
-   {
-      auto rel_positions = pier.PositionedRelativeTo();
-      IfcSchema::IfcPositioningElement positioning_element;
-      if (!rel_positions.empty())
-         positioning_element = rel_positions.front().RelatingPositioningElement();
-      auto referent = positioning_element ? positioning_element.as<IfcSchema::IfcReferent>() : IfcSchema::IfcReferent{};
-      return referent ? GetMeasureProperty<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), referent, "Pset_Stationing", "Station") : std::nullopt;
-   }
+   auto rel_positions = pier.PositionedRelativeTo();
+   IfcSchema::IfcPositioningElement positioning_element;
+   if (!rel_positions.empty())
+      positioning_element = rel_positions.front().RelatingPositioningElement();
+   auto referent = positioning_element ? positioning_element.as<IfcSchema::IfcReferent>() : IfcSchema::IfcReferent{};
+   return referent ? GetMeasureProperty<IfcSchema::IfcLengthMeasure>(CIfcImporter::GetUnits(), referent, "Pset_Stationing", "Station") : std::nullopt;
 }
 
 double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker,ifcopenshell::file& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart pier)
@@ -930,9 +926,12 @@ namespace
       {
          for (const auto& girder : layout[spanIdx])
          {
+            // a spliced girder that continues over a pier has no end there (SplicedGirders.h)
             Eigen::Vector2d direction = (girder.end - girder.start).normalized();
-            pier_faces[{spanIdx, pgsTypes::Ahead}].push_back({ girder.start, girder.start_bearing, direction });
-            pier_faces[{spanIdx + 1, pgsTypes::Back}].push_back({ girder.end, girder.end_bearing, -direction });
+            if (!girder.continuous[pgsTypes::metStart])
+               pier_faces[{spanIdx, pgsTypes::Ahead}].push_back({ girder.start, girder.start_bearing, direction });
+            if (!girder.continuous[pgsTypes::metEnd])
+               pier_faces[{spanIdx + 1, pgsTypes::Back}].push_back({ girder.end, girder.end_bearing, -direction });
          }
       }
       return pier_faces;
@@ -1206,6 +1205,10 @@ void set_boundary_conditions(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopen
    for (PierIndexType pierIdx = 0; pierIdx < nPiers; pierIdx++)
    {
       auto* pPier = bridge_desc.GetPier(pierIdx);
+
+      // a pier inside a girder group (spliced girders) has a segment connection instead (SplicedGirders.cpp)
+      if (pPier->IsInteriorPier())
+         continue;
 
       // CL pier: through the alignment at the pier station, with the normal pointing ahead on station
       CComPtr<IPoint2d> point;

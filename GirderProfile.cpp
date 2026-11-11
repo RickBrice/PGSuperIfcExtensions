@@ -303,6 +303,129 @@ namespace
    };
 }
 
+namespace
+{
+   // the sectioned solid of a representation item: the item, or the first operand of a clipping result, or the item of a
+   // mapped item, if there's exactly one
+   void find_sectioned_solids(IfcSchema::IfcRepresentationItem item, std::vector<IfcSchema::IfcSectionedSolidHorizontal>& solids, bool& bOther)
+   {
+      if (auto mapped = item.as<IfcSchema::IfcMappedItem>())
+      {
+         for (const auto& mapped_item : mapped.MappingSource().MappedRepresentation().Items())
+            find_sectioned_solids(mapped_item, solids, bOther);
+      }
+      else if (auto clipping = item.as<IfcSchema::IfcBooleanClippingResult>())
+      {
+         if (auto first = clipping.FirstOperand().as<IfcSchema::IfcRepresentationItem>())
+            find_sectioned_solids(first, solids, bOther);
+         else
+            bOther = true;
+      }
+      else if (auto sectioned = item.as<IfcSchema::IfcSectionedSolidHorizontal>())
+      {
+         solids.push_back(sectioned);
+      }
+      else
+      {
+         bOther = true;
+      }
+   }
+}
+
+std::vector<GirderProfileReader::CrossSection> GirderProfileReader::ReadCrossSections(IfcSchema::IfcBeam beam) const
+{
+   std::vector<CrossSection> sections;
+   if (!beam.Representation())
+      return sections;
+
+   std::vector<IfcSchema::IfcSectionedSolidHorizontal> solids;
+   bool bOther = false;
+   for (const auto& representation : beam.Representation().Representations())
+   {
+      auto identifier = representation.RepresentationIdentifier();
+      if (identifier && *identifier != "Body")
+         continue;
+      for (const auto& item : representation.Items())
+         find_sectioned_solids(item, solids, bOther);
+   }
+   if (bOther || solids.size() != 1)
+      return sections;
+
+   const auto& solid = solids.front();
+   std::vector<IfcSchema::IfcProfileDef> profiles = solid.CrossSections();
+   std::vector<IfcSchema::IfcAxis2PlacementLinear> positions = solid.CrossSectionPositions();
+   if (profiles.size() != positions.size() || profiles.size() < 2)
+      return sections;
+
+   for (size_t i = 0; i < profiles.size(); i++)
+   {
+      auto location = positions[i].Location().as<IfcSchema::IfcPointByDistanceExpression>();
+      auto distance = location ? location.DistanceAlong().as<IfcSchema::IfcLengthMeasure>() : IfcSchema::IfcLengthMeasure();
+      if (!distance)
+         return {};
+
+      // the profile in its own coordinates: y is up
+      ProfileLoops loops;
+      try
+      {
+         auto item = m_Mapping->map(profiles[i]);
+         if (!item)
+            return {};
+         collect_loops(item, Eigen::Matrix4d::Identity(), *m_Settings, loops);
+      }
+      catch (...)
+      {
+         return {};
+      }
+      if (loops.solids.empty())
+         return {};
+
+      SectionOutline outline;
+      for (const auto& loop : loops.solids)
+      {
+         SectionOutline::Loop l;
+         for (const auto& p : loop)
+            l.emplace_back(p.x(), p.y());
+         outline.solids.push_back(std::move(l));
+      }
+      for (const auto& loop : loops.voids)
+      {
+         SectionOutline::Loop l;
+         for (const auto& p : loop)
+            l.emplace_back(p.x(), p.y());
+         outline.voids.push_back(std::move(l));
+      }
+      auto measures = MeasureSection(outline);
+
+      // the bottom flange: going up from the bottom (past a chamfer), the depth over which the section is as wide as the
+      // widest part of its bottom quarter
+      const auto& widths = measures.width_profile; // from the top
+      double bottom_flange_depth = 0;
+      if (!widths.empty())
+      {
+         size_t n = widths.size();
+         size_t quarter = std::max<size_t>(1, n / 4);
+         double bottom_width = *std::max_element(widths.end() - quarter, widths.end());
+         const double tolerance = WIDTH_PROFILE_STEP;
+         size_t k = n;
+         while (0 < k && widths[k - 1] < bottom_width - tolerance)
+            k--; // a chamfer
+         while (0 < k && bottom_width - tolerance <= widths[k - 1])
+            k--;
+         bottom_flange_depth = (double)(n - k) * WIDTH_PROFILE_STEP;
+         bottom_flange_depth = std::min(bottom_flange_depth, measures.height);
+      }
+
+      sections.push_back({ (double)distance, measures.height, bottom_flange_depth });
+   }
+
+   std::sort(sections.begin(), sections.end(), [](const auto& a, const auto& b) {return a.distance < b.distance; });
+   double first = sections.front().distance;
+   for (auto& section : sections)
+      section.distance -= first;
+   return sections;
+}
+
 GirderProfileReader::GirderProfileReader(ifcopenshell::file& file)
 {
    m_Settings = std::make_unique<ifcopenshell::geom::settings>();

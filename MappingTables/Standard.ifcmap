@@ -13,6 +13,7 @@
     "pier": {"entity": "IfcBridgePart", "predefined_type": "PIER"},
     "abutment": {"entity": "IfcBridgePart", "predefined_type": "ABUTMENT"},
     "foundation": {"entity": "IfcBridgePart", "predefined_type": "FOUNDATION"},
+    "erection_tower": {"entity": "IfcBridgePart", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "ERECTION_TOWER"}},
     "girder": {"entity": "IfcBeam", "predefined_type": "BEAM"},
     "girder_assembly": {"entity": "IfcElementAssembly", "predefined_type": "GIRDER"},
     "closure_joint": {"entity": "IfcBeam", "attributes": {"ObjectType": "CLOSUREJOINT"}},

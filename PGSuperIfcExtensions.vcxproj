@@ -78,8 +78,9 @@
     <CustomBuildStep>
       <Message>Copy manifest to BridgeLink</Message>
       <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)
-xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
-      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.pgt</Outputs>
+xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)
+xcopy /y/d $(ProjectDir)IfcImportTemplate.spt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
+      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.pgt;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.spt</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -149,8 +150,9 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f.dll" d
     <CustomBuildStep>
       <Message>Copy manifest to BridgeLink</Message>
       <Command>xcopy /y/d $(ProjectDir)IfcExtensions.Manifest.PGSuper $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)
-xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
-      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.pgt</Outputs>
+xcopy /y/d $(ProjectDir)IfcImportTemplate.pgt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)
+xcopy /y/d $(ProjectDir)IfcImportTemplate.spt $(ARPDIR)\BridgeLink\RegFreeCOM\$(Platform)\$(Configuration)</Command>
+      <Outputs>$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcExtensions.Manifest.PGSuper;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.pgt;$(ARPDIR)/BridgeLink/RegFreeCOM/$(Platform)/$(Configuration)/IfcImportTemplate.spt</Outputs>
     </CustomBuildStep>
     <Midl>
       <AdditionalIncludeDirectories>$(ARPDIR)\PGSuper\Include\Plugins;$(ARPDIR)\WBFL\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -261,6 +263,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClCompile Include="DeckRebar.cpp" />
     <ClCompile Include="IfcRoundTripMerge.cpp" />
     <ClCompile Include="IfcRoundTrip.cpp" />
+    <ClCompile Include="SplicedGirders.cpp" />
     <ClCompile Include="Strands.cpp" />
     <ClCompile Include="RoadwaySection.cpp" />
     <ClCompile Include="Geometry.cpp" />
@@ -350,6 +353,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="DeckRebar.h" />
     <ClInclude Include="IfcRoundTripMerge.h" />
     <ClInclude Include="IfcRoundTrip.h" />
+    <ClInclude Include="SplicedGirders.h" />
     <ClInclude Include="Strands.h" />
     <ClInclude Include="RoadwaySection.h" />
     <ClInclude Include="Geometry.h" />

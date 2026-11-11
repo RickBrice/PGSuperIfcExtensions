@@ -25,6 +25,14 @@
       }
    },
    "Component": {
+      "Name": "IFC Project Importer (PGSplice)",
+      "CLSID": "{80F14A4A-F264-49FB-971F-F0D8664293B7}",
+      "dll": "PGSuperIfcExtensions.dll",
+      "Categories": {
+         "CATID": "{DB115813-3828-4564-A2FA-D8DDB368B1DB}"
+      }
+   },
+   "Component": {
       "Name": "IFC Extension Agent",
       "CLSID": "{577F6678-6DD6-4003-ACA2-6406039B690F}",
       "dll": "PGSuperIfcExtensions.dll",

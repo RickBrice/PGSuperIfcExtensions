@@ -41,6 +41,9 @@ struct Support
 // Fewer than two supports means the bridge can't be located. Each decision is logged
 std::vector<Support> locate_supports(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::vector<GirderCenterline>& girders);
 
+// The station of the IfcReferent that positions a bridge part (Pset_Stationing.Station), or nullopt
+std::optional<Float64> get_referent_station(IfcSchema::IfcBridgePart part);
+
 double get_pier_station(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, PierIndexType pierIdx, IfcSchema::IfcBridgePart pier);
 
 // Locates the CL bearing at each end of each girder from the IfcBearing geometry. Each bearing belongs to the girder end

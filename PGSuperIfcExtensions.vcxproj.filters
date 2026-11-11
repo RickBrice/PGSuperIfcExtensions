@@ -148,6 +148,9 @@
     <ClCompile Include="IfcRoundTrip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SplicedGirders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Strands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -379,6 +382,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="IfcRoundTrip.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SplicedGirders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Strands.h">

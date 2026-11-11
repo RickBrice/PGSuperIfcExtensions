@@ -547,6 +547,7 @@ namespace
          { ElementKind::Pier, "pier" },
          { ElementKind::Abutment, "abutment" },
          { ElementKind::Foundation, "foundation" },
+         { ElementKind::ErectionTower, "erection_tower" },
          { ElementKind::Alignment, "alignment" },
          { ElementKind::Referent, "referent" },
          { ElementKind::Girder, "girder" },

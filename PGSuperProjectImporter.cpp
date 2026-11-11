@@ -60,6 +60,19 @@ CString CPGSuperProjectImporter::GetTemplateFilePath() const
    return strFileName;
 }
 
+CLSID CPGSpliceProjectImporter::GetCLSID() const
+{
+   return CLSID_PGSpliceIfcProjectImporter;
+}
+
+CString CPGSpliceProjectImporter::GetTemplateFilePath() const
+{
+   CEAFApp* pApp = EAFGetApp();
+   CString strFileName = pApp->GetAppLocation();
+   strFileName += CString(_T("IfcImportTemplate.spt"));
+   return strFileName;
+}
+
 HRESULT CPGSuperProjectImporter::Import(std::shared_ptr<WBFL::EAF::Broker> pBroker)
 {
    HRESULT hr = E_FAIL;

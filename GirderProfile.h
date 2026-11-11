@@ -43,6 +43,18 @@ public:
    // the girder or its profile can't be read
    std::optional<SectionOutline> Read(IfcSchema::IfcBeam beam, const GirderCenterline& girder, std::string& source, std::string& why_not) const;
 
+   // The cross sections of a beam whose body is an IfcSectionedSolidHorizontal (mapped items and clipping results
+   // followed), in order along it: the distance from the first cross section, along the directrix; the section height;
+   // and the bottom flange depth (the height of the bottom's constant width, from the bottom of the section). Empty if
+   // the body isn't one sectioned solid or a profile can't be read. For the depth variation of spliced girder segments
+   struct CrossSection
+   {
+      double distance;
+      double height;
+      double bottom_flange_depth;
+   };
+   std::vector<CrossSection> ReadCrossSections(IfcSchema::IfcBeam beam) const;
+
 private:
    std::unique_ptr<ifcopenshell::geom::settings> m_Settings;
    std::unique_ptr<ifcopenshell::geom::abstract_mapping> m_Mapping;

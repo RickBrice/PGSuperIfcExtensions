@@ -219,14 +219,16 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
 
    if (bLast && m_bIfcImport)
    {
-      if (m_strIfcFile.IsEmpty() || (!m_strOutFile.IsEmpty() && m_strOutFile.Right(4).CompareNoCase(_T(".pgs")) != 0))
+      // the template is a PGSuper (.pgt) or PGSplice (.spt) template, and the project is the same kind
+      LPCTSTR lpszProjectExtension = (m_strFileName.Right(4).CompareNoCase(_T(".spt")) == 0) ? _T(".spl") : _T(".pgs");
+      if (m_strIfcFile.IsEmpty() || (!m_strOutFile.IsEmpty() && m_strOutFile.Right(4).CompareNoCase(lpszProjectExtension) != 0))
       {
          m_bError = TRUE;
          return;
       }
 
       if (m_strOutFile.IsEmpty())
-         m_strOutFile = ReplaceExtension(m_strIfcFile, _T(".pgs"));
+         m_strOutFile = ReplaceExtension(m_strIfcFile, lpszProjectExtension);
 
       if (m_strLogFile.IsEmpty())
          m_strLogFile = ReplaceExtension(m_strOutFile, _T(".log"));
@@ -236,10 +238,10 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
 CString CIfcCommandLineInfo::GetUsageMessage()
 {
    CString strMsg;
-   strMsg.Format(_T("Usage: BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>] [/IfcMapping=<table.ifcmap>]\n\n")
-                 _T("<template.pgt> - PGSuper project template used to create the new project (e.g. IfcImportTemplate.pgt)\n")
+   strMsg.Format(_T("Usage: BridgeLink.exe /IfcImport=<model.ifc> <template.pgt|template.spt> [/IfcOut=<project.pgs|project.spl>] [/IfcLog=<import.log>] [/IfcMapping=<table.ifcmap>]\n\n")
+                 _T("<template.pgt|template.spt> - PGSuper or PGSplice project template used to create the new project (e.g. IfcImportTemplate.pgt or IfcImportTemplate.spt)\n")
                  _T("/IfcImport - IFC model to import\n")
-                 _T("/IfcOut - PGSuper project file to create. Defaults to the IFC file name with a .pgs extension\n")
+                 _T("/IfcOut - project file to create (.pgs for a PGSuper template, .spl for a PGSplice template). Defaults to the IFC file name with that extension\n")
                  _T("/IfcLog - Import log file. Defaults to the project file name with a .log extension\n")
                  _T("/IfcMapping - IFC mapping table. Defaults to the configured table (File > Configure BridgeLink), else the standard table installed with the IFC extension\n\n")
                  _T("Usage: BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.ifcmap>] [/IfcIds=<design.ids>] [/IfcSourceModel[=<source.ifc>]]\n\n")

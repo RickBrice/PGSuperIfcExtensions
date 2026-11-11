@@ -23,6 +23,8 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <array>
+#include <set>
 #include "Geometry.h"
 #include <psgLib/Keys.h>
 
@@ -44,6 +46,9 @@ struct GirderCenterline
 {
    int beam_id;                     // IfcBeam
    CGirderKey girder_key;           // group = span, girder index from left to right looking ahead on station
+   SegmentIndexType segment_index = 0; // the segment of the girder (spliced girders, SplicedGirders.h; else 0)
+   std::array<bool, 2> continuous{ false, false }; // the girder continues over the pier at the start/end (a spliced girder's
+                                                   // piece of a span, SplicedGirders.h): no girder end there
    Eigen::Vector2d start, end;      // CL girder at the ends of the girder (global coordinates), start is at the lesser station
    Float64 start_top, end_top;      // elevation of the top of the girder at start and end
    Float64 start_station, start_offset;
@@ -58,6 +63,9 @@ using GirderLayout = std::vector<std::vector<GirderCenterline>>;
 
 // Locates the girders from the IfcBeam geometry: the centerline, stations, and offsets of each girder (girder_key isn't set)
 std::vector<GirderCenterline> get_girder_centerlines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file);
+
+// The centerlines of the given beams (e.g. the segments of spliced girders), as get_girder_centerlines locates them
+std::vector<GirderCenterline> get_beam_centerlines(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::file& file, const std::set<int>& beam_ids);
 
 // Assigns the girders to spans. Each girder is assigned to the span that contains its mid-point and girders are
 // ordered left to right within the span by offset from the alignment.

@@ -798,7 +798,7 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
       WBFL::System::Logger::Info(std::to_string(nShort) + " tendons were skipped: they don't run the length of their girder, so they aren't prestressing strands (e.g. lifting loops).");
 
    for (const auto& [beam_id, strands] : girder_strands)
-      CIfcImporter::GetRoundTripRecorder().RecordTendons(CSegmentKey(girders.at(beam_id)->girder_key, 0), beam_id);
+      CIfcImporter::GetRoundTripRecorder().RecordTendons(CSegmentKey(girders.at(beam_id)->girder_key, girders.at(beam_id)->segment_index), beam_id);
 
    auto girder_entry = [&bridge_desc](const GirderCenterline& girder)
       {
@@ -890,7 +890,7 @@ void import_strands(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopenshell::fi
 
       // the template's strand data, for what the model doesn't say (e.g. the temporary strand usage)
       auto* pGirder = bridge_desc.GetGirderGroup(girder.girder_key.groupIndex)->GetGirder(girder.girder_key.girderIndex);
-      auto* pSegment = pGirder->GetSegment(0);
+      auto* pSegment = pGirder->GetSegment(girder.segment_index);
       CStrandData strand_data(pSegment->Strands);
 
       // the library entry's strand grid when every strand is on it (G2, decision 2), else individual strands

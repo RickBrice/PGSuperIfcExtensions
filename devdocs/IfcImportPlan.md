@@ -263,7 +263,7 @@ The Iowa model imports end to end. What its log shows:
 ## Phases
 
 ### Phase 0: Test setup
-- **Headless import (done 2026-09-23):** `BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>]`.
+- **Headless import (done 2026-09-23):** `BridgeLink.exe /IfcImport=<model.ifc> <template.pgt> [/IfcOut=<project.pgs>] [/IfcLog=<import.log>]`. A PGSplice template (`.spt`, e.g. `IfcImportTemplate.spt`) makes a PGSplice project (`/IfcOut=<project.spl>`; since 2026-11-10).
   - `CIfcExtensionAgent` implements `IEAFProcessCommandLine`. It imports into the template-created project, saves it, and EAF exits.
   - `/IfcImport` had to come first because PGSuper's Test agent claimed any command line whose first parameter was not a flag. Fixed in PGSuper (F2); putting the flag first still works with older PGSuper builds.
   - `CIfcImportOptions::interactive = false` suppresses the results dialog and the bridge picker.
