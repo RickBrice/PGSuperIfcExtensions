@@ -50,6 +50,21 @@
 #include <Plugins\BeamFamilyCLSID.h>
 #include <GeomModel/GeomModel.h>
 
+// Reports an export step in the progress window. The window is created on this (the main) thread, so it appears and
+// repaints only when it's given a message: a long export without them looks hung.
+static void ReportProgress(std::shared_ptr<WBFL::EAF::Broker> pBroker, LPCTSTR lpszMsg)
+{
+   GET_IFACE2(pBroker, IEAFProgress, pProgress);
+   pProgress->UpdateMessage(lpszMsg);
+}
+
+static void ReportSegmentProgress(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey, LPCTSTR lpszStep)
+{
+   std::_tostringstream os;
+   os << _T("Exporting ") << GIRDER_LABEL(segmentKey) << _T(", Segment ") << LABEL_SEGMENT(segmentKey.segmentIndex) << _T(": ") << lpszStep;
+   ReportProgress(pBroker, os.str().c_str());
+}
+
 constexpr Float64 gs_InsideBendRadius = 0.01; // dummy inside bend radius.
 
 constexpr IndexType NUM_DECK_SECTIONS = 10;
@@ -3083,9 +3098,13 @@ typename Schema::IfcBeam CreatePrecastSegment(hierarchy_helper<Schema>& file, st
 
    auto body_model_representation_subcontext = file.getRepresentationSubContext(std::string("Body"), std::string("Model"));
 
+   ReportSegmentProgress(pBroker, segmentKey, _T("geometry"));
    CreatePrecastSegmentRepresentation<Schema>(file, pBroker, options, segmentKey, beam, body_model_representation_subcontext);
+   ReportSegmentProgress(pBroker, segmentKey, _T("materials"));
    CreatePrecastSegmentMaterials<Schema>(file, pBroker, options, segmentKey, beam);
+   ReportSegmentProgress(pBroker, segmentKey, _T("strands"));
    CreatePrecastSegmentStrandRepresentation<Schema>(file, pBroker, options, segmentKey, beam, rebar_batch);
+   ReportSegmentProgress(pBroker, segmentKey, _T("reinforcement"));
    CreatePrecastSegmentReinforcing<Schema>(file, pBroker, options, name, segmentKey, beam, rebar_batch);
 
    // Property sets and quantity sets from the mapping table. Their conditions decide which ones the options include.
@@ -3221,6 +3240,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
       Schema::IfcFacilityUsageEnum::IfcFacilityUsage_LONGITUDINAL,
       Schema::IfcBridgePartTypeEnum::IfcBridgePartType_DECK);
    Identify(options, roundtrip_key::DeckPart(), deck);
+   ReportProgress(pBroker, _T("Exporting the deck"));
    CreateSlab(file, pBroker, options, deck, body_model_representation_subcontext);
 
    if (options.classify)
@@ -3234,6 +3254,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    // Create spatial structure of substructure
    // IfcBridgePart::SUBSTRUCTURE <-> IfcRelAggregates <-> IfcBridgePart::ABUTMENT, PIER
+   ReportProgress(pBroker, _T("Exporting the piers"));
    auto list_of_piers = CreatePiers(file, pBroker, options);
    GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDescription);
    for (PierIndexType pierIdx = 0; pierIdx < list_of_piers.size(); pierIdx++)
@@ -3244,9 +3265,11 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
 
    if (options.bearing_seat_survey_points != CIfcExportOptions::BearingSeatSurveyPoints::None)
    {
+      ReportProgress(pBroker, _T("Exporting the bearing seat elevations"));
       CreateBearingSeatSurveyPoints<Schema>(file, pBroker, options, list_of_piers);
    }
 
+   ReportProgress(pBroker, _T("Exporting the bearings"));
    CreateBearings<Schema>(file, pBroker, options, list_of_piers, body_model_representation_subcontext);
 
    //if (options.include_work_plan)
@@ -3272,6 +3295,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    typename Schema::IfcProduct left_barrier;
    left_barrier = file.create<typename Schema::IfcWall>().initialize(ifcopenshell::global_id(), {}, std::string("Left Barrier"), std::nullopt, std::string("BARRIER"), {}, {}, std::nullopt, Schema::IfcWallTypeEnum::IfcWallType_USERDEFINED);
 
+   ReportProgress(pBroker, _T("Exporting the railing systems"));
    CreateBarrierSystemRepresentation(file, pBroker, options, pgsTypes::tboLeft, left_barrier, body_model_representation_subcontext);
    Identify(options, roundtrip_key::Barrier(pgsTypes::tboLeft), left_barrier);
    file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(deck, left_barrier);
@@ -3318,6 +3342,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    // associate the material with the slab
    auto rel_associates_materials = file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, barrier_list, material);
 
+   ReportProgress(pBroker, _T("Exporting the pier diaphragms"));
    CreatePierDiaphragms<Schema>(file, pBroker, options, superstructure, body_model_representation_subcontext);
 
 
@@ -3467,6 +3492,7 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
                      std::nullopt // PredefinedType (must not be used if defined in IfcBeamType)
                   );
 
+                  ReportSegmentProgress(pBroker, segmentKey, _T("closure joint"));
                   CreateClosureJointRepresentation<Schema>(file, pBroker, options, segmentKey, closure_joint, body_model_representation_subcontext);
 
                   // need to do this for each bar, stirrup, etc
@@ -3781,6 +3807,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
          WritePropertySets<Schema>(file, ElementKind::Project, project, project_context, PropertySetDeclaration::Condition::Classify);
       }
 
+      ReportProgress(pBroker, _T("Exporting the alignment"));
       CreateAlignment<Schema>(file, pBroker, options); // creates alignment and aggregates with project, references into site spatial structure
 
       if (options.model_elements == CIfcExportOptions::ModelElements::AlignmentAndBridge)
@@ -3791,6 +3818,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
 
    // Emit the buffered reinforcement relationships - one instance per relating
    // object, each with its complete member list set in a single write.
+   ReportProgress(pBroker, _T("Exporting the reinforcement relationships"));
    rebar_batch.Flush(file);
 
    // Declare project units for values that rely on them (e.g. quantities without their own unit)
@@ -3815,6 +3843,7 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    }
    else
    {
+      pProgress->UpdateMessage(_T("Writing the IFC file"));
       std::ofstream ofs(T2A(strFilePath));
       ofs << file;
    }
