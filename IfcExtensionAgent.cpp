@@ -42,6 +42,7 @@
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
 #include <EAF\EAFUtilities.h>
+#include <System\Exception.h>
 
 BEGIN_MESSAGE_MAP(CIfcExtensionAgent,CCmdTarget)
    ON_COMMAND(ID_EDIT_GEOREFERENCING,&CIfcExtensionAgent::OnEditGeoreferencing)
@@ -460,6 +461,11 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       {
          strError = e.what();
       }
+      catch (const WBFL::System::XBase& e)
+      {
+         // a WBFL exception from PGSuper (they don't derive from std::exception)
+         strError = e.GetErrorMessage().c_str();
+      }
    }
 
    // the design-value IDS for the exported model, with the default options
@@ -490,6 +496,10 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       catch (const std::exception& e)
       {
          strIdsError = e.what();
+      }
+      catch (const WBFL::System::XBase& e)
+      {
+         strIdsError = e.GetErrorMessage().c_str();
       }
    }
 

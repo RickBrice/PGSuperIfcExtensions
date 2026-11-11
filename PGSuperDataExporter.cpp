@@ -35,6 +35,7 @@
 #include <EAF/EAFDocument.h>
 #include <EAF/EAFUIIntegration.h>
 #include <EAF/AutoProgress.h>
+#include <System/Exception.h>
 
 #include <fstream>
 #include <map>
@@ -172,6 +173,11 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       // e.g. the mapping table can't be used (CIfcMappingTableException). The message says what to do
       strError = e.what();
    }
+   catch (const WBFL::System::XBase& e)
+   {
+      // a WBFL exception from PGSuper (they don't derive from std::exception)
+      strError = e.GetErrorMessage().c_str();
+   }
 
    // the project remembers the table, so its next export defaults to it
    if (bIfcResult)
@@ -246,6 +252,10 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
       catch (const std::exception& e)
       {
          strIdsError = e.what(); // e.g. the mapping table can't be used
+      }
+      catch (const WBFL::System::XBase& e)
+      {
+         strIdsError = e.GetErrorMessage().c_str();
       }
 
       CString idsMsg;

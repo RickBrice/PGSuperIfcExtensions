@@ -2217,6 +2217,18 @@ void CreateBarrierSystemRepresentation(hierarchy_helper<Schema>& file, std::shar
    }
 }
 
+// The unit vector along CL Pier, positive to the right (looking ahead on station). IBridge::GetPierDirection is the
+// pier line's direction, which points to the left. The pier line's left and right points can't be used: they're the
+// same point when the pier line's length is zero (e.g. Duckabush_1.spl in PGSplice's regression tests).
+inline WBFL::Geometry::Vector3d GetPierRightDirection(std::shared_ptr<IBridge> pBridge, PierIndexType pierIdx)
+{
+   CComPtr<IDirection> pier_direction;
+   pBridge->GetPierDirection(pierIdx, &pier_direction);
+   Float64 dir;
+   pier_direction->get_Value(&dir);
+   return WBFL::Geometry::Vector3d(-cos(dir), -sin(dir), 0.0);
+}
+
 template <typename Schema>
 std::vector<typename Schema::IfcObjectDefinition> CreatePiers(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
@@ -2511,13 +2523,7 @@ void CreateBearingSeatSurveyPoints(hierarchy_helper<Schema>& file, std::shared_p
          // The origin is at elevation 0.0 so the local z coordinate of each point is its bearing seat elevation.
          Float64 pierStation = pBridge->GetPierStation(pierIdx);
 
-         CComPtr<IPoint2d> pntLeft, pntAlignment, pntBridge, pntRight;
-         pBridge->GetPierPoints(pierIdx, pgsTypes::pcGlobal, &pntLeft, &pntAlignment, &pntBridge, &pntRight);
-         Float64 lx, ly, rx, ry;
-         pntLeft->Location(&lx, &ly);
-         pntRight->Location(&rx, &ry);
-         WBFL::Geometry::Vector3d x_dir(rx - lx, ry - ly, 0.0);
-         x_dir.Normalize();
+         WBFL::Geometry::Vector3d x_dir = GetPierRightDirection(pBridge, pierIdx);
          WBFL::Geometry::Vector3d z_dir(0, 0, 1);
          WBFL::Geometry::Vector3d y_dir = z_dir.Cross(x_dir);
 
@@ -2837,13 +2843,7 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
 
       // local coordinate system of the pier
       Float64 pierStation = pBridge->GetPierStation(pierIdx);
-      CComPtr<IPoint2d> pntLeft, pntAlignment, pntBridge, pntRight;
-      pBridge->GetPierPoints(pierIdx, pgsTypes::pcGlobal, &pntLeft, &pntAlignment, &pntBridge, &pntRight);
-      Float64 lx, ly, rx, ry;
-      pntLeft->Location(&lx, &ly);
-      pntRight->Location(&rx, &ry);
-      WBFL::Geometry::Vector3d x_dir(rx - lx, ry - ly, 0.0);
-      x_dir.Normalize();
+      WBFL::Geometry::Vector3d x_dir = GetPierRightDirection(pBridge, pierIdx);
       WBFL::Geometry::Vector3d z_dir(0, 0, 1);
       WBFL::Geometry::Vector3d y_dir = z_dir.Cross(x_dir);
 
