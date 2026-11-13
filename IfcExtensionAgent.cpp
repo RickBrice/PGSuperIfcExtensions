@@ -38,6 +38,7 @@
 #include "IfcTableIds.h"
 #include "IfcTableFormat.h"
 #include "MenuLogo.h"
+#include "IfcExtensionRegistry.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -60,6 +61,7 @@ bool CIfcExtensionAgent::RegisterInterfaces()
    REGISTER_INTERFACE(IIfcProjectMappingTable);
    REGISTER_INTERFACE(IIfcRoundTrip);
    REGISTER_INTERFACE(IIfcImportLog);
+   REGISTER_INTERFACE(IIfcModelBuilder);
 
    return true;
 }
@@ -91,6 +93,74 @@ bool CIfcExtensionAgent::ShutDown()
 CLSID CIfcExtensionAgent::GetCLSID() const
 {
    return CLSID_PGSuperIfcExtensionAgent;
+}
+
+////////////////////////////////////////////////////////////////////
+// IIfcModelBuilder (export extensions, see devdocs/ExtensionsDesign.md)
+
+int CIfcExtensionAgent::GetApiVersion() const
+{
+   return IFC_EXPORT_EXTENSION_API_VERSION;
+}
+
+std::string CIfcExtensionAgent::GetBuildFingerprint() const
+{
+   return IfcExport::BuildFingerprint();
+}
+
+IfcBuildResult CIfcExtensionAgent::BuildModel(const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension)
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   IfcBuildResult result;
+   CIfcExporter exporter;
+   try
+   {
+      CIfcExportOptions build_options(options);
+      if (extension)
+         build_options.mapping_source = MappingTableSource::ExportExtension; // the extension's table, for messages
+      result.bSucceeded = exporter.BuildModel(m_pBroker, build_options, strFilePath, extension);
+   }
+   catch (const std::exception& e)
+   {
+      // e.g. the mapping table or the extension can't be used, or one of the extension's hooks failed. The message says what to do
+      result.bSucceeded = false;
+      result.error = e.what();
+   }
+   result.table_files = exporter.GetMappingTableFiles();
+   result.log = exporter.GetExtensionLog();
+   return result;
+}
+
+IfcBuildResult CIfcExtensionAgent::WriteTableIds(const CString& strMappingTable, const CString& strIdsPath, IIfcExportExtension* extension)
+{
+   AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   IfcBuildResult result;
+   try
+   {
+      // the extension's targets and element roles, for the table
+      auto pContent = extension ? RegisterExtension(*extension) : nullptr; // outlives the table, which uses its targets
+      CIfcExtensionScope scope(pContent.get());
+
+      std::filesystem::path table_path(strMappingTable.GetString());
+      auto table = CIfcMappingTable::LoadActive(table_path, extension ? MappingTableSource::ExportExtension : MappingTableSource::CommandLine);
+      for (const auto& file : table->GetFiles())
+         result.table_files.push_back(DescribeTableFile(file));
+
+      std::vector<std::string> notes;
+      WriteTableAsIdsFile(*table, std::filesystem::path(strIdsPath.GetString()), notes);
+      for (const auto& note : notes)
+         result.log.push_back("Note: " + note);
+
+      result.bSucceeded = true;
+   }
+   catch (const std::exception& e)
+   {
+      result.bSucceeded = false;
+      result.error = e.what();
+   }
+   return result;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -535,17 +605,14 @@ void CIfcExtensionAgent::TableToIdsFromCommandLine(const CIfcCommandLineInfo& if
       std::filesystem::path table_path(ifcCmdInfo.m_strMappingFile.GetString());
       auto table = CIfcMappingTable::LoadActive(table_path);
       for (const auto& file : table->GetFiles())
-         log << "IFC mapping table \"" << file.name << "\" (version " << file.version << "): " << PathToString(file.path) << ", chosen by " << MappingTableSourceDescription(file.source) << std::endl;
+         log << "IFC mapping table " << DescribeTableFile(file) << ", chosen by " << MappingTableSourceDescription(file.source) << std::endl;
 
-      std::ofstream ids(ifcCmdInfo.m_strToolIdsFile.GetString(), std::ios::binary);
-      if (!ids)
-         throw std::runtime_error("The IDS file can't be written: " + PathToString(std::filesystem::path(ifcCmdInfo.m_strToolIdsFile.GetString())));
-
+      std::filesystem::path ids_path(ifcCmdInfo.m_strToolIdsFile.GetString());
       std::vector<std::string> notes;
-      WriteTableAsIds(*table, ids, notes);
+      WriteTableAsIdsFile(*table, ids_path, notes);
       for (const auto& note : notes)
          log << "Note: " << note << std::endl;
-      log << "IDS written: " << PathToString(std::filesystem::path(ifcCmdInfo.m_strToolIdsFile.GetString())) << std::endl;
+      log << "IDS written: " << PathToString(ids_path) << std::endl;
    }
    catch (const std::exception& e)
    {

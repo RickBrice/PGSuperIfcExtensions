@@ -42,6 +42,7 @@
 #include "IfcProjectMappingTable.h"
 #include "IfcRoundTrip.h"
 #include "ImportResults.h"
+#include "Include\IfcExport\IfcModelBuilder.h"
 
 class CIfcCommandLineInfo;
 
@@ -53,6 +54,7 @@ class CIfcExtensionAgent : public CCmdTarget, // must be first parent for inheri
    public IIfcProjectMappingTable,
    public IIfcRoundTrip,
    public IIfcImportLog,
+   public IIfcModelBuilder,
    public IEditAlignmentCallback,
    public WBFL::EAF::ICommandCallback,
    public IEAFProcessCommandLine
@@ -101,6 +103,13 @@ public:
    void SetImportLog(const std::string& log, const std::wstring& model) override { m_ImportLog = log; m_ImportLogModel = model; }
    const std::string& GetImportLog() const override { return m_ImportLog; }
    const std::wstring& GetImportLogModel() const override { return m_ImportLogModel; }
+
+// IIfcModelBuilder
+public:
+   int GetApiVersion() const override;
+   std::string GetBuildFingerprint() const override;
+   IfcBuildResult BuildModel(const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension) override;
+   IfcBuildResult WriteTableIds(const CString& strMappingTable, const CString& strIdsPath, IIfcExportExtension* extension) override;
 
 // IEditAlignmentCallback
 public:

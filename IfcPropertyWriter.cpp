@@ -26,17 +26,130 @@
 
 CIfcExportSession* CIfcExportSession::ms_pCurrent = nullptr;
 
-CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options)
+// What an export extension's hooks use to write property sets and log (IfcExport::IServices). The file, broker, and options
+// are the hook context's
+class CIfcExportServices : public IfcExport::IServices
+{
+public:
+   explicit CIfcExportServices(CIfcExportSession& session) : m_Session(session)
+   {
+   }
+
+   ElementKind Role(const std::string& name) const override
+   {
+      ElementKind kind;
+      if (!GetElementKind(name, kind))
+         throw CIfcExtensionException("unknown element role \"" + name + "\"");
+      return kind;
+   }
+
+   bool HasPropertySets(ElementKind role) const override
+   {
+      const auto& table = m_Session.GetTable();
+      return !table.GetPropertySets(role, PropertyOwner::Occurrence).empty() || !table.GetPropertySets(role, PropertyOwner::Type).empty() || !table.GetClassifications(role).empty();
+   }
+
+   void WritePropertySets(ElementKind role, const std::vector<IfcExport::Schema::IfcObjectDefinition>& objects, const ExportContext& context) override
+   {
+      ::WritePropertySets<IfcExport::Schema>(Hooks().file, role, objects, WithSession(context));
+   }
+
+   std::vector<IfcExport::Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const ExportContext& context) override
+   {
+      return ::CreateTypePropertySets<IfcExport::Schema>(Hooks().file, role, WithSession(context));
+   }
+
+   IfcExport::Schema::IfcMaterial RebarMaterial(const WBFL::Materials::Rebar& rebar) override
+   {
+      return ::GetExportRebarMaterial(Hooks().file, Hooks().broker, Hooks().options, rebar);
+   }
+
+   void Classify(ElementKind role, IfcExport::Schema::IfcObjectDefinition object) override
+   {
+      ::Classify<IfcExport::Schema>(Hooks().file, role, object, Hooks().options);
+   }
+
+   IfcExport::Schema::IfcGeometricRepresentationSubContext BodySubContext() override
+   {
+      return Hooks().file.getRepresentationSubContext(std::string("Body"), std::string("Model"));
+   }
+
+   void Log(const std::string& line) override
+   {
+      m_Session.m_HookLog.push_back(line);
+   }
+
+private:
+   CIfcExportSession& m_Session;
+
+   const IfcExport::HookContext& Hooks() const { return *m_Session.m_pHookContext; }
+
+   // the context with the broker and options of the export, if the extension left them out
+   ExportContext WithSession(const ExportContext& context) const
+   {
+      ExportContext c(context);
+      if (!c.broker) c.broker = Hooks().broker;
+      if (!c.options) c.options = &Hooks().options;
+      return c;
+   }
+};
+
+CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options, IIfcExportExtension* extension)
 {
    ASSERT(ms_pCurrent == nullptr); // one export at a time
+
+   if (extension)
+      m_pExtensionContent = RegisterExtension(*extension);
+   m_pScope = std::make_unique<CIfcExtensionScope>(m_pExtensionContent.get());
+
    std::filesystem::path path(options.mapping_file.GetString());
    m_pTable = CIfcMappingTable::LoadActive(path, options.mapping_source);
+
+   if (extension)
+      m_pHooks = extension->CreateHooks();
+
    ms_pCurrent = this;
 }
 
 CIfcExportSession::~CIfcExportSession()
 {
+   if (m_pHooks)
+      m_pHooks->OnExportEnd(m_bSucceeded);
+
    ms_pCurrent = nullptr;
+}
+
+void CIfcExportSession::StartHooks(IfcExport::File& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
+{
+   if (!m_pHooks)
+      return;
+
+   m_pServices = std::make_unique<CIfcExportServices>(*this);
+   m_pHookContext = std::make_unique<IfcExport::HookContext>(IfcExport::HookContext{ file, pBroker, options, *m_pServices, m_Elements });
+}
+
+void CIfcExportSession::CallHook(const char* hook, const std::function<void(IfcExport::IHooks&, IfcExport::HookContext&)>& call)
+{
+   if (!m_pHookContext)
+      return;
+
+   auto failed = [this, hook](const std::string& problem)
+      {
+         return CIfcExtensionException("The export extension \"" + m_pExtensionContent->id + "\" failed in " + hook + ": " + problem);
+      };
+
+   try
+   {
+      call(*m_pHooks, *m_pHookContext);
+   }
+   catch (const std::exception& e) // CIfcExtensionException too
+   {
+      throw failed(e.what());
+   }
+   catch (...)
+   {
+      throw failed("unexpected error");
+   }
 }
 
 CIfcExportSession& CIfcExportSession::Current()
