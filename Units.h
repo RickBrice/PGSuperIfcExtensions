@@ -269,9 +269,11 @@ template <typename Schema>
 void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
 {
    using UnitType = typename Schema::IfcUnitEnum::Value;
+   using DerivedUnitType = typename Schema::IfcDerivedUnitEnum::Value;
    std::set<UnitType> used;
+   std::set<DerivedUnitType> used_derived;
 
-   auto use_measure = [&used](const std::string& measure)
+   auto use_measure = [&used, &used_derived](const std::string& measure)
       {
          static const std::map<std::string, UnitType> unit_types{
             {"IfcLengthMeasure", Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT},
@@ -291,6 +293,13 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
             {"IfcQuantityWeight", Schema::IfcUnitEnum::IfcUnit_MASSUNIT},
             {"IfcQuantityTime", Schema::IfcUnitEnum::IfcUnit_TIMEUNIT},
          };
+         // measures of derived units (e.g. values of export extension targets). derived_units, below, says what they're made of
+         static const std::map<std::string, DerivedUnitType> derived_unit_types{
+            {"IfcLinearForceMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT},
+            {"IfcMassDensityMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT},
+            {"IfcTorqueMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_TORQUEUNIT},
+            {"IfcModulusOfElasticityMeasure", Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MODULUSOFELASTICITYUNIT},
+         };
          // measures without units don't need a project unit
          static const std::set<std::string> unitless{
             "IfcRatioMeasure",
@@ -302,8 +311,11 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
             "IfcDescriptiveMeasure",
          };
          auto found = unit_types.find(measure);
+         auto found_derived = derived_unit_types.find(measure);
          if (found != unit_types.end())
             used.insert(found->second);
+         else if (found_derived != derived_unit_types.end())
+            used_derived.insert(found_derived->second);
          else
             ASSERT(!measure.ends_with("Measure") || unitless.contains(measure)); // a measure type with units that isn't handled here - add it to unit_types
       };
@@ -336,9 +348,11 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
    {
       if (auto named_unit = unit.template as<typename Schema::IfcNamedUnit>())
          used.erase(named_unit.UnitType()); // already defined
+      else if (auto derived_unit = unit.template as<typename Schema::IfcDerivedUnit>())
+         used_derived.erase(derived_unit.UnitType());
    }
 
-   if (used.empty())
+   if (used.empty() && used_derived.empty())
       return;
 
    // PGSuper system units are SI (kg, m, Pa, etc)
@@ -353,10 +367,29 @@ void AddUsedProjectUnits(hierarchy_helper<Schema>& file)
       {Schema::IfcUnitEnum::IfcUnit_PRESSUREUNIT, {std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_PASCAL}},
    };
 
+   auto si_unit = [&file](UnitType unit_type)
+      {
+         const auto& [prefix, name] = si_units.at(unit_type);
+         return file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name);
+      };
+
    for (auto unit_type : used)
+      units.push_back(si_unit(unit_type));
+
+   // derived units are products of SI units
+   static const std::map<DerivedUnitType, std::vector<std::pair<UnitType, int64_t>>> derived_units{
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_LINEARFORCEUNIT, {{Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -1}}}, // N/m
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MASSDENSITYUNIT, {{Schema::IfcUnitEnum::IfcUnit_MASSUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -3}}}, // kg/m^3
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_TORQUEUNIT, {{Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, 1}}},        // N m
+      {Schema::IfcDerivedUnitEnum::IfcDerivedUnit_MODULUSOFELASTICITYUNIT, {{Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, 1}, {Schema::IfcUnitEnum::IfcUnit_LENGTHUNIT, -2}}}, // N/m^2
+   };
+   for (auto unit_type : used_derived)
    {
-      const auto& [prefix, name] = si_units.at(unit_type);
-      units.push_back(file.template create<typename Schema::IfcSIUnit>().initialize(unit_type, prefix, name));
+      std::vector<typename Schema::IfcDerivedUnitElement> elements;
+      for (const auto& [element_type, exponent] : derived_units.at(unit_type))
+         elements.push_back(file.template create<typename Schema::IfcDerivedUnitElement>().initialize(si_unit(element_type), exponent));
+
+      units.push_back(file.template create<typename Schema::IfcDerivedUnit>().initialize(elements, unit_type, std::nullopt, std::nullopt));
    }
    unit_assignment.setUnits(units);
 }
