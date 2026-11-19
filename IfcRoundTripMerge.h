@@ -48,7 +48,8 @@ struct RoundTripMergeResult
 //   table's classifications are added where missing. A shared property set, type, or material is copied for an element
 //   whose values differ from the others'.
 // - What PGSuper designs and the source doesn't have is added from PGSuper's model: the strands and bars of girders that
-//   have none in the source (girders with strands or bars keep the source's), bearings, and pier diaphragms. They're placed
+//   have none in the source (girders with strands or bars keep the source's), bearings, pier diaphragms, and the intermediate
+//   diaphragms of spans that have none in the source. They're placed
 //   in the source's coordinates and units and related to the source's elements.
 // - Everything else is kept as it is. Elements of PGSuper's model that the source doesn't have (e.g. a girder added in
 //   PGSuper) aren't added yet; the log lists them.

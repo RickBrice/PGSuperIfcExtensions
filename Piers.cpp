@@ -1198,7 +1198,45 @@ void set_boundary_conditions(std::shared_ptr<WBFL::EAF::Broker> pBroker, ifcopen
    const Float64 inch = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Inch);
    const Float64 feet = WBFL::Units::ConvertToSysUnits(1.0, WBFL::Units::Measure::Feet);
 
-   auto diaphragms = get_element_geometry(file, ElementKind::Diaphragm);
+   // the diaphragms: intermediate diaphragms (diaphragm.type, usBrPset_Diaphragm.DiaphragmType "Intermediate" in the
+   // standard table) aren't at the piers. They're recorded for round trips by the span they're in, and not imported:
+   // PGSuper's intermediate diaphragms come from the diaphragm layout rules of the girder library entries
+   std::vector<BearingGeometry> diaphragms;
+   IndexType nIntermediate = 0;
+   for (auto& diaphragm : get_element_geometry(file, ElementKind::Diaphragm))
+   {
+      auto object = file.instance_by_id(diaphragm.id).as<IfcSchema::IfcObject>();
+      auto reading = object ? CIfcImporter::GetTargetReader().Read("diaphragm.type", object) : std::nullopt;
+      std::string type = (reading && std::holds_alternative<std::string>(reading->value) ? std::get<std::string>(reading->value) : std::string());
+      std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) {return (char)std::tolower(c); });
+      if (type != "intermediate")
+      {
+         diaphragms.push_back(diaphragm);
+         continue;
+      }
+
+      nIntermediate++;
+      CComPtr<IPoint2d> center;
+      center.CoCreateInstance(CLSID_Point2d);
+      center->Move(diaphragm.center.x(), diaphragm.center.y());
+      Float64 station, offset;
+      pAlignment->GetStationAndOffset(pgsTypes::PlanCoordinateType::pcGlobal, center, &station, &offset);
+      for (SpanIndexType spanIdx = 0; spanIdx + 1 < pier_stations.size(); spanIdx++)
+      {
+         if (pier_stations[spanIdx] <= station && station < pier_stations[spanIdx + 1])
+         {
+            CIfcImporter::GetRoundTripRecorder().RecordIntermediateDiaphragm(spanIdx, diaphragm.id);
+            break;
+         }
+      }
+   }
+   if (0 < nIntermediate)
+   {
+      std::_tostringstream os;
+      os << nIntermediate << _T(" intermediate diaphragms found. They aren't imported: PGSuper's intermediate diaphragms come from the diaphragm layout rules of the girder library entries");
+      WBFL::System::Logger::Info(os.str().c_str());
+   }
+
    auto pier_faces = get_pier_faces(layout);
 
    PierIndexType nPiers = bridge_desc.GetPierCount();

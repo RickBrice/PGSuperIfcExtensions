@@ -47,6 +47,7 @@ namespace roundtrip_key
    std::string Girder(SegmentIDType segmentID) { return "girder:" + std::to_string(segmentID); }
    std::string Bearings(SegmentIDType segmentID, pgsTypes::MemberEndType end) { return "bearings:" + std::to_string(segmentID) + (end == pgsTypes::metStart ? ":start" : ":end"); }
    std::string Diaphragms(PierIDType pierID) { return "diaphragms:" + std::to_string(pierID); }
+   std::string IntermediateDiaphragms(PierIDType startPierID) { return "intermediate_diaphragms:" + std::to_string(startPierID); }
    std::string Tendons(SegmentIDType segmentID) { return "tendons:" + std::to_string(segmentID); }
    std::string Bars(SegmentIDType segmentID) { return "bars:" + std::to_string(segmentID); }
 };
@@ -199,6 +200,12 @@ void CRoundTripRecorder::RecordDiaphragm(PierIndexType pierIdx, int entity_id)
    m_Entries.push_back({ Kind::Diaphragm, {}, CSegmentKey(), pierIdx, pgsTypes::metStart, entity_id });
 }
 
+void CRoundTripRecorder::RecordIntermediateDiaphragm(SpanIndexType spanIdx, int entity_id)
+{
+   // keyed by the span's start pier (spans have no IDs)
+   m_Entries.push_back({ Kind::IntermediateDiaphragm, {}, CSegmentKey(), (PierIndexType)spanIdx, pgsTypes::metStart, entity_id });
+}
+
 void CRoundTripRecorder::RecordTendons(const CSegmentKey& segmentKey, int entity_id)
 {
    m_Entries.push_back({ Kind::Tendons, {}, segmentKey, INVALID_INDEX, pgsTypes::metStart, entity_id });
@@ -241,6 +248,7 @@ CRoundTripRegistry CRoundTripRecorder::MakeRegistry(ifcopenshell::file& file, co
       case Kind::Key: key = entry.key; break;
       case Kind::Pier: if (auto id = pier_id(entry.pier)) key = roundtrip_key::Pier(*id); break;
       case Kind::Diaphragm: if (auto id = pier_id(entry.pier)) key = roundtrip_key::Diaphragms(*id); break;
+      case Kind::IntermediateDiaphragm: if (entry.pier + 1 < bridge_desc.GetPierCount()) if (auto id = pier_id(entry.pier)) key = roundtrip_key::IntermediateDiaphragms(*id); break;
       case Kind::Girder: if (auto id = segment_id(entry.segment)) key = roundtrip_key::Girder(*id); break;
       case Kind::Bearing: if (auto id = segment_id(entry.segment)) key = roundtrip_key::Bearings(*id, entry.end); break;
       case Kind::Tendons: if (auto id = segment_id(entry.segment)) key = roundtrip_key::Tendons(*id); break;

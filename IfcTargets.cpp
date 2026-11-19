@@ -512,10 +512,22 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(support_condition(c, false)); } },
 
       //
-      // Pier diaphragms (PGSuper uses the deck concrete for them)
+      // Pier diaphragms and intermediate diaphragms (PGSuper uses the deck concrete for them)
       //
-      { .name = "diaphragm.support_condition", .element = ElementKind::Diaphragm, .kind = ValueKind::Text, .description = "support condition of the pier (its boundary condition): Fixed (hinge), Expansion (roller), or Continuous (continuous or integral)",
-        .get = [](const ExportContext& c) { return ExportValue(support_condition(c, true)); } },
+      { .name = "diaphragm.type", .element = ElementKind::Diaphragm, .kind = ValueKind::Text, .description = "diaphragm type: End (a pier diaphragm) or Intermediate",
+        .get = [](const ExportContext& c) { return ExportValue(std::string(c.intermediate_diaphragm ? "Intermediate" : "End")); } },
+      { .name = "diaphragm.support_condition", .element = ElementKind::Diaphragm, .kind = ValueKind::Text, .description = "support condition of the pier (its boundary condition): Fixed (hinge), Expansion (roller), or Continuous (continuous or integral). Pier diaphragms only",
+        .get = [](const ExportContext& c) { return c.intermediate_diaphragm ? ExportValue::Absent() : ExportValue(support_condition(c, true)); } },
+      { .name = "diaphragm.length", .element = ElementKind::Diaphragm, .kind = ValueKind::Length, .description = "length of an intermediate diaphragm, from web face to web face", .display_unit = DU::SpanLength,
+        .get = [](const ExportContext& c) { return c.intermediate_diaphragm ? ExportValue(c.intermediate_diaphragm->length) : ExportValue::Absent(); } },
+      { .name = "diaphragm.cross_section_area", .element = ElementKind::Diaphragm, .kind = ValueKind::Area, .description = "cross section area of an intermediate diaphragm (height times thickness)", .display_unit = DU::SmallArea,
+        .get = [](const ExportContext& c)
+         {
+            const auto* d = c.intermediate_diaphragm;
+            return d && d->bGeometry ? ExportValue(d->height * d->thickness) : ExportValue::Absent();
+         } },
+      { .name = "diaphragm.gross_weight", .element = ElementKind::Diaphragm, .kind = ValueKind::Mass, .description = "mass of an intermediate diaphragm, as PGSuper's diaphragm load has it (weight and mass are the same in IfcQuantityWeight)", .display_unit = DU::Mass,
+        .get = [](const ExportContext& c) { return c.intermediate_diaphragm ? ExportValue(c.intermediate_diaphragm->mass) : ExportValue::Absent(); } },
       { .name = "diaphragm.fc", .element = ElementKind::Diaphragm, .kind = ValueKind::Stress, .description = "diaphragm concrete strength, f'c", .display_unit = DU::Stress,
         .get = [](const ExportContext& c) { return ExportValue(deck_fc(c)); } },
       { .name = "diaphragm.strength_class", .element = ElementKind::Diaphragm, .kind = ValueKind::Text, .description = "diaphragm concrete strength class",

@@ -451,12 +451,12 @@
     {
       "name": "usBrPset_Diaphragm", "applies_to": "diaphragm", "uri": "bsdd",
       "properties": [
-        {"name": "DiaphragmType", "type": "IfcLabel", "value": "End", "uri": "bsdd", "comment": "PGSuper's pier diaphragms are at the girder ends"}
+        {"name": "DiaphragmType", "type": "IfcLabel", "target": "diaphragm.type", "uri": "bsdd", "comment": "End for PGSuper's pier diaphragms, Intermediate for its intermediate diaphragms"}
       ]
     },
     {
       "name": "PGSuperPset_Diaphragm", "applies_to": "diaphragm",
-      "comment": "The pier's boundary condition where the model may have no bearings (decided 2026-10-23). Continuous diaphragms also show it by spanning the CL pier",
+      "comment": "The pier's boundary condition where the model may have no bearings (decided 2026-10-23). Continuous diaphragms also show it by spanning the CL pier. Pier diaphragms only",
       "properties": [
         {"name": "SupportCondition", "type": "IfcLabel", "target": "diaphragm.support_condition"}
       ]
@@ -521,6 +521,15 @@
         {"name": "CrossSectionArea", "type": "IfcQuantityArea", "target": "girder.cross_section_area"},
         {"name": "OuterSurfaceArea", "type": "IfcQuantityArea", "target": "girder.outer_surface_area"},
         {"name": "GrossWeight", "type": "IfcQuantityWeight", "target": "girder.gross_weight"}
+      ]
+    },
+    {
+      "name": "Qto_BeamBaseQuantities", "applies_to": "diaphragm", "condition": "quantities", "method": "BaseQuantities",
+      "comment": "Intermediate diaphragms only. GrossWeight is PGSuper's diaphragm load, also when the library rule gives only the weight (the diaphragm then has no geometry)",
+      "quantities": [
+        {"name": "Length", "type": "IfcQuantityLength", "target": "diaphragm.length"},
+        {"name": "CrossSectionArea", "type": "IfcQuantityArea", "target": "diaphragm.cross_section_area"},
+        {"name": "GrossWeight", "type": "IfcQuantityWeight", "target": "diaphragm.gross_weight"}
       ]
     },
     {

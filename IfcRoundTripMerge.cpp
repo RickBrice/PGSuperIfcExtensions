@@ -119,7 +119,7 @@ namespace
       if (prefix == "pier") return { ElementKind::Pier, ElementKind::Abutment };
       if (prefix == "girder") return { ElementKind::Girder };
       if (prefix == "bearings") return { ElementKind::Bearing };
-      if (prefix == "diaphragms") return { ElementKind::Diaphragm };
+      if (prefix == "diaphragms" || prefix == "intermediate_diaphragms") return { ElementKind::Diaphragm };
       if (prefix == "tendons") return { ElementKind::TendonBundle };
       if (prefix == "bars") return { ElementKind::ReinforcementCage };
       return {};
@@ -417,6 +417,23 @@ namespace
                // the model's diaphragms at the pier get PGSuper's diaphragm values; PGSuper's aren't added
                for (const auto& s : source)
                   m_Matches.push_back({ key, exported.front(), s });
+            }
+            continue;
+         }
+
+         if (prefix == "intermediate_diaphragms")
+         {
+            if (source.empty())
+            {
+               for (const auto& e : exported)
+                  m_Additions.push_back({ e.as<IfcSchema::IfcProduct>(), {}, "intermediate diaphragm" });
+            }
+            else if (!exported.empty())
+            {
+               // not matched one by one yet (their values differ, e.g. GrossWeight), so the model's are kept as they are
+               std::ostringstream os;
+               os << "The model has " << source.size() << " intermediate diaphragms at " << key << " and PGSuper " << exported.size() << ": the model's diaphragms aren't changed.";
+               Log(os.str());
             }
             continue;
          }

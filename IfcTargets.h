@@ -40,6 +40,20 @@ class CBearingData2;
 struct BearingElevationDetails;
 struct BarDefinition;
 
+// An intermediate diaphragm the IFC export writes: the cast-in-place diaphragm of one bay of a span, made of the halves
+// PGSuper gives the girders on either side (IBridge::GetCastInPlaceDiaphragms), from web face to web face
+struct IntermediateDiaphragmDetails
+{
+   SpanIndexType span = INVALID_INDEX;
+   GirderIndexType left_girder = INVALID_INDEX; // the bay is between this girder and the next
+   IndexType index = INVALID_INDEX;             // the diaphragm's position in the girders' lists
+   bool bGeometry = false;  // false: PGSuper has only the diaphragm's weight (the library rule's weight is input)
+   Float64 height = 0;      // when bGeometry
+   Float64 thickness = 0;   // along the girders, when bGeometry
+   Float64 length = 0;      // web face to web face
+   Float64 mass = 0;        // the mass of PGSuper's diaphragm load for the bay
+};
+
 // The kind of PGSuper item a target belongs to. Mapping table element roles (e.g. "girder") use these names
 enum class ElementKind
 {
@@ -65,7 +79,7 @@ enum class ElementKind
    Deck,
    Haunch,
    Bearing,
-   Diaphragm,      // IfcBeam.DIAPHRAGM, a pier diaphragm
+   Diaphragm,      // IfcBeam.DIAPHRAGM, a pier diaphragm or an intermediate diaphragm
    Barrier
 };
 
@@ -116,6 +130,7 @@ struct ExportContext
    pgsTypes::TrafficBarrierOrientation barrier_side = pgsTypes::tboLeft; // Barrier
    const CBearingData2* bearing = nullptr; // Bearing
    const BearingElevationDetails* bearing_elevation = nullptr; // Bearing: its location and elevations
+   const IntermediateDiaphragmDetails* intermediate_diaphragm = nullptr; // Diaphragm: an intermediate diaphragm (pier is INVALID_INDEX)
 };
 
 // The value a target's getter gives the exporter

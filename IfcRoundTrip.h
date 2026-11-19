@@ -54,6 +54,7 @@ namespace roundtrip_key
    std::string Girder(SegmentIDType segmentID);                             // IfcBeam of a segment
    std::string Bearings(SegmentIDType segmentID, pgsTypes::MemberEndType end); // IfcBearing at a segment end, in order
    std::string Diaphragms(PierIDType pierID);                               // pier diaphragms
+   std::string IntermediateDiaphragms(PierIDType startPierID);              // the intermediate diaphragms of the span that starts at the pier
    std::string Tendons(SegmentIDType segmentID);                            // the source has the segment's strands
    std::string Bars(SegmentIDType segmentID);                               // the source has the segment's reinforcing bars
 };
@@ -116,6 +117,7 @@ public:
    void RecordGirder(const CSegmentKey& segmentKey, int entity_id);
    void RecordBearing(const CSegmentKey& segmentKey, pgsTypes::MemberEndType end, int entity_id);
    void RecordDiaphragm(PierIndexType pierIdx, int entity_id);
+   void RecordIntermediateDiaphragm(SpanIndexType spanIdx, int entity_id);
    void RecordTendons(const CSegmentKey& segmentKey, int entity_id); // entity_id: the girder
    void RecordBars(const CSegmentKey& segmentKey, int entity_id);
 
@@ -123,7 +125,7 @@ public:
    CRoundTripRegistry MakeRegistry(ifcopenshell::file& file, const CBridgeDescription2& bridge_desc, const SourceModel& source) const;
 
 private:
-   enum class Kind { Key, Pier, Girder, Bearing, Diaphragm, Tendons, Bars };
+   enum class Kind { Key, Pier, Girder, Bearing, Diaphragm, IntermediateDiaphragm, Tendons, Bars };
    struct Entry
    {
       Kind kind;

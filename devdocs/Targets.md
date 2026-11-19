@@ -177,13 +177,20 @@ The context carries the `CBearingData2` of the girder at the pier face (`CPierDa
 | `bearing.girder_slope` | Ratio | `BearingElevationDetails::GirderGrade` | – |
 | `bearing.support_condition` | Text | the pier's boundary condition (`CPierData2::GetBoundaryConditionType`), not the elastomeric bearing's fixity: "Fixed" for a hinge, "Expansion" for a roller, "Fixed" for continuous and integral connections (PGSuper's analysis pins the girders there) | `set_boundary_conditions` (`Piers.cpp`): hinge or roller for the pier when no diaphragm makes it continuous ("Fixed", "Hinge", "Pinned" → hinge; "Expansion", "Roller", "Free", "Sliding" → roller), set with `CPierData2::SetBoundaryConditionType` |
 
-### Pier diaphragms (`IfcBeam.DIAPHRAGM`)
+### Diaphragms (`IfcBeam.DIAPHRAGM`): pier diaphragms and intermediate diaphragms
 
-The context carries the pier index. PGSuper uses the deck concrete for the diaphragms. The exporter writes the diaphragms from `IBridge::GetPierDiaphragmSize` (`CreatePierDiaphragms`); the import reads continuity from their geometry (a diaphragm that the girder ends of both spans are in makes the pier continuous after the deck), see Phase 2 in [IfcImportPlan.md](IfcImportPlan.md).
+PGSuper uses the deck concrete for the diaphragms.
+
+- **Pier diaphragms:** the context carries the pier index. The exporter writes them from `IBridge::GetPierDiaphragmSize` (`CreatePierDiaphragms`); the import reads continuity from their geometry (a diaphragm that the girder ends of both spans are in makes the pier continuous after the deck), see Phase 2 in [IfcImportPlan.md](IfcImportPlan.md).
+- **Intermediate diaphragms (2026-11-19):** the context carries `IntermediateDiaphragmDetails` (span, left girder of the bay, index, dimensions, mass; the pier is `INVALID_INDEX`). The exporter writes one for each bay of a span from the cast-in-place diaphragms PGSuper gives the girders on either side (`IBridge::GetCastInPlaceDiaphragms`, from the girder library's diaphragm layout rules), paired by their position in the girders' lists (`CreateIntermediateDiaphragms`). It runs from web face to web face along the line through the CL girders at the diaphragm locations; its top is the bottom of the slab, as the pier diaphragms', its height and thickness are the rule's. A rule that gives only the weight makes a diaphragm without geometry, whose `GrossWeight` has the weight. The import recognizes them by `diaphragm.type` "Intermediate", leaves them out of the pier logic, records them for round trips by span, and doesn't import them (PGSuper's come from the library rules; fitting rules is Phase 5 work). Precast diaphragms (`GetPrecastDiaphragms`, inside multi-web girders) aren't exported yet.
 
 | Target | Kind | Export: PGSuper data | Import |
 |---|---|---|---|
-| `diaphragm.support_condition` | Text | the pier's boundary condition: "Fixed" (hinge, and an integral abutment), "Expansion" (roller), or "Continuous" (continuous and integral connections; integral ones are exported as continuous for now) | `set_boundary_conditions`, after the diaphragm geometry and the bearings' `bearing.support_condition`: hinge, roller, or continuous after the deck |
+| `diaphragm.type` | Text | "End" for a pier diaphragm, "Intermediate" for an intermediate diaphragm (usBridge's `DiaphragmType` values) | `set_boundary_conditions` (`Piers.cpp`): "Intermediate" diaphragms aren't pier diaphragms |
+| `diaphragm.support_condition` | Text | the pier's boundary condition: "Fixed" (hinge, and an integral abutment), "Expansion" (roller), or "Continuous" (continuous and integral connections; integral ones are exported as continuous for now). Absent on intermediate diaphragms | `set_boundary_conditions`, after the diaphragm geometry and the bearings' `bearing.support_condition`: hinge, roller, or continuous after the deck |
+| `diaphragm.length` | Length | intermediate diaphragms: web face to web face | – |
+| `diaphragm.cross_section_area` | Area | intermediate diaphragms: the rule's height times its thickness (absent when the rule gives only the weight) | – |
+| `diaphragm.gross_weight` | Mass | intermediate diaphragms: the mass of PGSuper's diaphragm load for the bay (H·T·length times `IMaterials::GetDiaphragmWeightDensity`, or the rule's weight per length times the length, over g) | – |
 | `diaphragm.fc` | Stress | `IMaterials::GetDeckFc28` | – |
 | `diaphragm.strength_class` | Text | the same, formatted | – |
 | `diaphragm.max_aggregate_size` | Length | `IMaterials::GetDeckMaxAggrSize` | – |

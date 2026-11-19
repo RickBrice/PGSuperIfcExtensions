@@ -2895,8 +2895,9 @@ typename Schema::IfcPolygonalFaceSet CreateDiaphragmFaceSet(hierarchy_helper<Sch
 // exterior girders outside of them. Its top follows the bottom of the slab at the girders, measured on the CL pier or CL bearing line.
 // The placement is at the intersection of the alignment and the CL pier at elevation 0, with x along the CL pier
 // (positive to the right), y normal to the CL pier (positive ahead on station), and z up, the same as the bearing seat survey point set.
+// Returns the diaphragms (AssociateDiaphragmMaterial gives them their material)
 template <typename Schema>
-void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart superstructure, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)
+std::vector<typename Schema::IfcDefinitionSelect> CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart superstructure, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)
 {
    USES_CONVERSION;
 
@@ -3138,13 +3139,237 @@ void CreatePierDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
       }
    }
 
-   if (diaphragms.empty())
-      return;
+   for (auto& diaphragm : contained_diaphragms)
+      file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, diaphragm);
+
+   return diaphragms;
+}
+
+// Creates an IfcBeam::DIAPHRAGM for each cast-in-place intermediate diaphragm (PGSuper's diaphragm layout rules of the
+// girder library entries, IBridge::GetCastInPlaceDiaphragms), one for each bay of a span: PGSuper gives each girder the
+// halves of its diaphragms in the bays on either side, which are paired by their position in the lists of the girders on
+// either side of the bay, as PGSuper's Bridge Plan View pairs them. They're contained in the superstructure, like the pier
+// diaphragms (usBridge's "Concrete Diaphragm"), with usBrPset_Diaphragm.DiaphragmType "Intermediate" (diaphragm.type).
+//
+// The diaphragm runs from the right web face of the left girder to the left web face of the right girder, along the
+// line through the CL girders at the diaphragm locations (each measured along its girder, so skewed and flared girders
+// are followed). Its top is the bottom of the slab at either end (as the pier diaphragms' top), its height is the
+// rule's height down from there, and its thickness (the rule's, along the girders) is centered on the line. The
+// placement is at the left end at elevation 0, with x along the diaphragm, y to its left (ahead on station), and z up.
+// When the rule gives only the weight (the weight is input), the diaphragm has no representation: its placement locates
+// it, and Qto_BeamBaseQuantities.GrossWeight (diaphragm.gross_weight) has its weight.
+// Precast diaphragms (cast with the girder, IBridge::GetPrecastDiaphragms) aren't exported yet
+template <typename Schema>
+std::vector<typename Schema::IfcDefinitionSelect> CreateIntermediateDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart superstructure, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)
+{
+   USES_CONVERSION;
+
+   GET_IFACE2(pBroker, IBridge, pBridge);
+   GET_IFACE2(pBroker, IGirder, pGirder);
+   GET_IFACE2(pBroker, IRoadway, pAlignment);
+   GET_IFACE2(pBroker, IBridgeDescription, pIBridgeDesc);
+   GET_IFACE2(pBroker, IPointOfInterest, pPoi);
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   GET_IFACE2(pBroker, IIntervals, pIntervals);
+   const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
+
+   Float64 startStation, startElevation, startGrade;
+   GetAlignmentStartPoint(pBroker, &startStation, &startElevation, &startGrade);
+
+   typename Schema::IfcCurve basis_curve = {};
+   if (options.beam_placement == CIfcExportOptions::BeamPlacement::Linear)
+   {
+      if (auto gc = GetAlignmentDirectrix(file, options).template as<typename Schema::IfcGradientCurve>())
+      {
+         basis_curve = gc.BaseCurve();
+      }
+   }
+
+   // PGSuper's diaphragm loads: H*T*W times this density for computed weights (CGirderModelManager::GetIntermediateDiaphragmLoads)
+   Float64 density = pMaterials->GetDiaphragmWeightDensity(pIntervals->GetCastIntermediateDiaphragmsInterval());
+   Float64 g = WBFL::Units::System::GetGravitationalAcceleration();
+
+   std::vector<typename Schema::IfcDefinitionSelect> diaphragms;
+   std::vector<typename Schema::IfcProduct> contained_diaphragms;
+
+   SpanIndexType nSpans = pBridge->GetSpanCount();
+   for (SpanIndexType spanIdx = 0; spanIdx < nSpans; spanIdx++)
+   {
+      PierIDType startPierID = pBridgeDesc->GetPier(spanIdx)->GetID();
+      GirderIndexType nGirders = pBridge->GetGirderCountBySpan(spanIdx);
+      for (GirderIndexType gdrIdx = 0; gdrIdx + 1 < nGirders; gdrIdx++)
+      {
+         CSpanKey leftKey(spanIdx, gdrIdx), rightKey(spanIdx, gdrIdx + 1);
+         auto left = pBridge->GetCastInPlaceDiaphragms(leftKey);
+         auto right = pBridge->GetCastInPlaceDiaphragms(rightKey);
+         if (left.size() != right.size())
+         {
+            std::_tostringstream os;
+            os << _T("Span ") << LABEL_SPAN(spanIdx) << _T(": Girders ") << LABEL_GIRDER(gdrIdx) << _T(" and ") << LABEL_GIRDER(gdrIdx + 1)
+               << _T(" have different numbers of intermediate diaphragms (") << left.size() << _T(" and ") << right.size() << _T("). The diaphragms between them aren't exported.");
+            WBFL::System::Logger::Warning(os.str().c_str());
+            continue;
+         }
+
+         for (IndexType i = 0; i < left.size(); i++)
+         {
+            const auto& dl = left[i];
+            const auto& dr = right[i];
+            if (IsZero(dl.W) || IsZero(dr.W))
+               continue; // no width (PGSuper's Bridge Plan View doesn't draw it either)
+
+            // the CL girders at the diaphragm, and the web faces toward the bay (offsets normal to the girder)
+            auto poiLeft = pPoi->ConvertSpanPointToPoi(leftKey, dl.Location);
+            auto poiRight = pPoi->ConvertSpanPointToPoi(rightKey, dr.Location);
+            auto plan_point = [&](const pgsPointOfInterest& poi)
+               {
+                  CComPtr<IPoint2d> pnt;
+                  pBridge->GetPoint(poi, pgsTypes::pcGlobal, &pnt);
+                  Float64 x, y;
+                  pnt->Location(&x, &y);
+                  return WBFL::Geometry::Vector3d(x, y, 0.0);
+               };
+            auto right_normal = [&](const pgsPointOfInterest& poi)
+               {
+                  CComPtr<IDirection> direction;
+                  pGirder->GetSegmentDirection(poi.GetSegmentKey(), &direction);
+                  Float64 dir;
+                  direction->get_Value(&dir);
+                  return WBFL::Geometry::Vector3d(sin(dir), -cos(dir), 0.0);
+               };
+            auto web_face_offset = [&](const pgsPointOfInterest& poi, bool bRightFace)
+               {
+                  WebIndexType nWebs = pGirder->GetWebCount(poi.GetSegmentKey());
+                  WebIndexType webIdx = (bRightFace ? nWebs - 1 : 0);
+                  return fabs(pGirder->GetWebLocation(poi, webIdx)) + pGirder->GetWebThickness(poi, webIdx) / 2;
+               };
+
+            auto pL = plan_point(poiLeft);
+            auto pR = plan_point(poiRight);
+            auto line = pR - pL;
+            Float64 cl_length = line.GetMagnitude();
+            if (IsZero(cl_length))
+               continue;
+            auto x_dir = line.NormalizeBy();
+
+            // along the line from each CL girder to its web face
+            Float64 cosL = x_dir.Dot(right_normal(poiLeft));
+            Float64 cosR = x_dir.Dot(right_normal(poiRight));
+            if (IsLE(cosL, 0.0) || IsLE(cosR, 0.0))
+               continue; // the line doesn't cross the girders (it can't, for girders on either side of a bay)
+            Float64 sL = web_face_offset(poiLeft, true) / cosL;
+            Float64 sR = web_face_offset(poiRight, false) / cosR;
+            Float64 length = cl_length - sL - sR;
+            if (IsLE(length, 0.0))
+               continue;
+
+            auto start = pL + x_dir.ScaleBy(sL);
+            auto end = pL + x_dir.ScaleBy(sL + length);
+            WBFL::Geometry::Vector3d z_dir(0, 0, 1);
+
+            // the bottom of the slab at a point, below the girder at poi
+            auto top_elevation = [&](const WBFL::Geometry::Vector3d& p, const pgsPointOfInterest& poi)
+               {
+                  CComPtr<IPoint2d> pnt;
+                  pnt.CoCreateInstance(CLSID_Point2d);
+                  pnt->Move(p.X(), p.Y());
+                  Float64 station, offset;
+                  pAlignment->GetStationAndOffset(pgsTypes::pcGlobal, pnt, &station, &offset);
+                  return pAlignment->GetElevation(station, offset) - pBridge->GetGrossSlabDepth(poi);
+               };
+
+            // the halves of the girders on either side: computed from the dimensions, or a weight per length
+            IntermediateDiaphragmDetails details;
+            details.span = spanIdx;
+            details.left_girder = gdrIdx;
+            details.index = i;
+            details.length = length;
+            details.bGeometry = dl.m_bCompute || dr.m_bCompute;
+            if (details.bGeometry)
+            {
+               // the computed halves give the dimensions (they're the same unless the girders use different library entries)
+               Float64 n = (dl.m_bCompute ? 1 : 0) + (dr.m_bCompute ? 1 : 0);
+               details.height = ((dl.m_bCompute ? dl.H : 0) + (dr.m_bCompute ? dr.H : 0)) / n;
+               details.thickness = ((dl.m_bCompute ? dl.T : 0) + (dr.m_bCompute ? dr.T : 0)) / n;
+               if (IsLE(details.height, 0.0) || IsLE(details.thickness, 0.0))
+                  details.bGeometry = false;
+            }
+            auto half_mass = [&](const IntermediateDiaphragm& d)
+               {
+                  Float64 weight_per_length = (d.m_bCompute ? d.H * d.T * density * g : d.P / d.W); // P is the girder's total
+                  return weight_per_length * length / 2 / g;
+               };
+            details.mass = half_mass(dl) + half_mass(dr);
+
+            typename Schema::IfcProductDefinitionShape product_definition_shape;
+            if (details.bGeometry)
+            {
+               // in the local coordinates of the placement
+               std::vector<DiaphragmPoint> points{ {0.0, top_elevation(start, poiLeft)}, {length, top_elevation(end, poiRight)} };
+               auto solid = CreateDiaphragmFaceSet<Schema>(file, points, details.height, -details.thickness / 2, details.thickness / 2);
+               StyleRepresentationItem<Schema>(file, solid, GetSurfaceStyle<Schema>(file, "Diaphragm", DECK_FILL_COLOR));
+
+               std::vector<typename Schema::IfcRepresentationItem> representation_items;
+               representation_items.push_back(solid);
+               std::vector<typename Schema::IfcRepresentation> shape_representation_list;
+               shape_representation_list.push_back(file.create<typename Schema::IfcShapeRepresentation>().initialize(pGeometricRepresentationSubContext, std::string("Body"), std::string("Tessellation"), representation_items));
+               product_definition_shape = file.create<typename Schema::IfcProductDefinitionShape>().initialize(std::nullopt, std::nullopt, shape_representation_list);
+            }
+
+            typename Schema::IfcObjectPlacement placement;
+            if (basis_curve)
+            {
+               CComPtr<IPoint2d> pnt;
+               pnt.CoCreateInstance(CLSID_Point2d);
+               pnt->Move(start.X(), start.Y());
+               Float64 station, offset;
+               pAlignment->GetStationAndOffset(pgsTypes::pcGlobal, pnt, &station, &offset);
+
+               // per PGSuper, positive offset is to the right, per IFC, positive value is to the left.... use -offset
+               auto pde = file.create<typename Schema::IfcPointByDistanceExpression>().initialize(file.create<typename Schema::IfcLengthMeasure>().initialize(station - startStation), -offset, std::nullopt, std::nullopt, basis_curve);
+               auto a2pl = file.create<typename Schema::IfcAxis2PlacementLinear>().initialize(pde,
+                  file.create<typename Schema::IfcDirection>().initialize({ z_dir.X(), z_dir.Y(), z_dir.Z() }),
+                  file.create<typename Schema::IfcDirection>().initialize({ x_dir.X(), x_dir.Y(), x_dir.Z() }));
+               auto fallback_placement = file.addPlacement3d(start.X(), start.Y(), 0.0, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+               placement = file.create<typename Schema::IfcLinearPlacement>().initialize({}, a2pl, fallback_placement);
+            }
+            else
+            {
+               placement = file.addLocalPlacement({}, start.X(), start.Y(), 0.0, z_dir.X(), z_dir.Y(), z_dir.Z(), x_dir.X(), x_dir.Y(), x_dir.Z());
+            }
+
+            std::ostringstream os;
+            os << "Span " << T2A(LABEL_SPAN(spanIdx)) << ", Girders " << T2A(LABEL_GIRDER(gdrIdx)) << "-" << T2A(LABEL_GIRDER(gdrIdx + 1)) << " Intermediate Diaphragm " << (i + 1);
+            auto diaphragm = file.create<typename Schema::IfcBeam>().initialize(ifcopenshell::global_id(), {}, os.str(), std::nullopt, std::nullopt,
+               placement, product_definition_shape, std::nullopt, Schema::IfcBeamTypeEnum::IfcBeamType_DIAPHRAGM);
+
+            diaphragms.push_back(diaphragm);
+            contained_diaphragms.push_back(diaphragm);
+            Identify(options, roundtrip_key::IntermediateDiaphragms(startPierID), diaphragm);
+
+            ExportContext context{ pBroker, &options };
+            context.segment = poiLeft.GetSegmentKey();
+            context.intermediate_diaphragm = &details;
+            Classify<Schema>(file, ElementKind::Diaphragm, diaphragm, options);
+            WritePropertySets<Schema>(file, ElementKind::Diaphragm, diaphragm, context);
+         }
+      }
+   }
 
    for (auto& diaphragm : contained_diaphragms)
       file.addRelatedObject<typename Schema::IfcRelContainedInSpatialStructure>(superstructure, diaphragm);
 
-   // PGSuper's diaphragm loads use the deck concrete
+   return diaphragms;
+}
+
+// Associates the deck concrete with the diaphragms (PGSuper's diaphragm loads use it)
+template <typename Schema>
+void AssociateDiaphragmMaterial(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const std::vector<typename Schema::IfcDefinitionSelect>& diaphragms)
+{
+   if (diaphragms.empty())
+      return;
+
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
    ExportContext context{ pBroker, &options };
    auto material = GetConcreteMaterial<Schema>(file, pBroker, options, pMaterials->GetDeckFc28(), pMaterials->GetDeckMaxAggrSize(), ElementKind::Diaphragm, context);
    file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::string("Associates_Concrete_to_Diaphragms"), std::nullopt, diaphragms, material);
@@ -3419,7 +3644,12 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    auto rel_associates_materials = file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, barrier_list, material);
 
    ReportProgress(pBroker, _T("Exporting the pier diaphragms"));
-   CreatePierDiaphragms<Schema>(file, pBroker, options, superstructure, body_model_representation_subcontext);
+   auto diaphragms = CreatePierDiaphragms<Schema>(file, pBroker, options, superstructure, body_model_representation_subcontext);
+
+   ReportProgress(pBroker, _T("Exporting the intermediate diaphragms"));
+   auto intermediate_diaphragms = CreateIntermediateDiaphragms<Schema>(file, pBroker, options, superstructure, body_model_representation_subcontext);
+   diaphragms.insert(diaphragms.end(), intermediate_diaphragms.begin(), intermediate_diaphragms.end());
+   AssociateDiaphragmMaterial<Schema>(file, pBroker, options, diaphragms);
 
 
 
