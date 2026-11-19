@@ -1,4 +1,4 @@
-Exported D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\models\PGSuper_Superelevation.pgs with property values in system units
-IFC mapping table "Standard (TPF/usBridge)" (version 1): D:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap
-IFC export succeeded: D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Superelevation-NoProfile-System.ifc
-IDS export succeeded: D:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Superelevation-NoProfile-System.ids
+Exported F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\models\PGSuper_Superelevation.pgs with property values in system units
+IFC mapping table "Standard (TPF/usBridge)" (version 1): F:\ARP\BridgeLink\RegFreeCOM\x64\Release\MappingTables\Standard.ifcmap
+IFC export succeeded: F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Superelevation-NoProfile-System.ifc
+IDS export succeeded: F:\ARP\PGSuperIfcExtensions\Tests\ImportValidation\results\PGSuper-Superelevation-NoProfile-System.ids
