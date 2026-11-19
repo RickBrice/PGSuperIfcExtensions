@@ -36,6 +36,7 @@ IMPLEMENT_DYNAMIC(CIdsExportOptionsDlg, CPropertyPage)
 CIdsExportOptionsDlg::CIdsExportOptionsDlg()
    : CPropertyPage(IDD_IDS_EXPORT_OPTIONS)
 {
+   options.include_rebar = false; // as the IFC tab, whose bars are left out unless they're asked for (CExportOptions)
 }
 
 CIdsExportOptionsDlg::~CIdsExportOptionsDlg()

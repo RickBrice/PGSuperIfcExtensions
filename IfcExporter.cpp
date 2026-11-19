@@ -272,8 +272,9 @@ typename Schema::IfcCurve CreatePolyline(hierarchy_helper<Schema>& file, IShape*
 }
 
 
-template <typename Schema>
-typename Schema::IfcProfileDef CreateSectionProfile(hierarchy_helper<Schema>& file, std::shared_ptr<IShapes> pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcExportOptions& options,double cut_angle=PI_OVER_2)
+// The outer outline of a girder's section (without voids), oriented and in girder section coordinates (origin at the top
+// of the CL girder, x to the right looking ahead along the girder, y up), as the girder solids are exported
+CComPtr<IShape> GetGirderSectionShape(std::shared_ptr<IShapes> pShapes, const pgsPointOfInterest& poi, IntervalIndexType intervalIdx)
 {
    CComPtr<IShape> shape;
    IndexType gdrIdx, slabIdx;
@@ -297,6 +298,13 @@ typename Schema::IfcProfileDef CreateSectionProfile(hierarchy_helper<Schema>& fi
    {
       gdrShape = _gdrShape;
    }
+   return gdrShape;
+}
+
+template <typename Schema>
+typename Schema::IfcProfileDef CreateSectionProfile(hierarchy_helper<Schema>& file, std::shared_ptr<IShapes> pShapes,const pgsPointOfInterest& poi,IntervalIndexType intervalIdx, const CIfcExportOptions& options,double cut_angle=PI_OVER_2)
+{
+   auto gdrShape = GetGirderSectionShape(pShapes, poi, intervalIdx);
 
    auto polyline = CreatePolyline<Schema>(file, gdrShape, options, cut_angle);
    auto girder_section = file.create<typename Schema::IfcArbitraryClosedProfileDef>().initialize(Schema::IfcProfileTypeEnum::IfcProfileType_AREA, std::string("CrossSectionProfile"), polyline);
@@ -3145,17 +3153,132 @@ std::vector<typename Schema::IfcDefinitionSelect> CreatePierDiaphragms(hierarchy
    return diaphragms;
 }
 
+// A point of a girder outline in the vertical plane of an intermediate diaphragm: s along the diaphragm line, d down
+// from the bottom of the slab
+struct BaySidePoint { Float64 s; Float64 d; };
+
+// The side of a girder's outline that faces a bay, from the bottom of the slab (d = 0) down to the bottom of the
+// diaphragm (d = height): at each depth, the outline's largest s (bMax, the left girder's right side) or smallest s (the
+// right girder's left side). Above the girder (the haunch), the side goes straight up from the outline's top corner toward
+// the bay; below it, the outline's extreme at its bottom is used. Where the outline steps (e.g. the underside of a flange), there are two points at that depth. Works for any
+// girder outline (I-beams, bulb tees, U-beams, boxes, ...). Empty if the outline isn't usable
+std::vector<BaySidePoint> GetBaySide(const std::vector<BaySidePoint>& outline, Float64 height, bool bMax)
+{
+   const Float64 eps = 1.0e-6;
+   if (outline.size() < 3)
+      return {};
+   auto [lo, hi] = std::minmax_element(outline.begin(), outline.end(), [](const auto& a, const auto& b) {return a.d < b.d; });
+   Float64 dmin = lo->d, dmax = hi->d;
+   if (IsLE(dmax - dmin, 2 * eps))
+      return {};
+
+   // the outline's corner toward the bay at the top of the girder (e.g. the tip of the top flange): the vertex of the top
+   // half of the outline farthest toward the bay, the highest of those. Above it, the side is straight up from it. (The
+   // highest point of the outline can be on the far side, since girders are turned to the roadway's cross slope)
+   const BaySidePoint* corner = nullptr;
+   for (const auto& p : outline)
+   {
+      if ((dmin + dmax) / 2 < p.d)
+         continue;
+      if (!corner || (bMax ? corner->s < p.s : p.s < corner->s) || (IsEqual(corner->s, p.s) && p.d < corner->d))
+         corner = &p;
+   }
+
+   // the extreme s of the outline at a depth
+   auto extreme = [&](Float64 d) -> std::optional<Float64>
+      {
+         if (d < corner->d)
+            return corner->s;
+         d = std::min(d, dmax - eps);
+         std::optional<Float64> best;
+         for (size_t i = 0; i < outline.size(); i++)
+         {
+            const auto& a = outline[i];
+            const auto& b = outline[(i + 1) % outline.size()];
+            if (a.d == b.d || d < std::min(a.d, b.d) || std::max(a.d, b.d) < d)
+               continue; // a level edge is taken just above and below its depth
+            Float64 s = a.s + (d - a.d) * (b.s - a.s) / (b.d - a.d);
+            if (!best || (bMax ? *best < s : s < *best))
+               best = s;
+         }
+         return best;
+      };
+
+   std::vector<Float64> levels{ 0.0, height };
+   for (const auto& p : outline)
+   {
+      if (0.0 < p.d && p.d < height)
+         levels.push_back(p.d);
+   }
+   std::sort(levels.begin(), levels.end());
+   levels.erase(std::unique(levels.begin(), levels.end(), [](Float64 a, Float64 b) {return IsEqual(a, b); }), levels.end());
+
+   std::vector<BaySidePoint> side;
+   for (auto d : levels)
+   {
+      for (auto probe : { d - eps, d + eps }) // just above and just below the depth
+      {
+         if ((probe < 0.0) || (height < probe))
+            continue;
+         auto s = extreme(probe);
+         if (!s)
+            return {};
+         if (side.empty() || !IsEqual(side.back().d, d) || !IsEqual(side.back().s, *s))
+            side.push_back({ *s, d });
+      }
+   }
+   return side;
+}
+
+// A closed IfcPolygonalFaceSet: a polygon in the x-z plane (counterclockwise with x to the right and z up), from y0 to y1
+template <typename Schema>
+typename Schema::IfcPolygonalFaceSet CreatePolygonPrismFaceSet(hierarchy_helper<Schema>& file, const std::vector<std::pair<Float64, Float64>>& polygon, Float64 y0, Float64 y1)
+{
+   std::vector<std::vector<double>> point_list;
+   for (auto y : { y0, y1 })
+   {
+      for (const auto& [x, z] : polygon)
+         point_list.push_back({ x, y, z });
+   }
+   auto coordinates = file.create<typename Schema::IfcCartesianPointList3D>().initialize(point_list, std::nullopt);
+
+   // faces are counter-clockwise when viewed from outside
+   std::vector<typename Schema::IfcIndexedPolygonalFace> faces;
+   auto add_face = [&](std::vector<int64_t> indices) { faces.push_back(file.create<typename Schema::IfcIndexedPolygonalFace>().initialize(indices)); };
+   int64_t n = (int64_t)polygon.size();
+   std::vector<int64_t> face0, face1;
+   for (int64_t i = 0; i < n; i++)
+   {
+      face0.push_back(i + 1);      // at y0, seen from -y: as the polygon
+      face1.push_back(2 * n - i);  // at y1, seen from +y: reversed
+   }
+   add_face(face0);
+   add_face(face1);
+   for (int64_t i = 0; i < n; i++)
+   {
+      int64_t a = i + 1, b = (i + 1) % n + 1;
+      add_face({ a, a + n, b + n, b }); // the side along the polygon's edge from a to b
+   }
+
+   return file.create<typename Schema::IfcPolygonalFaceSet>().initialize(coordinates, true, faces, std::nullopt);
+}
+
 // Creates an IfcBeam::DIAPHRAGM for each cast-in-place intermediate diaphragm (PGSuper's diaphragm layout rules of the
 // girder library entries, IBridge::GetCastInPlaceDiaphragms), one for each bay of a span: PGSuper gives each girder the
 // halves of its diaphragms in the bays on either side, which are paired by their position in the lists of the girders on
 // either side of the bay, as PGSuper's Bridge Plan View pairs them. They're contained in the superstructure, like the pier
 // diaphragms (usBridge's "Concrete Diaphragm"), with usBrPset_Diaphragm.DiaphragmType "Intermediate" (diaphragm.type).
 //
-// The diaphragm runs from the right web face of the left girder to the left web face of the right girder, along the
-// line through the CL girders at the diaphragm locations (each measured along its girder, so skewed and flared girders
-// are followed). Its top is the bottom of the slab at either end (as the pier diaphragms' top), its height is the
-// rule's height down from there, and its thickness (the rule's, along the girders) is centered on the line. The
-// placement is at the left end at elevation 0, with x along the diaphragm, y to its left (ahead on station), and z up.
+// The diaphragm fills the bay along the line through the CL girders at the diaphragm locations (each measured along its
+// girder, so skewed and flared girders are followed). Its top is the bottom of the slab (as the pier diaphragms' top,
+// straight between the CL girders), its height is the rule's height down from there, and its thickness (the rule's,
+// along the girders) is centered on the line. Its ends follow the girders: in the diaphragm's vertical plane, each end
+// is the side of the girder's section outline that faces the bay (GetBaySide: the flange tips, the webs, ...; the
+// girder solid's outline, GetGirderSectionShape, at its top chord elevation, with x across the girder stretched by the
+// skew of the line). If the outlines can't be used, the ends are the web faces. The placement is at the right web face
+// of the left girder at elevation 0, with x along the diaphragm, y to its left (ahead on station), and z up.
+// Length (diaphragm.length) is from web face to web face, as PGSuper computes the diaphragm load (H*T*W), so the
+// weight (diaphragm.net_weight) is PGSuper's load; the volume (diaphragm.net_volume) is the solid's.
 // When the rule gives only the weight (the weight is input), the diaphragm has no representation: its placement locates
 // it, and Qto_BeamBaseQuantities.NetWeight (diaphragm.net_weight) has its weight.
 // Precast diaphragms (cast with the girder, IBridge::GetPrecastDiaphragms) aren't exported yet
@@ -3171,6 +3294,7 @@ std::vector<typename Schema::IfcDefinitionSelect> CreateIntermediateDiaphragms(h
    GET_IFACE2(pBroker, IPointOfInterest, pPoi);
    GET_IFACE2(pBroker, IMaterials, pMaterials);
    GET_IFACE2(pBroker, IIntervals, pIntervals);
+   GET_IFACE2(pBroker, IShapes, pShapes);
    const CBridgeDescription2* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
 
    Float64 startStation, startElevation, startGrade;
@@ -3264,7 +3388,6 @@ std::vector<typename Schema::IfcDefinitionSelect> CreateIntermediateDiaphragms(h
                continue;
 
             auto start = pL + x_dir.ScaleBy(sL);
-            auto end = pL + x_dir.ScaleBy(sL + length);
             WBFL::Geometry::Vector3d z_dir(0, 0, 1);
 
             // the bottom of the slab at a point, below the girder at poi
@@ -3304,9 +3427,66 @@ std::vector<typename Schema::IfcDefinitionSelect> CreateIntermediateDiaphragms(h
             typename Schema::IfcProductDefinitionShape product_definition_shape;
             if (details.bGeometry)
             {
-               // in the local coordinates of the placement
-               std::vector<DiaphragmPoint> points{ {0.0, top_elevation(start, poiLeft)}, {length, top_elevation(end, poiRight)} };
-               auto solid = CreateDiaphragmFaceSet<Schema>(file, points, details.height, -details.thickness / 2, details.thickness / 2);
+               // the diaphragm's vertical plane: s along the line from the left CL girder, d down from the bottom of the
+               // slab, which is straight between the CL girders
+               Float64 topL = top_elevation(pL, poiLeft);
+               Float64 topR = top_elevation(pR, poiRight);
+               auto slab_bottom = [&](Float64 s) { return topL + (topR - topL) * s / cl_length; };
+
+               // a girder's section outline in the plane (s0: the CL girder, cosA: the line's angle to the girder's normal)
+               auto outline = [&](const pgsPointOfInterest& poi, Float64 s0, Float64 cosA)
+                  {
+                     auto shape = GetGirderSectionShape(pShapes, poi, pIntervals->GetErectSegmentInterval(poi.GetSegmentKey()));
+                     Float64 top = pGirder->GetTopGirderChordElevation(poi); // the top of the girder solid, as CreatePrecastSegment places it
+                     CComPtr<IPoint2dCollection> points;
+                     shape->get_PolyPoints(&points);
+                     IndexType nPoints;
+                     points->get_Count(&nPoints);
+                     std::vector<BaySidePoint> outline_points;
+                     for (IndexType p = 0; p < nPoints; p++)
+                     {
+                        CComPtr<IPoint2d> point;
+                        points->get_Item(p, &point);
+                        Float64 x, y;
+                        point->Location(&x, &y);
+                        Float64 s = s0 + x / cosA;
+                        outline_points.push_back({ s, slab_bottom(s) - (top + y) });
+                     }
+                     return outline_points;
+                  };
+               auto left_side = GetBaySide(outline(poiLeft, 0.0, cosL), details.height, true);
+               auto right_side = GetBaySide(outline(poiRight, cl_length, cosR), details.height, false);
+
+               // the polygon, counterclockwise: down the left girder, up the right girder. The web faces if the outlines
+               // can't be used (or they overlap)
+               bool bOutlines = !left_side.empty() && !right_side.empty();
+               if (bOutlines)
+               {
+                  Float64 left_max = std::max_element(left_side.begin(), left_side.end(), [](const auto& a, const auto& b) {return a.s < b.s; })->s;
+                  Float64 right_min = std::min_element(right_side.begin(), right_side.end(), [](const auto& a, const auto& b) {return a.s < b.s; })->s;
+                  bOutlines = IsLT(left_max, right_min);
+               }
+               if (!bOutlines)
+               {
+                  left_side = { {sL, 0.0}, {sL, details.height} };
+                  right_side = { {cl_length - sR, 0.0}, {cl_length - sR, details.height} };
+               }
+               std::vector<BaySidePoint> plane(left_side.begin(), left_side.end());
+               plane.insert(plane.end(), right_side.rbegin(), right_side.rend());
+
+               // in the local coordinates of the placement (at the left web face, elevation 0), and the area
+               std::vector<std::pair<Float64, Float64>> polygon;
+               Float64 area = 0;
+               for (size_t p = 0; p < plane.size(); p++)
+               {
+                  polygon.emplace_back(plane[p].s - sL, slab_bottom(plane[p].s) - plane[p].d);
+                  const auto& a = plane[p];
+                  const auto& b = plane[(p + 1) % plane.size()];
+                  area += a.s * b.d - b.s * a.d;
+               }
+               details.volume = fabs(area) / 2 * details.thickness;
+
+               auto solid = CreatePolygonPrismFaceSet<Schema>(file, polygon, -details.thickness / 2, details.thickness / 2);
                StyleRepresentationItem<Schema>(file, solid, GetSurfaceStyle<Schema>(file, "Diaphragm", DECK_FILL_COLOR));
 
                std::vector<typename Schema::IfcRepresentationItem> representation_items;

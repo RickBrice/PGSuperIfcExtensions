@@ -220,6 +220,24 @@ def check_export(run, ifc, update_baseline):
     return f", export differs from baseline: {n} lines (see {diff_file.name})"
 
 
+def check_schema(run, ifc):
+    """IfcOpenShell's schema and rule validation of an export (ifcopenshell.validate with the EXPRESS rules, as the
+    buildingSMART validation service checks the schema). Errors go to results/<run>.schema.txt. Returns a message"""
+    import ifcopenshell.validate
+    model = ifcopenshell.open(str(ifc))
+    logger = ifcopenshell.validate.json_logger()
+    ifcopenshell.validate.validate(model, logger, express_rules=True)
+    report = RESULTS / f"{run}.schema.txt"
+    if not logger.statements:
+        report.unlink(missing_ok=True)
+        return ", schema valid"
+    lines = [f"{run}: {len(logger.statements)} schema errors (ifcopenshell.validate, EXPRESS rules)", ""]
+    for statement in logger.statements:
+        lines += [f"{statement.get('type', '')}: {statement.get('message', '')}".rstrip(), ""]
+    report.write_text("\n".join(lines), encoding="utf-8")
+    return f", SCHEMA: {len(logger.statements)} errors (see {report.name})"
+
+
 def check_ids(run, ids, update_baseline):
     """compares the design-value IDS with its baseline, or saves it as the baseline. Returns a message for the summary"""
     if not ids.exists():
@@ -317,7 +335,7 @@ def round_trip(model, config, exe):
             rows.append((run, f"export failed: {message}", None))
             continue
         expected_strands = reinforcement(ifc)  # before anything is removed from the export
-        export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
+        export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"]) + check_schema(run, ifc)
         for standard in config["standards"]:
             export_message += check_standard.ids_message(standard, ifc, run)
         if model.get("remove_from_export"):

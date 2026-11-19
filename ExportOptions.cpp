@@ -43,7 +43,10 @@ IMPLEMENT_DYNAMIC(CExportOptions, CPropertyPage)
 CExportOptions::CExportOptions()
 	: CPropertyPage(IDD_EXPORT_OPTIONS)
 {
-
+	// The export command leaves the reinforcing bars out unless they're asked for (the user, 2026-11-19): they're most
+	// of the file, and PGSuper's rebar model is partly demonstration data (see CLAUDE.md). The command line (/IfcExport)
+	// and round trips keep CIfcExportOptions' default, which includes them
+	options.include_rebar = false;
 }
 
 CExportOptions::~CExportOptions()

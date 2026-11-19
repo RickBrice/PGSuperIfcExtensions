@@ -237,6 +237,10 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
          ids_options.include_strands = ids_options.include_strands && !merge.bModelTendons;
          ids_options.include_rebar = ids_options.include_rebar && !merge.bModelBars;
       }
+      else
+      {
+         ids_options.include_rebar = ids_options.include_rebar && ifc_options.include_rebar; // the IDS can't require bars the file doesn't have
+      }
 
       // the IDS checks the values where the IFC export put them
       ids_options.mapping_file = ifc_options.mapping_file;

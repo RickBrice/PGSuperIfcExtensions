@@ -508,6 +508,8 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->BrgSeatElevation); } },
       { .name = "bearing.girder_slope", .element = ElementKind::Bearing, .kind = ValueKind::Ratio, .description = "longitudinal slope of the girder at the bearing",
         .get = [](const ExportContext& c) { return ExportValue(c.bearing_elevation->GirderGrade); } },
+      { .name = "bearing.girder_slope_magnitude", .element = ElementKind::Bearing, .kind = ValueKind::Ratio, .description = "longitudinal slope of the girder at the bearing, without its sign (for a 0 to 1 ratio, e.g. IfcNormalisedRatioMeasure)",
+        .get = [](const ExportContext& c) { return ExportValue(fabs(c.bearing_elevation->GirderGrade)); } },
       { .name = "bearing.support_condition", .element = ElementKind::Bearing, .kind = ValueKind::Text, .description = "support condition of the pier (its boundary condition): Fixed (hinge) or Expansion (roller)",
         .get = [](const ExportContext& c) { return ExportValue(support_condition(c, false)); } },
 
@@ -526,11 +528,11 @@ const std::vector<TargetDef>& GetTargetDefs()
             const auto* d = c.intermediate_diaphragm;
             return d && d->bGeometry ? ExportValue(d->height * d->thickness) : ExportValue::Absent();
          } },
-      { .name = "diaphragm.net_volume", .element = ElementKind::Diaphragm, .kind = ValueKind::Volume, .description = "volume of an intermediate diaphragm (height times thickness times length; absent when the rule gives only the weight)", .display_unit = DU::Volume,
+      { .name = "diaphragm.net_volume", .element = ElementKind::Diaphragm, .kind = ValueKind::Volume, .description = "volume of an intermediate diaphragm, whose ends follow the girders (absent when the rule gives only the weight)", .display_unit = DU::Volume,
         .get = [](const ExportContext& c)
          {
             const auto* d = c.intermediate_diaphragm;
-            return d && d->bGeometry ? ExportValue(d->height * d->thickness * d->length) : ExportValue::Absent();
+            return d && d->bGeometry ? ExportValue(d->volume) : ExportValue::Absent();
          } },
       { .name = "diaphragm.net_weight", .element = ElementKind::Diaphragm, .kind = ValueKind::Mass, .description = "mass of an intermediate diaphragm, as PGSuper's diaphragm load has it (weight and mass are the same in IfcQuantityWeight)", .display_unit = DU::Mass,
         .get = [](const ExportContext& c) { return c.intermediate_diaphragm ? ExportValue(c.intermediate_diaphragm->mass) : ExportValue::Absent(); } },

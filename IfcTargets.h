@@ -51,6 +51,7 @@ struct IntermediateDiaphragmDetails
    Float64 height = 0;      // when bGeometry
    Float64 thickness = 0;   // along the girders, when bGeometry
    Float64 length = 0;      // web face to web face
+   Float64 volume = 0;      // when bGeometry: the solid's volume (its ends follow the girders)
    Float64 mass = 0;        // the mass of PGSuper's diaphragm load for the bay
 };
 

@@ -19,6 +19,7 @@ An element role is a kind of IFC element that PGSuper reads or writes. A table's
 | `pier` |
 | `abutment` |
 | `foundation` |
+| `erection_tower` |
 | `alignment` |
 | `referent` |
 | `girder` |
@@ -74,16 +75,16 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `girder.camber_after_losses` | `girder` | length | excess camber |
 | `girder.screed_camber` | `girder` | length | screed camber |
 | `girder.length` | `girder` | length | girder plan length |
-| `girder.cross_section_area` | `girder` | Area | girder cross section area at mid-span |
-| `girder.outer_surface_area` | `girder` | Area | girder outer surface area (length times perimeter) |
-| `girder.gross_weight` | `girder` | Mass | girder mass (weight and mass are the same in IfcQuantityWeight) |
+| `girder.cross_section_area` | `girder` | area | girder cross section area at mid-span |
+| `girder.outer_surface_area` | `girder` | area | girder outer surface area (length times perimeter) |
+| `girder.gross_weight` | `girder` | mass | girder mass (weight and mass are the same in IfcQuantityWeight) |
 | `deck.gross_depth` | `deck` | length | deck gross depth |
 | `deck.fc` | `deck` | stress | deck concrete strength, f'c |
 | `deck.strength_class` | `deck` | text | deck concrete strength class |
 | `deck.length` | `deck` | length | deck length (bridge length) |
 | `deck.depth` | `deck` | length | deck gross depth (input) |
 | `deck.perimeter` | `deck` | length | perimeter of the deck plan outline |
-| `deck.gross_area` | `deck` | Area | area of the deck plan outline |
+| `deck.gross_area` | `deck` | area | area of the deck plan outline |
 | `deck.max_aggregate_size` | `deck` | length | deck concrete maximum aggregate size |
 | `barrier.fc` | `barrier` | stress | barrier concrete strength, f'c |
 | `barrier.strength_class` | `barrier` | text | barrier concrete strength class |
@@ -109,7 +110,7 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `rebar.specification_edition` | `rebar` | text | edition of the reinforcing bar specification |
 | `rebar.bar_mark` | `rebar` | text | bar mark (e.g. G2) |
 | `rebar.bar_size` | `rebar` | text | bar size (e.g. #5) |
-| `rebar.bar_mass` | `rebar` | Mass | total mass of a bar, from its centerline length and nominal diameter |
+| `rebar.bar_mass` | `rebar` | mass | total mass of a bar, from its centerline length and nominal diameter |
 | `rebar.bar_element` | `rebar` | text | element the bar reinforces (e.g. BEAM) |
 | `rebar.bar_use` | `rebar` | text | use of the bar (e.g. STIRRUP) |
 | `rebar.bar_position` | `rebar` | text | position of the bar in the element (e.g. TOP) |
@@ -132,8 +133,14 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `bearing.top_elevation` | `bearing` | length | elevation of the top of the bearing |
 | `bearing.bottom_elevation` | `bearing` | length | elevation of the bottom of the bearing (bearing seat) |
 | `bearing.girder_slope` | `bearing` | ratio | longitudinal slope of the girder at the bearing |
+| `bearing.girder_slope_magnitude` | `bearing` | ratio | longitudinal slope of the girder at the bearing, without its sign (for a 0 to 1 ratio, e.g. IfcNormalisedRatioMeasure) |
 | `bearing.support_condition` | `bearing` | text | support condition of the pier (its boundary condition): Fixed (hinge) or Expansion (roller) |
-| `diaphragm.support_condition` | `diaphragm` | text | support condition of the pier (its boundary condition): Fixed (hinge), Expansion (roller), or Continuous (continuous or integral) |
+| `diaphragm.type` | `diaphragm` | text | diaphragm type: End (a pier diaphragm) or Intermediate |
+| `diaphragm.support_condition` | `diaphragm` | text | support condition of the pier (its boundary condition): Fixed (hinge), Expansion (roller), or Continuous (continuous or integral). Pier diaphragms only |
+| `diaphragm.length` | `diaphragm` | length | length of an intermediate diaphragm, from web face to web face |
+| `diaphragm.cross_section_area` | `diaphragm` | area | cross section area of an intermediate diaphragm (height times thickness) |
+| `diaphragm.net_volume` | `diaphragm` | volume | volume of an intermediate diaphragm, whose ends follow the girders (absent when the rule gives only the weight) |
+| `diaphragm.net_weight` | `diaphragm` | mass | mass of an intermediate diaphragm, as PGSuper's diaphragm load has it (weight and mass are the same in IfcQuantityWeight) |
 | `diaphragm.fc` | `diaphragm` | stress | diaphragm concrete strength, f'c |
 | `diaphragm.strength_class` | `diaphragm` | text | diaphragm concrete strength class |
 | `diaphragm.max_aggregate_size` | `diaphragm` | length | diaphragm concrete maximum aggregate size |

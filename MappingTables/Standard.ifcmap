@@ -492,7 +492,7 @@
         {"name": "SlidingSkewAngle", "type": "IfcPlaneAngleMeasure", "value": 0.0, "uri": "bsdd", "comment": "a bearing moves along the girder"},
         {"name": "BearingTopElevation", "type": "IfcLengthMeasure", "target": "bearing.top_elevation", "import": false, "uri": "bsdd"},
         {"name": "BearingBottomElevation", "type": "IfcLengthMeasure", "target": "bearing.bottom_elevation", "import": false, "uri": "bsdd"},
-        {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope", "import": false, "uri": "bsdd"},
+        {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope_magnitude", "import": false, "uri": "bsdd", "comment": "Without its sign: usBridge has IfcNormalisedRatioMeasure, which the schema limits to 0 to 1 (WR1)"},
         {"name": "BearingThermalMovement", "type": "IfcNonNegativeLengthMeasure", "uri": "bsdd"},
         {"name": "SupportCondition", "type": "IfcLabel", "target": "bearing.support_condition", "uri": "bsdd", "comment": "the pier's boundary condition (Fixed: hinge, Expansion: roller), not the fixity of the elastomeric bearing (DisplacementAccommodated)"}
       ]
