@@ -540,7 +540,7 @@
       "name": "usBrPset_RoadwaySlab", "applies_to": "deck", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/class/usBrPset_RoadwaySlab",
       "properties": [
         {"name": "FormType", "type": "IfcLabel", "value": "Wood", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/FormType"},
-        {"name": "SacrificialWearingSurface", "type": "IfcPositiveLengthMeasure", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SacrificialWearingThickness"},
+        {"name": "SacrificialWearingThickness", "type": "IfcLengthMeasure", "target": "deck.sacrificial_depth", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SacrificialWearingThickness"},
         {"name": "SurfaceArea", "type": "IfcAreaMeasure", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SurfaceArea"},
         {"name": "SurfaceFinish", "type": "IfcText", "value": "Raked", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SurfaceFinish"}
       ]
