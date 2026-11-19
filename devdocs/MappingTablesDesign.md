@@ -139,7 +139,7 @@ struct TargetDef
 **Status (M1):**
 - `TargetDef` has only the name, element, value kind, and a description for messages. Getters and setters come with the export engine (M3), when there are enough targets to justify them. Import code sets the values it reads.
 - `TargetValue` has no list alternative. `ReadAll` returns one reading per value instead.
-- `ValueKind` also has `Force`.
+- `ValueKind` also has `Force`, `Area`, `Mass`, and `Volume` (added 2026-11-19 for the intermediate diaphragms' `NetVolume`, exported in ft³ with display units).
 
 ### Vocabulary for M1–M2 (import)
 

@@ -129,6 +129,7 @@ namespace ifc_property_writer
       case ExportUnit::SmallArea: return GetSmallAreaUnit<Schema>(file, pBroker);
       case ExportUnit::BigArea: return GetBigAreaUnit<Schema>(file, pBroker);
       case ExportUnit::Mass: return GetMassUnit<Schema>(file, pBroker);
+      case ExportUnit::Volume: return GetVolumeUnit<Schema>(file, pBroker);
       default: return {};
       }
    }

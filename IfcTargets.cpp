@@ -526,7 +526,13 @@ const std::vector<TargetDef>& GetTargetDefs()
             const auto* d = c.intermediate_diaphragm;
             return d && d->bGeometry ? ExportValue(d->height * d->thickness) : ExportValue::Absent();
          } },
-      { .name = "diaphragm.gross_weight", .element = ElementKind::Diaphragm, .kind = ValueKind::Mass, .description = "mass of an intermediate diaphragm, as PGSuper's diaphragm load has it (weight and mass are the same in IfcQuantityWeight)", .display_unit = DU::Mass,
+      { .name = "diaphragm.net_volume", .element = ElementKind::Diaphragm, .kind = ValueKind::Volume, .description = "volume of an intermediate diaphragm (height times thickness times length; absent when the rule gives only the weight)", .display_unit = DU::Volume,
+        .get = [](const ExportContext& c)
+         {
+            const auto* d = c.intermediate_diaphragm;
+            return d && d->bGeometry ? ExportValue(d->height * d->thickness * d->length) : ExportValue::Absent();
+         } },
+      { .name = "diaphragm.net_weight", .element = ElementKind::Diaphragm, .kind = ValueKind::Mass, .description = "mass of an intermediate diaphragm, as PGSuper's diaphragm load has it (weight and mass are the same in IfcQuantityWeight)", .display_unit = DU::Mass,
         .get = [](const ExportContext& c) { return c.intermediate_diaphragm ? ExportValue(c.intermediate_diaphragm->mass) : ExportValue::Absent(); } },
       { .name = "diaphragm.fc", .element = ElementKind::Diaphragm, .kind = ValueKind::Stress, .description = "diaphragm concrete strength, f'c", .display_unit = DU::Stress,
         .get = [](const ExportContext& c) { return ExportValue(deck_fc(c)); } },
@@ -610,7 +616,7 @@ ElementKind GetTargetElement(ElementKind role)
 
 bool HasUnit(ValueKind kind)
 {
-   return kind == ValueKind::Stress || kind == ValueKind::Length || kind == ValueKind::Angle || kind == ValueKind::Force || kind == ValueKind::Area || kind == ValueKind::Mass;
+   return kind == ValueKind::Stress || kind == ValueKind::Length || kind == ValueKind::Angle || kind == ValueKind::Force || kind == ValueKind::Area || kind == ValueKind::Mass || kind == ValueKind::Volume;
 }
 
 bool IsNumeric(ValueKind kind)
@@ -628,6 +634,7 @@ std::string_view GetValueKindName(ValueKind kind)
    case ValueKind::Force: return "force";
    case ValueKind::Area: return "area";
    case ValueKind::Mass: return "mass";
+   case ValueKind::Volume: return "volume";
    case ValueKind::Ratio: return "ratio";
    case ValueKind::Count: return "count";
    case ValueKind::Boolean: return "boolean";

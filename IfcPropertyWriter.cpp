@@ -78,6 +78,7 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    case ExportUnit::SmallArea: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetAreaUnit().UnitOfMeasure); break;
    case ExportUnit::BigArea: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Feet2); break; // as GetBigAreaUnit
    case ExportUnit::Mass: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::PoundMass); break; // as GetMassUnit
+   case ExportUnit::Volume: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Feet3); break; // as GetVolumeUnit
    default: break;
    }
 

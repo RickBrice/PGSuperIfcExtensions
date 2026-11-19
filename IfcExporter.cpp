@@ -3157,7 +3157,7 @@ std::vector<typename Schema::IfcDefinitionSelect> CreatePierDiaphragms(hierarchy
 // rule's height down from there, and its thickness (the rule's, along the girders) is centered on the line. The
 // placement is at the left end at elevation 0, with x along the diaphragm, y to its left (ahead on station), and z up.
 // When the rule gives only the weight (the weight is input), the diaphragm has no representation: its placement locates
-// it, and Qto_BeamBaseQuantities.GrossWeight (diaphragm.gross_weight) has its weight.
+// it, and Qto_BeamBaseQuantities.NetWeight (diaphragm.net_weight) has its weight.
 // Precast diaphragms (cast with the girder, IBridge::GetPrecastDiaphragms) aren't exported yet
 template <typename Schema>
 std::vector<typename Schema::IfcDefinitionSelect> CreateIntermediateDiaphragms(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, typename Schema::IfcBridgePart superstructure, typename Schema::IfcGeometricRepresentationSubContext pGeometricRepresentationSubContext)

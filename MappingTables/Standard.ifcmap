@@ -525,11 +525,12 @@
     },
     {
       "name": "Qto_BeamBaseQuantities", "applies_to": "diaphragm", "condition": "quantities", "method": "BaseQuantities",
-      "comment": "Intermediate diaphragms only. GrossWeight is PGSuper's diaphragm load, also when the library rule gives only the weight (the diaphragm then has no geometry)",
+      "comment": "Intermediate diaphragms only, with the quantities usBridge lists for a Concrete Diaphragm. NetWeight is PGSuper's diaphragm load, also when the library rule gives only the weight (the diaphragm then has no geometry, CrossSectionArea, or NetVolume)",
       "quantities": [
         {"name": "Length", "type": "IfcQuantityLength", "target": "diaphragm.length"},
         {"name": "CrossSectionArea", "type": "IfcQuantityArea", "target": "diaphragm.cross_section_area"},
-        {"name": "GrossWeight", "type": "IfcQuantityWeight", "target": "diaphragm.gross_weight"}
+        {"name": "NetVolume", "type": "IfcQuantityVolume", "target": "diaphragm.net_volume"},
+        {"name": "NetWeight", "type": "IfcQuantityWeight", "target": "diaphragm.net_weight"}
       ]
     },
     {

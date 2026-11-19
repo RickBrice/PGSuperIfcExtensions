@@ -96,7 +96,8 @@ enum class ValueKind
    Count,
    Boolean,
    Text,
-   TextList // every location's value is collected (e.g. candidate girder type names)
+   TextList, // every location's value is collected (e.g. candidate girder type names)
+   Volume
 };
 
 // A target value. Numbers are in PGSuper system units (SI)
@@ -112,7 +113,8 @@ enum class ExportUnit
    Angle,      // degrees
    SmallArea,  // e.g. in^2
    BigArea,    // ft^2
-   Mass        // lb
+   Mass,       // lb
+   Volume      // ft^3
 };
 
 // The element whose target values are exported. The exporter fills in the keys the element's targets need

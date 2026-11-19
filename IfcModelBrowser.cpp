@@ -179,6 +179,7 @@ std::string FormatTargetValue(const TargetDef& target, const TargetValue& value)
       case ValueKind::Force: os << ConvertFromSysUnits(*number, Measure::Kip) << " kip (" << ConvertFromSysUnits(*number, Measure::Kilonewton) << " kN)"; break;
       case ValueKind::Area: os << ConvertFromSysUnits(*number, Measure::Feet2) << " ft2 (" << *number << " m2)"; break;
       case ValueKind::Mass: os << ConvertFromSysUnits(*number, Measure::PoundMass) << " lbm (" << *number << " kg)"; break;
+      case ValueKind::Volume: os << ConvertFromSysUnits(*number, Measure::Feet3) << " ft3 (" << *number << " m3)"; break;
       default: os << *number; break;
       }
    }

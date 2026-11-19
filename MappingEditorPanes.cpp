@@ -51,6 +51,7 @@ namespace
       case ValueKind::Force: return "force";
       case ValueKind::Area: return "area";
       case ValueKind::Mass: return "mass";
+      case ValueKind::Volume: return "volume";
       case ValueKind::Ratio: return "ratio";
       case ValueKind::Count: return "count";
       case ValueKind::Boolean: return "true or false";
