@@ -1,6 +1,6 @@
 Standard mapping table compared with the usBridge workbook usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx (categories: see check_standard.py)
 
-Counts: CLASS 4, REQUIRED 3, NO-VALUE 41, VALUE 14, TYPE 57, NAME 1, ENUM 20, PSET 22, RESTRICTED 26, OPTIONAL 39, EXTRA 30, NO-CLASS 2
+Counts: CLASS 4, REQUIRED 3, NO-VALUE 41, VALUE 14, TYPE 57, NAME 1, ENUM 20, PSET 22, RESTRICTED 26, OPTIONAL 37, EXTRA 29, NO-CLASS 2
 
 CLASS | girder_assembly (Girder) |  | the class Girder isn't in the workbook
 CLASS | project (BridgeProject) |  | the class BridgeProject isn't in the workbook
@@ -209,8 +209,6 @@ OPTIONAL | deck (DeckSlab) | Qto_SlabBaseQuantities.Width | IfcQuantityLength no
 OPTIONAL | deck (DeckSlab) | usBrPset_RoadwaySlab.SacrificialWearingThickness | IfcLengthMeasure not declared
 OPTIONAL | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionArea | IfcAreaMeasure not declared
 OPTIONAL | diaphragm (DiaphragmConcrete) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
-OPTIONAL | diaphragm (DiaphragmConcrete) | Qto_BeamBaseQuantities.NetVolume | IfcQuantityVolume not declared
-OPTIONAL | diaphragm (DiaphragmConcrete) | Qto_BeamBaseQuantities.NetWeight | IfcQuantityWeight not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Pset_ConcreteElementGeneral.ExposureClass | IfcLabel not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetVolume | IfcQuantityVolume not declared
 OPTIONAL | girder (GirderPrecastConcrete) | Qto_BeamBaseQuantities.NetWeight | IfcQuantityWeight not declared
@@ -238,7 +236,6 @@ EXTRA | deck (DeckSlab) | usBrPset_SlabCommon.CrossSectionalArea | not in the wo
 EXTRA | deck (DeckSlab) | usBrPset_SlabCommon.CrossSlope | not in the workbook's property set for this class
 EXTRA | diaphragm (DiaphragmConcrete) | PGSuperPset_Diaphragm | property set not in the workbook for this class
 EXTRA | diaphragm (DiaphragmConcrete) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class
-EXTRA | diaphragm (DiaphragmConcrete) | Qto_BeamBaseQuantities.GrossWeight | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Pset_BeamCommon.Slope | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Pset_BeamCommon.Status | not in the workbook's property set for this class
 EXTRA | girder (GirderPrecastConcrete) | Pset_MaterialConcrete.MaxAggregateSize | not in the workbook's property set for this class

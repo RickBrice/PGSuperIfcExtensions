@@ -694,7 +694,8 @@
       "quantities": [
         {"name": "Length", "type": "IfcQuantityLength", "target": "diaphragm.length", "import": false},
         {"name": "CrossSectionArea", "type": "IfcQuantityArea", "target": "diaphragm.cross_section_area", "import": false},
-        {"name": "GrossWeight", "type": "IfcQuantityWeight", "target": "diaphragm.gross_weight", "import": false}
+        {"name": "NetVolume", "type": "IfcQuantityVolume", "target": "diaphragm.net_volume", "import": false},
+        {"name": "NetWeight", "type": "IfcQuantityWeight", "target": "diaphragm.net_weight", "import": false}
       ]
     }
   ],
