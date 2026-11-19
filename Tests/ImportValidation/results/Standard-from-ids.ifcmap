@@ -578,7 +578,7 @@
         {"name": "SlidingSkewAngle", "type": "IfcPlaneAngleMeasure", "value": 0.0, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SlidingSkewAngle"},
         {"name": "BearingTopElevation", "type": "IfcLengthMeasure", "target": "bearing.top_elevation", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BearingTopElevation"},
         {"name": "BearingBottomElevation", "type": "IfcLengthMeasure", "target": "bearing.bottom_elevation", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BearingBottomElevation"},
-        {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BeamLongitudinalSlope"},
+        {"name": "BeamLongitudinalSlope", "type": "IfcNormalisedRatioMeasure", "target": "bearing.girder_slope_magnitude", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BeamLongitudinalSlope"},
         {"name": "BearingThermalMovement", "type": "IfcNonNegativeLengthMeasure", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BearingThermalMovement"},
         {"name": "SupportCondition", "type": "IfcLabel", "target": "bearing.support_condition", "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/SupportCondition"}
       ]
