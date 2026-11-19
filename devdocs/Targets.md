@@ -102,6 +102,7 @@ All values are in PGSuper system units (SI). "Export" is what the `get` lambda i
 |---|---|---|---|
 | `deck.gross_depth` | Length | – | `ImportSlab` (`IfcBridgeImporter.cpp`): cross check of the depth measured from the deck geometry, which wins (a difference over 1/8 in is logged). It sets `CDeckDescription2::GrossDepth` only when the depth can't be measured |
 | `deck.depth` | Length | `CDeckDescription2::GrossDepth` (input) | – |
+| `deck.sacrificial_depth` | Length | `IBridge::GetSacrificalDepth` (the input sacrificial depth; 0 with an overlay that isn't a future overlay); absent without a deck | – |
 | `deck.fc` | Stress | `IMaterials::GetDeckFc28` | – |
 | `deck.strength_class` | Text | `GetDeckFc28` formatted in the display stress unit | – |
 | `deck.length` | Length | `IBridge::GetLength` | – |

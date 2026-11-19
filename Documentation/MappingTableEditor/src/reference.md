@@ -83,6 +83,7 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `deck.strength_class` | `deck` | text | deck concrete strength class |
 | `deck.length` | `deck` | length | deck length (bridge length) |
 | `deck.depth` | `deck` | length | deck gross depth (input) |
+| `deck.sacrificial_depth` | `deck` | length | deck sacrificial depth |
 | `deck.perimeter` | `deck` | length | perimeter of the deck plan outline |
 | `deck.gross_area` | `deck` | area | area of the deck plan outline |
 | `deck.max_aggregate_size` | `deck` | length | deck concrete maximum aggregate size |

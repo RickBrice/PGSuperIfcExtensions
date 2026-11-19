@@ -181,7 +181,7 @@
       "name": "usBrPset_RoadwaySlab", "applies_to": "deck", "uri": "bsdd",
       "properties": [
         {"name": "FormType", "type": "IfcLabel", "value": "Wood", "uri": "bsdd"},
-        {"name": "SacrificialWearingSurface", "type": "IfcPositiveLengthMeasure", "uri": "bsdd:SacrificialWearingThickness"},
+        {"name": "SacrificialWearingThickness", "type": "IfcLengthMeasure", "uri": "bsdd", "target": "deck.sacrificial_depth"},
         {"name": "SurfaceArea", "type": "IfcAreaMeasure", "uri": "bsdd"},
         {"name": "SurfaceFinish", "type": "IfcText", "value": "Raked", "uri": "bsdd"}
       ]

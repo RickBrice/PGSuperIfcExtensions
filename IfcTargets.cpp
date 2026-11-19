@@ -321,6 +321,14 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridge, pBridge); return ExportValue(pBridge->GetLength()); } },
       { .name = "deck.depth", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "deck gross depth (input)", .display_unit = DU::Deflection,
         .get = [](const ExportContext& c) { GET_IFACE2(c.broker, IBridgeDescription, pIBridgeDesc); return ExportValue(pIBridgeDesc->GetBridgeDescription()->GetDeckDescription()->GrossDepth); } },
+      // the top layer of the deck that's in its dead load but not its section (usBridge SacrificialWearingThickness).
+      // PGSuper's is 0 with an overlay that isn't a future overlay
+      { .name = "deck.sacrificial_depth", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "deck sacrificial depth", .display_unit = DU::Deflection,
+        .get = [](const ExportContext& c)
+        {
+           GET_IFACE2(c.broker, IBridge, pBridge);
+           return pBridge->GetDeckType() == pgsTypes::sdtNone ? ExportValue::Absent() : ExportValue(pBridge->GetSacrificalDepth());
+        } },
       { .name = "deck.perimeter", .element = ElementKind::Deck, .kind = ValueKind::Length, .description = "perimeter of the deck plan outline", .display_unit = DU::SpanLength,
         .get = [](const ExportContext& c) { return ExportValue(slab_outline(c.broker).first); } },
       { .name = "deck.gross_area", .element = ElementKind::Deck, .kind = ValueKind::Area, .description = "area of the deck plan outline", .display_unit = DU::BigArea,
