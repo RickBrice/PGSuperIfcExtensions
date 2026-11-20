@@ -27,33 +27,7 @@ Everything needed to resume is in the repositories; working rules, build and tes
 - **Import log:** the Import Results window can save the log, and View > IFC Import Log shows the project's import log again until BridgeLink closes (`IIfcImportLog`; not saved with the project).
 - **Other repositories:** WBFL `ISectionCutTool::CreateSlabShapeWithoutHaunches`/`CreateHaunchShape` (PGSuper `IShapes::GetSlabShapeWithoutHaunches`/`GetHaunchShape`), skewed section cuts in COGO and GenericBridgeTools, `UBeam`/`UBeam2` with vertical webs, and the AutoSave status bar fix; the PGSuper Test and TxDOT agent command line fix (F2); IfcOpenShell's false GEO 242 warning (592ea02f7, #9590).
 
-**Drafted, waiting for work:**
-- **PGSplice:** S2 (closure joints, post-tensioning, construction sequence), S4 (post-tensioning import, timeline), S5 ([PGSplicePlan.md](PGSplicePlan.md)).
-- **Stirrups:** bar shapes and layouts as plug-in input, and a general bar export ([StirrupPlan.md](StirrupPlan.md)).
-- **3D view:** exploratory ([3DViewPlan.md](3DViewPlan.md)).
-
-**Decisions waiting on answers:**
-- **Integral connections** (Phase 2): exported as continuous; how to tell an integral connection from a continuous one is open (a property on the diaphragm, bearings under it, or the physical pier's cap and columns).
-- **F1** (girders as constructed vs. with camber): the haunch bottom follows PGSuper's haunch depth, so a gap to the cambered girder is expected for now.
-
-**Not started:** superelevation events (Phase 4), stay-in-place deck panels (Phase 3), importing diaphragms, sidewalks, and interior barriers (Phase 7), R2 (BCF output), the E2 validation template and expected values for PennDOT and Iowa, a test with a real agency IDS, and Phase 8.
-
-**To do:**
-- **End blocks from geometry** (asked 2026-10-30): the girder section is taken at mid-length only, so end blocks and tapers aren't seen and an imported girder gets the template's end blocks. See G1 in [GirderImportPlan.md](GirderImportPlan.md).
-- **PennDOT deck haunch about 0.2 in thinner than the model's:** the model's girders are drawn cambered (about 1.2 in at midspan), while the export draws straight girders and puts the haunch bottom at PGSuper's computed camber (about 0.2 in more). Reading the drawn camber from the girder solids is part of F1. Within an inch of the edges PGSuper's overhang is also 0.1 in (left) and 0.25 in (right) thinner; not traced.
-- **Girder fitting speed:** about 2.5 s per distinct section in Release, mostly screening about 50 factory and start candidates. Next: measure per factory, then screen factories by topology before fitting (voids, open top, number of webs). Threads stay an option (each worker would need its own COM initialization and sections, the factories would need checking for thread safety, and `QuietChecks` changes a process-wide CRT setting).
-- **Export file size: repeated value entities** (found 2026-11-19, not now, the user): about half of the `PGSuper_Import_Model` export with rebar (3.1 MB of 6.1 MB) is entities that exactly repeat one already in the file, mostly from the bar types (one per bar shape and length) and the confinement bars at every stirrup. The export dialog leaves the bars out by default, but `/IfcExport` and round trips include them. A value cache in `CIfcExportSession` (as it has for enumerations) would return an existing entity with the same values:
-  1. Geometry (safe for every reader, about 1.3 MB): `IfcDirection`, `IfcCartesianPoint`, and `IfcCartesianTransformationOperator3D`, mostly from `MapBarType` (`Rebar.h`); the "up" and axis directions of placements and girder cross sections; hierarchy_helper's `addLocalPlacement`/`addPlacement3d`; identical `IfcMappedItem`s between girders.
-  2. Properties and quantities (about 1.5 MB): `IfcPropertySingleValue`, `IfcPropertyEnumeratedValue`, and `IfcQuantityCount` from `IfcPropertyWriter.h`. Sharing them between property sets is valid IFC, but the round-trip merge edits property values in place, so it would have to copy a shared property before editing it; editors such as Bonsai would change every set that shares an edited property. Sharing whole identical property sets between bar types is the alternative.
-  3. Optionally `.ifcZIP` output (IFC text compresses to about a tenth).
-- **More test models from PGSuper projects:** round-trip a few of the 730 projects in `PGSuper/RegressionTest` for each girder factory (I-beam 293, box beam 90, voided slab 85, deck bulb tee 60, U-beam 82, double tee 29, ribbed 13, decked slab 9), and import some under another configuration (e.g. a TxDOT project under WSDOT; agency libraries are in `PGSuper/Configurations`), so entries are fitted and created rather than matched.
-- **Document the scoring systems** (asked 2026-10-15): the validation scores of `compare_bridge.py` and their tolerances; the girder name similarity (`girder_name_similarity`, 0.5 minimum); the section comparison and ranking (`CompareSections`, `SectionDifference`, `SectionTolerances`) and the fitting objective (`FitDimensions`); the usBridge IDS counts and the workbook comparison categories (`check_standard.py`).
-- **IfcOpenShell drops the main deck slab solid** of the `PGSuper_Skew_Straight_AlongPier` export without a message, so its deck imports as a haunch (the run's mismatches). The deck sections are valid (constant point counts, no self intersections, inside the deck edges); the failure is in the OpenCASCADE loft conversion (`kernels/opencascade/loft.cpp`), which returns false silently. Needs an IfcOpenShell debug build. Also, `loft.cpp:176-180` on the `rab_infrastructure` branch prints the first two loft sections to `std::wcout` on every loft (leftover debug output).
-- **The GenericBridgeTools test program** (`GenericBridgeToolsTest.exe`) crashes in its older section cut tests (`TestPrecastGirderBridge` is next; they're out of date).
-- **PGSuper documentation error** (for the user to fix in PGSuper): in `Include/psgLib/GirderLibraryEntry.h`, `AddStraightStrandCoordinates`, `AddHarpedStrandCoordinates`, and `AddTemporaryStrandCoordinates` say they return "the strand grid index for the new strand position", and `AddStrandToPermStrandGrid` says it returns "the position in the permanent strand grid", but `GirderLibraryEntry.cpp` returns the number of positions, one more than the index. `GenerateStrandGrid` subtracts one. Either the comments or the return values should change (callers such as TxDOT TOGA may depend on the current values).
-- **Extended strands with individual strands** (PGSuper, logged 2026-10-23, not investigated): see G2 in [GirderImportPlan.md](GirderImportPlan.md).
-- **Mapping table editor documentation:** publish it to the online documentation server, and add it to `UpdateBinFiles.bat` and the installer ([MappingTablesDesign.md](MappingTablesDesign.md), M7).
-- **The girder orientation** (roll) isn't measured: an imported girder gets the factory's first supported orientation.
+**Open work:** every open item, with its status and priority, is in [MasterPlan.md](MasterPlan.md).
 
 **How to validate:** Release build of BridgeLink with this extension (`%ARPDIR%\BridgeLink\RegFreeCOM\x64\Release`), then `python Tests/ImportValidation/run_validation.py` (see its README). Last run 2026-11-20 (`WSDOT:WSDOT` configuration): the PGSuper round trips 460 to 478 of 623 values match, with no mismatches except the `PGSuper-ExteriorGirders` run's 2 (skew models: 273, 301, and 302 of 619; `PGSuper-Skew`'s 8 mismatches are bearing offsets without bearings, by design); PennDOT 78 of 115, Iowa 250 of 293, and TxDOT 1673 of 2602 values set by the import; every export the same as its baseline, valid, with valid property units and its own design-value IDS passing; the round trips into the source models keep them and pass their design-value IDS; the export extension API checks pass; the standard table round trips through a general IDS (361 declarations). Under the Regression configuration, the PGSuper round trips have 13 harped strand mismatches, by design (WSDOT's bundled harped strands don't fit a generated grid, G2). Use `--config-file` with a copy of the template that has unusual values to show a value is set by the import rather than a template default.
 
@@ -137,32 +111,29 @@ How each step reads the geometry is in [ImportGeometry.md](ImportGeometry.md); t
 - **Headless import:** `BridgeLink.exe /IfcImport=<model.ifc> <template.pgt|template.spt> [/IfcOut=<project.pgs|project.spl>] [/IfcLog=<import.log>] [/IfcMapping=<table.ifcmap>]`. `CIfcExtensionAgent` implements `IEAFProcessCommandLine`; it imports into the template-created project, saves it, and EAF exits. `/IfcImport` comes first, for PGSuper builds older than F2.
 - **Headless export:** `BridgeLink.exe /IfcExport=<model.ifc> <project.pgs> [/IfcPropertyUnits=Display|System] [/IfcLog=<export.log>] [/IfcMapping=<table.ifcmap>] [/IfcIds=<design.ids>] [/IfcSourceModel[=<model.ifc>]]`, with the default `CIfcExportOptions`.
 - **Validation tooling:** `Tests/ImportValidation` (see its README).
-- **To do:** the E2 validation template (fewer ambiguous "default matches"); expected values for the PennDOT and Iowa models from their property sets (E1); alignments with spirals (export and evaluate with IfcOpenShell); the structured import report (R2).
 
 ### Phase 1: Correctness of what we already import
-Done: one geometry pass over the girders (`get_girder_layout`, the single source of girder keys), girders assigned to spans by pier stations and ordered by offset, model designations cross checked (the location wins), units from the property, else the project unit (`CIfcImportUnits`). **To do:** pull the mesh → top surface → boundary → segments pipeline into one reusable helper.
+Done: one geometry pass over the girders (`get_girder_layout`, the single source of girder keys), girders assigned to spans by pier stations and ordered by offset, model designations cross checked (the location wins), units from the property, else the project unit (`CIfcImportUnits`).
 
 ### Phase 2: Superstructure geometry
 Done: pier skew (from the positioning referent's `RefDirection`, the CL bearing lines, or the girder ends), end distance and bearing offset from the bearings, uniform or general spacing, bearing data (`CBearingData2`), and boundary conditions:
 - **Boundary conditions** (decided by the user, 2026-10-23): the export writes PGSuper's pier diaphragms as `IfcBeam.DIAPHRAGM` (usBridge's "Concrete Diaphragm", in the superstructure, not extended to the support) and the pier's boundary condition as `usBrPset_BearingCommon.SupportCondition` on the bearings and `PGSuperPset_Diaphragm.SupportCondition` on the diaphragms. `Pset_BearingCommon` is the elastomeric bearing's fixity (`CBearingData2::FixedX/FixedY`), not the pier's boundary condition. The import makes a pier continuous after deck when a diaphragm holds the girder ends of both spans, else uses the bearings' support condition, else the diaphragms', else a hinge at the first abutment and rollers elsewhere, each logged with its evidence.
-- **To do:** integral connections (see "Decisions waiting on answers"); importing the diaphragm dimensions (PGSuper computes them); PennDOT's end diaphragms are `IfcWall`s, which its table doesn't select as diaphragms.
 
 ### Phase 3: Deck
-Done: cast-in-place deck dimensions (gross depth, edge depths, overhang taper, haunch shape and fillet), slab offset at the CL bearings, the deck and haunches in one `IfcSlab` in the export (cut along skewed lines on skewed bridges), deck reinforcement as lump sums, decks of several slabs. **To do:** stay-in-place deck panels; deck concrete f'c; export the deck reinforcement (bars from the lump sums, or a property set), so round trips check its import; the slab offset tolerance as an import option (D2).
+Done: cast-in-place deck dimensions (gross depth, edge depths, overhang taper, haunch shape and fillet), slab offset at the CL bearings, the deck and haunches in one `IfcSlab` in the export (cut along skewed lines on skewed bridges), deck reinforcement as lump sums, decks of several slabs.
 
 ### Phase 4: Alignment and profile when the model has none
-Done: the roadway section and the profile from the deck, a straight alignment from the deck when the user asks. **To do:** superelevation events, `IfcReferent` SUPERELEVATIONEVENT with `Pset_Superelevation` (`IfcAlignmentCant` is for railways), written by the export and read by the import with the deck as the fallback and check, as for the profile. Use deck station property sets (Iowa) for the reference station.
+Done: the roadway section and the profile from the deck, a straight alignment from the deck when the user asks. Superelevation events aren't written or read yet: `IfcReferent` SUPERELEVATIONEVENT with `Pset_Superelevation` (`IfcAlignmentCant` is for railways), with the deck as the fallback and check, as for the profile, and deck station property sets (Iowa) for the reference station.
 
 ### Phase 5: Girder section and material mapping
-Done (G1). Geometry decides; names are clues. **To do:** end blocks and tapers (G1); the girder orientation (roll); screening factories by topology (fitting speed, above).
+Done (G1). Geometry decides; names are clues.
 
 ### Phase 6: Prestressing
-Done (G2). **To do:** other strand representations (indexed poly curves); a model with debonding; round trips by girder family.
+Done (G2).
 
 ### Phase 7: Secondary elements and loads
-- **Exterior traffic barriers:** done. **To do:** sidewalks and interior barriers (logged), barriers that vary along the bridge, barrier concrete.
-- **Intermediate diaphragms:** exported (2026-11-19); round trips add them to a model without them. The import recognizes them and logs them, but doesn't import them: PGSuper's intermediate diaphragms come from the girder library entries' diaphragm layout rules, so importing them means fitting rules to the model's diaphragms. **To do:** precast (internal) diaphragms of multi-web girders; fitting library rules to a model's diaphragms; telling a model's intermediate diaphragms from its pier diaphragms without `DiaphragmType`.
-- Pier caps and columns → the physical pier model (low priority).
+- **Exterior traffic barriers:** done; sidewalks and interior barriers are logged, not imported.
+- **Intermediate diaphragms:** exported (2026-11-19); round trips add them to a model without them. The import recognizes them and logs them, but doesn't import them: PGSuper's intermediate diaphragms come from the girder library entries' diaphragm layout rules, so importing them means fitting rules to the model's diaphragms.
 
 ### Phase 8: Visual Studio unit tests (one of the last steps)
 Turn the checks run by hand into Visual Studio unit tests (Microsoft C++ unit test framework), so they run from Test Explorer and in CI:

@@ -122,7 +122,7 @@ Refactor `CIfcBridgeImporter` from span-indexed to group → girder → segment:
   - Girder library matching works unchanged: the PGSuper validation model's WF66G and WF100G sections fit PGSplice's Spliced I-Beam factory, and new entries are created.
   - **Export of a PGSplice project with single-segment girders** failed (IfcOpenShell: "Requested type <instance> does not match actual type <null>"): in a PGSplice document only the spliced GIRDER_SEGMENT type was created, and a single-segment girder looked up a type by girder name. The beam types now follow the girders: single-segment girders get their BEAM type per girder name, and the GIRDER_SEGMENT type is created when a girder has more than one segment. PGSuper exports and `Segment_Tendons.spl` are unchanged.
   - **Headless runs:** PGSplice shows its Project Properties dialog for new projects (`HKCU\...\PGSplice\Settings\ShowProjectProperties = On`; PGSuper's was Off on the travel laptop), which stops a command-line import. Turn it off for test runs and restore it.
-  - Still to do: spliced girders (S3), post-tensioning and the timeline (below), and a PGSplice row in `run_validation.py` (S0).
+  - Spliced girders followed in S3 (2026-11-11); post-tensioning, the timeline, and PGSplice runs in `run_validation.py` (S0) are open ([MasterPlan.md](MasterPlan.md)).
 - **Post-tensioning import:**
   - A tendon is girder or segment by what it lies in (the girder assembly, or one segment's solid), with the geometry as the check: a tendon that crosses a closure joint is a girder tendon.
   - Duct geometry: fit PGSuper's duct types to the tendon or duct centerline: linear (points), parabolic (low points, inflection points), offset. A parabolic fit within tolerance, else linear with enough points.

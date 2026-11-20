@@ -82,7 +82,10 @@ A change to the SDK breaks the extensions built against it until they're changed
 
 `Time`, `LinearForce`, `MassDensity`, `Real`, and `Moment` were added for extension targets. They are generic physical quantity kinds. `AddUsedProjectUnits` declares SI project units for them: s, and the derived units N/m, kg/m³, and N·m (IFC 4.3 writes moments as `IfcTorqueMeasure`). Mapping tables can also use `IfcModulusOfElasticityMeasure` (N/m²) as a property type, e.g. for `Pset_MaterialMechanical.YoungModulus`.
 
-## Not done yet
+## Limitations
+
+The open items are in [MasterPlan.md](MasterPlan.md).
+
 
 - The design-value IDS (`IdsExporter`) doesn't know about extension targets. Use `IIfcModelBuilder::WriteTableIds` for a general IDS of the extension's table.
 - PGSplice: the builder is registered by the agent in both, but the extension hooks have only been designed with PGSuper bridges in mind.

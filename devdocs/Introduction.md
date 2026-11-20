@@ -2,11 +2,12 @@
 
 The design notes, plans, and explanations for the PGSuper IFC extensions: importing IFC bridge models into PGSuper, exporting PGSuper projects to IFC, mapping tables, and round trips.
 
-Start with the import plan and the mapping tables design.
+Start with the master plan, the import plan, and the mapping tables design.
 
 | Document | What it covers |
 |---|---|
-| [IFC import plan](IfcImportPlan.md) | The phased import plan, its status, decisions, and what's next |
+| [Master plan](MasterPlan.md) | All open work, with its status and priority |
+| [IFC import and export plan](IfcImportPlan.md) | What's done, the requirements (round trip, BCF, editor), the decisions A-F, the test models, and the phases |
 | [Import geometry](ImportGeometry.md) | How PGSuper input is derived from the model's geometry, with figures |
 | [Girder import plan](GirderImportPlan.md) | Girder sections, library entries, strands, and girder reinforcement |
 | [Mapping tables design](MappingTablesDesign.md) | The element registry, targets, the table format, and how the import and export use them |

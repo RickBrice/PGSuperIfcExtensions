@@ -53,7 +53,10 @@ The requirement is R1 in [IfcImportPlan.md](IfcImportPlan.md): a project importe
 4. **Declared properties:** targets win; constants and properties with no value never overwrite the model's values (built).
 5. **Types and materials:** the model's are kept and only their declared properties updated, with copies where the elements sharing them need different values (built).
 
-## Not done yet
+## Limitations
+
+What the first version doesn't do (the open items are in [MasterPlan.md](MasterPlan.md)):
+
 
 - Geometry and placement of the model's elements (decision 3).
 - Elements deleted in PGSuper (decision 2).

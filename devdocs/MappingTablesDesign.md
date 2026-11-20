@@ -364,7 +364,7 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 ### Validation
 - **Round trip:** `check_table_ids.py` (the "Standard table <-> IDS" row of `run_validation.py`) writes the standard table as a general IDS, generates a standalone table from it, and compares what the two tables declare for every role: the same 361 declarations (material property sets not compared). Without PGSuper instructions, the roles and targets all come back through the standard table.
 - **Binding:** tested by hand with an agency-style IDS and binding file (a girder property set with a bound strength and an unbound fabricator, `ReleaseStrength`, a haunch specification bound by role, an agency classification, and a specification with no role): the table extends the standard table, reports the unbound facet and the specification with no role, leaves out `ReleaseStrength` (the standard table already exports it), and is valid.
-- **Still to do:** a test with a real agency IDS.
+- **Not tested yet:** a real agency IDS ([MasterPlan.md](MasterPlan.md)).
 
 ## The mapping table editor (M7)
 
@@ -372,7 +372,7 @@ A BridgeLink application plugin in the IFC extension DLL (`IfcExtensions.Manifes
 
 **MFC module states** (fixed 2026-10-15): the extension is a regular MFC DLL, and each module state has its own window handle map. The frame and views are created by EAF in the application's module state, the panes in the DLL's (where their dialog templates are), so views are used in the application's state (`AfxGetAppModuleState`) and panes in the DLL's; a pane gets its parent with `CWnd::FromHandle` in the DLL's state, because `CWnd::CreateDlgIndirect` validates the parent in the current state.
 
-**To do:** publish the documentation to the online documentation root (BridgeLink's default `https://www.wsdot.wa.gov/eesc/bridge/software/Documentation/`, or `Settings\DocumentationRoot`) under `IfcMappingTableEditor/<major.minor>/`, with a copy of the map named `IfcMappingTableEditor.dm.html` (EAF retries with `.html`); until then Help says the topic isn't found. Add `Docs\IfcMappingTableEditor\<version>\` to `UpdateBinFiles.bat` and the installer for local documentation.
+**Not published yet** ([MasterPlan.md](MasterPlan.md)): it goes to the online documentation root (BridgeLink's default `https://www.wsdot.wa.gov/eesc/bridge/software/Documentation/`, or `Settings\DocumentationRoot`) under `IfcMappingTableEditor/<major.minor>/`, with a copy of the map named `IfcMappingTableEditor.dm.html` (EAF retries with `.html`); until then Help says the topic isn't found. Add `Docs\IfcMappingTableEditor\<version>\` to `UpdateBinFiles.bat` and the installer for local documentation.
 
 ## Code layout
 
