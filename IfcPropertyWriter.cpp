@@ -49,24 +49,24 @@ public:
       return !table.GetPropertySets(role, PropertyOwner::Occurrence).empty() || !table.GetPropertySets(role, PropertyOwner::Type).empty() || !table.GetClassifications(role).empty();
    }
 
-   void WritePropertySets(ElementKind role, const std::vector<IfcExport::Schema::IfcObjectDefinition>& objects, const ExportContext& context) override
+   void WritePropertySets(ElementKind role, const std::vector<IfcExport::Schema::IfcObjectDefinition>& objects, const IfcExport::ElementKeys& keys) override
    {
-      ::WritePropertySets<IfcExport::Schema>(Hooks().file, role, objects, WithSession(context));
+      ::WritePropertySets<IfcExport::Schema>(Hooks().file, role, objects, Context(keys));
    }
 
-   std::vector<IfcExport::Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const ExportContext& context) override
+   std::vector<IfcExport::Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const IfcExport::ElementKeys& keys) override
    {
-      return ::CreateTypePropertySets<IfcExport::Schema>(Hooks().file, role, WithSession(context));
+      return ::CreateTypePropertySets<IfcExport::Schema>(Hooks().file, role, Context(keys));
    }
 
    IfcExport::Schema::IfcMaterial RebarMaterial(const WBFL::Materials::Rebar& rebar) override
    {
-      return ::GetExportRebarMaterial(Hooks().file, Hooks().broker, Hooks().options, rebar);
+      return ::GetExportRebarMaterial(Hooks().file, Hooks().broker, Options(), rebar);
    }
 
    void Classify(ElementKind role, IfcExport::Schema::IfcObjectDefinition object) override
    {
-      ::Classify<IfcExport::Schema>(Hooks().file, role, object, Hooks().options);
+      ::Classify<IfcExport::Schema>(Hooks().file, role, object, Options());
    }
 
    IfcExport::Schema::IfcGeometricRepresentationSubContext BodySubContext() override
@@ -83,49 +83,56 @@ private:
    CIfcExportSession& m_Session;
 
    const IfcExport::HookContext& Hooks() const { return *m_Session.m_pHookContext; }
+   const CIfcExportOptions& Options() const { return *m_Session.m_pOptions; }
 
-   // the context with the broker and options of the export, if the extension left them out
-   ExportContext WithSession(const ExportContext& context) const
+   // the export context of an extension's element: the export's broker and options, and the element's keys
+   ExportContext Context(const IfcExport::ElementKeys& keys) const
    {
-      ExportContext c(context);
-      if (!c.broker) c.broker = Hooks().broker;
-      if (!c.options) c.options = &Hooks().options;
+      ExportContext c;
+      c.broker = Hooks().broker;
+      c.options = &Options();
+      c.segment = keys.segment;
+      c.pier = keys.pier;
+      c.span = keys.span;
+      c.index = keys.index;
+      c.extension = keys.extension;
       return c;
    }
 };
 
-CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options, IIfcExportExtension* extension)
+CIfcExportSession::CIfcExportSession(const CIfcExportOptions& options, const CExportProfile& profile) :
+   m_Profile(profile.Describe())
 {
    ASSERT(ms_pCurrent == nullptr); // one export at a time
 
-   if (extension)
+   if (auto* extension = profile.GetExtension())
       m_pExtensionContent = RegisterExtension(*extension);
    m_pScope = std::make_unique<CIfcExtensionScope>(m_pExtensionContent.get());
 
    std::filesystem::path path(options.mapping_file.GetString());
    m_pTable = CIfcMappingTable::LoadActive(path, options.mapping_source);
 
-   if (extension)
-      m_pHooks = extension->CreateHooks();
+   m_pHooks = profile.CreateHooks();
 
    ms_pCurrent = this;
 }
 
 CIfcExportSession::~CIfcExportSession()
 {
-   if (m_pHooks)
-      m_pHooks->OnExportEnd(m_bSucceeded);
-
+   m_pHooks->OnExportEnd(m_bSucceeded);
    ms_pCurrent = nullptr;
 }
 
 void CIfcExportSession::StartHooks(IfcExport::File& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options)
 {
-   if (!m_pHooks)
-      return;
+   m_pOptions = &options;
+   m_BuildOptions.mapping_file = options.mapping_file;
+   m_BuildOptions.include_rebar = options.include_rebar;
+   m_BuildOptions.include_quantities = options.include_quantities;
+   m_BuildOptions.display_units_for_properties = options.display_units_for_properties;
 
    m_pServices = std::make_unique<CIfcExportServices>(*this);
-   m_pHookContext = std::make_unique<IfcExport::HookContext>(IfcExport::HookContext{ file, pBroker, options, *m_pServices, m_Elements });
+   m_pHookContext = std::make_unique<IfcExport::HookContext>(IfcExport::HookContext{ file, pBroker, m_BuildOptions, *m_pServices, m_Elements });
 }
 
 void CIfcExportSession::CallHook(const char* hook, const std::function<void(IfcExport::IHooks&, IfcExport::HookContext&)>& call)
@@ -135,7 +142,11 @@ void CIfcExportSession::CallHook(const char* hook, const std::function<void(IfcE
 
    auto failed = [this, hook](const std::string& problem)
       {
-         return CIfcExtensionException("The export extension \"" + m_pExtensionContent->id + "\" failed in " + hook + ": " + problem);
+         // e.g. "The export extension "MyAgency.MyExchanger" failed in OnPier: ..."
+         std::string who = m_Profile;
+         if (!who.empty())
+            who[0] = (char)toupper((unsigned char)who[0]);
+         return CIfcExtensionException(who + " failed in " + hook + ": " + problem);
       };
 
    try
@@ -192,6 +203,7 @@ Float64 ConvertToDisplayUnits(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    case ExportUnit::BigArea: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Feet2); break; // as GetBigAreaUnit
    case ExportUnit::Mass: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::PoundMass); break; // as GetMassUnit
    case ExportUnit::Volume: value = WBFL::Units::ConvertFromSysUnits(value, WBFL::Units::Measure::Feet3); break; // as GetVolumeUnit
+   case ExportUnit::ComponentDim: value = WBFL::Units::ConvertFromSysUnits(value, pDisplayUnits->GetComponentDimUnit().UnitOfMeasure); break;
    default: break;
    }
 

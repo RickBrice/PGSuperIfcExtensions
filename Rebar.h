@@ -23,7 +23,9 @@
 
 #include "Materials.h"
 #include "BarShape.h"
-#include "PropertySets.h"
+#include "Units.h"
+#include "IfcExporter.h"
+#include "Properties.h"
 #include "QuantitySets.h"
 #include "RebarRelationshipBatch.h"
 
@@ -74,7 +76,7 @@ typename Schema::IfcIndexedPolyCurve CreateBarDirectrix(hierarchy_helper<Schema>
 // - the geometry is the centerline path swept by the bar diameter, mapped by the occurrences (see MapBarType)
 // - BarLength is the centerline length. NominalDiameter and CrossSectionArea are the bar's
 // - the mapping table's type property sets of the rebar role, with the bar in the export context (bar mark, size,
-//   mass, use, and covers), and usBrPset_ACI_BarShape from the bend shape
+//   mass, use, covers, and bend shape)
 // - the material and the classification of the rebar role
 // usBridge has a bar's data on its type, not on the bar (usBrSpec_Classes.ids), so bars with different paths or
 // type property values get different types. A second type with the same name gets " (2)", and so on.
@@ -115,13 +117,8 @@ typename Schema::IfcReinforcingBarType GetBarType(hierarchy_helper<Schema>& file
    auto representation_map = file.create<typename Schema::IfcRepresentationMap>().initialize(file.addPlacement3d(), shape_representation);
    std::vector<typename Schema::IfcRepresentationMap> representation_maps{ representation_map };
 
-   // property sets
+   // property sets (with usBrPset_ACI_BarShape, from the bar's bend shape)
    auto property_sets = CreateTypePropertySets<Schema>(file, ElementKind::Rebar, context);
-   if (options.classify && !bar.shape_code.empty())
-   {
-      if (auto bar_shape = Create_usBrPset_ACI_BarShape(file, pBroker, options, bar.shape_code, bar.bend_radius, bar.shape_dimensions))
-         property_sets.push_back(bar_shape);
-   }
    std::optional<std::vector<typename Schema::IfcPropertySetDefinition>> has_property_sets;
    if (!property_sets.empty())
       has_property_sets = property_sets;

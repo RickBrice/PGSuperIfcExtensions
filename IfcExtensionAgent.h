@@ -108,7 +108,7 @@ public:
 public:
    int GetApiVersion() const override;
    std::string GetBuildFingerprint() const override;
-   IfcBuildResult BuildModel(const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension) override;
+   IfcBuildResult BuildModel(const IfcExport::BuildOptions& options, const CString& strFilePath, IIfcExportExtension* extension) override;
    IfcBuildResult WriteTableIds(const CString& strMappingTable, const CString& strIdsPath, IIfcExportExtension* extension) override;
 
 // IEditAlignmentCallback

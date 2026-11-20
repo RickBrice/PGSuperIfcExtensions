@@ -31,6 +31,8 @@ After the models, the last row ("Standard table <-> IDS") checks the standard ta
 - generates `results/Standard-from-ids.ifcmap` from it (`/IfcIdsToTable`, `/IfcTableExtends=none`)
 - compares what the two tables declare, with any differences in `results/Standard-from-ids.diff.txt`
 
+The "ExtensionApi" row checks the export extension API with the test export extension (`check_extension.py`, `/IfcTestExtension`, `mappings/TestExtension.ifcmap`; see `devdocs/ExtensionsDesign.md`, "Testing the API"): the hooks are called in the documented order, once for each pier, bearing, and segment; the extension's property sets are on its own element and on the girders and piers; the rest of the export is the `PGSuper-System` export baseline; and a hook that throws, another API version, another build fingerprint, and the table without the extension each stop the export with a message and no file. The details are in `results/ExtensionApi.md`. It runs unless `--models` is given without `ExtensionApi`.
+
 ## Standards
 
 `standards.json` lists the standards the exports are checked against (`check_standard.py`). Each has a folder (environment variables allowed, e.g. usBridge in `%OneDriveCommercial%\BIM for Bridges\usBridge`), its IDS files, and its data dictionary workbook. A standard whose folder isn't found is skipped, and the summary says so.
@@ -61,6 +63,7 @@ An expected file lists values in SI (PGSuper system units) by the keys that `pgs
   - A *default match* equals the expected value only because the import template has the same value, so it doesn't show the importer set it.
   - Values measured differently (e.g. girder spacing along vs normal to the pier) are *not comparable*.
 - `check_table_ids.py`: the standard table <-> general IDS round trip (can also run alone).
+- `check_extension.py`: the export extension API with the test export extension (can also run alone; its exports are in `results/extension`, not tracked).
 - `check_roundtrip.py`: exports that update a copy of the model a project was imported from (`/IfcSourceModel`, see `devdocs/RoundTripDesign.md`). After each IFC model's import, the project is exported as a copy of the model, and the summary says what the merge did and whether the copy keeps the model (the model file unchanged, every GlobalId kept, no entity type with fewer instances) and passes its design-value IDS. The `PGSuper` model's System run (`"check_added_reinforcement"`) strips its export of strands and bars, exports the imported project into the stripped model, and compares the added strands and bars with the project's export. The copies are in `results/models/` (not tracked: what the merge adds gets new GlobalIds on every run). To see what a round trip changed, use IfcOpenShell's IfcDiff: `python "%IFCOPENSHELL_DIR%\src\ifcdiff\ifcdiff.py" <model.ifc> <copy.ifc> -o diff.json -r "attributes type property container aggregate classification"` (add `geometry` to compare shapes; it needs `deepdiff`, `python -m pip install deepdiff`).
 - `check_standard.py`: the standards checks (IDS on exports, workbook against the standard table); also runs alone with `--ifc` or `--workbook`. `check_ids.py`: one IFC file against one IDS, optionally one specification.
 - `compare_export.py`, `compare_ids.py`: reduce an export or an IDS to the lines compared with `export_baseline/`.

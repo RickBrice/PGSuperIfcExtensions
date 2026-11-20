@@ -16,6 +16,12 @@
     <ClCompile Include="IfcExtensionRegistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ExportProfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TestExportExtension.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="IfcPropertyWriter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -207,7 +213,13 @@
     <ClInclude Include="IfcExtensionRegistry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\IfcExport\IfcExportOptions.h">
+    <ClInclude Include="IfcExportOptions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ExportProfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TestExportExtension.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\IfcExport\IfcExtensionTypes.h">
@@ -330,7 +342,7 @@
     <ClInclude Include="Referents.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="USBridge_Classifications.h">
+    <ClInclude Include="Classifications.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Rebar.h">
@@ -426,13 +438,7 @@
     <ClInclude Include="ImportResults.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PropertySets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="QuantitySets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="bSDD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Georeferencing.h">

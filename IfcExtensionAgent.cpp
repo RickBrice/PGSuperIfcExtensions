@@ -39,6 +39,7 @@
 #include "IfcTableFormat.h"
 #include "MenuLogo.h"
 #include "IfcExtensionRegistry.h"
+#include "TestExportExtension.h"
 
 #include <EAF\EAFApp.h>
 #include <EAF\EAFDocument.h>
@@ -108,24 +109,35 @@ std::string CIfcExtensionAgent::GetBuildFingerprint() const
    return IfcExport::BuildFingerprint();
 }
 
-IfcBuildResult CIfcExtensionAgent::BuildModel(const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension)
+IfcBuildResult CIfcExtensionAgent::BuildModel(const IfcExport::BuildOptions& options, const CString& strFilePath, IIfcExportExtension* extension)
 {
    AFX_MANAGE_STATE(AfxGetStaticModuleState());
+
+   // the IFC export's default options, with the ones an extension sets
+   CIfcExportOptions build_options;
+   build_options.mapping_file = options.mapping_file;
+   build_options.include_rebar = options.include_rebar;
+   build_options.include_quantities = options.include_quantities;
+   build_options.display_units_for_properties = options.display_units_for_properties;
 
    IfcBuildResult result;
    CIfcExporter exporter;
    try
    {
-      CIfcExportOptions build_options(options);
-      if (extension)
-         build_options.mapping_source = MappingTableSource::ExportExtension; // the extension's table, for messages
-      result.bSucceeded = exporter.BuildModel(m_pBroker, build_options, strFilePath, extension);
+      auto profile = extension ? CExportProfile::Extension(*extension) : CExportProfile::Standard();
+      result.bSucceeded = exporter.BuildModel(m_pBroker, build_options, strFilePath, profile);
    }
    catch (const std::exception& e)
    {
       // e.g. the mapping table or the extension can't be used, or one of the extension's hooks failed. The message says what to do
       result.bSucceeded = false;
       result.error = e.what();
+   }
+   catch (const WBFL::System::XBase& e)
+   {
+      // a WBFL exception from PGSuper (they don't derive from std::exception)
+      result.bSucceeded = false;
+      result.error = CT2A(e.GetErrorMessage().c_str());
    }
    result.table_files = exporter.GetMappingTableFiles();
    result.log = exporter.GetExtensionLog();
@@ -519,13 +531,25 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
       options.segment_global_ids = &segment_global_ids;
    }
 
+   // the export's profile: the standard export, or the test export extension (/IfcTestExtension)
+   std::unique_ptr<CTestExportExtension> test_extension;
+   if (ifcCmdInfo.m_bTestExtension)
+   {
+      CTestExportExtension::Mode mode;
+      if (CTestExportExtension::GetMode(ifcCmdInfo.m_strTestExtensionMode, mode))
+         test_extension = std::make_unique<CTestExportExtension>(mode);
+      else
+         strError.Format(_T("/IfcTestExtension: \"%s\" isn't a test extension mode (hooks, throw, api, or fingerprint)"), ifcCmdInfo.m_strTestExtensionMode.GetString());
+   }
+   auto profile = test_extension ? CExportProfile::Extension(*test_extension) : CExportProfile::Standard();
+
    bool bResult = false;
    CIfcExporter exporter;
    if (strError.IsEmpty())
    {
       try
       {
-         bResult = exporter.BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile);
+         bResult = exporter.BuildModel(EAFGetBroker(), options, ifcCmdInfo.m_strIfcFile, profile);
       }
       catch (const std::exception& e)
       {
@@ -577,6 +601,10 @@ void CIfcExtensionAgent::ExportFromCommandLine(const CIfcCommandLineInfo& ifcCmd
    log << _T("Exported ") << ifcCmdInfo.m_strFileName.GetString() << _T(" with property values in ") << (options.display_units_for_properties ? _T("display units") : _T("system units")) << std::endl;
    for (const auto& table_file : exporter.GetMappingTableFiles())
       log << _T("IFC mapping table ") << CString(table_file.c_str()).GetString() << std::endl;
+   if (test_extension)
+      log << _T("Export extension ") << CString(test_extension->GetId().c_str()).GetString() << std::endl;
+   for (const auto& line : exporter.GetExtensionLog())
+      log << CString(line.c_str()).GetString() << std::endl;
    if (!strError.IsEmpty())
       log << _T("IFC export failed: ") << strError.GetString() << std::endl;
    if (!options.source_model.IsEmpty())
@@ -602,6 +630,26 @@ void CIfcExtensionAgent::TableToIdsFromCommandLine(const CIfcCommandLineInfo& if
    std::ofstream log(ifcCmdInfo.m_strLogFile.GetString());
    try
    {
+      if (ifcCmdInfo.m_bTestExtension)
+      {
+         // with the test export extension's targets and roles, through the model builder as an extension uses it
+         CTestExportExtension::Mode mode;
+         if (!CTestExportExtension::GetMode(ifcCmdInfo.m_strTestExtensionMode, mode))
+            throw std::runtime_error("/IfcTestExtension: \"" + std::string(CT2A(ifcCmdInfo.m_strTestExtensionMode)) + "\" isn't a test extension mode (hooks, throw, api, or fingerprint)");
+
+         CTestExportExtension extension(mode);
+         auto result = WriteTableIds(ifcCmdInfo.m_strMappingFile, ifcCmdInfo.m_strToolIdsFile, &extension);
+         for (const auto& file : result.table_files)
+            log << "IFC mapping table " << file << std::endl;
+         log << "Export extension " << extension.GetId() << std::endl;
+         for (const auto& line : result.log)
+            log << line << std::endl;
+         if (!result.bSucceeded)
+            throw std::runtime_error(result.error);
+         log << "IDS written: " << CT2A(ifcCmdInfo.m_strToolIdsFile) << std::endl;
+         return;
+      }
+
       std::filesystem::path table_path(ifcCmdInfo.m_strMappingFile.GetString());
       auto table = CIfcMappingTable::LoadActive(table_path);
       for (const auto& file : table->GetFiles())

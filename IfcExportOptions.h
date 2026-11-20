@@ -21,7 +21,8 @@
 ///////////////////////////////////////////////////////////////////////
 #pragma once
 
-// The IFC export options. Part of the extension SDK (see IfcModelBuilder.h): export extensions pass them to IIfcModelBuilder
+// The IFC export options. Not part of the extension SDK: export extensions pass IfcExport::BuildOptions to
+// IIfcModelBuilder (Include\IfcExport\IfcModelBuilder.h), which the IFC extension turns into these
 
 #include <map>
 #include <string>

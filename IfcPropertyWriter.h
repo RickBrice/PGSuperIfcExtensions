@@ -39,7 +39,7 @@
 #include "Include\IfcExport\IfcModelBuilder.h"
 #include "Properties.h"
 #include "Units.h"
-#include "USBridge_Classifications.h"
+#include "Classifications.h"
 
 #include <EAF/EAFDisplayUnits.h>
 
@@ -47,10 +47,10 @@ class CIfcExportSession
 {
 public:
    // Loads the mapping table for an export: options.mapping_file, or the installed standard table.
-   // extension: the export extension (see Include\IfcExport\IfcModelBuilder.h), or nullptr. Its targets and element roles
+   // profile: the standard export or an export extension's (ExportProfile.h). An extension's targets and element roles
    // are available to the mapping table for the session.
    // Throws CIfcMappingTableException if the table can't be used, CIfcExtensionException if the extension can't be used
-   CIfcExportSession(const CIfcExportOptions& options, IIfcExportExtension* extension = nullptr);
+   CIfcExportSession(const CIfcExportOptions& options, const CExportProfile& profile);
    ~CIfcExportSession();
 
    // The session of the export in progress
@@ -58,9 +58,9 @@ public:
 
    const CIfcMappingTable& GetTable() const { return *m_pTable; }
 
-   // Export extension hooks (devdocs/ExtensionsDesign.md). Call StartHooks once the file and project exist.
-   // CallHook does nothing without an extension. It turns an exception the hook throws into a CIfcExtensionException
-   // that names the extension and the hook
+   // The profile's hooks (devdocs/ExtensionsDesign.md). Every export has them: the standard export's do nothing.
+   // Call StartHooks once the file and project exist; before, CallHook does nothing. CallHook turns an exception the
+   // hook throws into a CIfcExtensionException that names the profile and the hook
    void StartHooks(IfcExport::File& file, std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options);
    bool HasHooks() const { return m_pHookContext != nullptr; }
    void CallHook(const char* hook, const std::function<void(IfcExport::IHooks&, IfcExport::HookContext&)>& call);
@@ -93,13 +93,17 @@ public:
    std::map<std::string, int> type_names;
 
 private:
+   std::string m_Profile; // for messages (CExportProfile::Describe)
+
    // in this order, so each outlives the ones after it: the table can use the extension's targets and roles
    std::unique_ptr<CIfcExtensionContent> m_pExtensionContent;
    std::unique_ptr<CIfcExtensionScope> m_pScope;
    std::unique_ptr<CIfcMappingTable> m_pTable;
    std::unique_ptr<IfcExport::IHooks> m_pHooks;
-   std::unique_ptr<IfcExport::IServices> m_pServices;       // uses m_pHookContext's file, broker, and options
-   std::unique_ptr<IfcExport::HookContext> m_pHookContext;  // refers to m_pServices
+   const CIfcExportOptions* m_pOptions = nullptr;           // the options StartHooks was given
+   IfcExport::BuildOptions m_BuildOptions;                  // what the hooks see of them
+   std::unique_ptr<IfcExport::IServices> m_pServices;       // uses m_pHookContext's file and broker, and m_pOptions
+   std::unique_ptr<IfcExport::HookContext> m_pHookContext;  // refers to m_pServices and m_BuildOptions
    IfcExport::ExportedElements m_Elements;
    std::vector<std::string> m_HookLog;
    bool m_bSucceeded = false;
@@ -108,7 +112,7 @@ private:
    friend class CIfcExportServices;
 };
 
-// Calls an export extension hook during a model build, if there's an extension, e.g.
+// Calls a hook of the export's profile during a model build, e.g.
 //    CallExportHook<Schema>("OnPier", &IfcExport::IHooks::OnPier, pierIdx, pier);
 // Hooks are only called for the schema extensions use
 template <typename Schema, typename... Params, typename... Args>
@@ -118,16 +122,12 @@ void CallExportHook(const char* name, void (IfcExport::IHooks::*hook)(IfcExport:
       CIfcExportSession::Current().CallHook(name, [&](IfcExport::IHooks& hooks, IfcExport::HookContext& context) { (hooks.*hook)(context, args...); });
 }
 
-// Records an element the extension's hooks can use, if there's an extension. record is a generic lambda [&](auto& elements) {...}
+// Records an element the profile's hooks can use. record is a generic lambda [&](auto& elements) {...}
 template <typename Schema, typename Record>
 void RecordExportedElement(Record&& record)
 {
    if constexpr (std::is_same_v<Schema, IfcExport::Schema>)
-   {
-      auto& session = CIfcExportSession::Current();
-      if (session.HasHooks())
-         record(session.GetExportedElements());
-   }
+      record(CIfcExportSession::Current().GetExportedElements());
 }
 
 // The material of reinforcing bars of the rebar's type and grade, as GetRebarMaterial (Materials.h) gives it, for
@@ -181,6 +181,7 @@ namespace ifc_property_writer
       case ExportUnit::BigArea: return GetBigAreaUnit<Schema>(file, pBroker);
       case ExportUnit::Mass: return GetMassUnit<Schema>(file, pBroker);
       case ExportUnit::Volume: return GetVolumeUnit<Schema>(file, pBroker);
+      case ExportUnit::ComponentDim: return GetComponentDimUnit<Schema>(file, pBroker);
       default: return {};
       }
    }

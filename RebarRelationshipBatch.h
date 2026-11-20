@@ -27,7 +27,6 @@
 #include <utility>
 #include <vector>
 
-#include "bSDD.h"
 
 // RebarRelationshipBatch buffers reinforcement relationship membership while the
 // bar/strand occurrences are authored and emits each relationship exactly once in

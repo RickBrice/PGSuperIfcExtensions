@@ -23,7 +23,7 @@
 #include "IfcTargetReader.h"
 #include "IfcTargetHints.h"
 #include "Utilities.h"
-#include "USBridge_Classifications.h"
+#include "Classifications.h"
 
 #include <charconv>
 

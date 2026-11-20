@@ -29,7 +29,6 @@
 #include "Units.h"
 #include "IfcExporter.h"
 #include "Properties.h"
-#include "bSDD.h"
 
 /// @brief Checks if an object has the specified classification
 /// @tparam Schema 
@@ -78,12 +77,4 @@ void AssociateClassification(hierarchy_helper<Schema>& file, typename Schema::If
    rel_classification.setGlobalId(ifcopenshell::global_id());
    rel_classification.setRelatedObjects(related_objects);
    rel_classification.setRelatingClassification(classification);
-}
-
-template <typename Schema>
-void Classify_usBridge_ReinforcingBarType(hierarchy_helper<Schema>& file, typename Schema::IfcReinforcingBarType rebar_type)
-{
-   // usBridge does not define a classification for IfcReinforcingBarType.
-   // Classification it is unclear if classification association is inherited from the type to the instance.
-   // When usBridge defines one, declare it in the mapping table and use Classify (IfcPropertyWriter.h)
 }

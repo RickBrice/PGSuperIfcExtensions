@@ -23,8 +23,7 @@
 #include "IfcExporter.h"
 #include "IfcAlignmentBuilder.h"
 #include "Referents.h"
-#include "USBridge_Classifications.h"
-#include "PropertySets.h"
+#include "Classifications.h"
 #include "QuantitySets.h"
 #include "Units.h"
 #include "Rebar.h"
@@ -4261,16 +4260,16 @@ void CreateGeoreferencing(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::
 }
 
 template <typename Schema>
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& export_options, const CString& strFilePath, IIfcExportExtension* extension)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& export_options, const CString& strFilePath, const CExportProfile& profile)
 {
    USES_CONVERSION;
 
+   // the profile's option overrides. Throws if the options can't be used with the profile (e.g. an extension's round trip)
+   CIfcExportOptions options = profile.Apply(export_options);
+
    // a round trip export names the elements it writes, for the merge into the copy of the source model
    IfcExportIdentities identities;
-   CIfcExportOptions options(export_options);
    bool bRoundTrip = !options.source_model.IsEmpty();
-   if (bRoundTrip && extension)
-      throw CIfcExtensionException("An export with an export extension can't be a copy of the model the project was imported from (a round trip).");
 
    // PGSplice analyzes with the time-step method, which is slow, and the IFC model is input data. Values that need
    // analysis results (cambers) are left out, so an export doesn't start the analysis
@@ -4299,11 +4298,19 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
    // the file outlives the session, because an export extension's hooks can hold its elements until the session ends
    hierarchy_helper<Schema> file;
 
-   // the mapping table for the property sets, and the export extension's targets, roles, and hooks.
+   // the mapping table for the property sets, and the profile's hooks (and an export extension's targets and roles).
    // Throws CIfcMappingTableException if the table can't be used, CIfcExtensionException if the extension can't be used
-   CIfcExportSession session(options, extension);
+   CIfcExportSession session(options, profile);
    for (const auto& table_file : session.GetTable().GetFiles())
       m_MappingTableFiles.push_back(DescribeTableFile(table_file));
+
+   // what the hooks logged, whether the export succeeds or not (e.g. what a hook logged before it failed)
+   struct CopyLog
+   {
+      CIfcExportSession& session;
+      std::vector<std::string>& log;
+      ~CopyLog() { log = session.GetHookLog(); }
+   } copy_log{ session, m_ExtensionLog };
 
    InitializeFile<Schema>(file, pBroker, strFilePath); // creates project and site
 
@@ -4395,7 +4402,6 @@ bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const 
       ofs << file;
    }
 
-   m_ExtensionLog = session.GetHookLog();
    session.SetSucceeded();
    return true;
 }
@@ -4409,12 +4415,12 @@ CIfcExporter::~CIfcExporter(void)
 {
 }
 
-bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension)
+bool CIfcExporter::BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, const CExportProfile& profile)
 {
    bool bResult = false;
    switch (options.schema)
    {
-   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, options, strFilePath, extension); break;
+   case CIfcExportOptions::Schema::Schema_4x3_add2: bResult = BuildModel<IfcSchema>(pBroker, options, strFilePath, profile); break;
    default:
       CHECK(false); // is there a new typename Schema type
    }

@@ -14,7 +14,7 @@ A **target** is a PGSuper data item with a fixed, readable name such as `girder.
 | `description` | Shown in the editor and in log messages |
 | `display_unit`, `display_round` | Export only: the display unit and rounding used when properties are written in display units |
 | `needs_analysis` | Export only: the value comes from analysis results. When `CIfcExportOptions::include_analysis_values` is false the property is written with no value and `get` isn't called. The exporter sets it false for PGSplice documents, so an export doesn't start the time-step analysis (the IFC model is input data) |
-| `get` | Export only: a lambda that reads the value from PGSuper, given an `ExportContext` (the broker, export options, and the segment, pier, strand, bar, bearing, or barrier being written). Empty for an import-only target |
+| `get` | Export only: a lambda that reads the value from PGSuper, given an `ExportContext` (the broker, export options, and the segment, pier, strand, bar, bearing, or barrier being written). Empty for an import-only target. Export extensions' targets see the context through `IfcExport::Element` instead (`ExtensionsDesign.md`) |
 
 A table can't add targets. `CIfcMappingTable` resolves each name it reads with `FindTargetDef` (`IfcMappingTable.cpp`, when properties and locations are loaded), so an unknown name is a table error. The editor (`MappingEditorPanes.cpp`, `MappingEditorModelPane.cpp`), the model browser (`IfcModelBrowser.cpp`) and the IDS writer (`IfcTableIds.cpp`) look names up the same way.
 
@@ -155,6 +155,10 @@ The girder bar imports (`GirderBars.h`, for `LongitudinalRebar.h` and `Stirrups.
 | `rebar.bar_mass` | Mass | `BarDefinition::GetMass()` (centerline length × nominal area × density) | – |
 | `rebar.bar_element`, `rebar.bar_use`, `rebar.bar_position` | Text | `BarDefinition::element`, `use`, `position` (no value when empty) | – |
 | `rebar.cover_top`, `cover_side`, `cover_bottom`, `cover_end` | Length | `BarDefinition::cover_*` (absent when the bar has none) | – |
+| `rebar.shape_standard`, `rebar.shape_standard_version` | Text | "ACI 315-99" and "1999", the standard of PGSuper's bend shape codes (absent for a bar without a shape code, as are the targets below) | – |
+| `rebar.bend_shape` | Text | `BarDefinition::shape_code`, e.g. "STRAIGHT", "17", "S11" | – |
+| `rebar.bend_radius` | Length | `BarDefinition::bend_radius` (display unit: the component dimension unit) | – |
+| `rebar.dimension_a`, `_b`, `_c`, `_d`, `_e`, `_f`, `_g`, `_h`, `_j`, `_k`, `_r`, `_o`, `_v` | Length | `BarDefinition::shape_dimensions["DimensionA"]`, ... (absent when the bar's shape doesn't have the dimension; the component dimension unit) | – |
 
 ### Bearings
 

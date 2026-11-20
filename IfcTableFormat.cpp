@@ -29,7 +29,7 @@ using ordered_json = nlohmann::ordered_json;
 
 namespace
 {
-   const char* const KEY_ORDER[] = { "comment", "format", "version", "name", "extends", "elements", "property_sets", "quantity_sets",
+   const char* const KEY_ORDER[] = { "comment", "format", "version", "name", "bsdd_dictionary", "extends", "elements", "property_sets", "quantity_sets",
       "classification_systems", "classifications", "targets" };
 
    // A value on one line, with ", " and ": " separators and UTF-8 text as it is (as Python's json.dumps(ensure_ascii=False))

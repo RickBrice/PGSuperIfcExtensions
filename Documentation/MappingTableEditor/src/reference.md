@@ -119,6 +119,23 @@ A target is a PGSuper value with a fixed name. A table can't add targets; it say
 | `rebar.cover_side` | `rebar` | length | cover to the side faces |
 | `rebar.cover_bottom` | `rebar` | length | cover to the bottom face |
 | `rebar.cover_end` | `rebar` | length | cover to the end faces |
+| `rebar.shape_standard` | `rebar` | text | detailing standard of the bar's bend shape code (ACI 315-99) |
+| `rebar.shape_standard_version` | `rebar` | text | version of the detailing standard (1999) |
+| `rebar.bend_shape` | `rebar` | text | the bar's bend shape code (e.g. STRAIGHT, 17, S11) |
+| `rebar.bend_radius` | `rebar` | length | inside radius of the bar's bends |
+| `rebar.dimension_a` | `rebar` | length | dimension A of the bar's bend shape |
+| `rebar.dimension_b` | `rebar` | length | dimension B of the bar's bend shape |
+| `rebar.dimension_c` | `rebar` | length | dimension C of the bar's bend shape |
+| `rebar.dimension_d` | `rebar` | length | dimension D of the bar's bend shape |
+| `rebar.dimension_e` | `rebar` | length | dimension E of the bar's bend shape |
+| `rebar.dimension_f` | `rebar` | length | dimension F of the bar's bend shape |
+| `rebar.dimension_g` | `rebar` | length | dimension G of the bar's bend shape |
+| `rebar.dimension_h` | `rebar` | length | dimension H of the bar's bend shape |
+| `rebar.dimension_j` | `rebar` | length | dimension J of the bar's bend shape |
+| `rebar.dimension_k` | `rebar` | length | dimension K of the bar's bend shape |
+| `rebar.dimension_r` | `rebar` | length | dimension R of the bar's bend shape |
+| `rebar.dimension_o` | `rebar` | length | dimension O of the bar's bend shape |
+| `rebar.dimension_v` | `rebar` | length | dimension V of the bar's bend shape |
 | `bearing.fixed_x` | `bearing` | true/false | bearing fixed along the girder |
 | `bearing.fixed_y` | `bearing` | true/false | bearing fixed across the girder |
 | `bearing.displacement_accommodated` | `bearing` | true/false | list of the displacements accommodated along, across, and normal to the girder |

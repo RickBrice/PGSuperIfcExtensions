@@ -26,6 +26,47 @@
 
 #include "Include\IfcExport\IfcExtensionTypes.h"
 
+class CIfcExportOptions;
+struct BarDefinition;
+
+// The element whose target values are exported. The exporter fills in the keys the element's targets need. Export
+// extensions see it through IfcExport::Element (IfcExtensionRegistry.cpp), so it can change without changing the SDK
+struct ExportContext
+{
+   std::shared_ptr<WBFL::EAF::Broker> broker;
+   const CIfcExportOptions* options = nullptr;
+   CSegmentKey segment;                 // Girder, ClosureJoint, Tendon
+   PierIndexType pier = INVALID_INDEX;  // Pier, Foundation
+   const WBFL::Materials::PsStrand* strand = nullptr; // Tendon (and its material)
+   pgsTypes::StrandType strand_type = pgsTypes::Straight; // Tendon
+   StrandIndexType strand_index = INVALID_INDEX; // Tendon
+   const WBFL::Materials::Rebar* rebar = nullptr; // Rebar material
+   const BarDefinition* bar = nullptr; // Rebar: the bar of a bar type (see BarShape.h)
+   pgsTypes::TrafficBarrierOrientation barrier_side = pgsTypes::tboLeft; // Barrier
+   const CBearingData2* bearing = nullptr; // Bearing
+   const BearingElevationDetails* bearing_elevation = nullptr; // Bearing: its location and elevations
+   const IntermediateDiaphragmDetails* intermediate_diaphragm = nullptr; // Diaphragm: an intermediate diaphragm (pier is INVALID_INDEX)
+   SpanIndexType span = INVALID_INDEX; // extension roles that belong to a span
+   IndexType index = INVALID_INDEX;    // extension roles: the element's position in its list (e.g. a stirrup zone)
+   std::any extension;                 // data an export extension passes to its own targets
+};
+
+using ExportGetter = std::function<ExportValue(const ExportContext&)>;
+
+struct TargetDef
+{
+   std::string_view name;  // e.g. "girder.fci"
+   ElementKind element;    // the element the target belongs to
+   ValueKind kind;
+   std::string_view description; // for messages
+   ExportUnit display_unit = ExportUnit::None; // export: the display unit of a number
+   Float64 display_round = 0; // export: rounding increment in display units (0: none)
+   bool needs_analysis = false; // export: the value comes from analysis results. Left out (no value) when the export
+                                // options say so, e.g. for PGSplice, whose time-step analysis is slow
+   ExportGetter get; // export: the value for an element. Empty for import-only targets
+   std::string_view provider; // the export extension that registered the target. Empty for the IFC extension's own targets
+};
+
 // All of the IFC extension's own targets (not those of export extensions)
 const std::vector<TargetDef>& GetTargetDefs();
 

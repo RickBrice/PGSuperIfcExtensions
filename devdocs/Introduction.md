@@ -12,8 +12,8 @@ Start with the import plan and the mapping tables design.
 | [Mapping tables design](MappingTablesDesign.md) | The element registry, targets, the table format, and how the import and export use them |
 | [Mapping table targets](Targets.md) | Each target and the PGSuper data and code behind it |
 | [Round trip design](RoundTripDesign.md) | Exporting a project as an updated copy of the model it was imported from |
-| [Export extensions](ExtensionsDesign.md) | The model builder API for other plug-ins (BridgeSight's BrDR export): targets, roles, hooks, and the SDK in `Include\IfcExport` |
-| [Export profiles plan](ExportProfilesPlan.md) | Evaluation: the usBridge and BrDR exports as profiles of one export mechanism |
+| [Export extensions](ExtensionsDesign.md) | The model builder API for other plug-ins (BridgeSight's BrDR export): targets, roles, hooks, the SDK in `Include\IfcExport`, and its test extension |
+| [Export profiles plan](ExportProfilesPlan.md) | The usBridge and BrDR exports as profiles of one export mechanism: the evaluation and what was done |
 | [PGSplice plan](PGSplicePlan.md) | Import and export for PGSplice |
 | [Stirrup plan](StirrupPlan.md) | Plug-in stirrup input with bar shapes and layouts, analysis through `CShearData2`, design mapping, and a general bar export |
 | [3D view plan](3DViewPlan.md) | Exploratory: a 3D view of the bridge model, native or from IFC |

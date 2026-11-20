@@ -27,10 +27,10 @@
 #include "IfcMappingTable.h"
 #include "IfcRoundTripMerge.h"
 
-#include "Include\IfcExport\IfcExportOptions.h"
+#include "IfcExportOptions.h"
+#include "ExportProfile.h"
 
 namespace WBFL { namespace EAF { class Broker; }; };
-class IIfcExportExtension;
 
 ///////////////////////////////////////////////////////////////////////////
 // CIfcExporter
@@ -40,11 +40,11 @@ public:
     CIfcExporter(void);
     ~CIfcExporter(void);
 
-    // Throws CIfcMappingTableException if the mapping table can't be used.
-    // extension: an export extension (see Include\IfcExport\IfcModelBuilder.h), or nullptr for the standard export.
-    // With an extension, its targets and element roles are available to the mapping table and its hooks add to the model.
-    // Throws CIfcExtensionException if the extension can't be used or one of its hooks fails
-    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension = nullptr);
+    // Builds the model of the export profile (ExportProfile.h): the standard export (CExportProfile::Standard()), or an
+    // export extension's. Every profile's model is built the same way; the profile's hooks add to it.
+    // Throws CIfcMappingTableException if the mapping table can't be used, CIfcExtensionException if the profile's
+    // extension can't be used or one of its hooks fails
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, const CExportProfile& profile);
 
     // The mapping table files of the last BuildModel, the selected table first, e.g. for the export log
     const std::vector<std::string>& GetMappingTableFiles() const { return m_MappingTableFiles; }
@@ -52,7 +52,7 @@ public:
     // What the last BuildModel with a source model changed in the copy of it
     const RoundTripMergeResult& GetMergeResult() const { return m_MergeResult; }
 
-    // The lines the export extension's hooks logged in the last BuildModel
+    // The lines the profile's hooks logged in the last BuildModel, whether it succeeded or not
     const std::vector<std::string>& GetExtensionLog() const { return m_ExtensionLog; }
 
 private:
@@ -61,7 +61,7 @@ private:
     std::vector<std::string> m_ExtensionLog;
 
     template <typename Schema>
-    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension);
+    bool BuildModel(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CIfcExportOptions& options, const CString& strFilePath, const CExportProfile& profile);
 };
 
 

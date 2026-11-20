@@ -23,6 +23,10 @@
 
 // Types shared by the IFC extension and the plug-ins that extend its export (see IfcModelBuilder.h and
 // devdocs/ExtensionsDesign.md). Targets are the PGSuper data items that mapping tables bind to IFC locations.
+//
+// The SDK is kept small, so that the IFC extension can change without changing it: extensions read an element's keys
+// through IfcExport::Element (accessors, not the IFC extension's export context) and pass their own elements' keys in
+// IfcExport::ElementKeys. The IFC extension's own export context and options aren't part of it
 
 #include <any>
 #include <functional>
@@ -35,15 +39,14 @@
 #include <PsgLib\Keys.h>
 
 // Changes when a type or interface of the extension SDK (Include\IfcExport) changes, from the first release that
-// includes the SDK on. The IFC extension refuses an export extension built with another version
+// includes the SDK on. The IFC extension refuses an export extension built with another version. Version 1 is
+// provisional until it's released: changes before then don't change it
 #define IFC_EXPORT_EXTENSION_API_VERSION 1
 
 namespace WBFL { namespace EAF { class Broker; }; };
 namespace WBFL { namespace Materials { class PsStrand; class Rebar; }; };
-class CIfcExportOptions;
 class CBearingData2;
 struct BearingElevationDetails;
-struct BarDefinition;
 
 // An intermediate diaphragm the IFC export writes: the cast-in-place diaphragm of one bay of a span, made of the halves
 // PGSuper gives the girders on either side (IBridge::GetCastInPlaceDiaphragms), from web face to web face
@@ -128,28 +131,8 @@ enum class ExportUnit
    SmallArea,  // e.g. in^2
    BigArea,    // ft^2
    Mass,       // lb
-   Volume      // ft^3
-};
-
-// The element whose target values are exported. The exporter fills in the keys the element's targets need
-struct ExportContext
-{
-   std::shared_ptr<WBFL::EAF::Broker> broker;
-   const CIfcExportOptions* options = nullptr;
-   CSegmentKey segment;                 // Girder, ClosureJoint, Tendon
-   PierIndexType pier = INVALID_INDEX;  // Pier, Foundation
-   const WBFL::Materials::PsStrand* strand = nullptr; // Tendon (and its material)
-   pgsTypes::StrandType strand_type = pgsTypes::Straight; // Tendon
-   StrandIndexType strand_index = INVALID_INDEX; // Tendon
-   const WBFL::Materials::Rebar* rebar = nullptr; // Rebar material
-   const BarDefinition* bar = nullptr; // Rebar: the bar of a bar type (see BarShape.h)
-   pgsTypes::TrafficBarrierOrientation barrier_side = pgsTypes::tboLeft; // Barrier
-   const CBearingData2* bearing = nullptr; // Bearing
-   const BearingElevationDetails* bearing_elevation = nullptr; // Bearing: its location and elevations
-   const IntermediateDiaphragmDetails* intermediate_diaphragm = nullptr; // Diaphragm: an intermediate diaphragm (pier is INVALID_INDEX)
-   SpanIndexType span = INVALID_INDEX; // extension roles that belong to a span
-   IndexType index = INVALID_INDEX;    // extension roles: the element's position in its list (e.g. a stirrup zone)
-   std::any extension;                 // data an export extension passes to its own targets
+   Volume,     // ft^3
+   ComponentDim // e.g. in (PGSuper's component dimension unit)
 };
 
 // The value a target's getter gives the exporter
@@ -176,18 +159,44 @@ struct ExportValue
    static ExportValue Absent() { ExportValue v; v.state = State::Absent; return v; }
 };
 
-using ExportGetter = std::function<ExportValue(const ExportContext&)>;
-
-struct TargetDef
+namespace IfcExport
 {
-   std::string_view name;  // e.g. "girder.fci"
-   ElementKind element;    // the element the target belongs to
-   ValueKind kind;
-   std::string_view description; // for messages
-   ExportUnit display_unit = ExportUnit::None; // export: the display unit of a number
-   Float64 display_round = 0; // export: rounding increment in display units (0: none)
-   bool needs_analysis = false; // export: the value comes from analysis results. Left out (no value) when the export
-                                // options say so, e.g. for PGSplice, whose time-step analysis is slow
-   ExportGetter get; // export: the value for an element. Empty for import-only targets
-   std::string_view provider; // the export extension that registered the target. Empty for the IFC extension's own targets
-};
+   // The element whose target values are exported, as an export extension's targets see it. The IFC extension gives
+   // the keys its element roles' targets need (e.g. Segment() for a girder, Pier() for a pier); an extension's own
+   // elements have the ElementKeys its hooks gave. A key the element doesn't have is INVALID_INDEX or nullptr.
+   // New keys are added at the end
+   class Element
+   {
+   public:
+      virtual std::shared_ptr<WBFL::EAF::Broker> Broker() const = 0;
+      virtual const CSegmentKey& Segment() const = 0;            // girder, closure joint, tendon
+      virtual PierIndexType Pier() const = 0;                    // pier, abutment, foundation
+      virtual SpanIndexType Span() const = 0;                    // an extension's elements that belong to a span; an intermediate diaphragm
+      virtual IndexType Index() const = 0;                       // the element's position in its list (e.g. a stirrup zone, an intermediate diaphragm)
+      virtual const WBFL::Materials::PsStrand* Strand() const = 0; // tendon (and its material)
+      virtual pgsTypes::StrandType StrandType() const = 0;       // tendon
+      virtual StrandIndexType StrandIndex() const = 0;           // tendon
+      virtual const WBFL::Materials::Rebar* Rebar() const = 0;   // rebar material
+      virtual pgsTypes::TrafficBarrierOrientation BarrierSide() const = 0; // barrier
+      virtual const CBearingData2* Bearing() const = 0;          // bearing
+      virtual const BearingElevationDetails* BearingElevation() const = 0; // bearing: its location and elevations
+      virtual const IntermediateDiaphragmDetails* IntermediateDiaphragm() const = 0; // diaphragm: an intermediate diaphragm (Pier() is INVALID_INDEX)
+      virtual const std::any& Extension() const = 0;             // data an export extension passes to its own targets (ElementKeys::extension)
+
+   protected:
+      ~Element() = default;
+   };
+
+   // An export extension target's value for an element
+   using Getter = std::function<ExportValue(const Element&)>;
+
+   // The keys of an export extension's element, for the targets of its property sets (IServices::WritePropertySets)
+   struct ElementKeys
+   {
+      CSegmentKey segment;                // the girder it belongs to
+      PierIndexType pier = INVALID_INDEX; // the pier it belongs to
+      SpanIndexType span = INVALID_INDEX; // the span it belongs to
+      IndexType index = INVALID_INDEX;    // its position in its list (e.g. a stirrup zone)
+      std::any extension;                 // anything else its targets need
+   };
+}

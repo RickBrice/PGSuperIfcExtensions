@@ -282,6 +282,8 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClCompile Include="IfcImportUnits.cpp" />
     <ClCompile Include="IfcMappingTable.cpp" />
     <ClCompile Include="IfcExtensionRegistry.cpp" />
+    <ClCompile Include="ExportProfile.cpp" />
+    <ClCompile Include="TestExportExtension.cpp" />
     <ClCompile Include="IfcPropertyWriter.cpp" />
     <ClCompile Include="IfcTableIds.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -347,7 +349,6 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BeamSpacing.h" />
-    <ClInclude Include="bSDD.h" />
     <ClInclude Include="DeckSlab.h" />
     <ClInclude Include="TrafficBarriers.h" />
     <ClInclude Include="GirderReinforcement.h" />
@@ -374,7 +375,6 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="GirderProfile.h" />
     <ClInclude Include="Piers.h" />
     <ClInclude Include="Structures.h" />
-    <ClInclude Include="PropertySets.h" />
     <ClInclude Include="QuantitySets.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="ImportOptions.h" />
@@ -389,7 +389,9 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="IfcMappingTable.h" />
     <ClInclude Include="IfcExtensionRegistry.h" />
     <ClInclude Include="IfcPropertyWriter.h" />
-    <ClInclude Include="Include\IfcExport\IfcExportOptions.h" />
+    <ClInclude Include="IfcExportOptions.h" />
+    <ClInclude Include="ExportProfile.h" />
+    <ClInclude Include="TestExportExtension.h" />
     <ClInclude Include="Include\IfcExport\IfcExtensionTypes.h" />
     <ClInclude Include="Include\IfcExport\IfcModelBuilder.h" />
     <ClInclude Include="IdsBuilder.h" />
@@ -431,7 +433,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
     <ClInclude Include="StdAfx.h" />
     <ClInclude Include="SteelSpecifications.h" />
     <ClInclude Include="Units.h" />
-    <ClInclude Include="USBridge_Classifications.h" />
+    <ClInclude Include="Classifications.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="IfcExtensions.bmp" />

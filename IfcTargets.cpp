@@ -136,6 +136,27 @@ namespace
       return cover ? ExportValue(*cover) : ExportValue::Absent();
    }
 
+   // The bar's bend shape (BarDefinition::shape_code), or absent for a bar without one, so its shape's property set isn't written
+   bool has_bend_shape(const ExportContext& c)
+   {
+      return c.bar && !c.bar->shape_code.empty();
+   }
+
+   template <typename T>
+   ExportValue bend_shape_value(const ExportContext& c, const T& value)
+   {
+      return has_bend_shape(c) ? ExportValue(value) : ExportValue::Absent();
+   }
+
+   // A dimension of the bar's bend shape (e.g. "DimensionB"), or absent if the shape doesn't have it
+   ExportValue bar_dimension(const ExportContext& c, const char* name)
+   {
+      if (!has_bend_shape(c))
+         return ExportValue::Absent();
+      auto found = c.bar->shape_dimensions.find(name);
+      return found == c.bar->shape_dimensions.end() ? ExportValue::Absent() : ExportValue(found->second);
+   }
+
    Float64 deck_fc(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetDeckFc28(); }
    Float64 deck_max_aggregate_size(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetDeckMaxAggrSize(); }
 
@@ -491,6 +512,45 @@ const std::vector<TargetDef>& GetTargetDefs()
         .get = [](const ExportContext& c) { return bar_cover(c.bar->cover_bottom); } },
       { .name = "rebar.cover_end", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "cover to the end faces", .display_unit = DU::Deflection,
         .get = [](const ExportContext& c) { return bar_cover(c.bar->cover_end); } },
+
+      //
+      // The bar's bend shape. PGSuper's shape codes and dimensions are those of ACI 315-99 (BarDefinition in BarShape.h).
+      // Absent for a bar without a shape code
+      //
+      { .name = "rebar.shape_standard", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "detailing standard of the bar's bend shape code (ACI 315-99)",
+        .get = [](const ExportContext& c) { return bend_shape_value(c, std::string("ACI 315-99")); } },
+      { .name = "rebar.shape_standard_version", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "version of the detailing standard (1999)",
+        .get = [](const ExportContext& c) { return bend_shape_value(c, std::string("1999")); } },
+      { .name = "rebar.bend_shape", .element = ElementKind::Rebar, .kind = ValueKind::Text, .description = "the bar's bend shape code (e.g. STRAIGHT, 17, S11)",
+        .get = [](const ExportContext& c) { return bend_shape_value(c, c.bar ? c.bar->shape_code : std::string()); } },
+      { .name = "rebar.bend_radius", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "inside radius of the bar's bends", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bend_shape_value(c, c.bar ? c.bar->bend_radius : 0.0); } },
+      { .name = "rebar.dimension_a", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension A of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionA"); } },
+      { .name = "rebar.dimension_b", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension B of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionB"); } },
+      { .name = "rebar.dimension_c", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension C of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionC"); } },
+      { .name = "rebar.dimension_d", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension D of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionD"); } },
+      { .name = "rebar.dimension_e", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension E of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionE"); } },
+      { .name = "rebar.dimension_f", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension F of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionF"); } },
+      { .name = "rebar.dimension_g", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension G of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionG"); } },
+      { .name = "rebar.dimension_h", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension H of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionH"); } },
+      { .name = "rebar.dimension_j", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension J of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionJ"); } },
+      { .name = "rebar.dimension_k", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension K of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionK"); } },
+      { .name = "rebar.dimension_r", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension R of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionR"); } },
+      { .name = "rebar.dimension_o", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension O of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionO"); } },
+      { .name = "rebar.dimension_v", .element = ElementKind::Rebar, .kind = ValueKind::Length, .description = "dimension V of the bar's bend shape", .display_unit = DU::ComponentDim,
+        .get = [](const ExportContext& c) { return bar_dimension(c, "DimensionV"); } },
 
       //
       // Bearings

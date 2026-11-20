@@ -278,6 +278,7 @@ The values in `map` (e.g. every value `3_Fixity` actually takes) are taken from 
 ### General rules
 
 - **Unknown keys are errors.** A misspelled key (e.g. `"unti"`) would otherwise be ignored without notice. Any object may have a `"comment"`.
+- **bSDD dictionary:** `"bsdd_dictionary"` (top level) is the URI `"bsdd"` URIs are built from (ending with `/`; the standard table's is usBridge's, `https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/`). A table without one uses the dictionary of the table it extends, so an agency table's `"bsdd"` URIs are usBridge's; another standard's table names its own. A table with `"bsdd"` URIs and no dictionary in its chain is an error. The URIs are resolved once the chain is loaded (`resolve_bsdd_uris`), so the dictionary isn't in code (until 2026-11-20 it was, `bSDD.h`).
 - **Element roles:**
   - A selector has `entity` (subtypes included), and optionally `predefined_type` (from the type object if there is one; as in IDS, a USERDEFINED element's user-defined type matches too: its type object's `ElementType`, else its `ObjectType`, e.g. `"TENDON_BUNDLE"`), `attributes` (`{ "ObjectType": "Haunch" }`, exact, ignoring case), and `classification` (a reference identification).
   - `any_of` lists alternative selectors.
@@ -331,11 +332,11 @@ Each name maps to a `WBFL::Units::Measure`. The loader rejects unknown names, an
 | `name`, `type` | property name and IFC value type (`IFCPRESSUREMEASURE`, `IFCLABEL`, ...) |
 | `target` | bound target. Without one, the property is written with no value |
 | `import` | `false` makes the binding export only (G2) |
-| `uri` | `"bsdd"` (built from the pset and property name, as `BSDD_PROPERTY` does) or an explicit URI, written as the description |
+| `uri` | `"bsdd"` (the table's bSDD dictionary, `prop/`, and the property name), `"bsdd:Name"` (another name in it), or an explicit URI, written as the description |
 | `enumeration` | name and values of an `IfcPropertyEnumeration`. The value is written as an enumerated value |
 
 Pset fields:
-- `name`, `applies_to` (element role), `attach` (`occurrence`, `type`, or `material`), `uri`
+- `name`, `applies_to` (element role), `attach` (`occurrence`, `type`, or `material`), `uri` (`"bsdd"`: the dictionary, `class/`, and the pset name)
 - `shared`: `true` makes one instance related to all elements of the role. Only allowed when no property depends on the element; the loader checks this.
 
 ## Layering
@@ -495,8 +496,8 @@ Each stage keeps the export identical to the baseline:
      - The round-trip models have no strands debonded at the ends. That path was checked separately: two PGSuper regression models with debonding (`PCI_BDM_Ex9.2.pgs`, `Debond_IBeam.pgs`), exported with the stage 2 build and the stage 3 build in both property-unit modes, give the same listings.
 4. Remove the replaced `Create_*` functions.
    - **Done 2026-09-29:** 53 functions removed from `PropertySets.h`, `QuantitySets.h`, and `USBridge_Classifications.h` (1,095 lines), and the name-based `RebarRelationshipBatch::Classify`. What's left in code:
-     - the code-owned reinforcing bar property sets and the bar count quantity (stage 3 decision)
-     - `Classify_usBridge_ReinforcingBarType` (empty: usBridge has no classification for bar types)
+     - the code-owned reinforcing bar property sets and the bar count quantity (stage 3 decision). Since 2026-11-20 only the bar count: `usBrPset_ACI_BarShape` is in the table, with a target for the bend shape's standard, its version, the shape code, the bend radius, and each ACI dimension (`rebar.dimension_a`, ...; absent when the bar's shape doesn't have it)
+     - `Classify_usBridge_ReinforcingBarType` (empty: usBridge has no classification for bar types). Removed 2026-11-20 (`USBridge_Classifications.h` is now `Classifications.h`, with the generic classification helpers)
      - `Pset_Stationing` on the referents and `Pset_LinearReferencingMethod` on the alignment (`Referents.h`): stationing is part of the alignment structure, which stays in code, as on the import side
    - The exports are the same as the baseline, and the end-debonding A/B check still passes.
 
@@ -507,7 +508,7 @@ M4 then moves the design-value IDS onto the table.
 - **Design values by target:** e.g. `girder.fci` gives `ReleaseStrength` (the location the importer reads, used in minimal mode) and, with the beam properties, `FormStrippingStrength` and `LiftingStrength`.
   - Quantities are checked as the measure they hold (`IfcQuantityLength` -> `IFCLENGTHMEASURE`).
   - A target the table doesn't export gives no requirement.
-- **Constant-valued checks** (`Pset_BeamCommon.Status`, `AssemblyPlace`, `CastingMethod`, the strand `UltimateStrain` and `Specification`): the value is taken from the table's declaration, found by property set and property name, and the requirement is left out if the table doesn't declare the property.
+- **Constant-valued checks:** every property with a constant value the table declares for the element role and attachment (the girder's, the girder type's, the strand material's; e.g. `Pset_BeamCommon.Status`, `AssemblyPlace`, `CastingMethod`, `UltimateStrain`), with the table's value; numbers are checked with the IDS tolerance. Until 2026-11-20 the IDS named the constants by property set and property name (`usBrPset_ACI_TendonMaterial.Specification`, which the table attaches to the tendon type, not the material, so it was never required).
 - **Unchanged:** the values, the per-element pinning (by `Name` or `GlobalId`), and the specification names and identifiers.
 - **Command line:** `/IfcIds=<file.ids>` writes the design-value IDS with an `/IfcExport`, with the default IDS options (girders pinned by `Name`, so the IDS is the same from one export to the next).
 - **Validation:** `run_validation.py` writes the IDS with every round-trip export and compares it with `export_baseline/<run>.ids.txt` (`compare_ids.py`: facets sorted within each specification, the date left out). The baselines were recorded with the IDS exporter before M4; all five IDS files are the same.
@@ -522,6 +523,19 @@ Found while making the table reproduce the exporter it replaces. **Fixed 2026-09
 - Concrete materials were shared by name ("Precast Concrete, f'c = ..."), so the deck and barriers could share a girder material, with the aggregate size of whichever element came first. Now girders are "Precast Concrete, f'c = ..." (as the design-value IDS expects), and the deck and barriers "Cast-in-Place Concrete, f'c = ...". A concrete with the same strength but another maximum aggregate size gets its own material, with the size in its name.
 - `usBrPset_Roadway` was created but never attached to the bridge. Now it's declared for the bridge (placeholders, as its code intended).
 - The girder-only export classified the girder without writing the usBridge classification system. Now it writes the system when classifying. The girder-only export can't be run from the command line, so this isn't covered by the validation.
+
+## The exporter's IFC conventions
+
+What a mapping table can't change: how the model is built. These are the exporter's conventions, shared by every export profile (the standard export and every export extension's; [ExportProfilesPlan.md](ExportProfilesPlan.md)), not usBridge's, although usBridge's IDS and IDM shaped several of them. Make one a profile option only when a standard needs something different (decided 2026-11-20).
+
+- **Spatial structure:** `IfcProject` > `IfcSite` > `IfcBridge` (`GIRDER`), which aggregates the `SUPERSTRUCTURE` and `SUBSTRUCTURE` `IfcBridgePart`s. The superstructure aggregates the `DECK` part; the substructure a `PIER` or `ABUTMENT` part for each pier (which aggregates its `FOUNDATION` part) and a `USERDEFINED` part for each PGSplice erection tower. Referents position the bridge, the piers, and the foundations (`IfcRelPositions`).
+- **Containment:** the girder segments (`IfcBeam`), the spliced girders' `IfcElementAssembly` `GIRDER`s, and the pier and intermediate diaphragms (`IfcBeam` `DIAPHRAGM`) are in the superstructure; the deck slab and the barriers in the deck part; the bearings and the bearing seat survey points in their pier. A girder-only export has the girder in the project.
+- **Types:** each girder has its `IfcBeamType`. A strand's and a bar's data (property sets, material, classification) are on its type (`IfcTendonType`, `IfcReinforcingBarType`), and elements with different type values get different types ("<name> (2)", ...): the types come from the strand or bar path and the type property values (`GetTendonType`, `GetBarType`; see "Strand and bar data on their types" in `CLAUDE.md`).
+- **Assemblies:** a segment's strands are an `IfcElementAssembly` with the shared `IfcElementAssemblyType` whose `ElementType` is `TENDON_BUNDLE`; its bars are an `IfcElementAssembly` `REINFORCEMENT_UNIT`. Both are aggregated by the girder.
+- **Materials:** concrete materials by strength (`GetConcreteMaterial`; each barrier's from its railing system's strength), a material for each bar type and grade, and one for each strand material, each with the table's material property sets.
+- **Not modeled:** the construction sequence (usBridge's IDM keeps it out of the model, `ConstructionSequence.h`).
+
+The table decides the rest: which elements play which element role in an import (selectors), and every property set, quantity set, classification, and constant value of the export.
 
 ## Tables and general IDS (M5)
 **Done 2026-09-29.** A general IDS says what an export must contain, with no design values. It is not the design-value IDS (M4), which pins values to single elements of one model and is not an input here.
@@ -594,7 +608,9 @@ The agency IDS is never changed (A4). Manual assignments live in the binding fil
 |---|---|
 | `IfcRoundTrip.h/.cpp` | the round trip registry (`CRoundTripRegistry`, its keys, `CRoundTripRecorder`, `IfcExportIdentities`), saved with the project (R1) |
 | `IfcRoundTripMerge.h/.cpp` | the merge of PGSuper's export into a copy of the source model (R1) |
-| `IfcTargets.h/.cpp` | `ElementKind`, `ValueKind`, `TargetValue`, `TargetDef`, the target list |
+| `IfcTargets.h/.cpp` | `ExportContext`, `TargetDef`, the target list (`ElementKind`, `ValueKind`, `TargetValue` are in the extension SDK, `Include\IfcExport\IfcExtensionTypes.h`) |
+| `ExportProfile.h/.cpp` | `CExportProfile`: the standard export or an export extension's ([ExportProfilesPlan.md](ExportProfilesPlan.md)) |
+| `TestExportExtension.h/.cpp` | the test export extension (`/IfcTestExtension`, `check_extension.py`) |
 | `IfcMappingTable.h/.cpp` | finding table files, JSON load (nlohmann-json, already in vcpkg), the `extends` merge, validation, error messages |
 | `IfcTargetReader.h/.cpp` | import engine |
 | `IfcTargetHints.h/.cpp` | hint rules for targets that weren't found (G3) |

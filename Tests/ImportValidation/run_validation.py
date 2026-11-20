@@ -34,6 +34,9 @@ baseline instead (after an intended change to the export).
 The standard table's round trip through a general IDS (/IfcTableToIds, /IfcIdsToTable; see
 check_table_ids.py) runs after the models, as the "Standard table <-> IDS" row, unless --models is given.
 
+The export extension API is checked with the test export extension (check_extension.py: the hooks, their order, and the
+refusals) as the "Export extension API" row, unless --models is given without ExtensionApi.
+
 Standards (standards.json, check_standard.py): each round-trip export is checked with the IDS files of
 each standard (results/<run>.<standard>-ids.txt), and, unless --models is given, the standard table is
 compared with each standard's data dictionary workbook (results/Standard-vs-<standard>-workbook.txt, one
@@ -56,7 +59,7 @@ bridge, whose design-value IDS needs PGSuper's analysis for the cambers).
 The girder label format (GirderLabelFormat in PGSuper's Settings key, "Alpha" by default) is set to
 Numeric for the run, as the baselines have, and restored when done.
 
-Usage: python run_validation.py [--models PGSuper Iowa] [--configuration "WSDOT (Local)"] [--bridgelink BridgeLink.exe] [--skip-standards]
+Usage: python run_validation.py [--models PGSuper Iowa ExtensionApi] [--configuration "WSDOT (Local)"] [--bridgelink BridgeLink.exe] [--skip-standards]
 """
 import argparse
 import datetime
@@ -75,6 +78,7 @@ import compare_bridge
 import compare_export
 import compare_ids
 import check_roundtrip
+import check_extension
 import check_standard
 import check_table_ids
 import ifc_rebar
@@ -530,6 +534,10 @@ def main():
             if model_configuration:
                 rows = [(run, message + f', configuration "{model_configuration[0]}":"{model_configuration[1]}"', score) for run, message, score in rows]
             summary += rows
+        if not args.models or "ExtensionApi" in args.models:
+            print("Checking the export extension API...", flush=True)
+            ok, message = check_extension.check(lambda arguments: run_bridgelink(exe, arguments))
+            summary.append(("ExtensionApi", ("OK: " if ok else "FAILED: ") + message, None))
         if not args.models:
             print("Running the standard table <-> IDS round trip...", flush=True)
             ok, message = check_table_ids.check(exe)

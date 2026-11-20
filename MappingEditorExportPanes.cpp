@@ -30,7 +30,6 @@
 #include "MappingEditorViews.h"
 #include "MappingEditorDoc.h"
 #include "MappingEditorUtil.h"
-#include "bSDD.h"
 #include "MenuLogo.h"
 
 #include <sstream>
@@ -85,10 +84,22 @@ namespace
       }
    }
 
-   // bSDD URIs as a table writes them: "bsdd" when the URI is built from the name, "bsdd:Other" for another bSDD name
-   std::string short_uri(const std::string& uri, const std::string& name, const char* kind)
+   // The bSDD dictionary the edited table's "bsdd" URIs name: its own "bsdd_dictionary", else the base table's
+   std::string bsdd_dictionary(CMappingEditorDoc* pDoc)
    {
-      std::string prefix = BSDD_URI + kind + "/";
+      const auto& table = pDoc->GetTable();
+      if (table.contains("bsdd_dictionary") && table["bsdd_dictionary"].is_string())
+         return table["bsdd_dictionary"].get<std::string>();
+      return pDoc->GetBaseTable() ? pDoc->GetBaseTable()->GetBsddDictionary() : std::string();
+   }
+
+   // bSDD URIs as a table writes them: "bsdd" when the URI is built from the name, "bsdd:Other" for another bSDD name
+   // (in the dictionary of the edited table)
+   std::string short_uri(const std::string& uri, const std::string& name, const char* kind, const std::string& dictionary)
+   {
+      if (dictionary.empty())
+         return uri;
+      std::string prefix = dictionary + kind + "/";
       if (uri == prefix + name)
          return "bsdd";
       if (uri.compare(0, prefix.size(), prefix) == 0)
@@ -102,7 +113,7 @@ namespace
    }
 
    // A base table's property set as an entry of this table, for the given role
-   ordered_json set_json(const PropertySetDeclaration& pset)
+   ordered_json set_json(const PropertySetDeclaration& pset, const std::string& dictionary)
    {
       ordered_json j = ordered_json::object();
       j["name"] = pset.name;
@@ -114,7 +125,7 @@ namespace
       if (pset.quantities && !pset.method.empty())
          j["method"] = pset.method;
       if (!pset.uri.empty())
-         j["uri"] = short_uri(pset.uri, pset.name, "class");
+         j["uri"] = short_uri(pset.uri, pset.name, "class", dictionary);
       if (pset.shared)
          j["shared"] = true;
 
@@ -131,7 +142,7 @@ namespace
          if (p.target && p.import == pset.quantities) // the default is import for properties, not for quantities
             jp["import"] = p.import;
          if (!p.uri.empty())
-            jp["uri"] = short_uri(p.uri, p.name, "prop");
+            jp["uri"] = short_uri(p.uri, p.name, "prop", dictionary);
          if (!p.enumeration_name.empty())
             jp["enumeration"] = { { "name", p.enumeration_name }, { "values", p.enumeration_values } };
          items.push_back(jp);
@@ -140,18 +151,18 @@ namespace
       return j;
    }
 
-   ordered_json system_json(const ClassificationSystemDeclaration& system)
+   ordered_json system_json(const ClassificationSystemDeclaration& system, const std::string& dictionary)
    {
       ordered_json j = ordered_json::object();
       j["name"] = system.name;
       if (!system.source.empty()) j["source"] = system.source;
       if (!system.edition.empty()) j["edition"] = system.edition;
       if (!system.edition_date.empty()) j["edition_date"] = system.edition_date;
-      if (!system.specification.empty()) j["specification"] = (system.specification == BSDD_URI ? std::string("bsdd") : system.specification);
+      if (!system.specification.empty()) j["specification"] = (!dictionary.empty() && system.specification == dictionary ? std::string("bsdd") : system.specification);
       return j;
    }
 
-   ordered_json classification_json(const ClassificationDeclaration& c)
+   ordered_json classification_json(const ClassificationDeclaration& c, const std::string& dictionary)
    {
       ordered_json j = ordered_json::object();
       j["applies_to"] = std::string(GetElementRoleName(c.applies_to));
@@ -161,7 +172,7 @@ namespace
       j["identification"] = c.identification;
       if (!c.name.empty()) j["name"] = c.name;
       if (!c.location.empty())
-         j["location"] = (c.location == BSDD_URI + "class/" + c.identification ? std::string("bsdd") : c.location);
+         j["location"] = (!dictionary.empty() && c.location == dictionary + "class/" + c.identification ? std::string("bsdd") : c.location);
       return j;
    }
 
@@ -513,7 +524,7 @@ BOOL CBaseItemPane::OnInitDialog()
    case MappingNode::Kind::QuantitySet:
       if (const auto* pset = find_base_set(m_pDoc, m_Node.kind == MappingNode::Kind::QuantitySet, m_Node.key))
       {
-         auto j = set_json(*pset);
+         auto j = set_json(*pset, bsdd_dictionary(m_pDoc));
          os << (pset->quantities ? "Quantity set " : "Property set ") << pset->name << ", from the base table" << std::endl << std::endl;
          os << "Applies to: " << GetElementRoleName(pset->applies_to) << std::endl;
          if (!pset->quantities) os << "Attach to: " << OwnerName(pset->attach) << std::endl;
@@ -573,15 +584,15 @@ void CBaseItemPane::OnChange()
    case MappingNode::Kind::PropertySet:
    case MappingNode::Kind::QuantitySet:
       if (const auto* pset = find_base_set(m_pDoc, m_Node.kind == MappingNode::Kind::QuantitySet, m_Node.key))
-         entry = set_json(*pset);
+         entry = set_json(*pset, bsdd_dictionary(m_pDoc));
       break;
    case MappingNode::Kind::ClassificationSystem:
       if (const auto* system = find_base_system(m_pDoc, m_Node.key))
-         entry = system_json(*system);
+         entry = system_json(*system, bsdd_dictionary(m_pDoc));
       break;
    case MappingNode::Kind::Classification:
       if (const auto* c = find_base_classification(m_pDoc, m_Node.key))
-         entry = classification_json(*c);
+         entry = classification_json(*c, bsdd_dictionary(m_pDoc));
       break;
    default:
       break;

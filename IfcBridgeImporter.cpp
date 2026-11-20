@@ -24,7 +24,7 @@
 #include "IfcImporter.h"
 #include "Properties.h"
 #include "IfcImporterException.h"
-#include "USBridge_Classifications.h"
+#include "Classifications.h"
 #include "Utilities.h"
 #include "IfcTargetReader.h"
 

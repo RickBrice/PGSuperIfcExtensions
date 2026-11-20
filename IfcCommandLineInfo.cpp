@@ -55,7 +55,8 @@ CIfcCommandLineInfo::CIfcCommandLineInfo() :
    m_bFormatTable(false),
    m_bTableExtendsStandard(true),
    m_bDisplayUnitsForProperties(true),
-   m_bSourceModel(false)
+   m_bSourceModel(false),
+   m_bTestExtension(false)
 {
 }
 
@@ -126,6 +127,17 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
          m_strIdsFile = strValue;
          bMyParameter = true;
       }
+      else if (strParam.CompareNoCase(_T("IfcTestExtension")) == 0)
+      {
+         m_bTestExtension = true;
+         bMyParameter = true;
+      }
+      else if (GetKeyValue(strParam, _T("IfcTestExtension"), strValue))
+      {
+         m_bTestExtension = true;
+         m_strTestExtensionMode = strValue;
+         bMyParameter = true;
+      }
       else if (GetKeyValue(strParam, _T("IfcTableToIds"), strValue))
       {
          m_strToolIdsFile = strValue;
@@ -177,6 +189,12 @@ void CIfcCommandLineInfo::ParseParam(LPCTSTR lpszParam, BOOL bFlag, BOOL bLast)
    if (bLast && 1 < (int)m_bIfcImport + (int)m_bIfcExport + (int)m_bTableToIds + (int)m_bIdsToTable + (int)m_bFormatTable)
    {
       m_bError = TRUE; // one at a time
+      return;
+   }
+
+   if (bLast && m_bTestExtension && !m_bIfcExport && !m_bTableToIds)
+   {
+      m_bError = TRUE; // the test extension is for exports and general IDS files
       return;
    }
 
@@ -251,7 +269,8 @@ CString CIfcCommandLineInfo::GetUsageMessage()
                  _T("/IfcLog - Export log file. Defaults to the IFC file name with a .export.log extension\n")
                  _T("/IfcMapping - IFC mapping table. Defaults to the project's table, else the configured table, else the standard table\n")
                  _T("/IfcIds - Also writes the design-value IDS\n")
-                 _T("/IfcSourceModel - Writes a copy of the IFC model the project was imported from (or of the given model) with PGSuper's design in it"));
+                 _T("/IfcSourceModel - Writes a copy of the IFC model the project was imported from (or of the given model) with PGSuper's design in it\n")
+                 _T("/IfcTestExtension[=hooks|throw|api|fingerprint] - Exports (or writes /IfcTableToIds) with the test export extension, for the validation of the extension API"));
    return strMsg;
 }
 

@@ -33,6 +33,32 @@ namespace
    {
       return prefix.size() + 1 < name.size() && name.compare(0, prefix.size(), prefix) == 0 && name[prefix.size()] == '.';
    }
+
+   // An export context as an export extension's targets see it (the SDK's accessors), so the context can change
+   // without changing the SDK
+   class CElementView : public IfcExport::Element
+   {
+   public:
+      explicit CElementView(const ExportContext& context) : m_Context(context) {}
+
+      std::shared_ptr<WBFL::EAF::Broker> Broker() const override { return m_Context.broker; }
+      const CSegmentKey& Segment() const override { return m_Context.segment; }
+      PierIndexType Pier() const override { return m_Context.pier; }
+      SpanIndexType Span() const override { return m_Context.span; }
+      IndexType Index() const override { return m_Context.index; }
+      const WBFL::Materials::PsStrand* Strand() const override { return m_Context.strand; }
+      pgsTypes::StrandType StrandType() const override { return m_Context.strand_type; }
+      StrandIndexType StrandIndex() const override { return m_Context.strand_index; }
+      const WBFL::Materials::Rebar* Rebar() const override { return m_Context.rebar; }
+      pgsTypes::TrafficBarrierOrientation BarrierSide() const override { return m_Context.barrier_side; }
+      const CBearingData2* Bearing() const override { return m_Context.bearing; }
+      const BearingElevationDetails* BearingElevation() const override { return m_Context.bearing_elevation; }
+      const IntermediateDiaphragmDetails* IntermediateDiaphragm() const override { return m_Context.intermediate_diaphragm; }
+      const std::any& Extension() const override { return m_Context.extension; }
+
+   private:
+      const ExportContext& m_Context;
+   };
 }
 
 // Fills in an extension's content as it registers it
@@ -84,7 +110,7 @@ public:
       stored.def.display_unit = target.display_unit;
       stored.def.display_round = target.display_round;
       stored.def.needs_analysis = target.needs_analysis;
-      stored.def.get = target.get;
+      stored.def.get = [get = target.get](const ExportContext& context) { return get(CElementView(context)); };
       stored.def.provider = m_Content.id;
    }
 

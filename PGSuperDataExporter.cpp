@@ -166,7 +166,7 @@ STDMETHODIMP CPGSuperDataExporter::Export(std::shared_ptr<WBFL::EAF::Broker> pBr
    CString strError;
    try
    {
-      bIfcResult = ifc_builder.BuildModel(pBroker, ifc_options, ifc_path);
+      bIfcResult = ifc_builder.BuildModel(pBroker, ifc_options, ifc_path, CExportProfile::Standard());
    }
    catch (const std::exception& e)
    {

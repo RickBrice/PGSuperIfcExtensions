@@ -1,0 +1,32 @@
+{
+  "comment": "The table of the test export extension (TestExportExtension.h, /IfcTestExtension), for check_extension.py. It extends the standard table with a property set for the extension's own element role and for two of the IFC extension's roles. It needs the extension, so a standard export refuses it",
+  "format": "PGSuperIfcMapping",
+  "version": 1,
+  "name": "Test extension",
+  "extends": "standard",
+  "requires": ["PGSuperIfc.TestExtension"],
+  "elements": {
+    "ifctest.marker": {"entity": "IfcBuildingElementProxy", "predefined_type": "USERDEFINED", "attributes": {"ObjectType": "TEST_MARKER"}}
+  },
+  "property_sets": [
+    {
+      "name": "TestPset_Marker", "applies_to": "ifctest.marker",
+      "properties": [
+        {"name": "HookCalls", "type": "IfcText", "target": "ifctest.marker.hooks"},
+        {"name": "HookCallCount", "type": "IfcInteger", "target": "ifctest.marker.hook_count"}
+      ]
+    },
+    {
+      "name": "TestPset_Girder", "applies_to": "girder",
+      "properties": [
+        {"name": "SegmentKey", "type": "IfcLabel", "target": "ifctest.girder.segment"}
+      ]
+    },
+    {
+      "name": "TestPset_Pier", "applies_to": ["pier", "abutment"],
+      "properties": [
+        {"name": "PierIndex", "type": "IfcInteger", "target": "ifctest.pier.index"}
+      ]
+    }
+  ]
+}

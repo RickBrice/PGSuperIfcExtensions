@@ -392,13 +392,22 @@ namespace
          return locations;
       }
 
-      // a property with a constant value, as the table declares it, or nullopt if the table doesn't export it
-      std::optional<Location> Constant(ElementKind role, PropertyOwner attach, const char* pset, const char* name) const
+      // the properties with a constant value the table exports for an element role and owner, in table order (e.g.
+      // Pset_BeamCommon.Status of a girder). Quantity sets are left out, as quantities are checked for presence only
+      std::vector<Location> Constants(ElementKind role, PropertyOwner attach) const
       {
-         auto exported = m_Table.FindExportedProperty(role, attach, pset, name);
-         if (!exported || !exported->property->value)
-            return std::nullopt;
-         return Location{ exported->pset->name, exported->property->name, DataType(*exported->property), true, exported->property->value };
+         std::vector<Location> constants;
+         for (const auto* pset : m_Table.GetPropertySets(role, attach))
+         {
+            if (pset->quantities)
+               continue;
+            for (const auto& property : pset->properties)
+            {
+               if (property.value)
+                  constants.push_back({ pset->name, property.name, DataType(property), true, property.value });
+            }
+         }
+         return constants;
       }
 
       // the classification references of an element role: (classification system, identification)
@@ -453,10 +462,18 @@ namespace
          requirements.property().push_back(PresenceProperty(l.pset, l.name, l.type.c_str(), card));
    }
 
-   void AddConstant(IDS::requirements& requirements, const std::optional<Location>& location)
+   // the constants the table exports for an element role and owner: numbers as numbers (with the options' tolerance), the
+   // others as their text
+   void AddConstants(IDS::requirements& requirements, const CIdsExportOptions& options, const CTableLocations& table, ElementKind role, PropertyOwner attach)
    {
-      if (location)
-         requirements.property().push_back(PropertyReq(location->pset, location->name, location->type.c_str(), SimpleValue(ConstantText(*location)), Card::Required));
+      for (const auto& constant : table.Constants(role, attach))
+      {
+         const auto& v = *constant.value;
+         if (std::holds_alternative<Float64>(v) || std::holds_alternative<Int64>(v))
+            requirements.property().push_back(NumProperty(options, constant.pset, constant.name, constant.type.c_str(), ConstantNumber(constant)));
+         else
+            requirements.property().push_back(PropertyReq(constant.pset, constant.name, constant.type.c_str(), SimpleValue(ConstantText(constant)), Card::Required));
+      }
    }
 
    void AddClassifications(IDS::requirements& requirements, const CTableLocations& table, ElementKind role)
@@ -505,7 +522,7 @@ namespace
 
       if (options.include_beam_properties)
       {
-         AddConstant(requirements, table.Constant(G, O, "Pset_BeamCommon", "Status"));
+         AddConstants(requirements, options, table, G, O);
          AddNumbers(requirements, options, table.Target(G, O, "girder.span"), Which::All, sdv.span_length, LengthInstruction("Span", sdv.span_length));
          AddNumbers(requirements, options, table.Target(G, O, "girder.slope"), Which::All, sdv.slope_angle);
          AddNumbers(requirements, options, table.Target(G, O, "girder.roll"), Which::All, sdv.roll_angle);
@@ -632,10 +649,8 @@ namespace
       const auto M = PropertyOwner::Material;
       AddNumbers(requirements, options, table.Target(T, M, "tendon.fy"), Which::All, m.fy, StressInstruction("fpy", m.fy));
       AddNumbers(requirements, options, table.Target(T, M, "tendon.fpu"), Which::All, m.fpu, StressInstruction("fpu", m.fpu));
-      if (auto strain = table.Constant(T, M, "Pset_MaterialSteel", "UltimateStrain"))
-         requirements.property().push_back(NumProperty(options, strain->pset, strain->name, strain->type.c_str(), ConstantNumber(*strain)));
+      AddConstants(requirements, options, table, T, M);
       AddTexts(requirements, table.Target(T, M, "tendon.grade"), m.grade_label);
-      AddConstant(requirements, table.Constant(T, M, "usBrPset_ACI_TendonMaterial", "Specification"));
 
       return MakeSpec(std::move(applicability), "Strand material - " + name, {},
          "Prestressing strand material properties from PGSuper", std::move(requirements));
@@ -676,14 +691,13 @@ namespace
          "Nominal strand diameter and area from PGSuper", std::move(requirements));
    }
 
-   IDS::specificationType BuildBeamTypeSpec(const CTableLocations& table, const std::string& name)
+   IDS::specificationType BuildBeamTypeSpec(const CIdsExportOptions& options, const CTableLocations& table, const std::string& name)
    {
       IDS::applicabilityType applicability = MakeApplicability("IFCBEAMTYPE", nullptr, "1");
       AddAttr(applicability, "Name", SimpleValue(name));
 
       IDS::requirements requirements;
-      AddConstant(requirements, table.Constant(ElementKind::Girder, PropertyOwner::Type, "Pset_ConcreteElementGeneral", "AssemblyPlace"));
-      AddConstant(requirements, table.Constant(ElementKind::Girder, PropertyOwner::Type, "Pset_ConcreteElementGeneral", "CastingMethod"));
+      AddConstants(requirements, options, table, ElementKind::Girder, PropertyOwner::Type);
 
       return MakeSpec(std::move(applicability), "Precast girder type - " + name, {},
          "Girder is factory-precast concrete", std::move(requirements));
@@ -812,7 +826,7 @@ bool CIdsExporter::BuildSpecification(std::shared_ptr<WBFL::EAF::Broker> pBroker
       if (options.include_beam_properties && !options.round_trip)
       {
          for (const auto& name : beamTypeNames)
-            specifications.specification().push_back(BuildBeamTypeSpec(table, name));
+            specifications.specification().push_back(BuildBeamTypeSpec(options, table, name));
       }
 
       if (options.include_concrete_material)

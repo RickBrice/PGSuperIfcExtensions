@@ -22,7 +22,6 @@
 #include "stdafx.h"
 #include "IfcMappingTable.h"
 #include "IfcExtensionRegistry.h"
-#include "bSDD.h"
 
 #include <nlohmann/json.hpp>
 
@@ -40,6 +39,10 @@ namespace
 {
    constexpr const char* table_format = "PGSuperIfcMapping";
    constexpr int table_version = 1;
+
+   // a bSDD URI before its table's dictionary is known, e.g. "bsdd:prop/Status" (an explicit URI is a URL, so it can't
+   // start with this)
+   const std::string BSDD_PLACEHOLDER = "bsdd:";
 
    std::string upper(std::string s)
    {
@@ -174,7 +177,7 @@ namespace
             return;
          }
 
-         CheckKeys(j, "", { "format", "version", "name", "extends", "requires", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
+         CheckKeys(j, "", { "format", "version", "name", "extends", "requires", "bsdd_dictionary", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
 
          auto format = GetString(j, "format", "", true);
          if (format && *format != table_format)
@@ -196,6 +199,11 @@ namespace
 
          m_File.name = GetString(j, "name", "", true).value_or("");
          m_File.extends = GetString(j, "extends", "", false).value_or("");
+
+         // the bSDD dictionary "bsdd" URIs name: the URI its class and property names are appended to (after "class/" and "prop/")
+         m_File.bsdd_dictionary = GetString(j, "bsdd_dictionary", "", false).value_or("");
+         if (!m_File.bsdd_dictionary.empty() && m_File.bsdd_dictionary.back() != '/')
+            Error("bsdd_dictionary", "must end with \"/\" (the names are appended to it, e.g. https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/)");
 
          if (j.contains("requires"))
          {
@@ -489,15 +497,17 @@ namespace
          return selector;
       }
 
-      // a bSDD URI ("bsdd" for the declaration's own name, "bsdd:Name" for another name), an explicit URI, or empty
+      // a bSDD URI ("bsdd" for the declaration's own name, "bsdd:Name" for another name), an explicit URI, or empty.
+      // A bSDD URI is kept as BSDD_PLACEHOLDER + "<kind>/<name>" until the table's dictionary is known (resolve_bsdd_uris):
+      // it can come from a table this one extends, which is read after it
       static std::string ResolveUri(const std::string& uri, const std::string& name, const char* kind)
       {
          if (uri.empty())
             return "";
          if (uri == "bsdd")
-            return BSDD_URI + kind + "/" + name;
+            return BSDD_PLACEHOLDER + kind + "/" + name;
          if (uri.starts_with("bsdd:"))
-            return BSDD_URI + kind + "/" + uri.substr(5);
+            return BSDD_PLACEHOLDER + kind + "/" + uri.substr(5);
          return uri;
       }
 
@@ -713,7 +723,7 @@ namespace
             system.edition = GetString(jsystem, "edition", path, false).value_or("");
             system.edition_date = GetString(jsystem, "edition_date", path, false).value_or("");
             auto specification = GetString(jsystem, "specification", path, false).value_or("");
-            system.specification = (specification == "bsdd" ? BSDD_URI : specification);
+            system.specification = (specification == "bsdd" ? BSDD_PLACEHOLDER : specification);
             m_File.classification_systems.push_back(system);
          }
       }
@@ -749,7 +759,7 @@ namespace
                classification.system = GetString(jclassification, "system", path, true).value_or("");
                classification.name = GetString(jclassification, "name", path, false).value_or("");
                auto location = GetString(jclassification, "location", path, false).value_or("");
-               classification.location = (location == "bsdd" ? BSDD_URI + "class/" + classification.identification : location);
+               classification.location = (location == "bsdd" ? BSDD_PLACEHOLDER + "class/" + classification.identification : location);
             }
 
             for (auto role : roles)
@@ -1105,6 +1115,35 @@ namespace
       std::error_code ec;
       return std::filesystem::equivalent(a, b, ec);
    }
+
+   // Replaces the bSDD URI placeholders of a table file (see CTableParser::ResolveUri) with the dictionary. Returns false
+   // if the file has one but there's no dictionary
+   bool resolve_bsdd_uris(MappingTableFile& file, const std::string& dictionary)
+   {
+      bool bMissing = false;
+      auto resolve = [&](std::string& uri)
+         {
+            if (!uri.starts_with(BSDD_PLACEHOLDER))
+               return;
+            if (dictionary.empty())
+               bMissing = true;
+            else
+               uri = dictionary + uri.substr(BSDD_PLACEHOLDER.size());
+         };
+
+      for (auto& pset : file.property_sets)
+      {
+         resolve(pset.uri);
+         for (auto& property : pset.properties)
+            resolve(property.uri);
+      }
+      for (auto& system : file.classification_systems)
+         resolve(system.specification);
+      for (auto& classification : file.classifications)
+         resolve(classification.location);
+
+      return !bMissing;
+   }
 }
 
 const std::vector<TableUnit>& GetTableUnits()
@@ -1372,6 +1411,17 @@ std::unique_ptr<CIfcMappingTable> CIfcMappingTable::Load(const std::filesystem::
 
       path = next;
    }
+
+   // "bsdd" URIs name the dictionary of their table, or of the nearest table it extends that names one
+   std::string dictionary;
+   for (auto file = table->m_Files.rbegin(); file != table->m_Files.rend(); file++)
+   {
+      if (!file->bsdd_dictionary.empty())
+         dictionary = file->bsdd_dictionary;
+      if (!resolve_bsdd_uris(*file, dictionary))
+         fail(file->path, file->source, context, "The table has \"bsdd\" URIs, but neither it nor the tables it extends name a bSDD dictionary (\"bsdd_dictionary\").", false);
+   }
+   table->m_BsddDictionary = dictionary;
 
    table->Merge();
    return table;

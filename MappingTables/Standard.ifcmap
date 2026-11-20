@@ -1,8 +1,9 @@
 {
-  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The property sets reproduce the exporter's property sets as of 2026-09-29, with the export findings of the design note fixed. The types of properties without a value are placeholders until they are checked against bSDD. Strands and bars have their data on their types, as usBridge requires: the bar detailing (mark, size, mass, use, covers) comes from the bar of each type (see BarShape.h). usBrPset_ACI_BarShape, whose properties depend on the bend shape, and the bar count of grouped bars stay in code.",
+  "comment": "Standard IFC mapping table: TPF/usBridge locations, which is what PGSuper exports. Agency tables extend it with \"extends\": \"standard\". See devdocs/MappingTablesDesign.md. The property sets reproduce the exporter's property sets as of 2026-09-29, with the export findings of the design note fixed. The types of properties without a value are placeholders until they are checked against bSDD. Strands and bars have their data on their types, as usBridge requires: the bar detailing (mark, size, mass, use, covers) comes from the bar of each type (see BarShape.h). The bar count of grouped bars stays in code. \"bsdd\" URIs name the bsdd_dictionary (usBridge's); a table that extends this one uses it unless it names its own.",
   "format": "PGSuperIfcMapping",
   "version": 1,
   "name": "Standard (TPF/usBridge)",
+  "bsdd_dictionary": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/",
   "elements": {
     "project": {"entity": "IfcProject"},
     "site": {"entity": "IfcSite"},
@@ -446,6 +447,29 @@
         {"name": "SideFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_side", "import": false, "uri": "bsdd"},
         {"name": "EndFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_end", "import": false, "uri": "bsdd"},
         {"name": "BottomFaceCover", "type": "IfcPositiveLengthMeasure", "target": "rebar.cover_bottom", "import": false, "uri": "bsdd"}
+      ]
+    },
+    {
+      "name": "usBrPset_ACI_BarShape", "applies_to": "rebar", "attach": "type",
+      "comment": "The bar's bend shape (ACI 315-99 shape codes). A bar without a shape code has none of these, so the property set isn't written. Each dimension is written when the bar's shape has it. usBridge has the dimensions as IfcReal, though ACI 131 has IfcLengthMeasure",
+      "properties": [
+        {"name": "StandardName", "type": "IfcLabel", "target": "rebar.shape_standard", "import": false, "uri": "bsdd"},
+        {"name": "StandardVersion", "type": "IfcLabel", "target": "rebar.shape_standard_version", "import": false, "uri": "bsdd"},
+        {"name": "BendShapeName", "type": "IfcLabel", "target": "rebar.bend_shape", "import": false, "uri": "bsdd"},
+        {"name": "DefaultInsideBendRadius", "type": "IfcPositiveLengthMeasure", "target": "rebar.bend_radius", "import": false, "uri": "bsdd"},
+        {"name": "DimensionA", "type": "IfcReal", "target": "rebar.dimension_a", "import": false, "uri": "bsdd"},
+        {"name": "DimensionB", "type": "IfcReal", "target": "rebar.dimension_b", "import": false, "uri": "bsdd"},
+        {"name": "DimensionC", "type": "IfcReal", "target": "rebar.dimension_c", "import": false, "uri": "bsdd"},
+        {"name": "DimensionD", "type": "IfcReal", "target": "rebar.dimension_d", "import": false, "uri": "bsdd"},
+        {"name": "DimensionE", "type": "IfcReal", "target": "rebar.dimension_e", "import": false, "uri": "bsdd"},
+        {"name": "DimensionF", "type": "IfcReal", "target": "rebar.dimension_f", "import": false, "uri": "bsdd"},
+        {"name": "DimensionG", "type": "IfcReal", "target": "rebar.dimension_g", "import": false, "uri": "bsdd"},
+        {"name": "DimensionH", "type": "IfcReal", "target": "rebar.dimension_h", "import": false, "uri": "bsdd"},
+        {"name": "DimensionJ", "type": "IfcReal", "target": "rebar.dimension_j", "import": false, "uri": "bsdd"},
+        {"name": "DimensionK", "type": "IfcReal", "target": "rebar.dimension_k", "import": false, "uri": "bsdd"},
+        {"name": "DimensionR", "type": "IfcReal", "target": "rebar.dimension_r", "import": false, "uri": "bsdd"},
+        {"name": "DimensionO", "type": "IfcReal", "target": "rebar.dimension_o", "import": false, "uri": "bsdd"},
+        {"name": "DimensionV", "type": "IfcReal", "target": "rebar.dimension_v", "import": false, "uri": "bsdd"}
       ]
     },
     {

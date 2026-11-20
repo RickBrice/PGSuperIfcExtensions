@@ -1,8 +1,8 @@
 # Export profiles: one export mechanism for usBridge and BrDR
 
-An evaluation (2026-11-19, after PR #3 was merged), not a design that's been implemented. The question: should the standard
-(usBridge) export use the same hook mechanism as BridgeSight's BrDR export, so that both are specializations of one generic
-export?
+An evaluation (2026-11-19, after PR #3 was merged), implemented 2026-11-20 (see [Status](#status-2026-11-20)). The question:
+should the standard (usBridge) export use the same hook mechanism as BridgeSight's BrDR export, so that both are
+specializations of one generic export?
 
 ## Short answer
 
@@ -81,3 +81,23 @@ them as options when a second standard needs something different, not before.
 | 1. The profile object | Small: a refactoring of the session and the entry points |
 | 2. The test profile | Moderate, and the most valuable step |
 | 3. Data out of the C++ | Small per item. The bar shape set needs a way to write one property per bar dimension from a table |
+
+## Status (2026-11-20)
+
+All five steps are done. The standard export is unchanged: the export baselines and the design-value IDS checks are as before (one IDS change, under step 3).
+
+1. **The profile object:** `CExportProfile` (`ExportProfile.h`): `Standard()` or `Extension(extension)`, its hooks (`CreateHooks`, a do-nothing `IfcExport::IHooks` for the standard export), and its option overrides (`Apply`: an extension's table is reported as the extension's, and an extension's export can't be a round trip). `CIfcExporter::BuildModel` takes a profile, and the three entry points make one. The session always has hooks, so `RecordExportedElement` and `CallExportHook` no longer check for an extension. The hooks' log is kept when an export fails.
+2. **The test profile:** `CTestExportExtension` (`TestExportExtension.h`), `/IfcTestExtension[=hooks|throw|api|fingerprint]` on `/IfcExport` and `/IfcTableToIds`, `Tests/ImportValidation/mappings/TestExtension.ifcmap`, and `check_extension.py`, the "Export extension API" row of `run_validation.py`: the hooks' order and counts, property sets on the extension's own element and on the IFC extension's girders and piers, the rest of the export against the `PGSuper-System` baseline, and the four refusals (a hook that throws, another API version, another build fingerprint, the table without the extension). The general IDS of a table with an extension's targets (`WriteTableIds`) is checked too.
+3. **Data out of the C++:**
+   - `usBrPset_ACI_BarShape` is in `Standard.ifcmap`, with targets (`rebar.shape_standard`, `rebar.shape_standard_version`, `rebar.bend_shape`, `rebar.bend_radius`, and `rebar.dimension_a` ... `rebar.dimension_v`, one per ACI dimension, absent when the bar's shape doesn't have it). No new table mechanism was needed: usBridge lists each dimension as its own property. ACI 315-99 is the standard of PGSuper's shape codes, so it's a target value, not a table constant. `PropertySets.h` is gone.
+   - The bSDD dictionary is the table's `"bsdd_dictionary"` (the standard table's is usBridge's; an extending table uses its base's unless it names its own). `bSDD.h` is gone; the mapping table editor shortens URIs with the edited table's dictionary.
+   - The design-value IDS requires every constant the table declares for the girder, the girder type, and the strand material, instead of naming them by property set. It names no usBridge property set any more. The IDS now also requires the girders' `usBrPset_Common.Status` and `Pset_PrecastConcreteElementGeneral.SupportDuringTransportDescription`, and the girder type's `StrengthClass`, which the export already wrote; the strand material's `usBrPset_ACI_TendonMaterial.Specification`, which the table attaches to the tendon type, was never required.
+   - `Classify_usBridge_ReinforcingBarType` is gone; `USBridge_Classifications.h` is `Classifications.h`.
+4. **The builder's conventions** are in [MappingTablesDesign.md](MappingTablesDesign.md), "The exporter's IFC conventions".
+5. **A smaller API** (still version 1, provisional until it's released):
+   - Extensions pass `IfcExport::BuildOptions` (the table, rebar, quantities, display units) to `IIfcModelBuilder::BuildModel` and see it in `HookContext::options`, instead of `CIfcExportOptions`, which is no longer in the SDK (`IfcExportOptions.h` is in the project).
+   - Extension targets read an element's keys through `IfcExport::Element` (accessors), and hooks give their own elements' keys in `IfcExport::ElementKeys`; `ExportContext` and `TargetDef` are no longer in the SDK.
+   - The build fingerprint has the sizes of the types that are still shared.
+   - BridgeSight's BrDR exporter was changed to match (the getters' parameter and accessors, its hooks' keys, and its build options) and builds; the change is in `BSDev\BrDrIfcExporter`, for BridgeSight to review.
+
+What's left from "What it doesn't do" is unchanged: BrDR still shares C++ objects with this DLL (IfcOpenShell types in the hooks).

@@ -54,6 +54,10 @@ CLASS
    (devdocs/RoundTripDesign.md), instead of PGSuper's model. The model is the one the project remembers, which must be
    unchanged since the import, or the given file. Without it the export is PGSuper's model, as before.
 
+   /IfcTestExtension[=hooks|throw|api|fingerprint] exports with the test export extension (TestExportExtension.h), with
+   a mapping table that requires it (/IfcMapping), for the validation of the extension API. It also works with
+   /IfcTableToIds.
+
    Write a mapping table as a general IDS (devdocs/MappingTablesDesign.md, M5):
    BridgeLink.exe /IfcTableToIds=<table.ids> <template.pgt> [/IfcMapping=<table.ifcmap>] [/IfcLog=<file.log>]
 
@@ -101,6 +105,8 @@ public:
    bool m_bSourceModel; // export option: /IfcSourceModel, update a copy of the source model (CIfcExportOptions::source_model)
    CString m_strSourceModel; // the source model given with /IfcSourceModel=, else the project's
    bool m_bDisplayUnitsForProperties; // export option, see CIfcExportOptions::display_units_for_properties
+   bool m_bTestExtension; // /IfcTestExtension: /IfcExport or /IfcTableToIds with the test export extension (TestExportExtension.h)
+   CString m_strTestExtensionMode; // its mode (CTestExportExtension::GetMode)
 
 private:
    // Prevent accidental copying and assignment

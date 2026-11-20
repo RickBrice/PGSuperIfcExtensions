@@ -49,7 +49,6 @@
 *****************************************************************************/
 
 #include "IfcExtensionTypes.h"
-#include "IfcExportOptions.h"
 
 #include <map>
 #include <memory>
@@ -69,31 +68,19 @@ namespace IfcExport
    using Schema = ::Ifc4x3_add2;
    using File = hierarchy_helper<Schema>;
 
-   // Identifies the build of a module that uses the SDK. Computed where it's compiled, so the IFC extension and an export
-   // extension each give their own
-   inline std::string BuildFingerprint()
+   // The options of a model an export extension builds (IIfcModelBuilder::BuildModel). Everything else is as the IFC
+   // export's defaults have it: the alignment and the bridge, classified (so the mapping table's property sets are
+   // written), with the default geometry
+   struct BuildOptions
    {
-      std::ostringstream os;
-      os << "api=" << IFC_EXPORT_EXTENSION_API_VERSION
-         << ";msc=" << _MSC_VER
-#if defined _ITERATOR_DEBUG_LEVEL
-         << ";idl=" << _ITERATOR_DEBUG_LEVEL
-#endif
-#if defined _DEBUG
-         << ";debug"
-#endif
-#if defined IFOPSH_SAFE_INSTANCE
-         << ";safe_instance"
-#endif
-#if defined IFOPSH_WITH_ROCKSDB
-         << ";rocksdb"
-#endif
-         << ";file=" << sizeof(File)
-         << ";context=" << sizeof(ExportContext)
-         << ";target=" << sizeof(TargetDef)
-         << ";options=" << sizeof(CIfcExportOptions);
-      return os.str();
-   }
+      CString mapping_file;                      // the extension's mapping table. Empty: the configured table (Configure BridgeLink), else the standard table
+      bool include_rebar = true;                 // the girders' reinforcing bars
+      bool include_quantities = true;            // the quantity sets
+      bool display_units_for_properties = false; // property values in PGSuper's display units, with their units; else in SI system units
+   };
+
+   // Identifies the build of a module that uses the SDK (defined at the end, after the types it measures)
+   inline std::string BuildFingerprint();
 
    // An element role of an export extension. Mapping tables name it in "applies_to" and "elements"
    struct RoleSpec
@@ -111,8 +98,8 @@ namespace IfcExport
       std::string description; // for messages
       ExportUnit display_unit = ExportUnit::None; // when properties are exported in display units
       Float64 display_round = 0;
-      bool needs_analysis = false; // the value comes from analysis results (TargetDef::needs_analysis)
-      ExportGetter get;
+      bool needs_analysis = false; // the value comes from analysis results. Left out (no value) when the export leaves them out (e.g. PGSplice)
+      Getter get;
    };
 
    // Receives an export extension's element roles and targets. Implemented by the IFC extension
@@ -152,11 +139,12 @@ namespace IfcExport
       // True if the mapping table declares property sets (or classifications) for the element role
       virtual bool HasPropertySets(ElementKind role) const = 0;
 
-      // Writes the property sets and quantity sets the mapping table declares for the element role, on the objects
-      virtual void WritePropertySets(ElementKind role, const std::vector<Schema::IfcObjectDefinition>& objects, const ExportContext& context) = 0;
+      // Writes the property sets and quantity sets the mapping table declares for the element role, on the objects. The
+      // keys are the ones the role's targets read (Element)
+      virtual void WritePropertySets(ElementKind role, const std::vector<Schema::IfcObjectDefinition>& objects, const ElementKeys& keys) = 0;
 
       // The property sets the mapping table declares for the element role that attach to type objects
-      virtual std::vector<Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const ExportContext& context) = 0;
+      virtual std::vector<Schema::IfcPropertySetDefinition> CreateTypePropertySets(ElementKind role, const ElementKeys& keys) = 0;
 
       // The material of reinforcing bars of the rebar's type and grade: the one the IFC extension's own bars use, with the
       // material property sets the mapping table declares for the "rebar" role. Created the first time it's needed.
@@ -180,7 +168,7 @@ namespace IfcExport
    {
       File& file;
       std::shared_ptr<WBFL::EAF::Broker> broker;
-      const CIfcExportOptions& options;
+      const BuildOptions& options;
       IServices& services;
       const ExportedElements& elements;
    };
@@ -193,8 +181,6 @@ namespace IfcExport
    //    OnExportEnd
    // The bridge steps are skipped when the options don't export the bridge (e.g. alignment only). A girder only export
    // calls OnSegment for its girder.
-   // Property sets are only written when the options classify the model (CIfcExportOptions::classify), as in the
-   // standard export, so the hooks' elements are usually created then too.
    // An exception thrown by a hook stops the export; no file is written
    class IHooks
    {
@@ -273,6 +259,40 @@ struct IfcBuildResult
    std::vector<std::string> log;         // lines the extension's hooks logged
 };
 
+namespace IfcExport
+{
+   // Identifies the build of a module that uses the SDK: the compiler, run time library, IfcOpenShell defines, and the
+   // sizes of the types the IFC extension and an extension share. Computed where it's compiled, so the IFC extension and
+   // an export extension each give their own
+   inline std::string BuildFingerprint()
+   {
+      std::ostringstream os;
+      os << "api=" << IFC_EXPORT_EXTENSION_API_VERSION
+         << ";msc=" << _MSC_VER
+#if defined _ITERATOR_DEBUG_LEVEL
+         << ";idl=" << _ITERATOR_DEBUG_LEVEL
+#endif
+#if defined _DEBUG
+         << ";debug"
+#endif
+#if defined IFOPSH_SAFE_INSTANCE
+         << ";safe_instance"
+#endif
+#if defined IFOPSH_WITH_ROCKSDB
+         << ";rocksdb"
+#endif
+         << ";file=" << sizeof(File)
+         << ";value=" << sizeof(ExportValue)
+         << ";keys=" << sizeof(ElementKeys)
+         << ";target=" << sizeof(TargetSpec)
+         << ";options=" << sizeof(BuildOptions)
+         << ";elements=" << sizeof(ExportedElements)
+         << ";hook=" << sizeof(HookContext)
+         << ";result=" << sizeof(IfcBuildResult);
+      return os.str();
+   }
+}
+
 // {5E0A1C3B-7B6F-4C61-9D3A-2A8E4F0B7C11}
 inline constexpr GUID IID_IIfcModelBuilder = { 0x5e0a1c3b, 0x7b6f, 0x4c61, { 0x9d, 0x3a, 0x2a, 0x8e, 0x4f, 0x0b, 0x7c, 0x11 } };
 
@@ -287,7 +307,7 @@ public:
    // Builds an IFC model with the mapping table and the export extension (which may be nullptr), and writes it to the file.
    // The mapping table is options.mapping_file; when it's empty the mapping table setting or the installed standard table is used.
    // Doesn't throw: problems are reported in the result
-   virtual IfcBuildResult BuildModel(const CIfcExportOptions& options, const CString& strFilePath, IIfcExportExtension* extension) = 0;
+   virtual IfcBuildResult BuildModel(const IfcExport::BuildOptions& options, const CString& strFilePath, IIfcExportExtension* extension) = 0;
 
    // Writes an IDS with a specification for each property set the mapping table exports (as /IfcTableToIds), with the
    // extension's targets and element roles available to the table. Doesn't throw: problems are reported in the result
