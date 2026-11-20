@@ -22,15 +22,20 @@ STANDARD = HERE.parent.parent / "MappingTables" / "Standard.ifcmap"
 TEMPLATE = HERE.parent.parent / "IfcImportTemplate.pgt"
 
 
-def resolve(uri, name, kind, dictionary):
-    """a "bsdd" URI in the table's bSDD dictionary ("bsdd_dictionary"), else the URI as it is"""
-    if not uri:
-        return ""
-    if uri == "bsdd":
-        return f"{dictionary}{kind}/{name}"
-    if uri.startswith("bsdd:"):
-        return f"{dictionary}{kind}/{uri[5:]}"
-    return uri
+def resolve(uri, name, kind, table):
+    """a bSDD URI ("bsdd", "bsdd:Name", "bsdd@dictionary", "bsdd@dictionary:Name") in the table's bSDD dictionaries
+    ("bsdd_dictionaries", the default "bsdd_dictionary"), else the URI as it is. kind is None for a dictionary itself"""
+    if not uri or not (uri == "bsdd" or uri.startswith(("bsdd:", "bsdd@"))):
+        return uri or ""
+    rest = uri[4:]
+    dictionary = table.get("bsdd_dictionary", "")
+    if rest.startswith("@"):
+        dictionary, _, rest = rest[1:].partition(":")
+        rest = ":" + rest if rest else ""
+    base = table.get("bsdd_dictionaries", {}).get(dictionary, f"<bSDD dictionary {dictionary!r}>/")
+    if kind is None:
+        return base
+    return f"{base}{kind}/{rest[1:] if rest else name}"
 
 
 def roles(applies_to):
@@ -40,14 +45,13 @@ def roles(applies_to):
 def canonical(table):
     """set of lines describing what the table exports, per element role"""
     lines = set()
-    dictionary = table.get("bsdd_dictionary", "")
     for key, items_key in (("property_sets", "properties"), ("quantity_sets", "quantities")):
         for p in table.get(key, []):
             attach = p.get("attach", "occurrence")
             if attach == "material" or p.get("remove"):
                 continue
             quantities = key == "quantity_sets"
-            head = f'{p["name"]} attach={attach} condition={p.get("condition", "classify")} uri={resolve(p.get("uri", ""), p["name"], "class", dictionary)}'
+            head = f'{p["name"]} attach={attach} condition={p.get("condition", "classify")} uri={resolve(p.get("uri", ""), p["name"], "class", table)}'
             if quantities:
                 head += f' method={p.get("method", "")}'
             for role in roles(p["applies_to"]):
@@ -57,12 +61,10 @@ def canonical(table):
                     value = prop.get("value", "")
                     lines.add(f'{role} | {head} | {n}: {prop["name"]} type={prop["type"].upper()} target={prop.get("target", "")} '
                               f'import={prop.get("import", not quantities) if prop.get("target") else ""} value={json.dumps(value)} '
-                              f'enumeration={enum_text} uri={resolve(prop.get("uri", ""), prop["name"], "prop", dictionary) if not quantities else ""}')
+                              f'enumeration={enum_text} uri={resolve(prop.get("uri", ""), prop["name"], "prop", table) if not quantities else ""}')
     for c in table.get("classifications", []):
         for role in roles(c["applies_to"]):
-            location = c.get("location", "")
-            if location == "bsdd":
-                location = f'{dictionary}class/{c["identification"]}'
+            location = resolve(c.get("location", ""), c["identification"], "class", table)
             lines.add(f'{role} | classification {c["system"]} {c["identification"]} name={c.get("name", "")} location={location}')
     return lines
 

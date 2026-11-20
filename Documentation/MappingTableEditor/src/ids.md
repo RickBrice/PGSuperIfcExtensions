@@ -34,6 +34,6 @@ The same can be done from the command line. It writes the configured table, or t
 Design-value IDS
 ----------------
 
-The IFC export can also write a design-value IDS: an IDS with the values PGSuper designed, for checking a model against the design. That IDS takes its property locations from the table the export uses (@ref choosing_table). It is written by the export, not by the editor.
+The IFC export can also write a design-value IDS: an IDS with the values PGSuper designed, for checking a model against the design. That IDS takes its property locations from the table the export uses (@ref choosing_table): each design value is required where the table exports its target, and the constants the table declares for the girders, their types, and the strand materials are required with their values. It is written by the export, not by the editor.
 
 The design-value IDS of an export that updates a copy of the model the project was imported from identifies the girders by their GlobalIds, and doesn't require what the copy keeps of the model (its girder materials and types, and its strands and bars). See @ref round_trip.

@@ -198,7 +198,8 @@ struct MappingTableFile
    std::string name;
    int version = 0;
    std::string extends;
-   std::string bsdd_dictionary; // the bSDD dictionary "bsdd" URIs name (e.g. usBridge's), or empty to use the one of the table it extends
+   std::map<std::string, std::string> bsdd_dictionaries; // the bSDD dictionaries the table's URIs can name ("bsdd@name"), by name: their URIs. Added to those of the table it extends
+   std::string bsdd_dictionary; // the name of the default dictionary ("bsdd" URIs), or empty to use the default of the table it extends
 
    std::map<std::string, std::vector<MappingLocation>, std::less<>> targets; // explicit import locations
    std::set<std::string, std::less<>> replace_targets; // targets whose locations replace those of the base table
@@ -280,16 +281,21 @@ public:
    // The table files, the selected table first
    const std::vector<MappingTableFile>& GetFiles() const { return m_Files; }
 
-   // The bSDD dictionary the selected table's "bsdd" URIs name: its "bsdd_dictionary", else that of the table it
-   // extends (e.g. the standard table's, usBridge's). Empty if none of the tables name one
-   const std::string& GetBsddDictionary() const { return m_BsddDictionary; }
+   // The bSDD dictionaries the selected table's URIs can name ("bsdd@name"), by name: their URIs, with those of the tables
+   // it extends (the selected table's win)
+   const std::map<std::string, std::string>& GetBsddDictionaries() const { return m_BsddDictionaries; }
+
+   // The name of the default dictionary ("bsdd" URIs): the selected table's "bsdd_dictionary", else that of the table it
+   // extends (e.g. the standard table's, usBridge). Empty if none of the tables name one
+   const std::string& GetDefaultBsddDictionary() const { return m_DefaultBsddDictionary; }
 
    // Writes the table files (path, how it was chosen, name, version) to the log
    void LogFiles() const;
 
 private:
    std::vector<MappingTableFile> m_Files; // the selected table first, then the tables it extends
-   std::string m_BsddDictionary;
+   std::map<std::string, std::string> m_BsddDictionaries;
+   std::string m_DefaultBsddDictionary;
    std::map<std::string, std::vector<MappingLocation>, std::less<>> m_Locations; // merged import locations
    std::map<ElementKind, ElementSelector> m_Selectors; // merged selectors
    std::vector<const PropertySetDeclaration*> m_PropertySets; // merged export property sets, in table order

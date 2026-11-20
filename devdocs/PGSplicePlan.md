@@ -16,12 +16,12 @@ PGSuper is a subset of PGSplice. Both use `CBridgeDescription2`. What PGSplice a
 
 One code path written for the PGSplice model, with PGSuper as the special case (one segment, one span per group, no post-tensioning). Everything that works for PGSuper today must keep working: all current validation runs are the regression test for this work. The new elements get roles in the mapping table, so their classes, property sets, and classifications are table data, not C++.
 
-## Where things stand (checked 2026-11-10)
+## Where things stand (2026-11-20)
 
-- **Not registered for PGSplice.** `IfcExtensions.Manifest.PGSuper` lists only the four PGSuper categories, so PGSplice has no IFC menu items, no command line, no georeferencing, and no mapping table setting. `CIfcExtensionAgent::RegisterUIExtensions` goes through `IExtendPGSuperUI` only.
-- **Export has a PGSplice branch that has never run** (`CreateBridge`, `IsPGSpliceDocument`): one `IfcElementAssembly.GIRDER` per girder, an `IfcBeam` per segment with a "Spliced_Girder_Type" `GIRDER_SEGMENT` type, prismatic/parabolic/double-parabolic segment solids, and each closure joint as an `IfcBeam` (ObjectType `CLOSUREJOINT`, own solid from `CreateClosureJointRepresentation`, `closure_joint` role property sets). Segment GlobalIds are already kept for round trips (`segment_global_ids`). Missing: post-tensioning, temporary supports, closure joint material, reinforcement, and type; all-segment output in the single-girder export (`CreateGirder` writes segment 0, `IfcExporter.cpp:3131`).
-- **Import is PGSuper only:** span-indexed layout, `GetSegment(0)` (`IfcBridgeImporter.cpp:375, 962`, `GirderBars.cpp:231`, `Strands.cpp:893`), no closure joints, temporary supports, or tendons. `CPGSuperProjectImporter` only.
-- **Tests:** `run_validation.py` and `pgs_extract.py`/`compare_bridge.py` know `.pgs` only. PGSuper has 41 PGSplice regression models (`PGSuper/RegressionTest/Current/PGSplice`).
+- **Registered for PGSplice** (S1, 2026-11-10): the exporter, the extension agent (menus, command line, georeferencing, the mapping table), and the project importer (`CPGSpliceProjectImporter`, `IfcImportTemplate.spt`). The data importer is still PGSuper only (S5).
+- **Export:** one `IfcElementAssembly.GIRDER` per spliced girder, an `IfcBeam` per segment (with a `GIRDER_SEGMENT` type when the girder has more than one segment), prismatic and varying-depth segment solids, closure joints as `IfcBeam`s (ObjectType `CLOSUREJOINT`, their own solids, `closure_joint` role property sets), and erection towers (S2 step 5). Values that need analysis results are left out, so an export never starts the time-step analysis. Missing: post-tensioning, the closure joints' type, material, reinforcement, and classification, the construction sequence, and all segments in the single-girder export (`CreateGirder` writes segment 0).
+- **Import:** spliced girders, segments, closure joints, temporary supports, and segment depth variation (S3, 2026-11-11, `SplicedGirders.h/.cpp`; see S3 below and [ImportGeometry.md](ImportGeometry.md)). Not yet: tendons, the timeline, closure joint concrete.
+- **Tests:** `run_validation.py` and `pgs_extract.py`/`compare_bridge.py` know `.pgs` only (S0); `Duckabush_1.spl` was checked by hand. PGSuper has 41 PGSplice regression models (`PGSuper/RegressionTest/Current/PGSplice`).
 
 ## What usBridge asks for (workbook 2.0 and `usBrSpec_*.ids`)
 

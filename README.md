@@ -1,7 +1,7 @@
 # PGSuper IFC Extensions
 IFC import and export for PGSuper/PGSplice
 
-This project develops IFC features for [BridgeLink](https://github.com/wsdot/bridgelink) [PGSuper and PGSplice](https://github.com/wsdot/pgsuper): importing IFC bridge models into PGSuper, exporting PGSuper projects to IFC (IFC 4.3, with the usBridge property sets and classifications), mapping tables that say where PGSuper data lives in a model, round trips that update the model a project was imported from, and IDS files for checking models.
+This project develops IFC features for [BridgeLink](https://github.com/wsdot/bridgelink) [PGSuper and PGSplice](https://github.com/wsdot/pgsuper): importing IFC bridge models into PGSuper, exporting PGSuper projects to IFC (IFC 4.3, with the usBridge property sets and classifications), mapping tables that say where PGSuper data lives in a model, round trips that update the model a project was imported from, IDS files for checking models, and export extensions, through which other plug-ins add to the export (see [devdocs/ExtensionsDesign.md](devdocs/ExtensionsDesign.md)).
 
 ## Building
 

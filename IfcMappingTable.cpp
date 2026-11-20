@@ -29,6 +29,7 @@
 #include <EAF\EAFUtilities.h>
 
 #include <cstdio>
+#include <set>
 #include <cstring>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase; // this DLL, for finding the installed standard table
@@ -40,9 +41,9 @@ namespace
    constexpr const char* table_format = "PGSuperIfcMapping";
    constexpr int table_version = 1;
 
-   // a bSDD URI before its table's dictionary is known, e.g. "bsdd:prop/Status" (an explicit URI is a URL, so it can't
-   // start with this)
-   const std::string BSDD_PLACEHOLDER = "bsdd:";
+   // a bSDD URI before the table's dictionaries are known, e.g. "bsdd:usBridge|prop/Status" (see
+   // CTableParser::ResolveUri). It starts with a control character, so no URI in a table can look like it
+   const std::string BSDD_PLACEHOLDER = "" "bsdd:";
 
    std::string upper(std::string s)
    {
@@ -177,7 +178,7 @@ namespace
             return;
          }
 
-         CheckKeys(j, "", { "format", "version", "name", "extends", "requires", "bsdd_dictionary", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
+         CheckKeys(j, "", { "format", "version", "name", "extends", "requires", "bsdd_dictionaries", "bsdd_dictionary", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
 
          auto format = GetString(j, "format", "", true);
          if (format && *format != table_format)
@@ -200,10 +201,11 @@ namespace
          m_File.name = GetString(j, "name", "", true).value_or("");
          m_File.extends = GetString(j, "extends", "", false).value_or("");
 
-         // the bSDD dictionary "bsdd" URIs name: the URI its class and property names are appended to (after "class/" and "prop/")
+         // the bSDD dictionaries the table's URIs name, by name: the URIs their class and property names are appended to
+         // (after "class/" and "prop/"), and the default ("bsdd" URIs)
+         if (j.contains("bsdd_dictionaries"))
+            ParseBsddDictionaries(j["bsdd_dictionaries"]);
          m_File.bsdd_dictionary = GetString(j, "bsdd_dictionary", "", false).value_or("");
-         if (!m_File.bsdd_dictionary.empty() && m_File.bsdd_dictionary.back() != '/')
-            Error("bsdd_dictionary", "must end with \"/\" (the names are appended to it, e.g. https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/)");
 
          if (j.contains("requires"))
          {
@@ -497,18 +499,71 @@ namespace
          return selector;
       }
 
-      // a bSDD URI ("bsdd" for the declaration's own name, "bsdd:Name" for another name), an explicit URI, or empty.
-      // A bSDD URI is kept as BSDD_PLACEHOLDER + "<kind>/<name>" until the table's dictionary is known (resolve_bsdd_uris):
-      // it can come from a table this one extends, which is read after it
-      static std::string ResolveUri(const std::string& uri, const std::string& name, const char* kind)
+      // "bsdd_dictionaries": { "name": "URI", ... }
+      void ParseBsddDictionaries(const json& j)
       {
-         if (uri.empty())
+         if (!j.is_object())
+         {
+            Error("bsdd_dictionaries", "must be an object of dictionary names and URIs");
+            return;
+         }
+
+         for (const auto& [name, value] : j.items())
+         {
+            auto path = Path("bsdd_dictionaries", name);
+            if (name == "comment")
+               continue;
+            if (name.empty() || name.find_first_of(":@|") != std::string::npos)
+               Error(path, "a dictionary name can't be empty or have \":\", \"@\", or \"|\" in it");
+            else if (!value.is_string() || value.get<std::string>().empty() || value.get<std::string>().back() != '/')
+               Error(path, "must be the dictionary's URI, ending with \"/\" (class and property names are appended to it, e.g. https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/)");
+            else
+               m_File.bsdd_dictionaries[name] = value.get<std::string>();
+         }
+      }
+
+      // A bSDD URI, an explicit URI, or empty. The bSDD forms:
+      //    "bsdd"                     the default dictionary ("bsdd_dictionary"), and the declaration's own name
+      //    "bsdd:Name"                the default dictionary, and another name
+      //    "bsdd@dictionary"          a dictionary of "bsdd_dictionaries", and the declaration's own name
+      //    "bsdd@dictionary:Name"     a dictionary of "bsdd_dictionaries", and another name
+      // kind is "class" or "prop", or nullptr for the dictionary itself (a classification system's specification), which
+      // has no name. A bSDD URI is kept as BSDD_PLACEHOLDER + "<dictionary>|<kind>/<name>" (an empty dictionary is the
+      // default) until the dictionaries are known (resolve_bsdd_uris): they can come from a table this one extends, which
+      // is read after it
+      std::string ResolveUri(const std::string& uri, const std::string& name, const char* kind, const std::string& path)
+      {
+         if (uri != "bsdd" && !uri.starts_with("bsdd:") && !uri.starts_with("bsdd@"))
+            return uri;
+
+         std::string rest = uri.substr(4);
+         std::string dictionary;
+         if (rest.starts_with("@"))
+         {
+            auto colon = rest.find(':');
+            dictionary = rest.substr(1, colon == std::string::npos ? std::string::npos : colon - 1);
+            rest = (colon == std::string::npos ? std::string() : rest.substr(colon));
+            if (dictionary.empty())
+            {
+               Error(path, "\"" + uri + "\": \"bsdd@\" needs a dictionary name, e.g. \"bsdd@usBridge\"");
+               return "";
+            }
+         }
+
+         if (!kind)
+         {
+            if (!rest.empty())
+               Error(path, "\"" + uri + "\": a classification system's specification is a dictionary (\"bsdd\" or \"bsdd@dictionary\"), not a name in it");
+            return BSDD_PLACEHOLDER + dictionary + "|";
+         }
+
+         std::string target = rest.empty() ? name : rest.substr(1); // rest is ":Name"
+         if (target.empty())
+         {
+            Error(path, "\"" + uri + "\" needs a name after \":\"");
             return "";
-         if (uri == "bsdd")
-            return BSDD_PLACEHOLDER + kind + "/" + name;
-         if (uri.starts_with("bsdd:"))
-            return BSDD_PLACEHOLDER + kind + "/" + uri.substr(5);
-         return uri;
+         }
+         return BSDD_PLACEHOLDER + dictionary + "|" + kind + "/" + target;
       }
 
       // a constant property value. The JSON type must fit the IFC value type
@@ -561,7 +616,7 @@ namespace
             if (!bQuantities)
                GetOwner(jpset, "attach", path, pset.attach);
             pset.condition = GetCondition(jpset, path);
-            pset.uri = ResolveUri(GetString(jpset, "uri", path, false).value_or(""), pset.name, "class");
+            pset.uri = ResolveUri(GetString(jpset, "uri", path, false).value_or(""), pset.name, "class", Path(path, "uri"));
             pset.quantities = bQuantities;
             pset.method = GetString(jpset, "method", path, false).value_or("");
             pset.shared = GetBool(jpset, "shared", path).value_or(false);
@@ -666,7 +721,7 @@ namespace
             Error(Path(property_path, "type"), "\"" + property.type + "\" isn't a value type the exporter can write");
 
          property.import = GetBool(jproperty, "import", property_path).value_or(!pset.quantities);
-         property.uri = ResolveUri(GetString(jproperty, "uri", property_path, false).value_or(""), property.name, "prop");
+         property.uri = ResolveUri(GetString(jproperty, "uri", property_path, false).value_or(""), property.name, "prop", Path(property_path, "uri"));
 
          if (jproperty.contains("enumeration"))
          {
@@ -723,7 +778,7 @@ namespace
             system.edition = GetString(jsystem, "edition", path, false).value_or("");
             system.edition_date = GetString(jsystem, "edition_date", path, false).value_or("");
             auto specification = GetString(jsystem, "specification", path, false).value_or("");
-            system.specification = (specification == "bsdd" ? BSDD_PLACEHOLDER : specification);
+            system.specification = ResolveUri(specification, "", nullptr, Path(path, "specification"));
             m_File.classification_systems.push_back(system);
          }
       }
@@ -759,7 +814,7 @@ namespace
                classification.system = GetString(jclassification, "system", path, true).value_or("");
                classification.name = GetString(jclassification, "name", path, false).value_or("");
                auto location = GetString(jclassification, "location", path, false).value_or("");
-               classification.location = (location == "bsdd" ? BSDD_PLACEHOLDER + "class/" + classification.identification : location);
+               classification.location = ResolveUri(location, classification.identification, "class", Path(path, "location"));
             }
 
             for (auto role : roles)
@@ -1116,19 +1171,40 @@ namespace
       return std::filesystem::equivalent(a, b, ec);
    }
 
-   // Replaces the bSDD URI placeholders of a table file (see CTableParser::ResolveUri) with the dictionary. Returns false
-   // if the file has one but there's no dictionary
-   bool resolve_bsdd_uris(MappingTableFile& file, const std::string& dictionary)
+   // Replaces the bSDD URI placeholders of a table file (see CTableParser::ResolveUri) with their dictionaries' URIs.
+   // Returns the problems: a dictionary that isn't declared, or no default dictionary
+   std::vector<std::string> resolve_bsdd_uris(MappingTableFile& file, const std::map<std::string, std::string>& dictionaries, const std::string& default_dictionary)
    {
-      bool bMissing = false;
+      std::set<std::string> problems;
       auto resolve = [&](std::string& uri)
          {
             if (!uri.starts_with(BSDD_PLACEHOLDER))
                return;
-            if (dictionary.empty())
-               bMissing = true;
-            else
-               uri = dictionary + uri.substr(BSDD_PLACEHOLDER.size());
+
+            auto bar = uri.find('|', BSDD_PLACEHOLDER.size());
+            std::string name = uri.substr(BSDD_PLACEHOLDER.size(), bar - BSDD_PLACEHOLDER.size());
+            std::string rest = uri.substr(bar + 1);
+            if (name.empty())
+            {
+               if (default_dictionary.empty())
+               {
+                  problems.insert("The table has \"bsdd\" URIs, but neither it nor the tables it extends name a default bSDD dictionary (\"bsdd_dictionary\").");
+                  return;
+               }
+               name = default_dictionary;
+            }
+
+            auto found = dictionaries.find(name);
+            if (found == dictionaries.end())
+            {
+               std::vector<std::string> names;
+               for (const auto& [n, u] : dictionaries)
+                  names.push_back(n);
+               problems.insert("The bSDD dictionary \"" + name + "\" isn't in the \"bsdd_dictionaries\" of the table or the tables it extends" +
+                  (names.empty() ? std::string(".") : ". Dictionaries: " + join(names) + "."));
+               return;
+            }
+            uri = found->second + rest;
          };
 
       for (auto& pset : file.property_sets)
@@ -1142,7 +1218,7 @@ namespace
       for (auto& classification : file.classifications)
          resolve(classification.location);
 
-      return !bMissing;
+      return std::vector<std::string>(problems.begin(), problems.end());
    }
 }
 
@@ -1412,16 +1488,27 @@ std::unique_ptr<CIfcMappingTable> CIfcMappingTable::Load(const std::filesystem::
       path = next;
    }
 
-   // "bsdd" URIs name the dictionary of their table, or of the nearest table it extends that names one
-   std::string dictionary;
+   // bSDD URIs name the dictionaries of their table and of the tables it extends (a table's dictionary replaces one with the
+   // same name of a table it extends), and "bsdd" the default of their table, or of the nearest table it extends that has one
+   std::map<std::string, std::string> dictionaries;
+   std::string default_dictionary;
    for (auto file = table->m_Files.rbegin(); file != table->m_Files.rend(); file++)
    {
+      for (const auto& [name, uri] : file->bsdd_dictionaries)
+         dictionaries[name] = uri;
       if (!file->bsdd_dictionary.empty())
-         dictionary = file->bsdd_dictionary;
-      if (!resolve_bsdd_uris(*file, dictionary))
-         fail(file->path, file->source, context, "The table has \"bsdd\" URIs, but neither it nor the tables it extends name a bSDD dictionary (\"bsdd_dictionary\").", false);
+      {
+         if (dictionaries.find(file->bsdd_dictionary) == dictionaries.end())
+            fail(file->path, file->source, context, "bsdd_dictionary: \"" + file->bsdd_dictionary + "\" isn't in the \"bsdd_dictionaries\" of the table or the tables it extends.", false);
+         default_dictionary = file->bsdd_dictionary;
+      }
+
+      auto problems = resolve_bsdd_uris(*file, dictionaries, default_dictionary);
+      if (!problems.empty())
+         fail(file->path, file->source, context, join(problems, " "), false);
    }
-   table->m_BsddDictionary = dictionary;
+   table->m_BsddDictionaries = dictionaries;
+   table->m_DefaultBsddDictionary = default_dictionary;
 
    table->Merge();
    return table;

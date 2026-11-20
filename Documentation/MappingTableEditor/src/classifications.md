@@ -13,7 +13,7 @@ Select **Classification systems** and **Add** to add a system, or select a syste
 | Name | The system's name, for example `usBridge`. Classifications refer to the system by name. |
 | Source | Who publishes the system. |
 | Edition, Edition date | The system's edition and its date. |
-| Specification | Where the system is described, for example a URL. |
+| Specification | Where the system is described, for example a URL, or `bsdd` for the table's default bSDD dictionary (`bsdd@name` for another one; see @ref bsdd_dictionaries). |
 | Comment | Anything you want to say about the system. |
 
 Classifications
@@ -28,7 +28,7 @@ Classifications are listed by element role. Select an element role and **Add** t
 | System | The classification system. |
 | Identification | The classification's identification, for example `usBridge_GirderPrecastConcrete`. |
 | Name | The classification's name. |
-| Location | Where the classification is described, for example its bSDD URI. |
+| Location | Where the classification is described, for example its bSDD URI: `bsdd` builds it from the identification in the table's default bSDD dictionary (`bsdd@name` in another one). |
 | Comment | Anything you want to say about the classification. |
 
 **Delete from This Table** removes the entry from this table.

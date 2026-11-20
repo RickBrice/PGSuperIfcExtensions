@@ -1,151 +1,78 @@
-# Round Trip: Design Note and Plan (R1)
+# Round Trip: Design (R1)
 
-Draft, 2026-09-30. The requirement is R1 in [IfcImportPlan.md](IfcImportPlan.md): importing an IFC model into PGSuper and exporting it again keeps the elements' `GlobalId`s, and loses nothing in the model. This note proposes how, with recommended answers to the open questions (marked **Recommended**).
+The requirement is R1 in [IfcImportPlan.md](IfcImportPlan.md): a project imported from an IFC model can be exported as that model with PGSuper's design in it, keeping the elements' `GlobalId`s and losing nothing in the model. Designed 2026-09-30; the first version ("properties plus missing elements", the user, 2026-10-26) is built. The user documentation is `Documentation/MappingTableEditor/src/round_trip.md`.
 
-## Status (2026-10-26)
+## What a round trip guarantees
 
-**Decided (the user, 2026-10-26):** the recommended answers below, with the first version's scope: "properties plus missing elements". The original model is never changed; the export is a copy of it, updated with PGSuper's design, so IfcOpenShell's IfcDiff (`src/ifcdiff/ifcdiff.py`) shows what changed. Girders whose model has strands or bars keep the model's.
+1. **The model itself isn't changed.** The export is a copy of it (B1), so IfcOpenShell's IfcDiff (`src/ifcdiff/ifcdiff.py`) shows what PGSuper changed.
+2. **Element GlobalIds don't change.** Every element of the model keeps its GlobalId.
+3. **Nothing is lost.** Elements PGSuper models keep every property set they came with; PGSuper updates only the properties the mapping table declares. Everything else in the model stays as it is: elements PGSuper doesn't model (wingwalls, piles, approach slabs), schedules, tasks, cost items, documents, groups, and their relationships.
+4. **PGSuper's design is in the result:** the values the table binds to targets, and the elements PGSuper designs that the model doesn't have (see "The merge").
 
-**Done (first version):**
-- **Registry (RT1):** `IfcRoundTrip.h/.cpp`. The import records (`CIfcImporter::GetRoundTripRecorder`) the project, site, bridge, bridge parts, piers and abutments, girders, deck, exterior barriers, bearings (by girder end), pier diaphragms, intermediate diaphragms (by span, `intermediate_diaphragms:<start pier ID>`, 2026-11-19), and which girders have strands or bars in the model; keys use PGSuper's IDs (`roundtrip_key`). The project saves it with the source model's path, size, and SHA-256 (`CIfcExtensionAgent`, unit version 3).
-- **Export identities instead of registry GlobalIds:** the exporter names each element it writes by its registry key (`IfcExportIdentities`, `CIfcExportOptions::export_identities`), and the merge pairs them with the registry's GlobalIds. PGSuper's model keeps new GlobalIds; the copy has the model's. Plain exports are unchanged (requirement 5, stable GlobalIds without a source model, isn't done).
-- **Merge (RT3, part of RT4):** `IfcRoundTripMerge.h/.cpp`, run by `CIfcExporter::BuildModel` when `CIfcExportOptions::source_model` is set:
-  - The model's elements PGSuper models get the table's property sets, quantity sets, material properties, and classifications: targeted values are PGSuper's, converted to the model property's unit (or the model's project unit); constants and placeholders are added only where missing. A property set shared with other elements is copied for the element before it changes; a type's property set is updated on the type unless elements of that type need different values (then on the element, which overrides it); a shared material whose elements need different values is copied, one copy per set of values (Iowa's span 2 girders, 10 ksi in a 5 ksi material).
-  - Added from PGSuper's model: the strands and bars of girders without them in the model, bearings at girder ends without them, pier diaphragms at piers without them, and intermediate diaphragms in spans without them (a span with the model's own intermediate diaphragms keeps them as they are, logged: they aren't matched one by one yet). They're copied with IfcOpenShell's `add_entity` (which converts IfcLengthMeasure attributes to the model's length unit; property and quantity values are converted by the merge). Their placements are made relative to the model's element they belong to (or the world) wherever they pointed outside the added elements (PGSuper's girder placement, linear placements along PGSuper's alignment), from the computed world matrices; the export's world coordinates are the model's (checked with PennDOT). Their relationships are rebuilt with only the added elements; representation contexts and classification systems are the model's. PGSuper's tendon bundles and reinforcement cages are matched with the model girder's assemblies of the same role (by their strands or bars, else by the mapping table's `tendon_bundle` and `reinforcement_cage` selectors; registry keys `tendons:<segment ID>` and `bars:<segment ID>`), an empty one or the one with the model's strands or bars, and updated like other matched elements, so they get the classification and property sets even when PGSuper has no strands or bars to add (2026-10-27). PGSuper's strands and bars go into the matched assembly when it's empty (e.g. from an export of the girder before it had strands), so it keeps its GlobalId and type and doesn't stay empty next to a second assembly.
-  - Not yet: geometry and placement of the model's elements (question 3; kept), elements deleted in PGSuper (question 2; kept), girders, spans, decks, barriers added in PGSuper (logged, not added), haunches, alignment and georeferencing (the model's are kept).
-- **User interface and command line (part of RT5):** the IFC tab of the export options has a Round Trip group ("Update a copy of the IFC model this project was imported from", on when the model is unchanged since the import; "..." locates a moved or changed model). `/IfcSourceModel` (the project's model, which must be unchanged) or `/IfcSourceModel=<file>` on the command line. The design-value IDS of a round trip pins the girders by GlobalId (the copy keeps the model's names). The export log lists every change.
-- **Validation:** `Tests/ImportValidation/check_roundtrip.py` (see the README): PennDOT and Iowa are exported as copies after their import and checked (the model file unchanged, every GlobalId kept, no entity type with fewer instances, the design-value IDS passes); the PGSuper model's export, stripped of its strands and bars, gets them back exactly where an export of the project puts them.
+## How it works
 
-**Results (2026-10-26):** PennDOT: 25 elements updated, 2 abutment diaphragms added; IfcDiff: 2 added, 0 deleted, 25 changed (properties), no geometry changes; its design-value IDS passes. Iowa (65 MB, about 30 s): 79 elements updated, 1 value changed (span 2 f'c, 10 ksi, in one copy of the 5 ksi material shared by the span 2 girders), its strands and bars kept; IfcDiff: 0 added, 0 deleted, 100 changed (properties and classifications); its design-value IDS passes. PGSuper model stripped of its strands and bars: 26 assemblies added, strands and bars within 0.001 mm of the project's export.
+**Export, then merge into a copy of the source model.** The exporter builds PGSuper's model in memory as for any export. The merge (`IfcRoundTripMerge.h/.cpp`, run by `CIfcExporter::BuildModel` when `CIfcExportOptions::source_model` is set) then applies it to a copy of the source model, element by element, and writes the result. A plain export skips the merge, so the export and IDS baselines keep checking the exporter.
 
-**Design-value IDS of a round trip:** `CIdsExportOptions::round_trip`. The girders are pinned by GlobalId (the copy keeps the model's names), their specifications don't require PGSuper's material (the model's is kept), and the girder type and concrete material specifications are left out; the strand and bar specifications are left out when a girder keeps the model's strands or bars (they apply to every IfcTendon and IfcReinforcingBar).
+### The registry
 
-## What must be true after a round trip
+`CRoundTripRegistry` (`IfcRoundTrip.h/.cpp`) maps keys of PGSuper's elements to the GlobalIds of the source model's elements. The keys use PGSuper's IDs, not indices, so editing spans or girders doesn't shift them (`roundtrip_key`, e.g. `girder:<segment ID>`, `bearings:<segment ID>:start`, `diaphragms:<pier ID>`, `intermediate_diaphragms:<start pier ID>`, `tendons:<segment ID>`, `bars:<segment ID>`).
 
-1. **Element GlobalIds don't change.** Every element PGSuper models (bridge, bridge parts, alignment, referents, girders, deck, bearings, barriers) has the GlobalId it had in the source model.
-2. **Nothing is lost.**
-   - Elements PGSuper models keep every property set they came with. PGSuper updates only the properties the mapping table declares; a declared property set that's already on the element is updated in place, keeping its other properties.
-   - Everything else in the model stays as it is: elements PGSuper doesn't model (wingwalls, piles, footings, approach slabs), schedules, tasks, cost items, documents, approvals, groups, systems, and their relationships to the elements.
-3. **PGSuper's changes are in the result.** Values PGSuper owns (the declared properties with targets), the geometry and placement of the elements it models, elements added in PGSuper, and elements deleted in PGSuper.
-4. **The source model isn't changed.** The result is a new file (B1).
-5. **A PGSuper project with no source model** exports the same element GlobalIds every time.
+- **The import records** (`CIfcImporter::GetRoundTripRecorder`, `CRoundTripRecorder`) the project, site, bridge, bridge parts, piers and abutments, girders, deck, exterior barriers, bearings (by girder end), pier diaphragms, intermediate diaphragms (by span), and which girders have strands or bars in the model.
+- **The project saves** the registry with the source model's path, size, and SHA-256 (`IIfcRoundTrip`, `CIfcExtensionAgent` unit version 3).
+- **The export names** each element it writes by its key (`IfcExportIdentities`, `CIfcExportOptions::export_identities`), and the merge pairs them with the registry's GlobalIds. PGSuper's own model keeps new GlobalIds on every export; only the copy has the model's.
 
-## Approach
+### The merge
 
-**Export, then merge into the source model.** The exporter stays as it is: it builds PGSuper's model in memory, as today. A new merge step then applies that model to a copy of the source model, element by element, and writes the result. A plain export (no source model) skips the merge.
+- **Elements in both:** the model's element gets the table's property sets, quantity sets, material properties, and classifications:
+  - properties bound to a target get PGSuper's value, converted to the model property's unit (or the model's project unit). If the model's property has another kind of value (text where PGSuper writes a pressure), PGSuper's replaces it.
+  - constants and properties with no value are added only where the model doesn't have the property; the model's value is kept.
+  - a classification of the table is added where the element doesn't have it.
+  - a property set shared with other elements is copied for the element before it changes; a type's property set is updated on the type unless elements of that type need different values (then on the element, which overrides it); a shared material whose elements need different values is copied, one copy per set of values (Iowa's span 2 girders, 10 ksi in a 5 ksi material).
+  - the model's names, geometry, placements, types, and everything else are kept.
+- **Elements PGSuper adds:** the strands and bars of girders without them in the model, bearings at girder ends without them, pier diaphragms at piers without them, and intermediate diaphragms in spans without them. A girder with strands or bars in the model keeps the model's; diaphragms the model has at a pier get PGSuper's diaphragm values; a span with its own intermediate diaphragms keeps them as they are (logged: they aren't matched one by one yet).
+  - They're copied with IfcOpenShell's `add_entity` (which converts `IfcLengthMeasure` attributes to the model's length unit; property and quantity values are converted by the merge).
+  - Their placements are made relative to the model's element they belong to (or the world) wherever they pointed outside the added elements (PGSuper's girder placement, linear placements along PGSuper's alignment), from the computed world matrices; the export's world coordinates are the model's.
+  - Their relationships are rebuilt with only the added elements; representation contexts and classification systems are the model's.
+  - PGSuper's tendon bundles and reinforcement cages are matched with the model girder's assemblies of the same role (by their strands or bars, else by the table's `tendon_bundle` and `reinforcement_cage` selectors), and updated like other matched elements, so they get the classification and property sets even when PGSuper has nothing to add. PGSuper's strands and bars go into a matched assembly that's empty, so it keeps its GlobalId and type.
+- **The log:** every change goes to the export log (`<file>.export.log` beside the IFC file from the export dialog): each property changed (old and new value), each property and classification added, each element added, and anything left alone and why.
 
-Why not make the exporter write into the source model directly: the exporter creates entities in about 100 places, all assuming a new file. Merging keeps the exporter, the mapping tables, and the validation baselines unchanged, and puts every round-trip rule in one module that can be tested on its own.
+### The design-value IDS of a round trip
 
-**An element registry ties the two models together.** It maps a PGSuper element identity to a GlobalId and is saved in the PGSuper project:
-- **Import** records the GlobalId of every IFC element that becomes PGSuper data.
-- **Export** gives each element the registry's GlobalId (a new one if there's none) and records new ones, so the next export repeats them (requirement 5).
-- **Merge** then matches the two models by GlobalId: an element in both is updated in place, an element only in PGSuper's model is added, and an element only in the source is kept, unless the registry says it was PGSuper's and PGSuper deleted it.
+`CIdsExportOptions::round_trip`: the girders are pinned by GlobalId (the copy keeps the model's names); their specifications don't require PGSuper's material (the model's is kept); the girder type and concrete material specifications are left out; the strand and bar specifications are left out when a girder keeps the model's strands or bars.
 
-## Components
+### User interface and command line
 
-### 1. Element registry (`IfcElementRegistry.h/.cpp`, planned since M0; built as `IfcRoundTrip.h/.cpp`, see "Status")
-- **Element identity** (`ElementId`): element role (the mapping tables' `ElementKind`) plus PGSuper's stable IDs, not indices, so inserting or removing a span or a girder doesn't shift the others:
+- **Export options:** the IFC tab's Round Trip group, "Update a copy of the IFC model this project was imported from", is on when the model is where it was and unchanged since the import; "..." locates a moved or changed model, which is used as it is. While it's on, the tab's other options are disabled: a round trip uses their defaults. The export won't replace the model itself.
+- **Command line:** `/IfcSourceModel` (the project's model, which must be unchanged) or `/IfcSourceModel=<file>`. An export extension's export can't be a round trip.
 
-  | Role | Key |
-  |---|---|
-  | project, site, bridge | (one each) |
-  | superstructure, substructure, deck part | (one each) |
-  | pier, abutment (bridge part), positioning referent | pier ID |
-  | alignment | (one; its components by index) |
-  | girder | segment ID |
-  | girder assembly (spliced) | girder ID |
-  | closure joint | closure ID |
-  | deck | (one) |
-  | bearing | pier ID, face, girder ID, bearing index |
-  | barrier | side |
+## Decisions (2026-10-26)
 
-  Strands, tendons, and reinforcing bars have no stable identity in PGSuper (they're regenerated from the girder's data); they aren't in the registry (see "Strands and reinforcement").
-- **Persisted** in the project by `CIfcExtensionAgent` (`IAgentPersist`): a new unit in the agent's data (agent version 1.0 → 2.0; version 1.0 projects load with an empty registry).
-- Also persisted: the **source model** (path, size, time, SHA-256; see question 1) and a fingerprint of the imported alignment and georeferencing (see "Alignment and georeferencing").
+1. **The source model** is found by the path stored in the project, checked by size and SHA-256. A copy isn't stored with the project: IFC models are often tens to hundreds of MB, and the modeler's file stays the reference.
+2. **Elements deleted in PGSuper** are to be removed, with what only they use and their membership in shared relationships, each removal logged. Not built yet (they're kept).
+3. **Geometry and placement:** PGSuper is to be authoritative for the geometry of the elements it models, replacing the representation and placement of the existing instance and keeping its name, description, tag, and `ObjectType`. Not built yet (the model's geometry is kept).
+4. **Declared properties:** targets win; constants and properties with no value never overwrite the model's values (built).
+5. **Types and materials:** the model's are kept and only their declared properties updated, with copies where the elements sharing them need different values (built).
 
-### 2. Import records the identities
-The project importer knows which IFC element became which PGSuper item (e.g. `get_girder_layout` assigns each `IfcBeam` to a span and a girder). After the bridge is built, a final pass records `ElementId → GlobalId` for every element it used, and the source model. Elements the import reads but PGSuper doesn't model one to one (e.g. Iowa's haunch slabs, measured into the deck) are recorded with their role, so the merge knows they were read (see "Haunches").
+## Not done yet
 
-### 3. Export uses the registry
-One GlobalId provider: the exporter asks it for an element's GlobalId instead of calling `ifcopenshell::global_id()`, for the elements in the table above (about 25 of the ~100 call sites; property sets, relationships, types, and materials keep new GlobalIds, B2). After the export, new identities are recorded in the registry. This marks the project modified, which is correct: the next export must repeat them.
-
-The design-value IDS already pins girders by GlobalId as an option; with stable GlobalIds that becomes a sound default for round trips.
-
-### 4. Merge (`IfcRoundTripMerge.h/.cpp`)
-Input: PGSuper's model (in memory), a copy of the source model, the registry, and the mapping table. For each element of PGSuper's model:
-- **In both** (same GlobalId): update the source instance in place:
-  - geometry and placement replaced (question 3);
-  - the declared properties updated in the element's, its type's, and its material's property sets (question 4); property sets the table declares that the element doesn't have are added; nothing else on the element is touched;
-  - classifications the table declares are added if missing (existing ones are kept).
-- **Only in PGSuper's model**: added, with its relationships (spatial containment in the corresponding source bridge part, aggregation, type, material, property sets, classifications).
-- **Only in the source, recorded in the registry, not in PGSuper's model**: PGSuper deleted it (question 2).
-- **Only in the source, not in the registry**: kept as it is.
-
-Everything that isn't an element PGSuper models is kept: the merge only ever touches the instances above and their representations, placements, and declared property values.
-
-**Units:** the source model's units are kept. PGSuper's model is built with the source's project units (the exporter's unit setup takes them from the source model), so copied geometry needs no conversion. Property values are written with their own units, as the export does today.
-
-**Log:** every change goes to the export log: elements updated, added, and removed, properties changed (old and new value), relationships changed, and every decision the merge couldn't make cleanly.
-
-### 5. User interface and command line
-- **Export options:** when the project has a source model, the IFC export offers "Update the source model (keeps everything in it)" (the default) or "Export PGSuper's model only". The source model's path is shown.
-- **Source model missing or changed** (question 1): interactive, the user locates it or chooses a plain export; from the command line the export fails with a message, unless `/IfcSourceModel=<file>` gives it (or `/IfcNoSourceModel` asks for a plain export).
-
-## Recommended answers to the open questions (decided 2026-10-26)
-
-1. **Where the source model comes from at export.** **Recommended:** store its path, size, time, and SHA-256 in the project. At export, if the file is there and unchanged, merge into it. If it's missing or changed, ask the user to locate it (or choose a plain export); from the command line, fail with a message, or use `/IfcSourceModel=`. Don't store a copy in the project: IFC models are often tens to hundreds of MB, and the modeler's file stays the reference.
-2. **Elements deleted in PGSuper.** **Recommended:** remove the element, what only it uses (its representation, placement, and property sets not shared with other elements), and its membership in shared relationships (a task's assignment, a group, an aggregation); delete a relationship left with no members. Log every removal, including each task, group, or other entity it was removed from, so the modeler can review it. Keeping deleted girders in the model would leave a model that contradicts the design.
-3. **Geometry and placement.** **Recommended:** PGSuper is authoritative for the geometry of the elements it models: replace the representation and placement of the existing instance (keeping the instance, its GlobalId, and its relationships), whatever representation the source used. The replaced representation items are removed unless something else uses them. `Name`, `Description`, `Tag`, and `ObjectType` are kept from the source (the modeler's naming; selectors may depend on `ObjectType`); new elements get PGSuper's names.
-4. **Declared properties.** **Recommended:**
-   - Properties with a target: PGSuper's value always wins (it's PGSuper's data), including `"import": false` properties. When the source property has a unit or a value type of the same kind (e.g. a pressure in ksi), keep them and convert PGSuper's value; when the kind differs (e.g. a text "8" where PGSuper writes a pressure), replace the property and log it.
-   - Constants (e.g. `Pset_BeamCommon.Status = "NEW"`): keep the source's value when the property exists (the source knows better, e.g. `EXISTING`); write the constant only when it's missing.
-   - Placeholders (no value): never overwrite a source value.
-5. **Types and materials.** **Recommended:** keep the source's type objects and materials for existing elements (they often carry agency data), and update only their declared properties. When a source material or type is shared by elements whose PGSuper values now differ (e.g. two girders sharing a material, one of which PGSuper changed to 10 ksi), give the differing elements their own copy, and log it. New elements use PGSuper's types and materials.
-6. **Validation.** **Recommended:** a round-trip check in `Tests/ImportValidation` (see "Validation").
-
-## Special cases
-
-### Haunches
-PGSuper exports the deck and its haunches as one `IfcSlab`. A source model can model haunches as separate elements (Iowa has 21). **Recommended:** when the source has separate haunch elements, keep them and replace the deck's geometry with the deck without haunches (a new exporter option for the deck representation); log that the haunch elements weren't updated. Updating the haunch elements' geometry from PGSuper's haunch depths is a later refinement.
-
-### Strands and reinforcement
-The import doesn't read strands or reinforcement yet (Phase 6). **Recommended:** in a round trip, PGSuper's strands and bars are written only for girders whose source element has none; a girder that has tendons or bars in the source keeps them, and the log says PGSuper's weren't written. Once the import reads them, they can be matched like other elements.
-
-### Alignment and georeferencing
-PGSuper's alignment and georeferencing come from the source model. **Recommended:** keep the source's (a civil model's alignment is richer than PGSuper's) unless the user changed them in PGSuper: compare with the fingerprint recorded at import, and replace them only when they differ (logged).
-
-### Elements PGSuper added
-A span or girder added in PGSuper has no GlobalId in the registry: it gets a new one, is added to the source model in the corresponding bridge part, and is recorded, so later exports repeat it.
+- Geometry and placement of the model's elements (decision 3).
+- Elements deleted in PGSuper (decision 2).
+- Elements added in PGSuper that the model doesn't have, such as girders, spans, decks, barriers, and piers (logged, not added). Once added they'd be recorded, so later exports repeat their GlobalIds.
+- Haunches: a model's separate haunch elements (Iowa's) are kept, but the deck's representation isn't changed to leave them out.
+- The alignment and the georeferencing: the model's are kept. To replace them when the user changed them in PGSuper, compare with a fingerprint recorded at import.
+- Stable GlobalIds for plain exports (a PGSuper project with no source model exporting the same GlobalIds every time).
+- PGSplice: closure joints, tendons, ducts, and anchors as keyed elements, and the bearings of an import into PGSplice ([PGSplicePlan.md](PGSplicePlan.md), S2 and S5).
+- A fixture with schedules and tasks for the retention checks (a script that adds an `IfcWorkSchedule` with `IfcTask`s assigned to the girders and the deck, a cost item, and a document reference to an exported model).
 
 ## Validation
 
-A new round-trip check in `run_validation.py`, for each IFC model (PennDOT, Iowa, and a fixture with schedules and tasks):
-1. Import the model, export the project with the source model (`/IfcExport` merges), and compare:
-   - **GlobalIds** of the elements PGSuper models: all the same.
-   - **Kept elements' data:** every property set and property the table doesn't declare has exactly the source's value; declared properties have PGSuper's values.
-   - **Everything else:** entity counts by type are the same for every entity type PGSuper doesn't create; the relationships to non-PGSuper entities (e.g. `IfcRelAssignsToProcess` of a task) have the same members.
-   - The report lists every difference; the check passes when there are none besides PGSuper's declared values and geometry.
-2. For PGSuper models: export twice and compare element GlobalIds (identical).
-3. Edits: a scripted edit (delete a girder, add a span) between import and export, with the expected removals and additions.
-
-**Fixture with schedules and tasks:** a small script (IfcOpenShell's Python, already in `D:\IfcOpenShell`) adds an `IfcWorkSchedule` with `IfcTask`s assigned to the girders and the deck, a cost item, a document reference, and an unrelated property set to an exported PGSuper model. It's the model the retention checks run on.
-
-## Milestones
-
-| | Milestone | Done when |
-|---|---|---|
-| RT0 | This note, reviewed; the open questions decided | Done 2026-10-26 (the recommended answers) |
-| RT1 | Element registry, persisted in the project; import records identities and the source model | A saved and reopened imported project has a GlobalId for every imported element |
-| RT2 | Export uses the registry | PGSuper models export the same element GlobalIds twice; IFC → PGSuper → IFC (plain export) gives the source's GlobalIds to the elements PGSuper models |
-| RT3 | Merge: update in place, add, keep everything else; units; log | The round-trip check passes for PennDOT and Iowa (no losses) |
-| RT4 | Deleted and added elements; haunches; strands and reinforcement; alignment and georeferencing | The edit checks pass; Iowa's haunches are kept |
-| RT5 | Export options, locating a missing source model, `/IfcSourceModel=`, `/IfcNoSourceModel` | |
-| RT6 | Schedules and tasks fixture, and its retention checks | The fixture's schedules, tasks, and their assignments survive a round trip |
-
-Plain exports (no source model) stay the same through RT0–RT6, so the existing export and IDS baselines keep checking the exporter.
+`Tests/ImportValidation/check_roundtrip.py` (run by `run_validation.py`; see its README):
+- **IFC models (PennDOT, Iowa, TxDOT):** each is exported as a copy after its import and checked: the model file unchanged, every GlobalId kept, no entity type with fewer instances, and the copy passes its design-value IDS.
+- **Added reinforcement:** the PGSuper model's export, stripped of its strands and bars, gets them back exactly where an export of the project puts them.
 
 ## Risks
-- **IfcOpenShell copying between files:** adding an entity from PGSuper's model to the source model copies what it references; representations can share items (e.g. a profile). The merge must copy each shared item once (a map from PGSuper's instances to the copies), as `RebarRelationshipBatch` already does for relationships.
-- **Removing entities** leaves dangling references if anything else points to them; the merge checks inverse references before removing anything.
-- **Performance:** large models (hundreds of MB, or many bars). The merge works per element with GlobalId lookups (`instance_by_guid`), not whole-file scans.
-- **Source models PGSuper can't fully read** (e.g. a girder PGSuper matched to the wrong span): the registry records what the import decided, so a wrong match is updated with the wrong girder's data. The import log already reports its matching; the merge log lists each updated element with its PGSuper identity so it can be checked.
+
+- **Copying between files:** adding an entity from PGSuper's model copies what it references, and representations can share items (e.g. a profile). Each shared item is copied once.
+- **Removing entities** (decision 2) would leave dangling references if anything else points to them: check inverse references before removing anything.
+- **Performance:** large models (hundreds of MB, or many bars). The merge works per element with GlobalId lookups, not whole-file scans (Iowa's 65 MB model takes about 30 s).
+- **Models PGSuper can't fully read** (e.g. a girder matched to the wrong span): the registry records what the import decided, so a wrong match is updated with the wrong girder's data. The import log reports its matching, and the merge log lists each updated element with its PGSuper identity.

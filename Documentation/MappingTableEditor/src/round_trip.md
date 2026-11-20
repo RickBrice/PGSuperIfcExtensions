@@ -35,6 +35,7 @@ The model's names, geometry, placements, types, and everything else on the eleme
 - The strands and reinforcing bars of a girder that has none in the model. A girder that has strands or bars in the model keeps the model's.
 - The bearings at a girder end that has none in the model.
 - The pier diaphragms at a pier that has none in the model. Diaphragms the model has at a pier get PGSuper's diaphragm values instead.
+- The intermediate diaphragms of a span that has none in the model. A span whose intermediate diaphragms are in the model keeps the model's, unchanged (the export log says so).
 
 They are placed in the model's coordinates and units, related to the model's elements (for example a girder's strands are part of the model's girder), and use the model's representation contexts and classification systems.
 

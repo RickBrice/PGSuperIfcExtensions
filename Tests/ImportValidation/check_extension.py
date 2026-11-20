@@ -37,6 +37,8 @@ TABLE = HERE / "mappings" / "TestExtension.ifcmap"
 TEMPLATE = HERE.parent.parent / "IfcImportTemplate.pgt"
 BASELINE = HERE / "export_baseline" / "PGSuper-System.txt.gz"
 EXTENSION_ID = "PGSuperIfc.TestExtension"
+USBRIDGE = "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/"  # the standard table's default bSDD dictionary
+TEST_DICTIONARY = "https://identifier.buildingsmart.org/uri/example/test/1/"  # the test table's second one
 
 # the hooks in the order IfcExport::IHooks documents (OnExportEnd isn't recorded: it's called after the model is written)
 HOOK_ORDER = ["OnExportBegin", "OnDeck", "OnBridgeParts", "OnPier", "OnBearing", "OnBarrier", "OnSegment",
@@ -101,6 +103,21 @@ def check_hooks(run_bridgelink):
     if sorted(psets(p)["TestPset_Pier"]["PierIndex"] for p in piers) != list(range(len(piers))):
         problems.append("the piers' PierIndex values aren't 0, 1, ...")
 
+    # bSDD URIs in two dictionaries: the test table's own ("bsdd@test", "bsdd@test:Calls") and the standard table's default ("bsdd")
+    def specification(element, pset, name):
+        for rel in element.IsDefinedBy or []:
+            definition = getattr(rel, "RelatingPropertyDefinition", None)
+            if definition and definition.is_a("IfcPropertySet") and definition.Name == pset:
+                for p in definition.HasProperties:
+                    if p.Name == name:
+                        return p.Specification
+        return None
+    for element, pset, name, expected in ((markers[0], "TestPset_Marker", "HookCalls", TEST_DICTIONARY + "prop/Calls"),
+                                          (girders[0] if girders else None, "TestPset_Girder", "SegmentKey", TEST_DICTIONARY + "prop/SegmentKey"),
+                                          (piers[0] if piers else None, "TestPset_Pier", "PierIndex", USBRIDGE + "prop/PierIndex")):
+        if element is not None and specification(element, pset, name) != expected:
+            problems.append(f"{pset}.{name} has the URI {specification(element, pset, name)!r}, not {expected!r}")
+
     # the rest is the standard export
     if BASELINE.exists():
         current = [line for line in compare_export.listing(ifc) if "TestPset_" not in line and '"Test extension marker"' not in line]
@@ -143,6 +160,27 @@ def check_table_ids(run_bridgelink):
     return [f"the IDS has no {name}" for name in ("TestPset_Marker", "TestPset_Girder", "TestPset_Pier", "usBrPset_ACI_BarShape") if name not in text]
 
 
+def check_unknown_dictionary(run_bridgelink):
+    """a table whose URI names a dictionary no table declares can't be loaded. Returns a list of problems"""
+    OUT.mkdir(parents=True, exist_ok=True)
+    table = OUT / "UnknownDictionary.ifcmap"
+    table.write_text('{"format": "PGSuperIfcMapping", "version": 1, "name": "Unknown dictionary", "extends": "standard", '
+                     '"property_sets": [{"name": "TestPset_Bridge", "applies_to": "bridge", "uri": "bsdd@missing", '
+                     '"properties": [{"name": "Name", "type": "IfcLabel"}]}]}', encoding="utf-8")
+    ids = OUT / "UnknownDictionary.ids"
+    ids.unlink(missing_ok=True)
+    run_bridgelink([quote(f"/IfcTableToIds={ids}"), quote(TEMPLATE), quote(f"/IfcMapping={table}")])
+    log = Path(str(ids) + ".log")
+    text = log.read_text(errors="replace") if log.exists() else ""
+    expected = "The bSDD dictionary \"missing\" isn't in the \"bsdd_dictionaries\""
+    problems = []
+    if ids.exists():
+        problems.append("the IDS was written")
+    if expected not in text:
+        problems.append(f"the log doesn't say \"{expected}\"")
+    return problems
+
+
 def check(run_bridgelink):
     """runs the checks. Returns (ok, message)"""
     cases = [
@@ -156,6 +194,7 @@ def check(run_bridgelink):
         ("the table without the extension", lambda: check_refused(run_bridgelink, "Requires", [quote(f"/IfcMapping={TABLE}")],
                                                                  f'the table needs the export extension "{EXTENSION_ID}"')),
         ("the general IDS of the table", lambda: check_table_ids(run_bridgelink)),
+        ("a bSDD dictionary that isn't declared", lambda: check_unknown_dictionary(run_bridgelink)),
     ]
     lines = ["# Export extension API", "", "The test export extension (TestExportExtension.h) with mappings/TestExtension.ifcmap (check_extension.py).", "",
              "| Check | Result |", "|---|---|"]
@@ -168,7 +207,7 @@ def check(run_bridgelink):
     (RESULTS / "ExtensionApi.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     if failed:
         return False, f"{len(failed)} of {len(cases)} checks failed: {', '.join(failed)}"
-    return True, f"{len(cases)} of {len(cases)} checks passed (hooks, the four refusals, and the general IDS)"
+    return True, f"{len(cases)} of {len(cases)} checks passed (hooks, the four refusals, the general IDS, and bSDD dictionaries)"
 
 
 def main():

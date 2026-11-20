@@ -20,6 +20,32 @@ A table that extends another table has only what is different from it:
 
 The standard table describes the TPF/usBridge property sets PGSuper exports. Extending it keeps an agency table small, and an agency table keeps up with new versions of the standard table without being changed.
 
+bSDD dictionaries {#bsdd_dictionaries}
+-----------------
+
+Property sets, properties, classification systems, and classifications can have URIs in a bSDD dictionary (the buildingSMART Data Dictionary). A table names its dictionaries at the top of the file:
+
+    "bsdd_dictionaries": {"usBridge": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/"},
+    "bsdd_dictionary": "usBridge",
+
+`bsdd_dictionaries` gives each dictionary a short name and its URI, ending with `/`. `bsdd_dictionary` is the default. A URI then names a dictionary instead of being written out:
+
+| URI | Means |
+|---|---|
+| `bsdd` | The default dictionary and the entry's own name, for example `.../usBridge/1/prop/BarMark` for the property `BarMark`. |
+| `bsdd:Other` | The default dictionary and another name. |
+| `bsdd@name` | The dictionary with that short name, and the entry's own name. |
+| `bsdd@name:Other` | That dictionary and another name. |
+
+The standard table has the usBridge dictionary, its default, so a table that extends it writes usBridge URIs with `bsdd`. A table has the dictionaries of the table it extends, and can add its own, replace one by giving its short name another URI, or name another default. For example, a table that adds property sets from another dictionary declares that dictionary, `"bsdd_dictionaries": {"agency": "https://identifier.buildingsmart.org/uri/myAgency/bridges/2/"}`, and writes their URIs as `bsdd@agency`.
+
+The editor doesn't show the dictionaries; they're edited in the file. When the editor copies an entry from the base table, it writes its URIs in the short form for the table's dictionaries.
+
+Tables for an export extension
+------------------------------
+
+Another plug-in can add to PGSuper's IFC export with an export extension, for example an exchange with another program. Its table extends the standard table and names the extension in `"requires"`; it can use the extension's own element roles and targets. Such a table works only with the export command of the plug-in that provides the extension. The import, the editor's validation, and PGSuper's own export report the table as needing the extension.
+
 Files
 -----
 
@@ -44,5 +70,7 @@ Table > Validate checks the table the same way the import and the export do. The
 - a regular expression that isn't valid
 - a shared property set with a property whose value differs from element to element
 - a base table that can't be found, or tables that extend each other in a circle
+- a URI that names a bSDD dictionary the table and the tables it extends don't have, or `bsdd` without a default dictionary
+- a table that needs an export extension (`"requires"`), outside that extension's export command
 
 A table that isn't valid stops an import or export. PGSuper doesn't fall back to the standard table, because the results would differ without notice.

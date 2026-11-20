@@ -257,13 +257,23 @@ PGSuper's deck reinforcement is a top and a bottom mat, each with primary bars a
 - **Supplemental bars** belong to the pier they cross nearest their middle; for each pier and mat, the lump sum is computed the same way, and the **cutoffs** are the median distances from the CL pier to the bar ends. Bars that cross no pier are counted and skipped.
 - A model without longitudinal deck bars keeps the template's deck reinforcement.
 
-## 20. What doesn't come from geometry
+## 20. Spliced girders (PGSplice)
+
+An import into PGSplice (`IfcImportTemplate.spt`) reads spliced girders (`SplicedGirders.h/.cpp`, since 2026-11-11):
+- **Girder lines** (`get_spliced_girders`): each `girder_assembly` (an `IfcElementAssembly.GIRDER`) is a girder line; its beams are its segments, except those matching the `closure_joint` selector. A lone girder is a girder line of one segment. Segments are located as single girders are (Section 6), and a closure joint goes in the gap between segments that contains the middle of its centerline.
+- **Framing** (`get_spliced_framing`): at each interior pier, a segment over it makes a continuous segment, a closure joint in the gap there a continuous closure joint, and anything else a group boundary. A closure joint between piers is at a temporary support: an erection tower if an `erection_tower` part is there, else a strongback. An erection tower under a segment is a temporary support with a continuous segment. The leftmost girder of each group decides; disagreements are logged.
+- **The bridge:** spans are appended to the current group or a new one, then the pier connections and temporary supports are set (PGSplice splits the segments). The temporary supports' events and end distance come from the template's temporary support; the bearing offset is half the closure joint plus that end distance. The import checks that every girder has the model's number of segments.
+- **Layouts:** the pieces of each girder line per span feed the piers, spacing, bearings, boundary conditions, and deck (continuous ends over interior piers are skipped where a girder end is expected); the segments feed the strands, girder bars, and concrete; each girder's segment closest to constant depth is the section the library entry is matched with (Section 9).
+- **Depth variation** (`set_segment_variations`): the heights and bottom flange depths of a sectioned solid's cross sections give a segment's variation: none, linear, parabolic, double linear, or double parabolic. PGSplice measures its zones over the framing length, so the prismatic end zones include the distance from the closure joint's centerline (half the gap) or the pier to the segment end. An entry the import created gets its variable depth section enabled.
+- **Not yet:** tendons, the timeline (the template's), closure joint concrete (the template's), slab offsets per segment (the average is used, with a warning), a temporary support's end distance (where a segment rests on it isn't in the model), and skewed temporary supports.
+
+## 21. What doesn't come from geometry
 
 Some PGSuper input is read from properties through the mapping table, because geometry can't show it: concrete strengths (`girder.fc`, `girder.fci`), strand and bar materials, debonding, jacking forces, bearing fixity and support conditions, the girder type name (a hint for the library entry, never an override), and the girder designation (a cross check). The pier stations come from the positioning referents when the model has them. See [Targets.md](Targets.md) for every target and [MappingTablesDesign.md](MappingTablesDesign.md) for how locations are found.
 
 Not imported from geometry yet: stay-in-place deck panels, sidewalks and interior barriers, intermediate diaphragms, superelevation events, the girder orientation (roll), and the girders' drawn camber.
 
-## 21. Tolerances
+## 22. Tolerances
 
 | What | Tolerance |
 |---|---|

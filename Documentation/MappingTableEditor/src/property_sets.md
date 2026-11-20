@@ -22,7 +22,7 @@ A set in this table
 | Applies to | The element roles the set is written for. |
 | Attach to | Where the set is written: on the element (`occurrence`), on its type object (`type`), or on its material (`material`). |
 | Condition | The export option that includes the set: `classify` (written when the export classifies elements, the default), `quantities` (written when the export includes quantities), or `always`. |
-| URI | The set's URI, written as its description, for example its bSDD URI (`bsdd`, in the table's bSDD dictionary). |
+| URI | The set's URI, written as its description, for example its bSDD URI (`bsdd`, in the table's default bSDD dictionary, or `bsdd@dictionary`; see @ref bsdd_dictionaries). |
 | Shared | Write one instance of the set, related to every element of the role. Only allowed when no property's value depends on the element. |
 | Comment | Anything you want to say about the set. |
 | Properties | The set's properties, in the order they are written. Add, edit, remove, and reorder them. |
@@ -40,7 +40,7 @@ The Property window {#property_dialog}
 | Bound to a target | The property holds a PGSuper value. The export writes the target's value, in PGSuper's units. See @ref reference for the targets. |
 | An import reads the target from it | When checked, the import also reads the target from this property (after the target's own locations). Uncheck it for a property that only the export uses. |
 | A constant | The property is written with this value for every element. |
-| URI | The property's URI, written as its description. `bsdd` builds the bSDD URI from the property's name, in the table's bSDD dictionary: the `bsdd_dictionary` of the table, else of the table it extends (the standard table's is usBridge's). |
+| URI | The property's URI, written as its description. `bsdd` builds the bSDD URI from the property's name, in the table's default bSDD dictionary (the standard table's is usBridge); `bsdd:Other` uses another name. `bsdd@dictionary` and `bsdd@dictionary:Other` name another of the table's dictionaries. See @ref bsdd_dictionaries. |
 | Enumeration name, Enumeration values | Makes the property an enumerated property. The values are one per line. |
 | Comment | Anything you want to say about the property. |
 
