@@ -269,6 +269,10 @@ def compare_workbook(standard, table):
         entity = selector.get("entity", "")
         predefined = (selector.get("predefined_type") or "").upper()
         object_type = (selector.get("attributes") or {}).get("ObjectType")
+        if cls["object_type"] and predefined == cls["object_type"].upper() and "USERDEFINED" in cls["predefined"]:
+            # a selector's predefined type can name a USERDEFINED element's user-defined type (as in IDS; it's from the
+            # type object's ElementType or the ObjectType)
+            predefined, object_type = "USERDEFINED", cls["object_type"]
         if entity.lower() != cls["entity"].lower():
             findings.append(("CLASS", label, "entity", f"table {entity}, workbook {cls['ifc_name']}"))
         if cls["predefined"] and predefined not in cls["predefined"]:
