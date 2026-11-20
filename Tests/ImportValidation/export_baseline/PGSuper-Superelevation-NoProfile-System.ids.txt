@@ -431,7 +431,7 @@ spec "Tendon classification and material" | requirements classification[cardinal
 spec "Tendon classification and material" | requirements material[cardinality="required"](value(simpleValue(steel)))
 spec "Tendon bundle classification" | [description="Every strand bundle is a classified tendon bundle" identifier="STRANDS" ifcVersion="IFC4X3_ADD2"]
 spec "Tendon bundle classification" | applicability [maxOccurs="unbounded" minOccurs="1"]
-spec "Tendon bundle classification" | applicability entity(name(simpleValue(IFCELEMENTASSEMBLY)) predefinedType(simpleValue(USERDEFINED)))
+spec "Tendon bundle classification" | applicability entity(name(simpleValue(IFCELEMENTASSEMBLY)) predefinedType(simpleValue(TENDON_BUNDLE)))
 spec "Tendon bundle classification" | requirements classification[cardinality="required"](value(simpleValue(usBridge_TendonBundle)) system(simpleValue(usBridge)))
 spec "Reinforcing material - AASHTO M31 (A615) - Grade 60" | [description="Reinforcing steel material properties from PGSuper" ifcVersion="IFC4X3_ADD2"]
 spec "Reinforcing material - AASHTO M31 (A615) - Grade 60" | applicability [maxOccurs="unbounded" minOccurs="0"]
