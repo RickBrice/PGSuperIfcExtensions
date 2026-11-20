@@ -203,13 +203,13 @@ typename Schema::IfcConversionBasedUnit GetMassUnit(hierarchy_helper<Schema>& fi
    typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
    if (!unit)
    {
-      auto cf = WBFL::Units::Measure::PoundMass.GetConvFactor(); // converts to base mass units which is KG
-      auto cf2 = WBFL::Units::Measure::Gram.GetConvFactor();
+      // the factor to the IFC unit (GRAM), not to the system unit (kg)
+      auto cf = WBFL::Units::Convert(1.0, WBFL::Units::Measure::PoundMass, WBFL::Units::Measure::Gram);
       unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
          file.create<typename Schema::IfcDimensionalExponents>().initialize(0/*length*/, 1/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_MASSUNIT,
          name,
-         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcMassMeasure>().initialize(cf * cf2), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcMassMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_MASSUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_GRAM))
       );
    }
    return unit;
@@ -222,13 +222,12 @@ typename Schema::IfcConversionBasedUnit GetForceUnit(hierarchy_helper<Schema>& f
    typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
    if (!unit)
    {
-      auto cf = WBFL::Units::Measure::Kip.GetConvFactor(); // converts to base force units which is N
-      auto cf2 = WBFL::Units::Measure::Newton.GetConvFactor();
+      auto cf = WBFL::Units::Convert(1.0, WBFL::Units::Measure::Kip, WBFL::Units::Measure::Newton);
       unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
          file.create<typename Schema::IfcDimensionalExponents>().initialize(1/*length*/, 1/*mass*/, -2/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_FORCEUNIT,
          name,
-         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcForceMeasure>().initialize(cf * cf2), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_NEWTON))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcForceMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_FORCEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_NEWTON))
       );
    }
    return unit;
@@ -241,13 +240,12 @@ typename Schema::IfcConversionBasedUnit GetAngleUnit(hierarchy_helper<Schema>& f
    typename Schema::IfcConversionBasedUnit unit = FindUnitByName<Schema>(file, name);
    if (!unit)
    {
-      auto cf = WBFL::Units::Measure::Degree.GetConvFactor(); // converts to base angle units which is rad
-      auto cf2 = WBFL::Units::Measure::Radian.GetConvFactor();
+      auto cf = WBFL::Units::Convert(1.0, WBFL::Units::Measure::Degree, WBFL::Units::Measure::Radian);
       unit = file.create<typename Schema::IfcConversionBasedUnit>().initialize(
          file.create<typename Schema::IfcDimensionalExponents>().initialize(0/*length*/, 0/*mass*/, 0/*time*/, 0, 0, 0, 0),
          Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT,
          name,
-         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcPlaneAngleMeasure>().initialize(cf * cf2), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN))
+         file.create<typename Schema::IfcMeasureWithUnit>().initialize(file.create<typename Schema::IfcPlaneAngleMeasure>().initialize(cf), file.create<typename Schema::IfcSIUnit>().initialize(Schema::IfcUnitEnum::IfcUnit_PLANEANGLEUNIT, std::nullopt, Schema::IfcSIUnitName::IfcSIUnitName_RADIAN))
       );
    }
    return unit;
