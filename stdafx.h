@@ -34,7 +34,9 @@
 #undef max // this is a non-standard macro and it interferes with IfcOpenShell - undefine it.
 #undef min // this is a non-standard macro and it interferes with IfcOpenShell - undefine it.
 
+#ifndef IFOPSH_WITH_ROCKSDB // Include\IfcExport\IfcExtensionSdk.props defines it
 #define IFOPSH_WITH_ROCKSDB
+#endif
 #pragma warning(disable:4250)
 #include <ifcparse/hierarchy_helper.h>
 #include <ifcparse/schema.h>

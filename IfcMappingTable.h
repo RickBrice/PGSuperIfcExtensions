@@ -52,7 +52,8 @@ enum class MappingTableSource
    Editor,               // the table being edited in the mapping table editor
    ChosenForImport,      // chosen in the IFC Import window for one import
    ChosenForExport,      // chosen in the IFC export options for one export
-   Project               // the table the project remembers (used by its IFC import or its last IFC export)
+   Project,              // the table the project remembers (used by its IFC import or its last IFC export)
+   ExportExtension       // the table of an export extension (IIfcModelBuilder, Include\IfcExport\IfcModelBuilder.h)
 };
 
 // How a table file was chosen, for logs and messages (e.g. "the command line (/IfcMapping)")
@@ -294,3 +295,6 @@ private:
 
 // Path as text, for messages
 std::string PathToString(const std::filesystem::path& path);
+
+// A table file for logs: "name" (version n): path
+std::string DescribeTableFile(const MappingTableFile& file);

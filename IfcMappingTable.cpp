@@ -21,6 +21,7 @@
 ///////////////////////////////////////////////////////////////////////
 #include "stdafx.h"
 #include "IfcMappingTable.h"
+#include "IfcExtensionRegistry.h"
 #include "bSDD.h"
 
 #include <nlohmann/json.hpp>
@@ -94,6 +95,7 @@ namespace
       case MappingTableSource::ChosenForImport: return "the table chosen for this import (IFC Import window)";
       case MappingTableSource::ChosenForExport: return "the table chosen for this export (IFC export options)";
       case MappingTableSource::Project: return "the table this project remembers (from its IFC import or last IFC export)";
+      case MappingTableSource::ExportExtension: return "the export command of the plug-in that uses it (an export extension)";
       }
       ASSERT(false);
       return "";
@@ -146,6 +148,9 @@ namespace
          case MappingTableSource::Project:
             os << "Correct the table, or choose a different table in the IFC export options.";
             break;
+         case MappingTableSource::ExportExtension:
+            os << "The table comes with the plug-in whose export command uses it. Reinstall that plug-in, or install versions of it and the IFC extension that were released together.";
+            break;
          default:
             os << "Correct the table. It may have been edited after the IFC extension was installed; reinstalling the extension restores it.";
             break;
@@ -169,7 +174,7 @@ namespace
             return;
          }
 
-         CheckKeys(j, "", { "format", "version", "name", "extends", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
+         CheckKeys(j, "", { "format", "version", "name", "extends", "requires", "elements", "targets", "property_sets", "quantity_sets", "classification_systems", "classifications" });
 
          auto format = GetString(j, "format", "", true);
          if (format && *format != table_format)
@@ -191,6 +196,15 @@ namespace
 
          m_File.name = GetString(j, "name", "", true).value_or("");
          m_File.extends = GetString(j, "extends", "", false).value_or("");
+
+         if (j.contains("requires"))
+         {
+            // the export extensions whose targets and element roles the table uses (devdocs/ExtensionsDesign.md). Such a
+            // table only works with the export command of the plug-in that provides the extension
+            ParseRequires(j["requires"]);
+            if (!m_Errors.empty())
+               return; // the rest would only report the extension's targets and roles as unknown
+         }
 
          if (j.contains("elements"))
             ParseElements(j["elements"]);
@@ -349,6 +363,22 @@ namespace
             return false;
          }
          return true;
+      }
+
+      void ParseRequires(const json& j)
+      {
+         if (!j.is_array() || !std::all_of(j.begin(), j.end(), [](const auto& v) {return v.is_string(); }))
+         {
+            Error("requires", "must be a list of export extension names");
+            return;
+         }
+
+         const auto* pActive = GetActiveExtensionContent();
+         for (const auto& name : j.get<std::vector<std::string>>())
+         {
+            if (!pActive || pActive->id != name)
+               Error("requires", "the table needs the export extension \"" + name + "\". It belongs to the export command of the plug-in that provides it, and can't be used by this command");
+         }
       }
 
       void ParseElements(const json& j)
@@ -759,6 +789,12 @@ namespace
                continue;
             }
 
+            if (!target->provider.empty())
+            {
+               Error(path, "\"" + name + "\" is a target of the export extension \"" + std::string(target->provider) + "\". Its values are only exported, so it has no import locations");
+               continue;
+            }
+
             const json* jlocations = &value;
             auto locations_path = path;
             if (value.is_object())
@@ -1121,6 +1157,7 @@ bool IsExportValueType(const std::string& type)
       "IFCPRESSUREMEASURE", "IFCLENGTHMEASURE", "IFCPOSITIVELENGTHMEASURE", "IFCNONNEGATIVELENGTHMEASURE",
       "IFCPLANEANGLEMEASURE", "IFCPOSITIVEPLANEANGLEMEASURE", "IFCRATIOMEASURE", "IFCPOSITIVERATIOMEASURE", "IFCNORMALISEDRATIOMEASURE",
       "IFCAREAMEASURE", "IFCVOLUMEMEASURE", "IFCMASSMEASURE", "IFCFORCEMEASURE",
+      "IFCTIMEMEASURE", "IFCLINEARFORCEMEASURE", "IFCMASSDENSITYMEASURE", "IFCTORQUEMEASURE", "IFCMODULUSOFELASTICITYMEASURE",
    };
    return types.find(type) != types.end();
 }
@@ -1194,6 +1231,11 @@ std::string PathToString(const std::filesystem::path& path)
       auto text = path.u8string();
       return std::string(text.begin(), text.end());
    }
+}
+
+std::string DescribeTableFile(const MappingTableFile& file)
+{
+   return "\"" + file.name + "\" (version " + std::to_string(file.version) + "): " + PathToString(file.path);
 }
 
 namespace
