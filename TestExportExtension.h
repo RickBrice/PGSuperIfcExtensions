@@ -26,7 +26,7 @@
 
    /IfcTestExtension[=<mode>] on the /IfcExport and /IfcTableToIds command lines
    uses it, so the extension API is tested by this repository's validation
-   (Tests/ImportValidation/check_extension.py), not only by BridgeSight's builds.
+   (Tests/ImportValidation/check_extension.py), not only by the extensions' own builds.
    It goes through the same SDK as an extension in another DLL:
 
    - it registers an element role (ifctest.marker) and targets on its own role

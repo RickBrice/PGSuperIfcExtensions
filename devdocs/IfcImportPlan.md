@@ -136,17 +136,7 @@ Done (G2).
 - **Intermediate diaphragms:** exported (2026-11-19); round trips add them to a model without them. The import recognizes them and logs them, but doesn't import them: PGSuper's intermediate diaphragms come from the girder library entries' diaphragm layout rules, so importing them means fitting rules to the model's diaphragms.
 
 ### Phase 8: Visual Studio unit tests (one of the last steps)
-Turn the checks run by hand into Visual Studio unit tests (Microsoft C++ unit test framework), so they run from Test Explorer and in CI:
-- the round trips and model imports in `Tests/ImportValidation`, with the expected values and tolerances of `compare_bridge.py`
-- the geometry checks done by hand: deck section outlines (constant point count, no self intersection, valid for IfcOpenShell), haunch profiles, girder layout and spacing, pier skew, end distance and bearing offset
-- exports that IfcOpenShell must be able to convert (every representation item produces geometry)
-- table loading errors (a missing file, invalid JSON, a table with many problems, an unsupported version, an `extends` cycle), checked by hand when the tables were built
-- the WBFL `ISectionCutTool::CreateSlabShapeWithoutHaunches`/`CreateHaunchShape` and PGSuper `IShapes` methods, in their own test projects
-
-**To consider (2026-11-20): a static library of the testable core.** A test project can't call this project's code through the DLL: it exports only EAF's component factory (`create_class_object`, `BOOST_DLL_ALIAS` in `EAF/ComponentModule.h`), which creates the six EAF components of its object map (the importers, the exporter, the agent, the editor plugin). Those need a running BridgeLink. The classes worth unit testing are internal. The proposal is to move them into a static library linked by both the DLL and a new `PGSuperIfcExtensionsUnitTests` project (Microsoft C++ unit test framework, as WBFL's `CogoUnitTests`). The alternatives are linking the DLL build's `.obj` files (fragile: precompiled headers, and MFC and EAF pulled in) or compiling the sources into the test project too (two file lists to keep in step).
-- **First candidates:** table loading and validation (every table error and its message, the `extends` merge, `requires`), the bSDD URI forms and dictionary inheritance, `FormatMappingTable` (`Standard.ifcmap` formats to itself), the table <-> general IDS round trip (now `check_table_ids.py`), `CIfcTargetReader` on small IFC models built in memory (location order, units, `parse`, `map`, `list_index`, hints), `BarShape.h` (lengths with arcs, signatures, masses), and `RegisterExtension` with a fake extension (prefix, duplicates, unknown roles, the API version and fingerprint refusals). Later: the geometry helpers on synthetic meshes, and the section fitting (needs PGSuper's beam factories).
-- **What the library must avoid:** the application (`EAFGetApp()` in `CIfcMappingTable::GetTableSetting`, and the installed standard table's path from this DLL's location); tests load tables from a path or text (`CIfcMappingTable::Load`).
-- **Stays in Python:** the round trips, model imports and their scores, the export baselines, the usBridge IDS checks (ifctester), schema validation, and the extension hooks test, which all need BridgeLink and a PGSuper project.
+The checks that don't need a running BridgeLink move to Visual Studio unit tests, with a static library of the testable core: see [UnitTestPlan.md](UnitTestPlan.md).
 
 ## Working conventions
 

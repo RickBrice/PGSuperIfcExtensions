@@ -17,6 +17,7 @@ Start with the master plan, the import plan, and the mapping tables design.
 | [Export profiles](ExportProfilesPlan.md) | The standard export and export extensions as profiles of one export mechanism |
 | [PGSplice plan](PGSplicePlan.md) | Import and export for PGSplice |
 | [Stirrup plan](StirrupPlan.md) | Plug-in stirrup input with bar shapes and layouts, analysis through `CShearData2`, design mapping, and a general bar export |
+| [Unit test plan](UnitTestPlan.md) | Visual Studio unit tests for the testable core, with a static library (Phase 8) |
 | [3D view plan](3DViewPlan.md) | Exploratory: a 3D view of the bridge model, native or from IFC |
 | [Dependencies](Dependencies.md) | Building IfcOpenShell and the other dependencies |
 

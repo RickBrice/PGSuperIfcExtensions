@@ -20,7 +20,7 @@ What's done is summarized in [IfcImportPlan.md](IfcImportPlan.md), "Status"; how
 | Stirrups: bar shapes and layouts as plug-in input, analysis through `CShearData2`, design, and a general bar export | Planned (open questions) | 1, 3 | [StirrupPlan.md](StirrupPlan.md) |
 | 3D view of the bridge model | Exploratory (open questions) | | [3DViewPlan.md](3DViewPlan.md) |
 | R2: import issues as BCF for the modeler | Not started (C1-C5 decided) | 3 | [IfcImportPlan.md](IfcImportPlan.md), R2 |
-| Unit tests in Visual Studio (Phase 8), with a static library of the testable core | Not started (one of the last steps) | | [IfcImportPlan.md](IfcImportPlan.md), Phase 8 |
+| Unit tests in Visual Studio (Phase 8): a static library of the testable core, a test project, and a first batch of tests (tables, bSDD dictionaries, the formatter, table <-> IDS, the target reader, bar geometry, extension registration) | Planned (one of the last steps) | | [UnitTestPlan.md](UnitTestPlan.md) |
 
 ## Import
 
@@ -99,7 +99,7 @@ The steps are in [PGSplicePlan.md](PGSplicePlan.md).
 | Expected values for PennDOT and Iowa from their property sets (E1) | Not started | | [IfcImportPlan.md](IfcImportPlan.md), Phase 0 |
 | More test models: PGSuper regression projects by girder factory, and imports under other configurations | Not started | 2 | Details, below |
 | Document the scoring systems (validation scores, name similarity, section comparison and fitting, usBridge counts, workbook categories) | Not started | | Details, below |
-| Unit tests (Phase 8) | Not started | | Large plans, above |
+| Unit tests (Phase 8) | Planned | | [UnitTestPlan.md](UnitTestPlan.md) |
 
 ## Outside this repository
 
