@@ -479,6 +479,28 @@
       ]
     },
     {
+      "name": "usBrPset_ACI_BarShape", "applies_to": "rebar", "attach": "type",
+      "properties": [
+        {"name": "StandardName", "type": "IfcLabel", "target": "rebar.shape_standard", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StandardName"},
+        {"name": "StandardVersion", "type": "IfcLabel", "target": "rebar.shape_standard_version", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/StandardVersion"},
+        {"name": "BendShapeName", "type": "IfcLabel", "target": "rebar.bend_shape", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/BendShapeName"},
+        {"name": "DefaultInsideBendRadius", "type": "IfcPositiveLengthMeasure", "target": "rebar.bend_radius", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DefaultInsideBendRadius"},
+        {"name": "DimensionA", "type": "IfcReal", "target": "rebar.dimension_a", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionA"},
+        {"name": "DimensionB", "type": "IfcReal", "target": "rebar.dimension_b", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionB"},
+        {"name": "DimensionC", "type": "IfcReal", "target": "rebar.dimension_c", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionC"},
+        {"name": "DimensionD", "type": "IfcReal", "target": "rebar.dimension_d", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionD"},
+        {"name": "DimensionE", "type": "IfcReal", "target": "rebar.dimension_e", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionE"},
+        {"name": "DimensionF", "type": "IfcReal", "target": "rebar.dimension_f", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionF"},
+        {"name": "DimensionG", "type": "IfcReal", "target": "rebar.dimension_g", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionG"},
+        {"name": "DimensionH", "type": "IfcReal", "target": "rebar.dimension_h", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionH"},
+        {"name": "DimensionJ", "type": "IfcReal", "target": "rebar.dimension_j", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionJ"},
+        {"name": "DimensionK", "type": "IfcReal", "target": "rebar.dimension_k", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionK"},
+        {"name": "DimensionR", "type": "IfcReal", "target": "rebar.dimension_r", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionR"},
+        {"name": "DimensionO", "type": "IfcReal", "target": "rebar.dimension_o", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionO"},
+        {"name": "DimensionV", "type": "IfcReal", "target": "rebar.dimension_v", "import": false, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/DimensionV"}
+      ]
+    },
+    {
       "name": "usBrPset_Common", "applies_to": "reinforcement_cage",
       "properties": [
         {"name": "Status", "type": "IfcLabel", "value": "NEW", "enumeration": {"name": "usBrPEnum_ElementStatus", "values": ["NEW", "EXISTING - REMAIN", "EXISTING - REMOVE", "TEMPORARY", "OTHER"]}, "uri": "https://identifier.buildingsmart.org/uri/usTransportation/usBridge/1/prop/Status"},

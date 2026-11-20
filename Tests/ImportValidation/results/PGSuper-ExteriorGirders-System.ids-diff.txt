@@ -1,0 +1,60 @@
+--- old
++++ new
+@@ -17,0 +18 @@
++spec "Girder design values - Span 1, Girder 1" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -32,0 +34 @@
++spec "Girder design values - Span 1, Girder 1" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -47,0 +50 @@
++spec "Girder design values - Span 1, Girder 2" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -62,0 +66 @@
++spec "Girder design values - Span 1, Girder 2" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -77,0 +82 @@
++spec "Girder design values - Span 1, Girder 3" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -92,0 +98 @@
++spec "Girder design values - Span 1, Girder 3" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -107,0 +114 @@
++spec "Girder design values - Span 1, Girder 4" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -122,0 +130 @@
++spec "Girder design values - Span 1, Girder 4" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -137,0 +146 @@
++spec "Girder design values - Span 2, Girder 1" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -152,0 +162 @@
++spec "Girder design values - Span 2, Girder 1" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -167,0 +178 @@
++spec "Girder design values - Span 2, Girder 2" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -182,0 +194 @@
++spec "Girder design values - Span 2, Girder 2" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -197,0 +210 @@
++spec "Girder design values - Span 2, Girder 3" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -212,0 +226 @@
++spec "Girder design values - Span 2, Girder 3" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -227,0 +242 @@
++spec "Girder design values - Span 2, Girder 4" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -242,0 +258 @@
++spec "Girder design values - Span 2, Girder 4" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -257,0 +274 @@
++spec "Girder design values - Span 2, Girder 5" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -272,0 +290 @@
++spec "Girder design values - Span 2, Girder 5" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -287,0 +306 @@
++spec "Girder design values - Span 3, Girder 1" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -302,0 +322 @@
++spec "Girder design values - Span 3, Girder 1" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -317,0 +338 @@
++spec "Girder design values - Span 3, Girder 2" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -332,0 +354 @@
++spec "Girder design values - Span 3, Girder 2" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -347,0 +370 @@
++spec "Girder design values - Span 3, Girder 3" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -362,0 +386 @@
++spec "Girder design values - Span 3, Girder 3" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -377,0 +402 @@
++spec "Girder design values - Span 3, Girder 4" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(usBrPset_Common)) baseName(simpleValue(Status)) value(simpleValue(NEW)))
+@@ -392,0 +418 @@
++spec "Girder design values - Span 3, Girder 4" | requirements property[cardinality="required" dataType="IFCTEXT"](propertySet(simpleValue(Pset_PrecastConcreteElementGeneral)) baseName(simpleValue(SupportDuringTransportDescription)) value(simpleValue(Assumed to be truck transported with bunking locations per MinimumAllowableSupportLength property)))
+@@ -398,0 +425 @@
++spec "Precast girder type - WF100G" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(Pset_ConcreteElementGeneral)) baseName(simpleValue(StrengthClass)) value(simpleValue(Override on entity instance)))
+@@ -404,0 +432 @@
++spec "Precast girder type - WF66G" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(Pset_ConcreteElementGeneral)) baseName(simpleValue(StrengthClass)) value(simpleValue(Override on entity instance)))
+@@ -410,0 +439 @@
++spec "Precast girder type - WF66G Exterior" | requirements property[cardinality="required" dataType="IFCLABEL"](propertySet(simpleValue(Pset_ConcreteElementGeneral)) baseName(simpleValue(StrengthClass)) value(simpleValue(Override on entity instance)))

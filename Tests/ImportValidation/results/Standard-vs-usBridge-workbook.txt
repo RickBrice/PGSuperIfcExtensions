@@ -1,6 +1,6 @@
 Standard mapping table compared with the usBridge workbook usBridge_Data_Dictionary_Workbook_Version_2.0.xlsx (categories: see check_standard.py)
 
-Counts: CLASS 3, REQUIRED 3, NO-VALUE 41, VALUE 14, TYPE 57, NAME 1, ENUM 20, PSET 22, RESTRICTED 26, OPTIONAL 36, EXTRA 28, NO-CLASS 2
+Counts: CLASS 3, REQUIRED 3, NO-VALUE 41, VALUE 14, TYPE 57, NAME 1, ENUM 20, PSET 21, RESTRICTED 26, OPTIONAL 36, EXTRA 28, NO-CLASS 2
 
 CLASS | girder_assembly (Girder) |  | the class Girder isn't in the workbook
 CLASS | project (BridgeProject) |  | the class BridgeProject isn't in the workbook
@@ -159,7 +159,6 @@ PSET | diaphragm (DiaphragmConcrete) | Pset_PrecastConcreteElementGeneral | not 
 PSET | foundation (Foundation) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | pier (Pier) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | rebar (ReinforcingBar) | Qto_ReinforcingElementBaseQuantities | not declared (2 properties, 0 required)
-PSET | rebar (ReinforcingBar) | usBrPset_ACI_BarShape | not declared (17 properties, 4 required)
 PSET | substructure (BridgeSubstructure) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | superstructure (BridgeSuperstructure) | usBrPset_PayItemQuantities | not declared (3 properties, 3 required)
 PSET | tendon (Tendon) | Qto_ReinforcingElementBaseQuantities | not declared (3 properties, 0 required)
