@@ -13,7 +13,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)..;$(IFCOPENSHELL_DIR)\src;$(BOOSTDIR);$(IFCOPENSHELL_DIR)\_deps-vs2026-$(Platform)-installed\rocksdb\include;$(IFCOPENSHELL_DIR)\_deps-vs2026-$(Platform)-installed\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(IFCOPENSHELL_DIR)\src;$(BOOSTDIR);$(IFCOPENSHELL_DIR)\_deps-vs2026-$(Platform)-installed\rocksdb\include;$(IFCOPENSHELL_DIR)\_deps-vs2026-$(Platform)-installed\Eigen;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>HAS_SCHEMA_4x3_add2;IFOPSH_SAFE_INSTANCE;IFOPSH_WITH_ROCKSDB;BOOST_ALL_NO_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <DisableSpecificWarnings>4250;%(DisableSpecificWarnings)</DisableSpecificWarnings>

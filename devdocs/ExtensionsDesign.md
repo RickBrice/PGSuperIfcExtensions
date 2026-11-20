@@ -23,11 +23,11 @@ Another plug-in reaches the builder through the broker: `IIfcModelBuilder`, regi
 - `IfcExtensionTypes.h`: the target types (`ElementKind`, `ValueKind`, `ExportContext`, `TargetDef`, ...), moved out of `IfcTargets.h`
 - `IfcExportOptions.h`: `CIfcExportOptions`, moved out of `IfcExporter.h`
 - `IfcModelBuilder.h`: `IIfcModelBuilder`, `IIfcExportExtension`, `IfcExport::IHooks`, `IServices`, `IRegistry`, `HookContext`, `ExportedElements`
-- `IfcExtensionSdk.props`: the IfcOpenShell settings both projects must share
+- `Include\IfcExtensionSdk.props` (beside the `IfcExport` headers, which it puts on the include path as `<IfcExport/...>`): the IfcOpenShell settings both projects must share
 
 ## Hooks
 
-In order: `OnExportBegin`, `OnDeck`, `OnBridgeParts`, `OnPier` (each), `OnBearing` (each), `OnBarrier` (each), `OnSegment` (each), `OnSuperstructureComplete`, `OnBridgeComplete`, `OnModelComplete`, `OnExportEnd`. The bridge hooks aren't called when the bridge isn't exported. `HookContext.elements` has the elements made so far. The pier diaphragms of the standard export (`ElementKind::Diaphragm`) exist by `OnSuperstructureComplete`.
+In order: `OnExportBegin`, `OnDeck`, `OnBridgeParts`, `OnPier` (each), `OnBearing` (each), `OnBarrier` (each), `OnSegment` (each), `OnSuperstructureComplete`, `OnBridgeComplete`, `OnModelComplete`, `OnExportEnd`. The bridge hooks aren't called when the bridge isn't exported. `HookContext.elements` has the elements made so far. The diaphragms of the standard export (`ElementKind::Diaphragm`: the pier diaphragms, and the intermediate diaphragms, one per bay with `DiaphragmType` "Intermediate", whose property sets have the context's `span`, `index`, `segment` (the bay's left girder), and `intermediate_diaphragm`) exist by `OnSuperstructureComplete`.
 
 An export with an extension can't be a round trip (`CIfcExportOptions::source_model`): `BuildModel` refuses it with a `CIfcExtensionException`.
 

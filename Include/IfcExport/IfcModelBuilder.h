@@ -43,7 +43,7 @@
 
    The extension shares C++ objects (e.g. the IfcOpenShell file) with the IFC
    extension, so both must be built with the same compiler, run time library,
-   and IfcOpenShell build. Import IfcExtensionSdk.props in both projects. The
+   and IfcOpenShell build. Import Include\IfcExtensionSdk.props in both projects. The
    IFC extension checks the API version and build fingerprint before it uses an
    extension.
 *****************************************************************************/
