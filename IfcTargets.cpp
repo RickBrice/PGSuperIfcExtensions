@@ -95,14 +95,22 @@ namespace
       return { perimeter, fabs(area) / 2 };
    }
 
-   // the exterior barrier of the railing system on one side of the bridge, or nullptr
-   const TrafficBarrierEntry* exterior_barrier(const ExportContext& c)
+   // the railing system on the barrier's side of the bridge
+   const CRailingSystem* railing_system(const ExportContext& c)
    {
       GET_IFACE2(c.broker, IBridgeDescription, pIBridgeDesc);
       const auto* pBridgeDesc = pIBridgeDesc->GetBridgeDescription();
-      const auto* pRailing = (c.barrier_side == pgsTypes::tboLeft ? pBridgeDesc->GetLeftRailingSystem() : pBridgeDesc->GetRightRailingSystem());
-      return pRailing->GetExteriorRailing();
+      return (c.barrier_side == pgsTypes::tboLeft ? pBridgeDesc->GetLeftRailingSystem() : pBridgeDesc->GetRightRailingSystem());
    }
+
+   // the exterior barrier of the railing system on one side of the bridge, or nullptr
+   const TrafficBarrierEntry* exterior_barrier(const ExportContext& c)
+   {
+      return railing_system(c)->GetExteriorRailing();
+   }
+
+   // the barrier's concrete is its railing system's, not the deck's
+   Float64 barrier_fc(const ExportContext& c) { GET_IFACE2(c.broker, IMaterials, pMaterials); return pMaterials->GetRailingSystemFc28(c.barrier_side); }
 
    // the released segment mid-span point of interest, where cambers are reported
    pgsPointOfInterest released_midspan(std::shared_ptr<WBFL::EAF::Broker> pBroker, const CSegmentKey& segmentKey)
@@ -340,9 +348,9 @@ const std::vector<TargetDef>& GetTargetDefs()
       // Barriers (PGSuper assumes they are the same concrete as the deck)
       //
       { .name = "barrier.fc", .element = ElementKind::Barrier, .kind = ValueKind::Stress, .description = "barrier concrete strength, f'c", .display_unit = DU::Stress,
-        .get = [](const ExportContext& c) { return ExportValue(deck_fc(c)); } },
+        .get = [](const ExportContext& c) { return ExportValue(barrier_fc(c)); } },
       { .name = "barrier.strength_class", .element = ElementKind::Barrier, .kind = ValueKind::Text, .description = "barrier concrete strength class",
-        .get = [](const ExportContext& c) { return ExportValue(strength_class(c.broker, deck_fc(c))); } },
+        .get = [](const ExportContext& c) { return ExportValue(strength_class(c.broker, barrier_fc(c))); } },
       { .name = "barrier.type", .element = ElementKind::Barrier, .kind = ValueKind::Text, .description = "exterior barrier (traffic barrier library entry)",
         .get = [](const ExportContext& c)
          {
@@ -377,7 +385,7 @@ const std::vector<TargetDef>& GetTargetDefs()
             return ExportValue(ymax);
          } },
       { .name = "barrier.max_aggregate_size", .element = ElementKind::Barrier, .kind = ValueKind::Length, .description = "barrier concrete maximum aggregate size", .display_unit = DU::Deflection,
-        .get = [](const ExportContext& c) { return ExportValue(deck_max_aggregate_size(c)); } },
+        .get = [](const ExportContext& c) { return ExportValue(railing_system(c)->Concrete.MaxAggregateSize); } },
 
       //
       // Strands (IfcTendon) and their material

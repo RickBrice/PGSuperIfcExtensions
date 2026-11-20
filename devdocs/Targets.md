@@ -118,9 +118,9 @@ PGSuper assumes the barriers are the same concrete as the deck.
 |---|---|---|---|
 | `barrier.type` | Text | `TrafficBarrierEntry::GetName()` of `CRailingSystem::GetExteriorRailing()` (left or right railing system of `CBridgeDescription2`) | `import_traffic_barriers` (`TrafficBarriers.cpp`): a clue. The named entry is used if its section matches the barrier's geometry, and it names a new `TrafficBarrierEntry` when none matches. The entry is set with `CRailingSystem::SetExteriorRailing` |
 | `barrier.height` | Length | highest point of `TrafficBarrierEntry::GetBarrierPoints` (above the top of the deck) | – |
-| `barrier.fc` | Stress | `IMaterials::GetDeckFc28` | – |
+| `barrier.fc` | Stress | `IMaterials::GetRailingSystemFc28` of the barrier's side (each railing system has its own concrete, `CRailingSystem::Concrete`; each barrier's material is made from it) | – |
 | `barrier.strength_class` | Text | the same, formatted | – |
-| `barrier.max_aggregate_size` | Length | `IMaterials::GetDeckMaxAggrSize` | – |
+| `barrier.max_aggregate_size` | Length | `CRailingSystem::Concrete.MaxAggregateSize` of the barrier's side | – |
 
 ### Strands (`IfcTendon`) and their material
 

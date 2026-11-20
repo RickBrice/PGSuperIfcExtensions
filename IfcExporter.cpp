@@ -3792,12 +3792,21 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
    barriers.push_back(left_barrier);
    barriers.push_back(right_barrier);
 
-   // PGSuper assumes barriers are same material as deck
-   GET_IFACE2(pBroker, IMaterials, pMaterials);
-   auto fc = pMaterials->GetDeckFc28();
-   auto max_agg_size = pMaterials->GetDeckMaxAggrSize();
    ExportContext context{ pBroker, &options };
-   auto material = GetConcreteMaterial<Schema>(file, pBroker, options, fc, max_agg_size, ElementKind::Barrier, context);
+
+   // each barrier is made of its railing system's concrete. GetConcreteMaterial gives barriers (and a deck) with the same
+   // concrete the same material
+   GET_IFACE2(pBroker, IMaterials, pMaterials);
+   for (auto [barrier, side] : { std::make_pair(left_barrier, pgsTypes::tboLeft), std::make_pair(right_barrier, pgsTypes::tboRight) })
+   {
+      const auto* pBridgeDesc = pIBridgeDescription->GetBridgeDescription();
+      const auto* pRailing = (side == pgsTypes::tboLeft ? pBridgeDesc->GetLeftRailingSystem() : pBridgeDesc->GetRightRailingSystem());
+      ExportContext barrier_context(context);
+      barrier_context.barrier_side = side;
+      auto material = GetConcreteMaterial<Schema>(file, pBroker, options, pMaterials->GetRailingSystemFc28(side), pRailing->Concrete.MaxAggregateSize, ElementKind::Barrier, barrier_context);
+      std::vector<typename Schema::IfcDefinitionSelect> barrier_list{ barrier };
+      file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, barrier_list, material);
+   }
 
    if (options.classify)
    {
@@ -3812,16 +3821,6 @@ void CreateBridge(hierarchy_helper<Schema>& file, std::shared_ptr<WBFL::EAF::Bro
          WritePropertySets<Schema>(file, ElementKind::Barrier, barrier, barrier_context);
       }
    }
-
-
-   // need a list of entities that are associated with this material
-   // right now we are creating a unique material for the deck slab
-   std::vector<typename Schema::IfcDefinitionSelect> barrier_list;
-   barrier_list.push_back(left_barrier);
-   barrier_list.push_back(right_barrier);
-
-   // associate the material with the slab
-   auto rel_associates_materials = file.create<typename Schema::IfcRelAssociatesMaterial>().initialize(ifcopenshell::global_id(), {}, std::nullopt, std::nullopt, barrier_list, material);
 
    ReportProgress(pBroker, _T("Exporting the pier diaphragms"));
    auto diaphragms = CreatePierDiaphragms<Schema>(file, pBroker, options, superstructure, body_model_representation_subcontext);
