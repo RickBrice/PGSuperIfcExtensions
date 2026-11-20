@@ -37,7 +37,7 @@
 // declared in the mapping table (devdocs/MappingTablesDesign.md).
 
 template <typename Schema>
-void addBarDimension(std::string name,std::string uri,double dim,typename Schema::IfcConversionBasedUnit unit, hierarchy_helper<Schema>& file, std::vector<typename Schema::IfcProperty>& list_of_properties)
+void addBarDimension(std::string name,std::string uri,double dim,typename Schema::IfcNamedUnit unit, hierarchy_helper<Schema>& file, std::vector<typename Schema::IfcProperty>& list_of_properties)
 {
    // ACI 131 says to use IfcLengthMeasure for distances and IfcPlaneAngleMeasure for angles. IfcReal is for nondimensional real values
    // but usBridge has distances as IfcReal.
@@ -59,7 +59,7 @@ typename Schema::IfcPropertySet Create_usBrPset_ACI_BarShape(hierarchy_helper<Sc
 
    GET_IFACE2_NOCHECK(pBroker, IEAFDisplayUnits, pDisplayUnits);
 
-   typename Schema::IfcConversionBasedUnit dimension_unit;
+   typename Schema::IfcNamedUnit dimension_unit;
    if (options.display_units_for_properties && pDisplayUnits->GetUnitMode() == WBFL::EAF::UnitMode::US)
    {
       dimension_unit = GetComponentDimUnit<Schema>(file, pBroker);
