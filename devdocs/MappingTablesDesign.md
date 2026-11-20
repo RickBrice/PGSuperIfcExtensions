@@ -278,7 +278,7 @@ The values in `map` (e.g. every value `3_Fixity` actually takes) are taken from 
 
 - **Unknown keys are errors.** A misspelled key (e.g. `"unti"`) would otherwise be ignored without notice. Any object may have a `"comment"`.
 - **Element roles:**
-  - A selector has `entity` (subtypes included), and optionally `predefined_type` (from the type object if there is one), `attributes` (`{ "ObjectType": "Haunch" }`, exact, ignoring case), and `classification` (a reference identification).
+  - A selector has `entity` (subtypes included), and optionally `predefined_type` (from the type object if there is one; as in IDS, a USERDEFINED element's user-defined type matches too: its type object's `ElementType`, else its `ObjectType`, e.g. `"TENDON_BUNDLE"`), `attributes` (`{ "ObjectType": "Haunch" }`, exact, ignoring case), and `classification` (a reference identification).
   - `any_of` lists alternative selectors.
   - The loader checks entity and attribute names against the IFC schema.
   - Roles the importer uses in M1: `girder` (together with superstructure containment, G1), `deck`, `haunch`, `bearing`.

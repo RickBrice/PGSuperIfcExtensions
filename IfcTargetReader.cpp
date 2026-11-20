@@ -540,6 +540,32 @@ namespace
 
       return "";
    }
+
+   // the user-defined type of a USERDEFINED element: its type object's ElementType if it has a type object (the occurrence
+   // then doesn't give its own, IfcObject.PredefinedType), else its ObjectType
+   std::string user_defined_type(IfcSchema::IfcObject object)
+   {
+      RawValue raw;
+      for (auto& rel : object.IsTypedBy())
+      {
+         auto type = rel.RelatingType().as<express::entity>();
+         if (attribute_value(type, "PredefinedType", raw) && upper(raw.Text()) == "USERDEFINED")
+            return attribute_value(type, "ElementType", raw) ? upper(raw.Text()) : std::string();
+      }
+
+      if (attribute_value(object.as<express::entity>(), "ObjectType", raw))
+         return upper(raw.Text());
+
+      return "";
+   }
+
+   // A selector's predefined type is the element's (from its type object if it has one) or, as in IDS, the user-defined
+   // type of a USERDEFINED element (e.g. "TENDON_BUNDLE")
+   bool matches_predefined_type(IfcSchema::IfcObject object, const std::string& selector_type)
+   {
+      auto type = predefined_type(object);
+      return type == selector_type || (type == "USERDEFINED" && !selector_type.empty() && user_defined_type(object) == selector_type);
+   }
 }
 
 std::string DescribeElement(IfcSchema::IfcRoot object)
@@ -689,7 +715,7 @@ bool CIfcTargetReader::Matches(const ElementSelector& selector, IfcSchema::IfcOb
    if (!object.declaration().is(selector.entity))
       return false;
 
-   if (!selector.predefined_type.empty() && predefined_type(object) != selector.predefined_type)
+   if (!selector.predefined_type.empty() && !matches_predefined_type(object, selector.predefined_type))
       return false;
 
    for (const auto& [name, value] : selector.attributes)
@@ -734,8 +760,13 @@ std::string CIfcTargetReader::WhyNotMatched(const ElementSelector& selector, Ifc
    if (!selector.predefined_type.empty())
    {
       auto type = predefined_type(object);
-      if (type != selector.predefined_type)
-         return type.empty() ? std::string("it has no PredefinedType") : "its PredefinedType is " + type;
+      if (!matches_predefined_type(object, selector.predefined_type))
+      {
+         if (type.empty())
+            return "it has no PredefinedType";
+         auto user_type = (type == "USERDEFINED" ? user_defined_type(object) : std::string());
+         return "its PredefinedType is " + type + (user_type.empty() ? std::string() : " (" + user_type + ")");
+      }
    }
 
    for (const auto& [name, value] : selector.attributes)

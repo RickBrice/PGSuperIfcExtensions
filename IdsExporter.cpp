@@ -570,7 +570,7 @@ namespace
 
    IDS::specificationType BuildGlobalTendonBundleSpec(const CTableLocations& table)
    {
-      IDS::applicabilityType applicability = MakeApplicability("IFCELEMENTASSEMBLY", "USERDEFINED", "1");
+      IDS::applicabilityType applicability = MakeApplicability("IFCELEMENTASSEMBLY", "TENDON_BUNDLE", "1"); // the user-defined type of the bundles' type object (not every USERDEFINED assembly, e.g. an export extension's)
 
       IDS::requirements requirements;
       AddClassifications(requirements, table, ElementKind::TendonBundle);

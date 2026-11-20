@@ -18,7 +18,7 @@
     "girder_assembly": {"entity": "IfcElementAssembly", "predefined_type": "GIRDER"},
     "closure_joint": {"entity": "IfcBeam", "attributes": {"ObjectType": "CLOSUREJOINT"}},
     "tendon": {"entity": "IfcTendon", "predefined_type": "STRAND"},
-    "tendon_bundle": {"entity": "IfcElementAssembly", "predefined_type": "USERDEFINED"},
+    "tendon_bundle": {"entity": "IfcElementAssembly", "predefined_type": "TENDON_BUNDLE"},
     "rebar": {"entity": "IfcReinforcingBar"},
     "reinforcement_cage": {"entity": "IfcElementAssembly", "predefined_type": "REINFORCEMENT_UNIT"},
     "deck": {"entity": "IfcSlab", "predefined_type": "FLOOR"},
