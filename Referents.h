@@ -140,7 +140,8 @@ typename Schema::IfcReferent CreatePositioningReferent(hierarchy_helper<Schema>&
 //}
 
 // Assigns Pset_LinearReferencingMethod to the alignment, declaring that stationing (LRMName "station-point")
-// is measured in feet as an absolute distance along the alignment (LRMType PEnum_LRMType.LRM_ABSOLUTE).
+// is measured in metres, the project length unit the stations are written in, as an absolute distance along the alignment
+// (LRMType PEnum_LRMType.LRM_ABSOLUTE). LRMUnit is a label (ISO 19148's unit name).
 template <typename Schema>
 void DefineLinearReferencingMethod(hierarchy_helper<Schema>& file)
 {
@@ -155,7 +156,7 @@ void DefineLinearReferencingMethod(hierarchy_helper<Schema>& file)
    auto lrm_type = createPropertyEnumeratedValue<Schema>(file, "LRMType", property_enum_values, "LRM_ABSOLUTE"); // creates an IfcPropertyEnumeratedValue
    list_of_properties.push_back(lrm_type);
 
-   list_of_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("LRMUnit"), std::nullopt, file.create<typename Schema::IfcLabel>().initialize(std::string("foot")), {}));
+   list_of_properties.push_back(file.create<typename Schema::IfcPropertySingleValue>().initialize(std::string("LRMUnit"), std::nullopt, file.create<typename Schema::IfcLabel>().initialize(std::string("metre")), {}));
 
    auto property_set = file.create<typename Schema::IfcPropertySet>().initialize(ifcopenshell::global_id(), {}, std::string("Pset_LinearReferencingMethod"), std::nullopt, list_of_properties);
 
