@@ -23,7 +23,7 @@ Another plug-in reaches the builder through the broker: `IIfcModelBuilder`, regi
 - `IfcExtensionTypes.h`: the target types (`ElementKind`, `ValueKind`, `ExportContext`, `TargetDef`, ...), moved out of `IfcTargets.h`
 - `IfcExportOptions.h`: `CIfcExportOptions`, moved out of `IfcExporter.h`
 - `IfcModelBuilder.h`: `IIfcModelBuilder`, `IIfcExportExtension`, `IfcExport::IHooks`, `IServices`, `IRegistry`, `HookContext`, `ExportedElements`
-- `Include\IfcExtensionSdk.props` (beside the `IfcExport` headers, which it puts on the include path as `<IfcExport/...>`): the IfcOpenShell settings both projects must share
+- `IfcExtensionSdk.props` (at the repository root, where `PGSuper.props` and `WBFL.props` are in theirs; it puts `Include` on the include path, so the headers are `<IfcExport/...>`): the IfcOpenShell settings both projects must share
 
 ## Hooks
 

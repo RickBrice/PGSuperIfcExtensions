@@ -43,7 +43,7 @@
     <Import Project="$(ARPDIR)\WBFL\WBFL.props" />
     <Import Project="$(ARPDIR)\PGSuper\PGSuper.props" />
     <Import Project="$(ARPDIR)\WBFL\XSD.props" />
-    <Import Project="Include\IfcExtensionSdk.props" />
+    <Import Project="IfcExtensionSdk.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -52,7 +52,7 @@
     <Import Project="$(ARPDIR)\WBFL\WBFL.props" />
     <Import Project="$(ARPDIR)\PGSuper\PGSuper.props" />
     <Import Project="$(ARPDIR)\WBFL\XSD.props" />
-    <Import Project="Include\IfcExtensionSdk.props" />
+    <Import Project="IfcExtensionSdk.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
@@ -341,7 +341,7 @@ for %%f in (plugin parse geometry) do if exist "$(OutDir)ifcopenshell.%%f_d.dll"
   </ItemGroup>
   <ItemGroup>
     <None Include="IfcExtensions.def" />
-    <None Include="Include\IfcExtensionSdk.props" />
+    <None Include="IfcExtensionSdk.props" />
     <None Include="IfcExtensions.Manifest.PGSuper" />
     <None Include="IfcExtensions.Manifest.BridgeLink" />
   </ItemGroup>
