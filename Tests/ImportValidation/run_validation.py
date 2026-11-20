@@ -11,7 +11,9 @@ For a model with a "pgs" file (round trip):
    with those of the first export. The template's girders have no strands, so a strand count of 0 is reported
    as the template default.
    With "check_added_reinforcement", the System units run also checks the strands and bars a round trip adds to a model
-   that has none (see check_roundtrip.py).
+   that has none (see check_roundtrip.py). "display_units" ("SI" or "US") runs a copy of the project with those display
+   units (results/models/<name>.pgs, not tracked). Each export is checked with its own design-value IDS, and its property units are
+   checked to be ones IDS checkers read right (check_units).
 For a model with an "ifc" file (.ifc, or .zip containing one .ifc):
    import the IFC into a new project and compare to expected/<name>.json if it exists,
    otherwise report which values the import set (inventory). Then the project is exported as a copy of the model
@@ -66,6 +68,8 @@ import winreg
 import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
+
+import ifcopenshell
 
 import compare_bridge
 import compare_export
@@ -238,6 +242,57 @@ def check_schema(run, ifc):
     return f", SCHEMA: {len(logger.statements)} errors (see {report.name})"
 
 
+def unit_scale(unit):
+    """the factor of an IfcSIUnit or IfcConversionBasedUnit to its SI base unit (kg for mass), or None"""
+    import ifcopenshell.util.unit
+    if unit.is_a("IfcSIUnit"):
+        scale = ifcopenshell.util.unit.get_prefix_multiplier(unit.Prefix) if unit.Prefix else 1.0
+        if unit.Name == "SQUARE_METRE":
+            scale **= 2
+        elif unit.Name == "CUBIC_METRE":
+            scale **= 3
+        return scale * (0.001 if unit.Name == "GRAM" else 1.0)
+    if unit.is_a("IfcConversionBasedUnit"):
+        base = unit_scale(unit.ConversionFactor.UnitComponent)
+        return None if base is None else unit.ConversionFactor.ValueComponent.wrappedValue * base
+    return None
+
+
+def check_units(run, ifc):
+    """Checks that each conversion-based unit of a property or quantity has a name IDS checkers know, with its factor.
+    Checkers (ifctester) convert a value by its unit's name (ifcopenshell.util.unit.si_conversions), not by its
+    factor, so a name that disagrees with the factor (e.g. "ksi" with an MPa factor) misreads every value. Problems
+    go to results/<run>.units.txt. Returns a message"""
+    import ifcopenshell.util.unit
+    model = ifcopenshell.open(str(ifc))
+    used = {}
+    for entity in model.by_type("IfcPropertySingleValue") + model.by_type("IfcPropertyListValue") + model.by_type("IfcPhysicalSimpleQuantity"):
+        if entity.Unit and entity.Unit.is_a("IfcConversionBasedUnit"):
+            used[entity.Unit.id()] = entity.Unit
+    problems = []
+    for unit in used.values():
+        known = ifcopenshell.util.unit.si_conversions.get(unit.Name.lower())
+        factor = unit_scale(unit)
+        if known is None:
+            problems.append(f"#{unit.id()} {unit.UnitType} '{unit.Name}': a name checkers don't know, so they can't convert its values")
+        elif factor is None or abs(factor - known) > 0.005 * known: # ifcopenshell's factors are rounded (e.g. a pound is 0.454 kg)
+            problems.append(f"#{unit.id()} {unit.UnitType} '{unit.Name}': factor {factor} (SI), but checkers use {known}")
+    report = RESULTS / f"{run}.units.txt"
+    if not problems:
+        report.unlink(missing_ok=True)
+        return ", units valid" if used else ""
+    report.write_text("\n".join([f"{run}: {len(problems)} property units checkers misread", ""] + problems) + "\n", encoding="utf-8")
+    return f", UNITS: {len(problems)} misread (see {report.name})"
+
+
+def check_design_ids(run, ifc, ids):
+    """checks the export with its own design-value IDS (the values PGSuper's export wrote, as a checker reads them)"""
+    if not ids.exists():
+        return ""
+    failed, total = check_roundtrip.ids_failures(ifcopenshell.open(str(ifc)), ids)
+    return f", design-value IDS: {failed} failures in {total} specifications"
+
+
 def check_ids(run, ids, update_baseline):
     """compares the design-value IDS with its baseline, or saves it as the baseline. Returns a message for the summary"""
     if not ids.exists():
@@ -315,10 +370,23 @@ def compare_strands(exe, run, pgs, units, expected_strands, config, tolerances):
     return compare_bridge.compare(reinforcement(reexport), expected_strands, template, tolerances), ""
 
 
+def with_display_units(pgs, units, copy):
+    """a copy of a PGSuper project with other display units ("SI" or "US"; ProjectSettings/Units, EAF's UnitMode)"""
+    mode = {"SI": b"1", "US": b"2"}[units]
+    data = pgs.read_bytes()
+    old = b'<ProjectSettings version="1"><Units>'
+    start = data.index(old) + len(old)
+    copy.parent.mkdir(parents=True, exist_ok=True)
+    copy.write_bytes(data[:start] + mode + data[data.index(b"</Units>", start):])
+    return copy
+
+
 def round_trip(model, config, exe):
     """export -> import -> compare for a PGSuper project. Returns summary rows."""
     rows = []
     source = config["base"] / model["pgs"]
+    if model.get("display_units"):
+        source = with_display_units(source, model["display_units"], RESULTS / "models" / f"{model['name']}.pgs")
     expected = compare_bridge.load(str(source))
     stations = expected["meta"]["stations"]
     template = compare_bridge.load(str(config["template"]), stations)
@@ -335,7 +403,8 @@ def round_trip(model, config, exe):
             rows.append((run, f"export failed: {message}", None))
             continue
         expected_strands = reinforcement(ifc)  # before anything is removed from the export
-        export_message = check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"]) + check_schema(run, ifc)
+        export_message = (check_export(run, ifc, config["update_export_baseline"]) + check_ids(run, ids, config["update_export_baseline"])
+                          + check_schema(run, ifc) + check_units(run, ifc) + check_design_ids(run, ifc, ids))
         for standard in config["standards"]:
             export_message += check_standard.ids_message(standard, ifc, run)
         if model.get("remove_from_export"):

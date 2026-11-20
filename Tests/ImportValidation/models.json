@@ -8,6 +8,13 @@
       "check_added_reinforcement": true
     },
     {
+      "name": "PGSuper-SI",
+      "comment": "The PGSuper model with SI display units (made by the run: display_units), exported with its properties in display units. The units are SI units (MPa, mm, ...), which IDS checkers must read right (check_units, and the export's design-value IDS)",
+      "pgs": "models/PGSuper_Import_Model.pgs",
+      "display_units": "SI",
+      "property_units": [ "Display" ]
+    },
+    {
       "name": "PGSuper-WSDOT",
       "comment": "The WF66G and WF100G girders are in the WSDOT library: they match their library entries and fill their strand grids. Without it (the run's configuration) the import makes new entries",
       "pgs": "models/PGSuper_Import_Model.pgs",
