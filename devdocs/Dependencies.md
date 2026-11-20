@@ -33,3 +33,7 @@ git config --global --add safe.directory %IFCOPENSHELL_DIR%
 ~~~
 
 and the same for each directory git names (under `_deps` and `src`), or trust every directory with `git config --global --add safe.directory *`.
+
+## Deployment
+
+The BridgeLink installer installs the extension as the optional "Experimental Features" of PGSuper (`%ARPDIR%\BridgeLink\Installer\ExperimentalExtensions.wxs`). `UpdateBinFiles.bat` stages the files in `bin\Extensions\Experimental\x64` and BridgeLink's `BuildRelease.bat` copies them to the release tree (`devdocs\Release Procedures.md` in BridgeLink). Everything goes in the BridgeLink folder: the DLL, both manifests (they register the COM components, there are no registry entries), the import templates, the IfcOpenShell DLLs (OpenCASCADE is linked statically), PROJ and the vcpkg DLLs it needs (`sqlite3`, `tiff`, `libcurl`, `z`, `jpeg62`, `liblzma`), the PROJ data in `proj\` (`proj.db` is the EPSG database), and `MappingTables\Standard.ifcmap`. No Python is needed at run time. When a run-time dependency changes, change the batch file and the `.wxs` file together; the batch file reports files it couldn't stage.
