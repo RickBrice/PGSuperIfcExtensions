@@ -1,12 +1,10 @@
 REM Builds the IFC Mapping Table Editor documentation and copies it to BridgeLink.
-REM Usage: BuildDocumentation.bat <version>, e.g. BuildDocumentation.bat 9.0
-REM The version is the major.minor version of the IFC extension (PGSuperIfcExtensions.dll).
+REM Usage: BuildDocumentation.bat
+REM The documentation version (x.y) comes from WBFL_VERSION_STRING in WBFL\Include\WBFLVersion.h, like PGSuperIfcExtensions.dll's.
 REM Requires Doxygen, Python 3, and a Release build of MakeDocMap.
 
-if "%1"=="" (
-   echo Usage: BuildDocumentation.bat ^<version^>, e.g. BuildDocumentation.bat 9.0
-   exit /B 1
-)
+call %ARPDIR%\BridgeLink\GetVersion.bat
+if errorlevel 1 exit /B 1
 
 set SET_NAME=IfcMappingTableEditor
 cd %ARPDIR%\PGSuperIfcExtensions\Documentation\MappingTableEditor
@@ -33,7 +31,7 @@ rem ** the documentation map file (help topic ID = page)
 %ARPDIR%\BridgeLink\RegFreeCOM\x64\Release\MakeDocMap %SET_NAME%
 
 rem ** copy to BridgeLink, where BridgeLink looks for local documentation
-rmdir /S /Q %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%1\
-mkdir %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%1\
-xcopy /s /y /d doc\html\* %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%1\
-copy %SET_NAME%.dm %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%1\
+rmdir /S /Q %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%ARP_DOCUMENTATION_VERSION%\
+mkdir %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%ARP_DOCUMENTATION_VERSION%\
+xcopy /s /y /d doc\html\* %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%ARP_DOCUMENTATION_VERSION%\
+copy %SET_NAME%.dm %ARPDIR%\BridgeLink\Docs\%SET_NAME%\%ARP_DOCUMENTATION_VERSION%\

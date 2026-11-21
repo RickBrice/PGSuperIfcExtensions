@@ -39,49 +39,14 @@ END
 3 TEXTINCLUDE 
 BEGIN
     "\r\n"
+    "#include ""res\\IfcExtensions.rc2""  // version resource; uses the version number in WBFLVersion.h\r\n"
     "\0"
 END
 
 #endif    // APSTUDIO_INVOKED
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 9,0,3,1
- PRODUCTVERSION 9,0,3,1
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x4L
- FILETYPE 0x2L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904b0"
-        BEGIN
-            VALUE "FileDescription", "PGSuperIfcExtensions Module"
-            VALUE "FileVersion", "9.0.3.1"
-            VALUE "InternalName", "PGSuperIfcExtensions"
-            VALUE "LegalCopyright", "Copyright © 1999-2026, Washington State Department of Transportation, All Rights Reserved"
-            VALUE "OriginalFilename", "PGSuperIfcExtensions.DLL"
-            VALUE "ProductName", "PGSuperIfcExtensions Module"
-            VALUE "ProductVersion", "9.0.3.1"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
-END
-
+// The version resource is in res\IfcExtensions.rc2 (version resource; uses the version number in WBFLVersion.h)
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -131,6 +96,7 @@ END
 //
 
 IDB_BSI                 BITMAP                  "IfcExtensions.bmp"
+
 IDB_BSI_15              BITMAP                  "IfcExtensions15.bmp"
 
 
@@ -250,7 +216,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_CAPTION | WS_SYSMENU
 CAPTION "IFC Extension"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_MAPPING_LOGO,"Static",SS_ICON | SS_CENTERIMAGE,7,7,28,26
+    ICON            "",IDC_MAPPING_LOGO,7,7,28,26,SS_CENTERIMAGE
     LTEXT           "The mapping table says where IFC imports and exports read and write each value. The configured table applies to PGSuper and PGSplice. An IFC import or export can choose another table, and /IfcMapping=<file> on the command line overrides it.",IDC_STATIC,41,7,297,26
     CONTROL         "Standard table (installed with the IFC extension)",IDC_MAPPING_STANDARD,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,38,331,10
@@ -310,13 +276,15 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "",IDC_SELECTOR_HEADER,7,7,346,20
-    CONTROL         "Use the base table's selector",IDC_SELECTOR_INHERITED,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,32,346,10
-    CONTROL         "Define the selector in this table",IDC_SELECTOR_DEFINED,"Button",BS_AUTORADIOBUTTON,7,46,346,10
+    CONTROL         "Use the base table's selector",IDC_SELECTOR_INHERITED,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,32,346,10
+    CONTROL         "Define the selector in this table",IDC_SELECTOR_DEFINED,
+                    "Button",BS_AUTORADIOBUTTON,7,46,346,10
     LTEXT           "Entity:",IDC_STATIC,19,64,70,8
     EDITTEXT        IDC_SELECTOR_ENTITY,92,62,150,14,ES_AUTOHSCROLL | WS_GROUP
     LTEXT           "Subtypes included, e.g. IfcSlab",IDC_STATIC,248,64,105,8
     LTEXT           "Predefined type:",IDC_STATIC,19,82,70,8
-    EDITTEXT        IDC_SELECTOR_PREDEFINED,92,80,150,14,ES_AUTOHSCROLL | ES_UPPERCASE
+    EDITTEXT        IDC_SELECTOR_PREDEFINED,92,80,150,14,ES_UPPERCASE | ES_AUTOHSCROLL
     LTEXT           "Empty: any",IDC_STATIC,248,82,105,8
     LTEXT           "Classification:",IDC_STATIC,19,100,70,8
     EDITTEXT        IDC_SELECTOR_CLASSIFICATION,92,98,150,14,ES_AUTOHSCROLL
@@ -333,13 +301,14 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "",IDC_TARGET_HEADER,7,7,346,28
     LTEXT           "Locations in this table, in the order they're tried:",IDC_STATIC,7,40,290,8
-    CONTROL         "",IDC_LOCATIONS,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,51,290,90
+    CONTROL         "",IDC_LOCATIONS,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,51,290,90
     PUSHBUTTON      "Add...",IDC_LOCATION_ADD,303,51,50,14
     PUSHBUTTON      "Edit...",IDC_LOCATION_EDIT,303,68,50,14
     PUSHBUTTON      "Remove",IDC_LOCATION_REMOVE,303,85,50,14
     PUSHBUTTON      "Move Up",IDC_LOCATION_UP,303,106,50,14
     PUSHBUTTON      "Move Down",IDC_LOCATION_DOWN,303,123,50,14
-    CONTROL         "Replace the base table's locations (otherwise they're tried after these)",IDC_REPLACE_BASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,146,346,10
+    CONTROL         "Replace the base table's locations (otherwise they're tried after these)",IDC_REPLACE_BASE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,146,346,10
     LTEXT           "Base table locations:",IDC_STATIC,7,162,290,8
     CONTROL         "",IDC_BASE_LOCATIONS,"SysListView32",LVS_REPORT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,173,346,80
 END
@@ -386,7 +355,7 @@ BEGIN
     EDITTEXT        IDC_LOC_LIST_INDEX,92,180,40,14,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Empty: the whole value",IDC_STATIC,138,182,120,8
     LTEXT           "Value types:",IDC_STATIC,14,200,75,8
-    EDITTEXT        IDC_LOC_VALUE_TYPES,92,198,224,14,ES_AUTOHSCROLL | ES_UPPERCASE
+    EDITTEXT        IDC_LOC_VALUE_TYPES,92,198,224,14,ES_UPPERCASE | ES_AUTOHSCROLL
     LTEXT           "Map:",IDC_STATIC,14,218,75,8
     EDITTEXT        IDC_LOC_MAP,92,216,224,38,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
     LTEXT           "One per line: model value = target value",IDC_STATIC,92,256,224,8
@@ -407,7 +376,7 @@ BEGIN
     LTEXT           "Element:",IDC_STATIC,7,50,60,8
     COMBOBOX        IDC_MODEL_ELEMENT,70,48,283,200,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Properties of the element (double-click one to add it as a location of the target):",IDC_STATIC,7,68,346,8
-    CONTROL         "",IDC_MODEL_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | WS_BORDER | WS_TABSTOP,7,79,346,120
+    CONTROL         "",IDC_MODEL_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | WS_BORDER | WS_TABSTOP,7,79,346,120
     LTEXT           "Target:",IDC_STATIC,7,207,60,8
     COMBOBOX        IDC_MODEL_TARGET,70,205,180,200,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Add as Location...",IDC_MODEL_ADD,256,205,97,14
@@ -427,7 +396,8 @@ BEGIN
     EDITTEXT        IDC_FROMIDS_BINDING,70,50,230,14,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_FROMIDS_BINDING_BROWSE,303,50,20,14
     LTEXT           "Optional. It assigns element roles and targets the IDS doesn't give (see devdocs/MappingTablesDesign.md, M5).",IDC_STATIC,70,66,253,18
-    CONTROL         "Extend the standard table (the table has only what differs from it)",IDC_FROMIDS_EXTEND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,92,316,10
+    CONTROL         "Extend the standard table (the table has only what differs from it)",IDC_FROMIDS_EXTEND,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,92,316,10
     DEFPUSHBUTTON   "Generate",IDOK,219,129,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,273,129,50,14
 END
@@ -456,7 +426,7 @@ BEGIN
     LTEXT           "Name:",IDC_STATIC,7,9,60,8
     EDITTEXT        IDC_SET_NAME,70,7,283,14,ES_AUTOHSCROLL
     LTEXT           "Applies to:",IDC_STATIC,7,27,60,8
-    LISTBOX         IDC_SET_ROLES,70,25,120,62,LBS_MULTIPLESEL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+    LISTBOX         IDC_SET_ROLES,70,25,120,62,LBS_MULTIPLESEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Attach to:",IDC_SET_ATTACH_LABEL,200,27,50,8
     COMBOBOX        IDC_SET_ATTACH,252,25,101,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     EDITTEXT        IDC_SET_METHOD,252,25,101,14,ES_AUTOHSCROLL
@@ -468,7 +438,7 @@ BEGIN
     LTEXT           "Comment:",IDC_STATIC,7,95,60,8
     EDITTEXT        IDC_SET_COMMENT,70,93,283,14,ES_AUTOHSCROLL
     LTEXT           "Properties:",IDC_SET_ITEMS_LABEL,7,113,100,8
-    CONTROL         "",IDC_SET_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SINGLESEL | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,124,290,110
+    CONTROL         "",IDC_SET_PROPERTIES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,124,290,110
     PUSHBUTTON      "Add...",IDC_PROP_ADD,303,124,50,14
     PUSHBUTTON      "Edit...",IDC_PROP_EDIT,303,141,50,14
     PUSHBUTTON      "Remove",IDC_PROP_REMOVE,303,158,50,14
@@ -488,12 +458,14 @@ BEGIN
     LTEXT           "Type:",IDC_STATIC,7,27,70,8
     COMBOBOX        IDC_PROP_TYPE,80,25,160,120,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Value",IDC_STATIC,7,45,316,78
-    CONTROL         "No value (the property is declared only)",IDC_PROP_NONE,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,14,58,300,10
+    CONTROL         "No value (the property is declared only)",IDC_PROP_NONE,
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,14,58,300,10
     CONTROL         "Bound to a target:",IDC_PROP_BIND_TARGET,"Button",BS_AUTORADIOBUTTON,14,74,90,10
-    COMBOBOX        IDC_PROP_TARGET,106,72,210,160,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_GROUP
+    COMBOBOX        IDC_PROP_TARGET,106,72,210,160,CBS_DROPDOWNLIST | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     CONTROL         "A constant:",IDC_PROP_BIND_VALUE,"Button",BS_AUTORADIOBUTTON,14,92,90,10
     EDITTEXT        IDC_PROP_VALUE,106,90,210,14,ES_AUTOHSCROLL
-    CONTROL         "An import reads the target from it",IDC_PROP_IMPORT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,108,210,10
+    CONTROL         "An import reads the target from it",IDC_PROP_IMPORT,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,106,108,210,10
     LTEXT           "URI:",IDC_STATIC,7,131,70,8
     EDITTEXT        IDC_PROP_URI,80,129,243,14,ES_AUTOHSCROLL
     LTEXT           """bsdd"" (built from the name), ""bsdd:Name"", or a URI",IDC_STATIC,80,145,243,8
@@ -533,7 +505,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Applies to:",IDC_STATIC,7,9,60,8
-    LISTBOX         IDC_CLS_ROLES,70,7,120,80,LBS_MULTIPLESEL | LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_BORDER | WS_TABSTOP
+    LISTBOX         IDC_CLS_ROLES,70,7,120,80,LBS_MULTIPLESEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Condition:",IDC_STATIC,200,9,50,8
     COMBOBOX        IDC_CLS_CONDITION,252,7,101,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "System:",IDC_STATIC,200,27,50,8
@@ -636,7 +608,6 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 228
     END
-
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -683,6 +654,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_BSI                 ICON                    "IfcProjectImporter.ico"
+
 IDR_MAPPING_EDITOR      ICON                    "IfcProjectImporter.ico"
 
 
@@ -694,13 +666,17 @@ IDR_MAPPING_EDITOR      ICON                    "IfcProjectImporter.ico"
 STRINGTABLE
 BEGIN
     ID_EDIT_GEOREFERENCING  "Edit Georeferencing\nEdit Georeferencing"
-    ID_VIEW_IMPORT_LOG      "View the log of the IFC import that made this project\nIFC Import Log"
     ID_MAPPING_VALIDATE     "Check the table the way IFC imports and exports do\nValidate"
     ID_MAPPING_WRITE_IDS    "Write what the table exports as a general IDS\nWrite as IDS"
     ID_MAPPING_FROM_IDS     "Generate a mapping table from a general IDS, e.g. an agency IDS\nGenerate from IDS"
     ID_MAPPING_OPEN_MODEL   "Open an IFC model to pick properties from and to try the table on\nOpen Model"
     ID_MAPPING_TRY_MODEL    "Read every target from the model with the table, as an import would\nTry on Model"
     ID_MAPPING_HELP         "Show the IFC Mapping Table Editor documentation\nHelp"
+    ID_VIEW_IMPORT_LOG      "View the log of the IFC import that made this project\nIFC Import Log"
+END
+
+STRINGTABLE
+BEGIN
     IDR_MAPPING_EDITOR      "\nIfcMapping\nIFC Mapping Table\nIFC Mapping Tables (*.ifcmap;*.json)\n.ifcmap;.json\nPGSuperIfc.MappingTable\nIFC Mapping Table"
 END
 
@@ -715,6 +691,8 @@ END
 // Generated from the TEXTINCLUDE 3 resource.
 //
 
+
+#include "res\IfcExtensions.rc2"  // version resource; uses the version number in WBFLVersion.h
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
